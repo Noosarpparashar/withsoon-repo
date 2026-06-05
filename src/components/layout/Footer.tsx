@@ -14,8 +14,15 @@ export default function Footer() {
       <div className="mx-auto max-w-7xl px-4">
         <div className="flex flex-col md:flex-row justify-between gap-8 mb-8">
           <div>
-            <div className="font-bold text-lg mb-2 text-[var(--text)]">
-              <span className="text-[var(--accent-text)]">with</span>soon
+            <div className="flex items-center gap-1.5 mb-2">
+              <span className="flex items-center justify-center w-6 h-6 rounded-md bg-gradient-to-br from-[var(--accent)] to-[var(--blue)]">
+                <svg className="w-3.5 h-3.5 text-white" fill="currentColor" viewBox="0 0 24 24">
+                  <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/>
+                </svg>
+              </span>
+              <span className="font-black text-lg tracking-tight">
+                <span className="text-transparent bg-clip-text bg-gradient-to-r from-[var(--accent)] to-[var(--blue)]">with</span><span className="text-[var(--text)]">soon</span>
+              </span>
             </div>
             <p className="text-sm text-[var(--text-muted)] max-w-xs leading-relaxed">
               One-stop platform for Big Data and AI engineers — system design, setup guides, interview prep, and cheatsheets.

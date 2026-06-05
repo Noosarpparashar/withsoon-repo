@@ -41,8 +41,15 @@ export default function Navbar() {
         <div className="mx-auto max-w-7xl px-4 flex items-center justify-between h-14 gap-4">
 
           {/* Logo */}
-          <Link href="/" className="font-bold text-lg tracking-tight shrink-0 text-[var(--text)]">
-            <span className="text-[var(--accent-text)]">with</span>soon
+          <Link href="/" className="shrink-0 flex items-center gap-1.5 group">
+            <span className="flex items-center justify-center w-7 h-7 rounded-lg bg-gradient-to-br from-[var(--accent)] to-[var(--blue)] shadow-sm group-hover:shadow-[0_0_12px_var(--accent)] transition-shadow">
+              <svg className="w-4 h-4 text-white" fill="currentColor" viewBox="0 0 24 24">
+                <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/>
+              </svg>
+            </span>
+            <span className="font-black text-xl tracking-tight">
+              <span className="text-transparent bg-clip-text bg-gradient-to-r from-[var(--accent)] to-[var(--blue)]">with</span><span className="text-[var(--text)]">soon</span>
+            </span>
           </Link>
 
           {/* Desktop nav */}
