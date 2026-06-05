@@ -82,8 +82,8 @@ export default function Home() {
           <span className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
           Built in public · Updated as the industry moves
         </div>
-        <h1 className="font-bold tracking-tight mb-6 text-[var(--text)]">
-          <div className="text-3xl md:text-4xl mb-2 font-semibold text-[var(--text-muted)]">
+        <h1 className="font-bold tracking-tight mb-6">
+          <div className="text-4xl md:text-6xl mb-1 font-bold text-[var(--text-muted)]">
             Everything for a
           </div>
           <div className="text-5xl md:text-7xl leading-tight text-transparent bg-clip-text bg-gradient-to-r from-[var(--blue)] via-[var(--accent)] to-[var(--purple)]">
