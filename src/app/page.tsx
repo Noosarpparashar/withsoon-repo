@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { getFeatured, getAllContent, getContentBySection, getSetupGuides } from "@/lib/content";
 import ContentCard from "@/components/ui/ContentCard";
+import LLMCharts from "@/components/ui/LLMCharts";
 
 const SECTIONS = [
   {
@@ -105,6 +106,11 @@ export default function Home() {
             📋 Cheatsheets
           </Link>
         </div>
+      </section>
+
+      {/* ── LLM Benchmark Charts ──────────────────────────── */}
+      <section className="mb-20">
+        <LLMCharts />
       </section>
 
       {/* ── Noticeboard + Sections ────────────────────────── */}
