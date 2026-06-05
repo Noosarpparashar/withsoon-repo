@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { getFeatured, getAllContent, getContentBySection, getSetupGuides } from "@/lib/content";
 import ContentCard from "@/components/ui/ContentCard";
-import LLMCharts from "@/components/ui/LLMCharts";
+import { LLMBenchmarkButton } from "@/components/ui/LLMCharts";
 
 const SECTIONS = [
   {
@@ -92,7 +92,7 @@ export default function Home() {
           System Design · Setup Guides · LLM Deep Dives · Interview Prep · Cheatsheets.
           One platform — daily work, career growth, and staying current.
         </p>
-        <div className="flex flex-wrap gap-4 justify-center mb-10">
+        <div className="flex flex-wrap gap-4 justify-center mb-6">
           <Link href="/big-data" className="px-6 py-3 rounded-xl bg-[var(--blue)] hover:opacity-90 text-white font-semibold transition-opacity">
             🗄️ Big Data Hub
           </Link>
@@ -106,11 +106,10 @@ export default function Home() {
             📋 Cheatsheets
           </Link>
         </div>
-      </section>
-
-      {/* ── LLM Benchmark Charts ──────────────────────────── */}
-      <section className="mb-20">
-        <LLMCharts />
+        {/* Benchmark trigger — sits below the main CTAs, centered */}
+        <div className="flex justify-center">
+          <LLMBenchmarkButton />
+        </div>
       </section>
 
       {/* ── Noticeboard + Sections ────────────────────────── */}
