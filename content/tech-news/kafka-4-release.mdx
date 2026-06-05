@@ -1,0 +1,43 @@
+---
+title: "Apache Kafka 4.0 drops Zookeeper — KRaft is now the default"
+date: "2026-06-03"
+type: "news"
+summary: "Kafka 4.0 is the first major release fully free of Zookeeper. KRaft mode is now the only option. Here's what changes for your cluster."
+tags: ["kafka", "big-data", "release", "open-source"]
+featured: false
+---
+
+## What changed
+
+Apache Kafka 4.0 ships without Zookeeper support. The KRaft (Kafka Raft) consensus protocol is now the only mode.
+
+## Why this matters
+
+Zookeeper has been a pain point for years:
+- Separate cluster to manage and monitor
+- Metadata stored in ZK, not Kafka — created sync issues
+- Extra failure domain
+- More complex ops for small teams
+
+KRaft moves all metadata management into Kafka itself. One less system to run.
+
+## Migration path
+
+If you're still on Zookeeper-mode Kafka:
+
+1. Upgrade to Kafka 3.x first (supports both modes)
+2. Run the migration tool: `kafka-zk-to-kraft-migration.sh`
+3. Validate in staging
+4. Upgrade to Kafka 4.0
+
+Kafka 3.9 is the last version supporting Zookeeper mode.
+
+## What stays the same
+
+- Client APIs unchanged — producers and consumers don't need updating
+- Same config for topics, partitions, replication
+- All major connectors (Debezium, MirrorMaker) work with KRaft
+
+## Bottom line
+
+If you're on managed Kafka (Confluent Cloud, MSK, Aiven), you're likely already on KRaft. Self-hosted clusters need to plan the migration before upgrading past 3.9.

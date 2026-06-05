@@ -5,6 +5,7 @@ import matter from "gray-matter";
 const contentDir = path.join(process.cwd(), "content");
 
 export type Section =
+  | "tech-news"
   | "radar"
   | "big-data"
   | "ai"
@@ -81,7 +82,7 @@ export function getContentBySection(section: Section): ContentMeta[] {
 }
 
 export function getAllContent(): ContentMeta[] {
-  const sections: Section[] = ["radar", "big-data", "ai", "tools", "interview", "reference"];
+  const sections: Section[] = ["tech-news", "radar", "big-data", "ai", "tools", "interview", "reference"];
   return sections.flatMap(readSection).sort((a, b) => (a.date < b.date ? 1 : -1));
 }
 

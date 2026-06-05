@@ -1,6 +1,6 @@
 import { getContentBySection } from "@/lib/content";
 import SectionHero from "@/components/ui/SectionHero";
-import SubsectionFilter from "@/components/ui/SubsectionFilter";
+import SubsectionBrowser from "@/components/ui/SubsectionBrowser";
 
 export const metadata = {
   title: "Reference — withsoon",
@@ -8,28 +8,32 @@ export const metadata = {
 };
 
 const SUBSECTIONS = [
-  { key: "sql", label: "SQL" },
-  { key: "system-design", label: "System Design" },
-  { key: "dsa", label: "DSA" },
-  { key: "cloud", label: "Cloud" },
-  { key: "linux", label: "Linux / Shell" },
-  { key: "git", label: "Git" },
-  { key: "python", label: "Python" },
+  { key: "sql",           label: "SQL",             emoji: "🗃️", desc: "Window functions, joins, CTEs, optimization, most asked" },
+  { key: "system-design", label: "System Design",   emoji: "🏗️", desc: "Distributed systems, databases, caching, APIs" },
+  { key: "dsa",           label: "DSA",             emoji: "🧩", desc: "Data structures and algorithm patterns by category" },
+  { key: "cloud",         label: "Cloud",           emoji: "☁️", desc: "AWS, GCP, Azure — services quick reference" },
+  { key: "linux",         label: "Linux / Shell",   emoji: "💻", desc: "Commands, bash scripting, file ops, process management" },
+  { key: "python",        label: "Python",          emoji: "🐍", desc: "Common patterns, built-ins, data manipulation" },
+  { key: "git",           label: "Git",             emoji: "🔀", desc: "Commands, workflows, rebase vs merge, common fixes" },
 ];
 
 export default function ReferencePage() {
   const items = getContentBySection("reference");
-
   return (
     <div className="mx-auto max-w-7xl px-4 py-10">
       <SectionHero
         emoji="📚"
         title="Reference"
-        subtitle="Quick-reference cheatsheets, patterns, and guides. Bookmark this — it's built for daily use."
-        color="text-pink-400"
+        subtitle="Quick-reference cheatsheets, patterns, and guides. Bookmark this — it's designed for daily use."
+        accentClass="text-[var(--pink-text)]"
       />
-
-      <SubsectionFilter items={items} subsections={SUBSECTIONS} section="reference" />
+      <SubsectionBrowser
+        items={items}
+        subsections={SUBSECTIONS}
+        section="reference"
+        accentClass="text-[var(--pink-text)]"
+        softClass="bg-[var(--pink-soft)] text-[var(--pink-text)]"
+      />
     </div>
   );
 }

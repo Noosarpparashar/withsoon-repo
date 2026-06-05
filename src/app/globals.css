@@ -1,32 +1,82 @@
 @import "tailwindcss";
 @plugin "@tailwindcss/typography";
 
+/* ── Light mode (default) ─────────────────────────────── */
 :root {
-  --background: #0f0f0f;
-  --foreground: #f0f0f0;
-  --accent: #7c3aed;
-  --accent-light: #a78bfa;
-  --muted: #1a1a1a;
-  --border: #2a2a2a;
+  --bg:          #f8f9fa;
+  --bg-card:     #ffffff;
+  --bg-muted:    #f1f3f5;
+  --border:      #e2e8f0;
+  --text:        #0f172a;
+  --text-muted:  #64748b;
+  --text-faint:  #94a3b8;
+  --accent:      #6d28d9;
+  --accent-fg:   #ffffff;
+  --accent-soft: #ede9fe;
+  --accent-text: #6d28d9;
+  --blue:        #2563eb;
+  --blue-soft:   #dbeafe;
+  --blue-text:   #1d4ed8;
+  --purple:      #7c3aed;
+  --purple-soft: #ede9fe;
+  --purple-text: #6d28d9;
+  --green:       #059669;
+  --green-soft:  #d1fae5;
+  --green-text:  #065f46;
+  --orange:      #d97706;
+  --orange-soft: #fef3c7;
+  --orange-text: #92400e;
+  --pink:        #db2777;
+  --pink-soft:   #fce7f3;
+  --pink-text:   #9d174d;
+  --yellow:      #ca8a04;
+  --yellow-soft: #fef9c3;
+  --yellow-text: #713f12;
+}
+
+/* ── Dark mode ────────────────────────────────────────── */
+.dark {
+  --bg:          #0d0d0d;
+  --bg-card:     #161616;
+  --bg-muted:    #1c1c1c;
+  --border:      #2a2a2a;
+  --text:        #f1f5f9;
+  --text-muted:  #94a3b8;
+  --text-faint:  #475569;
+  --accent:      #7c3aed;
+  --accent-fg:   #ffffff;
+  --accent-soft: rgba(124,58,237,0.15);
+  --accent-text: #a78bfa;
+  --blue:        #3b82f6;
+  --blue-soft:   rgba(59,130,246,0.12);
+  --blue-text:   #93c5fd;
+  --purple:      #8b5cf6;
+  --purple-soft: rgba(139,92,246,0.12);
+  --purple-text: #c4b5fd;
+  --green:       #10b981;
+  --green-soft:  rgba(16,185,129,0.12);
+  --green-text:  #6ee7b7;
+  --orange:      #f59e0b;
+  --orange-soft: rgba(245,158,11,0.12);
+  --orange-text: #fcd34d;
+  --pink:        #ec4899;
+  --pink-soft:   rgba(236,72,153,0.12);
+  --pink-text:   #f9a8d4;
+  --yellow:      #eab308;
+  --yellow-soft: rgba(234,179,8,0.12);
+  --yellow-text: #fde047;
 }
 
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --color-accent: var(--accent);
-  --color-accent-light: var(--accent-light);
-  --color-muted: var(--muted);
-  --color-border: var(--border);
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
+  background: var(--bg);
+  color: var(--text);
   font-family: var(--font-geist-sans), Arial, sans-serif;
+  transition: background 0.2s, color 0.2s;
 }
 
-html {
-  scroll-behavior: smooth;
-}
+html { scroll-behavior: smooth; }

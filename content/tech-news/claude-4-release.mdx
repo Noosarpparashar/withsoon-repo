@@ -1,0 +1,51 @@
+---
+title: "Anthropic releases Claude 4 — Opus 4.8 leads the pack"
+date: "2026-06-04"
+type: "news"
+summary: "Anthropic's Claude 4 family lands with Opus 4.8, Sonnet 4.6, and Haiku 4.5. Here's what changed, what's faster, and when to use each."
+tags: ["claude", "anthropic", "llm", "release"]
+featured: true
+---
+
+## What dropped
+
+Anthropic released the Claude 4 model family in mid-2026. The lineup:
+
+| Model | ID | Best for |
+|---|---|---|
+| Claude Opus 4.8 | `claude-opus-4-8` | Complex reasoning, long context tasks |
+| Claude Sonnet 4.6 | `claude-sonnet-4-6` | Balanced speed + quality, daily use |
+| Claude Haiku 4.5 | `claude-haiku-4-5` | Fast, cheap, high-volume tasks |
+
+## What's new vs Claude 3
+
+- **Extended thinking** on Opus — the model reasons step by step before answering
+- **Faster output** on Sonnet — noticeable improvement in time-to-first-token
+- **Better instruction following** across the board — fewer hallucinated refusals
+- **200k context** maintained on Opus and Sonnet
+
+## When to use which
+
+**Opus 4.8** — complex multi-step reasoning, document analysis, code review across large codebases. Use when quality matters more than cost.
+
+**Sonnet 4.6** — production apps, chat, coding assistants, summarization. Best balance.
+
+**Haiku 4.5** — classification, tagging, extraction at scale. Cheapest, fastest.
+
+## API quick start
+
+```python
+import anthropic
+
+client = anthropic.Anthropic()
+message = client.messages.create(
+    model="claude-sonnet-4-6",
+    max_tokens=1024,
+    messages=[{"role": "user", "content": "Explain Kafka consumer groups."}],
+)
+print(message.content[0].text)
+```
+
+## Bottom line
+
+If you're on Claude 3 Sonnet, upgrade to Claude Sonnet 4.6 — it's a straight improvement with no breaking API changes.
