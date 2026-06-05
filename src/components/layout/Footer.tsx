@@ -6,7 +6,6 @@ const LINKS = [
   { href: "/ai",          label: "AI & LLMs" },
   { href: "/interview",   label: "Interview" },
   { href: "/cheatsheets", label: "Cheatsheets" },
-  { href: "/tools",       label: "Tools" },
 ];
 
 export default function Footer() {
@@ -18,8 +17,8 @@ export default function Footer() {
             <div className="font-bold text-lg mb-2 text-[var(--text)]">
               <span className="text-[var(--accent-text)]">with</span>soon
             </div>
-            <p className="text-sm text-[var(--text-muted)] max-w-xs">
-              One-stop platform for Big Data and AI engineers — system design, guides, interview prep, and tool discovery.
+            <p className="text-sm text-[var(--text-muted)] max-w-xs leading-relaxed">
+              One-stop platform for Big Data and AI engineers — system design, setup guides, interview prep, and cheatsheets.
             </p>
           </div>
           <nav className="flex flex-wrap gap-x-6 gap-y-2">

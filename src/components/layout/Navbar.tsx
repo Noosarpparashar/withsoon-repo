@@ -7,11 +7,10 @@ import { useTheme } from "next-themes";
 
 const NAV = [
   { href: "/tech-news",   label: "Tech News",   emoji: "📰", desc: "Latest AI & Data news" },
-  { href: "/big-data",    label: "Big Data",    emoji: "🗄️", desc: "Kafka, Spark, Flink, dbt..." },
-  { href: "/ai",          label: "AI & LLMs",  emoji: "🤖", desc: "Models, RAG, agents, prompts" },
-  { href: "/interview",   label: "Interview",   emoji: "🎯", desc: "Prep for Big Data & AI roles" },
-  { href: "/cheatsheets", label: "Cheatsheets", emoji: "📋", desc: "SQL, DSA, System Design, Cloud" },
-  { href: "/tools",       label: "Tools",       emoji: "🛠️", desc: "Tool comparisons & new launches" },
+  { href: "/big-data",    label: "Big Data",    emoji: "🗄️", desc: "Kafka, Spark, Flink, System Design" },
+  { href: "/ai",          label: "AI & LLMs",   emoji: "🤖", desc: "RAG, Agents, Providers, Setups" },
+  { href: "/interview",   label: "Interview",   emoji: "🎯", desc: "System Design, Kafka, SQL, Behavioral" },
+  { href: "/cheatsheets", label: "Cheatsheets", emoji: "📋", desc: "SQL, Kafka, Spark, Cloud — quick ref" },
 ];
 
 export default function Navbar() {

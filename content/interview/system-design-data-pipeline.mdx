@@ -1,0 +1,152 @@
+---
+title: "System Design: Real-Time Data Pipeline"
+date: "2026-06-05"
+type: "system-design"
+subsection: "system-design"
+summary: "Design a real-time data pipeline that ingests 1M events/second, processes them, and serves analytics — with architecture diagram and trade-off discussion."
+tags: ["system-design", "interview", "kafka", "spark", "real-time"]
+difficulty: "advanced"
+featured: true
+---
+
+## The question
+
+> Design a real-time data pipeline for an e-commerce platform that processes 1 million order events per second, enriches them with user data, and serves analytics dashboards with under 5 second latency.
+
+---
+
+## Clarifying questions to ask first
+
+Before drawing anything, ask:
+- **What's the read pattern?** Dashboards (aggregated) or individual event lookup?
+- **How long do we need to retain raw events?** 7 days? 90 days? Forever?
+- **Is exactly-once processing required?** (Affects tech choices significantly)
+- **What's the acceptable latency?** under 1s, under 5s, or near-real-time?
+- **Any existing tech stack constraints?** AWS, GCP, on-prem?
+
+---
+
+## High-level architecture
+
+```
+Order Service
+     │
+     ▼
+ Kafka (ingestion)          ← 1M events/sec, 12+ partitions
+     │
+     ├──▶ Flink (real-time) ──▶ Redis (live dashboards, under 1s)
+     │         │
+     │         └──▶ Postgres (enriched events, recent window)
+     │
+     └──▶ S3 / GCS (raw events, retention)
+               │
+               ▼
+          Spark (batch)   ──▶ ClickHouse / BigQuery (historical analytics)
+```
+
+---
+
+## Component decisions
+
+### Ingestion: Kafka
+
+- **Partitions:** 1M/sec ÷ ~100k/sec/partition = **12 partitions minimum**. Use 24 for headroom.
+- **Replication factor:** 3 in production
+- **Retention:** 7 days (raw events). Long enough for replay if downstream fails.
+- **Producers:** `acks=all`, `enable.idempotence=true` for at-least-once with deduplication downstream
+
+### Real-time processing: Flink
+
+Why Flink over Spark Streaming?
+- True streaming (not micro-batch) — lower latency
+- Better exactly-once semantics with stateful operators
+- Native Kafka integration with checkpointing
+
+Flink job:
+```
+Kafka source
+  → Parse & validate
+  → Enrich with user data (async I/O to Redis user cache)
+  → Compute 1-min rolling window aggregations
+  → Sink to Redis (live counts) + Postgres (event store)
+```
+
+### Serving layer: Redis + ClickHouse
+
+| Layer | Tech | Use case |
+|---|---|---|
+| Live (under 1s) | Redis sorted sets | Current order counts, GMV |
+| Recent (5s-5min) | Postgres | Per-user order history |
+| Historical | ClickHouse | Dashboard queries, trends |
+
+**ClickHouse** is the right call for analytics (not Postgres) because:
+- Columnar storage → 10-100x faster for aggregations
+- Handles billions of rows without breaking a sweat
+- ReplacingMergeTree handles late arrivals / deduplication
+
+---
+
+## Handling the hard parts
+
+### Late-arriving events
+
+Events can arrive up to 2 minutes late (network delays, mobile clients).
+
+Solution: **watermarks in Flink** — allow events up to 2 minutes late:
+```java
+WatermarkStrategy.forBoundedOutOfOrderness(Duration.ofMinutes(2))
+```
+
+Events after the watermark go to a **side output** for manual review.
+
+### Data skew
+
+Some users place 100x more orders than average. If partitioning by `user_id`, one partition gets hot.
+
+Solution: partition by `order_id` (uniform) for throughput. Join with user data using async enrichment, not co-partitioning.
+
+### Exactly-once
+
+For financial data (orders), use:
+1. Idempotent Kafka producer
+2. Flink exactly-once with checkpointing to S3
+3. Idempotent sink (upsert by `order_id`)
+
+The trade-off: exactly-once adds ~20-30% latency overhead. For non-financial events, at-least-once + idempotent sinks is usually fine.
+
+---
+
+## Estimating capacity
+
+```
+1M events/sec × 500 bytes/event = 500 MB/sec throughput
+
+Kafka storage:
+  500 MB/sec × 86400 sec/day × 7 days = 302 TB
+  With 3x replication = ~900 TB
+
+Flink:
+  12 partitions → 12 parallel tasks
+  Each task processes ~83k events/sec — manageable with 4 cores/2GB
+```
+
+---
+
+## Trade-offs to discuss
+
+| Decision | Alternative | Trade-off |
+|---|---|---|
+| Flink for real-time | Spark Structured Streaming | Flink lower latency, Spark easier if team knows it |
+| ClickHouse for analytics | BigQuery | ClickHouse cheaper self-hosted, BigQuery zero-ops |
+| Redis for live layer | Materialize | Redis simpler, Materialize has SQL semantics |
+| Kafka as backbone | Kinesis | Kafka more control, Kinesis zero-ops on AWS |
+
+---
+
+## What a strong answer includes
+
+- Clarifying questions before drawing anything
+- Numbers: partition count, storage estimates, latency budget
+- Trade-off discussion — not just "I'd use Kafka" but "why Kafka over X"
+- Failure scenarios: what happens if Flink crashes mid-job?
+- Monitoring: consumer lag, Flink checkpoint duration, Redis memory

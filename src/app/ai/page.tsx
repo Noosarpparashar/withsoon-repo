@@ -4,21 +4,20 @@ import SubsectionBrowser from "@/components/ui/SubsectionBrowser";
 
 export const metadata = {
   title: "AI & LLMs — withsoon",
-  description: "OpenAI, Claude, Gemini, Llama — RAG pipelines, agents, prompt engineering, fine-tuning, industry patterns.",
+  description: "OpenAI, Claude, Gemini, Llama — RAG pipelines, agents, prompt engineering, fine-tuning, setup guides.",
 };
 
 const SUBSECTIONS = [
-  { key: "openai",      label: "OpenAI",              emoji: "🟢", desc: "GPT-4o, API guide, function calling, assistants, pricing" },
-  { key: "anthropic",   label: "Anthropic / Claude",  emoji: "🟣", desc: "Claude 3/4, extended thinking, tool use, prompt caching" },
-  { key: "google",      label: "Google / Gemini",     emoji: "🔵", desc: "Gemini 1.5 Pro, 1M context, multimodal, Vertex AI" },
-  { key: "meta",        label: "Meta / Llama",        emoji: "🦙", desc: "Llama 3, self-hosting, fine-tuning, Ollama setup" },
-  { key: "mistral",     label: "Mistral",             emoji: "💨", desc: "Mistral Large, Mixtral, open weights, self-hosting" },
-  { key: "rag",         label: "RAG",                 emoji: "🔍", desc: "Chunking, embedding, vector DBs, retrieval, re-ranking" },
-  { key: "agents",      label: "Agents",              emoji: "🤖", desc: "Tool use, multi-agent, ReAct, planning, memory" },
-  { key: "prompting",   label: "Prompt Engineering",  emoji: "✍️", desc: "System prompts, chain-of-thought, few-shot, industry patterns" },
-  { key: "fine-tuning", label: "Fine-tuning",         emoji: "⚙️", desc: "LoRA, QLoRA, RLHF, when to fine-tune vs RAG" },
-  { key: "embeddings",  label: "Embeddings",          emoji: "🧬", desc: "Models, vector DBs, semantic search, similarity" },
-  { key: "comparison",  label: "Comparisons",         emoji: "⚖️", desc: "Side-by-side model benchmarks on real tasks" },
+  { key: "setup",       label: "Setup Guides",       emoji: "🚀", desc: "RAG pipeline, chatbot, AI agent, LangChain, LlamaIndex — step-by-step from zero" },
+  { key: "rag",         label: "RAG",                emoji: "🔍", desc: "Chunking, embedding models, vector DBs, retrieval, re-ranking, production RAG" },
+  { key: "agents",      label: "Agents",             emoji: "🤖", desc: "Tool use, multi-agent systems, ReAct, planning, memory, LangGraph" },
+  { key: "openai",      label: "OpenAI",             emoji: "🟢", desc: "GPT-4o, o1, function calling, assistants API, structured output, pricing" },
+  { key: "anthropic",   label: "Anthropic / Claude", emoji: "🟣", desc: "Claude 4, extended thinking, tool use, prompt caching, context windows" },
+  { key: "google",      label: "Google / Gemini",    emoji: "🔵", desc: "Gemini 2.0 Flash, 1M context, multimodal, Vertex AI, Gemma" },
+  { key: "meta",        label: "Meta / Llama",       emoji: "🦙", desc: "Llama 3.3, self-hosting with Ollama, fine-tuning, quantization" },
+  { key: "prompting",   label: "Prompt Engineering", emoji: "✍️", desc: "System prompts, chain-of-thought, few-shot, industry-standard patterns" },
+  { key: "fine-tuning", label: "Fine-tuning",        emoji: "⚙️", desc: "LoRA, QLoRA, RLHF, when to fine-tune vs RAG vs prompt engineering" },
+  { key: "comparison",  label: "Model Comparisons",  emoji: "⚖️", desc: "GPT vs Claude vs Gemini on real tasks — coding, reasoning, cost, speed" },
 ];
 
 export default function AIPage() {
@@ -28,7 +27,7 @@ export default function AIPage() {
       <SectionHero
         emoji="🤖"
         title="AI & LLMs Hub"
-        subtitle="By provider, by technique, by use case. Everything from RAG pipelines to production chatbot architecture — step by step."
+        subtitle="Setup guides, provider deep-dives, RAG pipelines, agents, and model comparisons — everything to build production AI systems."
         accentClass="text-[var(--purple-text)]"
       />
       <SubsectionBrowser

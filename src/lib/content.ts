@@ -121,6 +121,18 @@ export function getByTag(tag: string): ContentMeta[] {
   return getAllContent().filter((c) => c.tags.includes(tag));
 }
 
+export function getSetupGuides(): ContentMeta[] {
+  return getAllContent()
+    .filter((c) => c.type === "setup" || c.tags.includes("setup") || c.subsection === "setup")
+    .slice(0, 6);
+}
+
+export function getAllCheatsheets(): ContentMeta[] {
+  return getAllContent().filter(
+    (c) => c.type === "cheatsheet" || c.tags.includes("cheatsheet") || c.subsection === "cheatsheet"
+  );
+}
+
 export function getSearchIndex(): { id: string; title: string; summary: string; section: Section; slug: string; tags: string }[] {
   return getAllContent().map((c) => ({
     id: `${c.section}/${c.slug}`,

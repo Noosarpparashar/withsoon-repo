@@ -1,0 +1,139 @@
+---
+title: "Spark Architecture — How it Actually Works"
+date: "2026-06-05"
+type: "system-design"
+subsection: "system-design"
+summary: "Driver, executors, DAG scheduler, shuffle — the complete mental model for how Spark executes a job and where things go wrong."
+tags: ["spark", "system-design", "big-data", "architecture"]
+difficulty: "intermediate"
+featured: true
+---
+
+## The big picture
+
+```
+Your code → SparkContext → DAG Scheduler → Task Scheduler → Executors
+```
+
+Spark is a **distributed compute engine**. You write transformations (map, filter, join), Spark figures out how to run them across a cluster.
+
+## Driver vs Executors
+
+| Component | What it does |
+|---|---|
+| **Driver** | Runs your main() code, builds the execution plan, coordinates everything |
+| **Executor** | Worker process on a node — runs tasks, caches data |
+| **Cluster Manager** | Allocates resources (YARN, Kubernetes, Standalone) |
+
+The Driver is a bottleneck for:
+- `collect()` — pulls all data to Driver
+- Broadcast joins — Driver sends the broadcast table
+- Accumulator updates
+
+## RDDs, DataFrames, Datasets
+
+- **RDD** — raw distributed collection, no schema, full control, verbose
+- **DataFrame** — distributed table with schema, Catalyst optimizer applies, 10-100x faster than RDD for most tasks
+- **Dataset** — typed DataFrame, JVM only (not Python)
+
+**Always use DataFrames in Python (PySpark).** RDDs bypass Catalyst.
+
+## How a job runs: DAG → Stages → Tasks
+
+```python
+df.filter(col("age") > 25).groupBy("city").count().show()
+```
+
+1. Spark builds a **DAG** (Directed Acyclic Graph) of transformations
+2. DAG Scheduler splits the DAG into **stages** — boundaries at wide transformations (shuffles)
+3. Each stage runs as parallel **tasks**, one per partition
+
+```
+Stage 1: filter (narrow — no shuffle)
+  → Stage 2: groupBy + count (wide — shuffle needed)
+    → show
+```
+
+## Shuffles — the expensive part
+
+A shuffle happens when data needs to move between executors (groupBy, join, distinct, repartition).
+
+What happens during a shuffle:
+1. Mapper tasks write shuffle data to local disk (map output files)
+2. Reducer tasks fetch the data over the network
+3. Data is sorted and merged
+
+**Shuffle is slow because:** disk I/O + network transfer + sort.
+
+### How to minimize shuffles
+
+```python
+# Bad: two separate shuffles
+df.groupBy("country").count()
+df.groupBy("country").sum("revenue")
+
+# Good: one shuffle
+df.groupBy("country").agg(count("*"), sum("revenue"))
+```
+
+```python
+# Bad: shuffle both sides
+large_df.join(medium_df, "id")
+
+# Good: broadcast the small side (no shuffle)
+from pyspark.sql.functions import broadcast
+large_df.join(broadcast(small_df), "id")
+```
+
+Rule of thumb: if one side of a join fits in memory (~100MB), broadcast it.
+
+## Partitions
+
+The number of partitions controls parallelism.
+
+```python
+# See partition count
+df.rdd.getNumPartitions()
+
+# Repartition (triggers shuffle, even distribution)
+df.repartition(200)
+
+# Coalesce (no shuffle, reduces partitions only)
+df.coalesce(10)
+```
+
+**Default shuffle partitions:** `spark.sql.shuffle.partitions = 200`
+
+For small datasets this is way too many. For large datasets it may be too few.
+
+Rule of thumb: target 100–500MB of data per partition.
+
+## Common performance problems
+
+| Symptom | Cause | Fix |
+|---|---|---|
+| One task takes 10x longer | Data skew — one partition has most data | Salting, AQE |
+| OOM on Driver | collect() on large data | Use write() instead |
+| OOM on Executor | Partition too large | Repartition / increase executor memory |
+| Slow joins | Missing broadcast | Add broadcast() hint |
+| Thousands of small files | Too many output partitions | Coalesce before write |
+
+## Adaptive Query Execution (AQE)
+
+Spark 3.0+ dynamically adjusts the plan at runtime:
+- Merges small shuffle partitions automatically
+- Converts joins to broadcast joins if one side is small
+- Handles skew by splitting large partitions
+
+Enable it: `spark.sql.adaptive.enabled = true` (default in Spark 3.2+)
+
+## Key configs to know
+
+```properties
+spark.executor.memory=4g
+spark.executor.cores=4
+spark.sql.shuffle.partitions=200       # tune for your data size
+spark.sql.adaptive.enabled=true
+spark.sql.adaptive.skewJoin.enabled=true
+spark.serializer=org.apache.spark.serializer.KryoSerializer
+```
