@@ -4,17 +4,15 @@ import SubsectionBrowser from "@/components/ui/SubsectionBrowser";
 
 export const metadata = {
   title: "Tools — withsoon",
-  description: "Curated directory of AI and Big Data tools the industry is actually using.",
+  description: "Tool comparisons, new launches, and vetted picks for AI and Big Data engineers.",
 };
 
 const SUBSECTIONS = [
-  { key: "ai",            label: "AI Tools",        emoji: "🤖", desc: "LLM APIs, AI assistants, code tools, image/video gen" },
-  { key: "big-data",      label: "Big Data Tools",  emoji: "🗄️", desc: "Stream processing, orchestration, storage, query engines" },
-  { key: "vector-db",     label: "Vector DBs",      emoji: "🧬", desc: "Pinecone, Weaviate, Qdrant, Chroma, pgvector" },
-  { key: "cloud",         label: "Cloud",           emoji: "☁️", desc: "AWS, GCP, Azure data services and managed offerings" },
-  { key: "orchestration", label: "Orchestration",   emoji: "🌬️", desc: "Airflow, Prefect, Dagster, Temporal" },
-  { key: "monitoring",    label: "Monitoring",      emoji: "📊", desc: "Observability, data quality, ML monitoring" },
-  { key: "open-source",   label: "Open Source",     emoji: "🔓", desc: "Self-hostable tools and OSS alternatives" },
+  { key: "ai",         label: "AI Tools",      emoji: "🤖", desc: "LLM APIs, coding assistants, AI dev tools — what's worth using and when" },
+  { key: "big-data",   label: "Big Data Tools", emoji: "🗄️", desc: "Stream processing, storage, orchestration, query engines — compared" },
+  { key: "vector-db",  label: "Vector DBs",     emoji: "🧬", desc: "Pinecone vs Weaviate vs Qdrant vs pgvector — pick the right one" },
+  { key: "cloud",      label: "Cloud Services", emoji: "☁️", desc: "AWS, GCP, Azure data and AI services — what to use for what" },
+  { key: "new-tools",  label: "New Launches",   emoji: "🚀", desc: "Tools that just dropped — quick verdict on whether they're worth it" },
 ];
 
 export default function ToolsPage() {
@@ -23,8 +21,8 @@ export default function ToolsPage() {
     <div className="mx-auto max-w-7xl px-4 py-10">
       <SectionHero
         emoji="🛠️"
-        title="Tools Directory"
-        subtitle="Vetted tools for AI and Big Data engineers — what each one does, when to use it, and what to compare it against."
+        title="Tools"
+        subtitle="Honest comparisons and quick-start guides for the tools Big Data and AI engineers actually use in production."
         accentClass="text-[var(--green-text)]"
       />
       <SubsectionBrowser

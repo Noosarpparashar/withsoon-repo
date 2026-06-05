@@ -1,12 +1,12 @@
 import Link from "next/link";
 
 const LINKS = [
-  { href: "/tech-news", label: "Tech News" },
-  { href: "/big-data",  label: "Big Data" },
-  { href: "/ai",        label: "AI & LLMs" },
-  { href: "/tools",     label: "Tools" },
-  { href: "/interview", label: "Interview" },
-  { href: "/reference", label: "Reference" },
+  { href: "/tech-news",   label: "Tech News" },
+  { href: "/big-data",    label: "Big Data" },
+  { href: "/ai",          label: "AI & LLMs" },
+  { href: "/interview",   label: "Interview" },
+  { href: "/cheatsheets", label: "Cheatsheets" },
+  { href: "/tools",       label: "Tools" },
 ];
 
 export default function Footer() {

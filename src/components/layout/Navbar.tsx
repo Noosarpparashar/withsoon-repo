@@ -6,12 +6,12 @@ import { useState } from "react";
 import { useTheme } from "next-themes";
 
 const NAV = [
-  { href: "/tech-news", label: "Tech News", emoji: "📰", desc: "Latest AI & Data news" },
-  { href: "/big-data",  label: "Big Data",  emoji: "🗄️", desc: "Kafka, Spark, Flink, dbt..." },
-  { href: "/ai",        label: "AI & LLMs", emoji: "🤖", desc: "Models, RAG, agents, prompts" },
-  { href: "/tools",     label: "Tools",     emoji: "🛠️", desc: "Curated tool directory" },
-  { href: "/interview", label: "Interview", emoji: "🎯", desc: "Prep for Big Data & AI roles" },
-  { href: "/reference", label: "Reference", emoji: "📚", desc: "SQL, DSA, System Design" },
+  { href: "/tech-news",   label: "Tech News",   emoji: "📰", desc: "Latest AI & Data news" },
+  { href: "/big-data",    label: "Big Data",    emoji: "🗄️", desc: "Kafka, Spark, Flink, dbt..." },
+  { href: "/ai",          label: "AI & LLMs",  emoji: "🤖", desc: "Models, RAG, agents, prompts" },
+  { href: "/interview",   label: "Interview",   emoji: "🎯", desc: "Prep for Big Data & AI roles" },
+  { href: "/cheatsheets", label: "Cheatsheets", emoji: "📋", desc: "SQL, DSA, System Design, Cloud" },
+  { href: "/tools",       label: "Tools",       emoji: "🛠️", desc: "Tool comparisons & new launches" },
 ];
 
 export default function Navbar() {
