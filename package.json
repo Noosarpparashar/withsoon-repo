@@ -10,6 +10,7 @@
   },
   "dependencies": {
     "@tailwindcss/typography": "^0.5.19",
+    "flexsearch": "^0.8.212",
     "gray-matter": "^4.0.3",
     "next": "16.2.7",
     "next-mdx-remote": "^6.0.0",

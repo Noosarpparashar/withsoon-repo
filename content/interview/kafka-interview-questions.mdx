@@ -1,0 +1,142 @@
+---
+title: "Kafka Interview Questions — Top 50 with Answers"
+date: "2026-06-04"
+type: "interview-qa"
+subsection: "kafka"
+summary: "The 50 most asked Kafka interview questions with detailed answers — from basics to internals to production scenarios."
+tags: ["kafka", "interview", "streaming", "big-data"]
+difficulty: "intermediate"
+featured: true
+---
+
+## Basics
+
+**Q1: What is Kafka and what problem does it solve?**
+
+Kafka is a distributed event streaming platform. It solves the problem of integrating multiple producers and consumers in a scalable, fault-tolerant way. Without Kafka, you'd need N×M integrations between N sources and M destinations. With Kafka, you need N+M.
+
+---
+
+**Q2: What is a topic? What is a partition?**
+
+A **topic** is a named feed/category for events. A **partition** is an ordered, immutable sequence of records within a topic. Partitions are the unit of parallelism — more partitions = more consumers can read in parallel.
+
+---
+
+**Q3: What is an offset?**
+
+An offset is a unique, monotonically increasing integer that identifies each record within a partition. Consumers track their position using offsets. Kafka doesn't delete records when they're consumed — it retains them until the retention period expires.
+
+---
+
+**Q4: What is a consumer group?**
+
+A consumer group is a set of consumers that together consume a topic. Each partition is assigned to exactly one consumer in the group. Multiple groups get independent offsets — they each get a full copy of the data.
+
+---
+
+**Q5: What happens when there are more consumers than partitions?**
+
+The extra consumers sit idle. A partition can only be consumed by one consumer per group at a time.
+
+---
+
+## Internals
+
+**Q6: How does Kafka achieve fault tolerance?**
+
+Through replication. Each partition has a configurable replication factor (typically 3). One replica is the **leader** (handles reads/writes), others are **followers** (sync from leader). If the leader dies, a follower is elected as the new leader.
+
+---
+
+**Q7: What is ISR (In-Sync Replicas)?**
+
+ISR is the set of replicas that are fully caught up with the leader. The leader tracks which followers are in sync. If `acks=all`, the producer waits for all ISR replicas to acknowledge the write. If a replica falls behind (configurable by `replica.lag.time.max.ms`), it's removed from ISR.
+
+---
+
+**Q8: What is the difference between at-least-once and exactly-once?**
+
+- **At-least-once**: messages may be processed multiple times (consumer crashes after processing but before committing offset)
+- **Exactly-once**: each message is processed exactly once, using Kafka transactions + idempotent producers
+
+---
+
+**Q9: What is Log Compaction?**
+
+Log compaction retains the latest value for each key, removing older duplicates. Used for changelog topics (e.g. database CDC). The topic acts like a key-value store — you can always replay the latest state.
+
+---
+
+**Q10: How does Kafka handle back-pressure?**
+
+Producers block or throw exceptions when the broker is overwhelmed (`buffer.memory` fills up). Consumers control their own pace — they pull records, so there's no push-based back-pressure issue. Set `max.poll.records` and `fetch.max.bytes` to tune throughput.
+
+---
+
+## Performance
+
+**Q11: How would you increase Kafka throughput?**
+
+- Increase partitions (more parallelism)
+- Enable compression (`snappy` or `lz4`)
+- Increase `batch.size` and `linger.ms` on producer
+- Tune `fetch.min.bytes` on consumer
+- Use async sends where durability isn't critical
+
+---
+
+**Q12: What is the impact of increasing partition count?**
+
+More partitions = more parallelism, but also more overhead: more file handles, more replication traffic, longer leader election time. Don't over-partition — start with a reasonable number and scale up.
+
+---
+
+**Q13: When would you use `linger.ms`?**
+
+`linger.ms` makes the producer wait before sending a batch, allowing more records to accumulate. Improves throughput at the cost of slight latency. Use it for high-volume, non-latency-sensitive pipelines.
+
+---
+
+## Scenario Questions
+
+**Q14: Your consumer lag is growing. How do you diagnose it?**
+
+1. Check consumer group lag with `kafka-consumer-groups.sh --describe`
+2. Check if consumer is stuck (GC pause, slow downstream)
+3. Check partition distribution — is lag concentrated on specific partitions?
+4. Check producer throughput — is ingestion spiking?
+5. Solutions: add more consumers (up to partition count), increase `max.poll.records`, optimize processing logic
+
+---
+
+**Q15: How would you design a Kafka-based audit log system?**
+
+```
+Services → Kafka topic (audit-events, 12 partitions, retention 90 days)
+         → Consumer Group 1: writes to S3 (long-term storage)
+         → Consumer Group 2: writes to Elasticsearch (search/query)
+```
+
+Key decisions:
+- Use log compaction off (keep all events, not just latest)
+- Set `acks=all` for guaranteed writes
+- Include correlation IDs in messages for tracing
+- Partition by service name for ordering guarantees within a service
+
+---
+
+**Q16: Kafka vs RabbitMQ — when do you choose which?**
+
+| Kafka | RabbitMQ |
+|---|---|
+| High throughput (millions/sec) | Lower throughput |
+| Message retention & replay | Message deleted after consumption |
+| Event sourcing, audit logs, analytics | Task queues, RPC, routing |
+| Pull-based consumers | Push-based consumers |
+
+Choose Kafka for streaming/event sourcing. Choose RabbitMQ for task queues with routing logic.
+
+---
+
+*(More questions covering Kafka Streams, Connect, schema registry, and MirrorMaker coming soon)*

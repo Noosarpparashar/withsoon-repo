@@ -1,0 +1,160 @@
+---
+title: "RAG Pipeline — Complete Production Guide"
+date: "2026-06-04"
+type: "guide"
+subsection: "rag"
+summary: "Build a production-ready RAG pipeline: chunking strategy, embedding models, vector DBs, retrieval, re-ranking, and generation."
+tags: ["rag", "embeddings", "vector-db", "llm", "production"]
+difficulty: "intermediate"
+featured: true
+---
+
+## What is RAG?
+
+**Retrieval-Augmented Generation** — give an LLM access to your own documents without fine-tuning. The model retrieves relevant chunks at query time and uses them as context.
+
+```
+                  ┌─────────────┐
+Documents ──────▶ │   Indexing  │ ──▶ Vector DB
+                  └─────────────┘
+                        ▲ offline
+─────────────────────────────────────────────────
+                        ▼ online
+Query ──────────▶ Embed ──▶ Search ──▶ Top-K chunks ──▶ LLM ──▶ Answer
+```
+
+## Step 1: Document ingestion
+
+Supported formats: PDF, DOCX, HTML, Markdown, plain text.
+
+```python
+from pathlib import Path
+
+def load_documents(directory: str) -> list[dict]:
+    docs = []
+    for path in Path(directory).rglob("*"):
+        if path.suffix in {".txt", ".md", ".pdf"}:
+            docs.append({"path": str(path), "text": path.read_text()})
+    return docs
+```
+
+## Step 2: Chunking strategy
+
+Chunking is the most underrated part of RAG quality.
+
+| Strategy | When to use |
+|---|---|
+| Fixed size (512 tokens) | Simple, fast baseline |
+| Sentence splitter | Better coherence |
+| Recursive character | Good for mixed content |
+| Semantic chunking | Best quality, slowest |
+
+```python
+from langchain.text_splitter import RecursiveCharacterTextSplitter
+
+splitter = RecursiveCharacterTextSplitter(
+    chunk_size=512,
+    chunk_overlap=64,
+    separators=["\n\n", "\n", ". ", " "]
+)
+chunks = splitter.split_text(document_text)
+```
+
+**Overlap matters** — 10-15% overlap ensures no context is lost at boundaries.
+
+## Step 3: Embedding models
+
+| Model | Dims | Best for |
+|---|---|---|
+| `text-embedding-3-small` | 1536 | Cost-effective, great quality |
+| `text-embedding-3-large` | 3072 | Highest quality, 2x cost |
+| `nomic-embed-text` | 768 | Open source, self-hostable |
+| `bge-large-en` | 1024 | Strong on retrieval benchmarks |
+
+```python
+import openai
+
+def embed_chunks(chunks: list[str]) -> list[list[float]]:
+    resp = openai.embeddings.create(
+        model="text-embedding-3-small",
+        input=chunks
+    )
+    return [r.embedding for r in resp.data]
+```
+
+## Step 4: Vector database
+
+| DB | Best for |
+|---|---|
+| Chroma | Local dev, prototypes |
+| Pinecone | Managed, production |
+| Weaviate | Hybrid search (keyword + vector) |
+| pgvector | Already on Postgres |
+| Qdrant | High performance, self-hosted |
+
+```python
+import chromadb
+
+client = chromadb.PersistentClient(path="./chroma_db")
+collection = client.get_or_create_collection("docs")
+
+collection.add(
+    documents=chunks,
+    embeddings=embeddings,
+    ids=[f"chunk_{i}" for i in range(len(chunks))],
+    metadatas=[{"source": "doc.pdf", "page": i} for i in range(len(chunks))]
+)
+```
+
+## Step 5: Retrieval + Re-ranking
+
+Basic retrieval returns top-K by cosine similarity. Re-ranking improves precision.
+
+```python
+def retrieve(query: str, k: int = 10) -> list[str]:
+    q_embed = embed_chunks([query])[0]
+    results = collection.query(query_embeddings=[q_embed], n_results=k)
+    return results["documents"][0]
+
+# Re-rank with a cross-encoder
+from sentence_transformers import CrossEncoder
+reranker = CrossEncoder("cross-encoder/ms-marco-MiniLM-L-6-v2")
+
+def rerank(query: str, chunks: list[str], top_n: int = 5) -> list[str]:
+    scores = reranker.predict([(query, chunk) for chunk in chunks])
+    ranked = sorted(zip(scores, chunks), reverse=True)
+    return [chunk for _, chunk in ranked[:top_n]]
+```
+
+## Step 6: Generation
+
+```python
+import anthropic
+
+def answer(query: str) -> str:
+    chunks = retrieve(query, k=10)
+    top_chunks = rerank(query, chunks, top_n=5)
+    context = "\n\n---\n\n".join(top_chunks)
+
+    client = anthropic.Anthropic()
+    message = client.messages.create(
+        model="claude-sonnet-4-6",
+        max_tokens=1024,
+        system="You are a helpful assistant. Answer based only on the provided context. If the answer isn't in the context, say so.",
+        messages=[{
+            "role": "user",
+            "content": f"Context:\n{context}\n\nQuestion: {query}"
+        }]
+    )
+    return message.content[0].text
+```
+
+## Production checklist
+
+- [ ] Add metadata filters (date, source, category) to narrow retrieval
+- [ ] Implement hybrid search (BM25 + vector) for keyword-heavy queries
+- [ ] Cache embeddings — don't re-embed unchanged documents
+- [ ] Log retrieved chunks for debugging low-quality answers
+- [ ] Eval with RAGAS or DeepEval — measure faithfulness and relevance
+- [ ] Handle chunking failures (malformed PDFs, encoding errors)
+- [ ] Rate limit embedding API calls for large ingestion jobs

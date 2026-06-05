@@ -1,62 +1,35 @@
+import { getContentBySection } from "@/lib/content";
+import SectionHero from "@/components/ui/SectionHero";
+import SubsectionFilter from "@/components/ui/SubsectionFilter";
+
 export const metadata = {
   title: "Tools — withsoon",
-  description: "Interactive AI tools: prompt playgrounds, token counters, embedding visualizers, and more.",
+  description: "Curated directory of AI and Big Data tools the industry is actually using.",
 };
 
-const TOOLS = [
-  {
-    title: "Token Counter",
-    desc: "Paste any text and see how many tokens it uses across different models (GPT-4, Claude, Gemini).",
-    status: "soon",
-  },
-  {
-    title: "Prompt Playground",
-    desc: "Write a prompt, send it to multiple models at once, and compare the outputs side-by-side.",
-    status: "soon",
-  },
-  {
-    title: "RAG Pipeline Builder",
-    desc: "Visual walkthrough: paste documents, chunk them, embed, store, and query — all in the browser.",
-    status: "soon",
-  },
-  {
-    title: "Embedding Visualizer",
-    desc: "See how different sentences cluster in embedding space. Useful for understanding semantic similarity.",
-    status: "soon",
-  },
-  {
-    title: "System Prompt Analyzer",
-    desc: "Paste a system prompt and get a breakdown: token cost, instruction clarity, potential issues.",
-    status: "soon",
-  },
+const SUBSECTIONS = [
+  { key: "ai", label: "AI Tools" },
+  { key: "big-data", label: "Big Data Tools" },
+  { key: "cloud", label: "Cloud" },
+  { key: "open-source", label: "Open Source" },
+  { key: "vector-db", label: "Vector DBs" },
+  { key: "orchestration", label: "Orchestration" },
+  { key: "monitoring", label: "Monitoring" },
 ];
 
 export default function ToolsPage() {
-  return (
-    <div className="mx-auto max-w-5xl px-4 py-16">
-      <h1 className="text-4xl font-bold mb-2">Tools</h1>
-      <p className="text-gray-400 mb-12">
-        Interactive AI tools that run in the browser. No API key needed for most.
-      </p>
+  const items = getContentBySection("tools");
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
-        {TOOLS.map(({ title, desc, status }) => (
-          <div
-            key={title}
-            className="p-6 rounded-xl border border-[var(--border)] bg-[var(--muted)] opacity-80"
-          >
-            <div className="flex items-center justify-between mb-3">
-              <h2 className="font-semibold">{title}</h2>
-              {status === "soon" && (
-                <span className="text-xs px-2 py-0.5 rounded-full bg-yellow-500/10 text-yellow-400 border border-yellow-500/20">
-                  coming soon
-                </span>
-              )}
-            </div>
-            <p className="text-sm text-gray-400">{desc}</p>
-          </div>
-        ))}
-      </div>
+  return (
+    <div className="mx-auto max-w-7xl px-4 py-10">
+      <SectionHero
+        emoji="🛠️"
+        title="Tools Directory"
+        subtitle="Vetted tools for AI and Big Data engineers — what each one does, when to use it, quick-start links, and alternatives."
+        color="text-green-400"
+      />
+
+      <SubsectionFilter items={items} subsections={SUBSECTIONS} section="tools" />
     </div>
   );
 }

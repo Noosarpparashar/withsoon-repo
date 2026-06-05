@@ -1,0 +1,191 @@
+---
+title: "SQL Cheatsheet — Window Functions, Joins, Optimization"
+date: "2026-06-04"
+type: "cheatsheet"
+subsection: "sql"
+summary: "The most important SQL patterns for data engineers — window functions, CTEs, joins, aggregations, and query optimization."
+tags: ["sql", "cheatsheet", "data-engineering", "reference"]
+difficulty: "beginner"
+featured: true
+---
+
+## Window Functions
+
+The most asked topic in data engineering interviews.
+
+```sql
+-- Syntax
+function() OVER (
+  PARTITION BY col     -- optional: reset window per group
+  ORDER BY col         -- defines order within window
+  ROWS/RANGE BETWEEN   -- optional: frame spec
+)
+```
+
+### ROW_NUMBER, RANK, DENSE_RANK
+
+```sql
+SELECT
+  name,
+  department,
+  salary,
+  ROW_NUMBER()  OVER (PARTITION BY department ORDER BY salary DESC) AS row_num,
+  RANK()        OVER (PARTITION BY department ORDER BY salary DESC) AS rank,
+  DENSE_RANK()  OVER (PARTITION BY department ORDER BY salary DESC) AS dense_rank
+FROM employees;
+```
+
+| salary | ROW_NUMBER | RANK | DENSE_RANK |
+|--------|-----------|------|-----------|
+| 100k | 1 | 1 | 1 |
+| 90k  | 2 | 2 | 2 |
+| 90k  | 3 | 2 | 2 |
+| 80k  | 4 | 4 | 3 |
+
+RANK skips numbers after ties. DENSE_RANK doesn't.
+
+### LAG / LEAD
+
+```sql
+-- Compare current row to previous/next row
+SELECT
+  date,
+  revenue,
+  LAG(revenue, 1) OVER (ORDER BY date)  AS prev_revenue,
+  LEAD(revenue, 1) OVER (ORDER BY date) AS next_revenue,
+  revenue - LAG(revenue, 1) OVER (ORDER BY date) AS day_over_day_change
+FROM daily_sales;
+```
+
+### Running totals and moving averages
+
+```sql
+-- Running total
+SUM(amount) OVER (ORDER BY date ROWS UNBOUNDED PRECEDING) AS running_total
+
+-- 7-day moving average
+AVG(amount) OVER (ORDER BY date ROWS 6 PRECEDING) AS ma_7d
+
+-- Cumulative sum reset per group
+SUM(amount) OVER (PARTITION BY user_id ORDER BY date) AS user_running_total
+```
+
+---
+
+## CTEs (Common Table Expressions)
+
+```sql
+-- Basic CTE
+WITH active_users AS (
+  SELECT user_id, COUNT(*) AS sessions
+  FROM events
+  WHERE date >= CURRENT_DATE - 30
+  GROUP BY user_id
+  HAVING COUNT(*) > 5
+)
+SELECT u.name, a.sessions
+FROM active_users a
+JOIN users u ON a.user_id = u.id;
+
+-- Recursive CTE (hierarchy traversal)
+WITH RECURSIVE org_tree AS (
+  SELECT id, name, manager_id, 0 AS level
+  FROM employees
+  WHERE manager_id IS NULL           -- root
+  
+  UNION ALL
+  
+  SELECT e.id, e.name, e.manager_id, t.level + 1
+  FROM employees e
+  JOIN org_tree t ON e.manager_id = t.id
+)
+SELECT * FROM org_tree ORDER BY level, name;
+```
+
+---
+
+## Joins
+
+```sql
+-- INNER: only matching rows
+-- LEFT: all left rows + matching right (NULLs where no match)
+-- RIGHT: opposite of LEFT
+-- FULL OUTER: all rows from both, NULLs where no match
+-- CROSS: cartesian product (every combo)
+
+-- Find rows in A not in B
+SELECT a.* FROM a
+LEFT JOIN b ON a.id = b.id
+WHERE b.id IS NULL;
+
+-- Alternative with NOT EXISTS (often faster)
+SELECT * FROM a
+WHERE NOT EXISTS (SELECT 1 FROM b WHERE b.id = a.id);
+```
+
+---
+
+## Aggregations
+
+```sql
+-- FILTER (cleaner than CASE WHEN for conditional aggregation)
+SELECT
+  COUNT(*) FILTER (WHERE status = 'active')    AS active_count,
+  SUM(amount) FILTER (WHERE type = 'revenue')  AS total_revenue,
+  AVG(score) FILTER (WHERE score IS NOT NULL)  AS avg_score
+FROM events;
+
+-- GROUPING SETS (multiple groupings in one query)
+SELECT region, product, SUM(sales)
+FROM sales
+GROUP BY GROUPING SETS (
+  (region, product),  -- subtotal by region+product
+  (region),           -- subtotal by region
+  ()                  -- grand total
+);
+```
+
+---
+
+## Optimization tips
+
+```sql
+-- Use EXISTS instead of IN for large subqueries
+-- BAD:
+SELECT * FROM orders WHERE customer_id IN (SELECT id FROM customers WHERE country = 'US');
+-- GOOD:
+SELECT * FROM orders o WHERE EXISTS (SELECT 1 FROM customers c WHERE c.id = o.customer_id AND c.country = 'US');
+
+-- Avoid functions on indexed columns in WHERE (breaks index use)
+-- BAD:  WHERE YEAR(created_at) = 2024
+-- GOOD: WHERE created_at >= '2024-01-01' AND created_at < '2025-01-01'
+
+-- Use EXPLAIN ANALYZE to see actual execution plan
+EXPLAIN ANALYZE SELECT ...;
+```
+
+---
+
+## Most asked interview patterns
+
+```sql
+-- Nth highest salary
+SELECT salary FROM (
+  SELECT salary, DENSE_RANK() OVER (ORDER BY salary DESC) AS rnk
+  FROM employees
+) t WHERE rnk = 3;
+
+-- Consecutive logins (gaps and islands)
+SELECT user_id, MIN(date) AS start, MAX(date) AS end, COUNT(*) AS streak
+FROM (
+  SELECT user_id, date,
+         date - INTERVAL (ROW_NUMBER() OVER (PARTITION BY user_id ORDER BY date)) DAY AS grp
+  FROM logins
+) t
+GROUP BY user_id, grp
+HAVING COUNT(*) >= 3;
+
+-- Median (no built-in in most DBs)
+SELECT PERCENTILE_CONT(0.5) WITHIN GROUP (ORDER BY salary) AS median
+FROM employees;
+```

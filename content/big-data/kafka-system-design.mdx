@@ -1,0 +1,120 @@
+---
+title: "Kafka System Design — Complete Architecture Guide"
+date: "2026-06-04"
+type: "system-design"
+subsection: "kafka"
+summary: "End-to-end Kafka architecture: topics, partitions, consumer groups, replication, exactly-once semantics, and production patterns."
+tags: ["kafka", "system-design", "streaming", "big-data"]
+difficulty: "intermediate"
+featured: true
+---
+
+## Core concepts
+
+Kafka is a **distributed event streaming platform**. Think of it as a commit log that multiple producers write to and multiple consumers read from, in order, at their own pace.
+
+```
+Producers → Topics (Partitions) → Consumer Groups → Processing
+```
+
+## Topics and Partitions
+
+A **topic** is a logical category (e.g. `user-events`, `orders`). Each topic is split into **partitions** — the unit of parallelism.
+
+| Concept | What it means |
+|---|---|
+| Partition | Ordered, immutable sequence of records |
+| Offset | Position of a record in a partition |
+| Replication factor | How many copies of each partition exist |
+| Leader | The broker that handles reads/writes for a partition |
+| Follower | Replica that syncs from the leader |
+
+**Rule of thumb:** Number of partitions = max consumer parallelism. You can't have more consumers in a group than partitions.
+
+## Consumer Groups
+
+Each consumer group gets its own independent offset. Multiple groups = multiple independent reads of the same data.
+
+```
+Topic: user-events (3 partitions)
+├── Consumer Group A (analytics): 3 consumers → 1 partition each
+└── Consumer Group B (notifications): 1 consumer → reads all 3
+```
+
+**Rebalancing** happens when a consumer joins or leaves. During rebalance, consumption pauses — minimize this by using static group membership (`group.instance.id`).
+
+## Replication & Fault Tolerance
+
+```
+Replication factor = 3
+Min ISR (in-sync replicas) = 2
+
+Broker 1: Partition 0 (Leader), Partition 1 (Follower)
+Broker 2: Partition 1 (Leader), Partition 2 (Follower)  
+Broker 3: Partition 2 (Leader), Partition 0 (Follower)
+```
+
+If Broker 1 dies: Broker 3 becomes leader for Partition 0. No data loss if `acks=all` was used.
+
+## Delivery Guarantees
+
+| Setting | Guarantee | Tradeoff |
+|---|---|---|
+| `acks=0` | At-most-once | Fastest, can lose messages |
+| `acks=1` | At-least-once (partial) | Leader ack only |
+| `acks=all` | At-least-once | Safest, slower |
+| Idempotent + transactions | Exactly-once | Most overhead |
+
+For exactly-once: enable `enable.idempotence=true` on producer, use Kafka transactions.
+
+## Production Architecture Patterns
+
+### Pattern 1: Event Sourcing
+```
+User action → Kafka → Multiple consumers:
+├── DB Writer (persist state)
+├── Search Indexer (Elasticsearch)
+└── Analytics (ClickHouse)
+```
+
+### Pattern 2: CDC with Debezium
+```
+MySQL binlog → Debezium → Kafka → Data Warehouse
+```
+Debezium captures every insert/update/delete as a Kafka event. Zero-impact on the source DB.
+
+### Pattern 3: Lambda Architecture
+```
+Kafka → Flink (real-time) → Redis (serving layer)
+      → Spark Batch      → S3/DWH (historical)
+```
+
+## Key Producer Config
+
+```properties
+acks=all
+enable.idempotence=true
+max.in.flight.requests.per.connection=5
+compression.type=snappy
+batch.size=16384
+linger.ms=5
+```
+
+## Key Consumer Config
+
+```properties
+group.id=my-consumer-group
+auto.offset.reset=earliest
+enable.auto.commit=false
+max.poll.records=500
+session.timeout.ms=30000
+```
+
+## Monitoring must-haves
+
+- **Consumer lag** — most important metric. High lag = consumers falling behind.
+- **Under-replicated partitions** — should always be 0.
+- **Request latency** — p99 produce and fetch latency.
+- **Disk usage per broker** — uneven distribution = partition imbalance.
+
+Use Kafka UI, Confluent Control Center, or Prometheus + Grafana with the JMX exporter.
