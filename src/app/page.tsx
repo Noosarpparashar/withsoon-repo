@@ -82,11 +82,13 @@ export default function Home() {
           <span className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
           Built in public · Updated as the industry moves
         </div>
-        <h1 className="text-5xl md:text-7xl font-bold tracking-tight mb-6 leading-tight text-[var(--text)]">
-          Everything for a{" "}
-          <span className="text-transparent bg-clip-text bg-gradient-to-r from-[var(--blue)] via-[var(--accent)] to-[var(--purple)]">
+        <h1 className="font-bold tracking-tight mb-6 text-[var(--text)]">
+          <div className="text-3xl md:text-4xl mb-2 font-semibold text-[var(--text-muted)]">
+            Everything for a
+          </div>
+          <div className="text-5xl md:text-7xl leading-tight text-transparent bg-clip-text bg-gradient-to-r from-[var(--blue)] via-[var(--accent)] to-[var(--purple)]">
             Big Data + AI Engineer
-          </span>
+          </div>
         </h1>
         <p className="text-lg md:text-xl text-[var(--text-muted)] max-w-3xl mx-auto mb-10">
           System Design · Setup Guides · LLM Deep Dives · Interview Prep · Cheatsheets.
