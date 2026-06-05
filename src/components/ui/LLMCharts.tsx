@@ -188,7 +188,7 @@ export function LLMBenchmarkButton() {
   useEffect(() => {
     if (!open || apiData) return;
     setLoading(true);
-    fetch("/api/llm-benchmarks")
+    fetch("/api/llm-benchmarks?v=2")
       .then((r) => r.json())
       .then((json: ApiResponse) => {
         if (json.intelModels?.length) {

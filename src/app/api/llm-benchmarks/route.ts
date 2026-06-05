@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import scores from "@/lib/llm-scores.json";
 
-export const revalidate = 86400;
+export const revalidate = 3600; // 1 hour cache
 
 // Always proprietary — no open weights released
 const PROPRIETARY_PROVIDERS = new Set([
@@ -80,17 +80,17 @@ export async function GET() {
       });
     }
 
-    // Intel list: only models with scores, sorted by score desc
-    const intelModels = allModels
-      .filter((m) => m.intel !== null)
+    // Both charts use only scored models — so you can compare quality vs cost
+    const scoredModels = allModels
+      .filter((m) => m.intel !== null);
+
+    // Intel list: sorted by score desc
+    const intelModels = [...scoredModels]
       .sort((a, b) => (b.intel ?? 0) - (a.intel ?? 0));
 
-    // Price list: top 25 cheapest models (with real prices, not noise)
-    // Exclude models under $0.001 blended (usually free tiers or test entries)
-    const priceModels = allModels
-      .filter((m) => m.price >= 0.001)
-      .sort((a, b) => a.price - b.price)
-      .slice(0, 25);
+    // Price list: same models, sorted cheapest first
+    const priceModels = [...scoredModels]
+      .sort((a, b) => a.price - b.price);
 
     return NextResponse.json({
       intelModels,
