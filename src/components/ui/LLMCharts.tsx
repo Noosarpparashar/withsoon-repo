@@ -1,133 +1,202 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import type { BenchmarkModel } from "@/app/api/llm-benchmarks/route";
 
-// ── Fallback data (used if API is unreachable) ───────────────────────────────
-const FALLBACK: BenchmarkModel[] = [
-  { id: "anthropic/claude-opus-4.8", name: "Claude Opus 4.8 (max)",  intel: 61, price: 4.10,  open: false, contextLength: 200000 },
-  { id: "openai/gpt-5.5",            name: "GPT-5.5 (xhigh)",        intel: 60, price: 4.35,  open: false, contextLength: 128000 },
-  { id: "google/gemini-3.1-pro",     name: "Gemini 3.1 Pro Preview", intel: 57, price: 1.74,  open: false, contextLength: 1000000 },
-  { id: "minimax/minimax-m3",        name: "MiniMax-M3",             intel: 55, price: 0.22,  open: false, contextLength: 128000 },
-  { id: "moonshot/kimi-k2",          name: "Kimi K2.6",              intel: 54, price: 0.20,  open: true,  contextLength: 131072 },
-  { id: "mimo/mimo-v2.5-pro",        name: "MiMo-V2.5-Pro",          intel: 54, price: 0.18,  open: true,  contextLength: 32768  },
-  { id: "x-ai/grok-4.3",             name: "Grok 4.3 (high)",        intel: 53, price: 0.70,  open: false, contextLength: 131072 },
-  { id: "deepseek/deepseek-v4-pro",  name: "DeepSeek V4 Pro",        intel: 52, price: 0.18,  open: true,  contextLength: 65536  },
-  { id: "nvidia/nemotron-3-ultra",   name: "Nemotron 3 Ultra",        intel: 48, price: 0.20,  open: true,  contextLength: 131072 },
-  { id: "openai/gpt-oss-120b",       name: "gpt-oss-120b",            intel: 33, price: 0.14,  open: true,  contextLength: 128000 },
+type Model = {
+  id: string;
+  name: string;
+  intel: number | null;
+  price: number;
+  open: boolean;
+  contextLength: number;
+};
+
+type ApiResponse = {
+  intelModels: Model[];
+  priceModels: Model[];
+  totalModels: number;
+  updatedAt: string;
+};
+
+// Fallback: used if API unreachable
+const FALLBACK_INTEL: Model[] = [
+  { id: "anthropic/claude-opus-4.8",           name: "Claude Opus 4.8",    intel: 61, price: 4.10, open: false, contextLength: 200000 },
+  { id: "openai/gpt-5.5",                      name: "GPT-5.5",            intel: 60, price: 4.35, open: false, contextLength: 128000 },
+  { id: "google/gemini-3.1-pro-preview",        name: "Gemini 3.1 Pro",    intel: 57, price: 1.74, open: false, contextLength: 1000000 },
+  { id: "minimax/minimax-m3",                   name: "MiniMax M3",         intel: 55, price: 0.22, open: true,  contextLength: 128000 },
+  { id: "moonshotai/kimi-k2.6",                 name: "Kimi K2.6",          intel: 54, price: 0.20, open: true,  contextLength: 131072 },
+  { id: "x-ai/grok-4.20",                      name: "Grok 4.20",          intel: 53, price: 0.70, open: false, contextLength: 131072 },
+  { id: "deepseek/deepseek-v4-pro",             name: "DeepSeek V4 Pro",   intel: 52, price: 0.18, open: true,  contextLength: 65536  },
+  { id: "nvidia/nemotron-3-ultra-550b-a55b",    name: "Nemotron 3 Ultra",  intel: 48, price: 0.20, open: true,  contextLength: 131072 },
+  { id: "openai/gpt-oss-120b",                  name: "gpt-oss-120b",       intel: 33, price: 0.14, open: true,  contextLength: 128000 },
 ];
+const FALLBACK_PRICE: Model[] = [...FALLBACK_INTEL].sort((a, b) => a.price - b.price);
 
-function HorizChart({
-  models,
-  chartKey,
-  higherBetter,
-  propColor,
-  openColor,
-}: {
-  models: BenchmarkModel[];
-  chartKey: "intel" | "price";
-  higherBetter: boolean;
-  propColor: string;
-  openColor: string;
+// ── Horizontal bar row ───────────────────────────────────────────────────────
+function Bar({ model, val, max, fmt, propGrad, ossGrad }: {
+  model: Model; val: number; max: number;
+  fmt: (v: number) => string;
+  propGrad: string; ossGrad: string;
 }) {
-  const valid = models.filter((m) =>
-    chartKey === "intel" ? m.intel !== null : m.price > 0
-  );
-  const sorted = [...valid].sort((a, b) => {
-    const av = chartKey === "intel" ? (a.intel ?? 0) : a.price;
-    const bv = chartKey === "intel" ? (b.intel ?? 0) : b.price;
-    return higherBetter ? bv - av : av - bv;
-  });
-
-  const vals = sorted.map((m) =>
-    chartKey === "intel" ? (m.intel ?? 0) : m.price
-  );
-  const max = Math.max(...vals, 1);
-
-  const fmt = (v: number) =>
-    chartKey === "price"
-      ? v < 1
-        ? `$${v}`
-        : `$${v.toFixed(2)}`
-      : String(v);
+  const pct = Math.max((val / max) * 100, 2);
+  const grad = model.open ? ossGrad : propGrad;
+  const inside = pct > 30;
 
   return (
-    <div className="space-y-2">
-      {sorted.map((m) => {
-        const val = chartKey === "intel" ? (m.intel ?? 0) : m.price;
-        const pct = Math.max((val / max) * 100, 3);
-        const color = m.open ? openColor : propColor;
-        const inside = pct > 28;
+    <div className="group flex items-center gap-3 py-0.5">
+      {/* Name */}
+      <div className="w-[150px] shrink-0 text-right">
+        <span className="text-[11px] leading-tight text-[var(--text-muted)] group-hover:text-[var(--text)] transition-colors block truncate">
+          {model.name}
+        </span>
+      </div>
 
-        return (
-          <div key={m.id} className="group flex items-center gap-3">
-            <div className="w-36 shrink-0 text-right">
-              <span className="text-[11px] text-[var(--text-muted)] group-hover:text-[var(--text)] transition-colors leading-tight line-clamp-1 block">
-                {m.name.replace(/ \(.*?\)$/, "")}
-              </span>
-            </div>
-            <div className="flex-1 relative h-7 rounded-lg overflow-hidden bg-[var(--bg-muted)]">
-              <div
-                className="h-full rounded-lg flex items-center justify-end transition-all duration-700 ease-out"
-                style={{ width: `${pct}%`, background: color }}
-              >
-                {inside && (
-                  <span className="text-[11px] font-bold text-white px-2.5">{fmt(val)}</span>
-                )}
-              </div>
-              {!inside && (
-                <span
-                  className="absolute top-1/2 -translate-y-1/2 text-[11px] font-bold text-[var(--text-muted)]"
-                  style={{ left: `calc(${pct}% + 7px)` }}
-                >
-                  {fmt(val)}
-                </span>
-              )}
-            </div>
-            {m.open && (
-              <span className="shrink-0 text-[9px] font-bold px-1.5 py-0.5 rounded-full bg-cyan-100 text-cyan-700 dark:bg-cyan-900/30 dark:text-cyan-300 border border-cyan-200 dark:border-cyan-700">
-                OSS
-              </span>
-            )}
-          </div>
-        );
-      })}
+      {/* Bar */}
+      <div className="flex-1 relative h-[26px] rounded-lg bg-[var(--bg-muted)] overflow-hidden">
+        <div
+          className="h-full rounded-lg flex items-center justify-end transition-[width] duration-500 ease-out"
+          style={{ width: `${pct}%`, background: grad }}
+        >
+          {inside && (
+            <span className="text-[11px] font-bold text-white px-2.5 whitespace-nowrap">{fmt(val)}</span>
+          )}
+        </div>
+        {!inside && (
+          <span
+            className="absolute top-1/2 -translate-y-1/2 text-[11px] font-bold text-[var(--text-muted)] whitespace-nowrap"
+            style={{ left: `calc(${pct}% + 7px)` }}
+          >
+            {fmt(val)}
+          </span>
+        )}
+      </div>
+
+      {/* OSS badge */}
+      {model.open ? (
+        <span className="shrink-0 text-[9px] font-bold px-1.5 py-0.5 rounded-full bg-cyan-100 text-cyan-700 dark:bg-cyan-900/30 dark:text-cyan-400 border border-cyan-200 dark:border-cyan-800 w-8 text-center">
+          OSS
+        </span>
+      ) : (
+        <span className="shrink-0 w-8" />
+      )}
     </div>
   );
 }
 
+// ── Sort button ──────────────────────────────────────────────────────────────
+function SortBtn({ asc, onToggle }: { asc: boolean; onToggle: () => void }) {
+  return (
+    <button
+      onClick={onToggle}
+      className="flex items-center gap-1 text-[10px] font-semibold text-[var(--text-faint)] hover:text-[var(--text)] border border-[var(--border)] rounded-full px-2 py-0.5 bg-[var(--bg-muted)] transition-colors"
+      title={asc ? "Currently: low → high" : "Currently: high → low"}
+    >
+      <svg className="w-3 h-3" fill="none" stroke="currentColor" strokeWidth={2.5} viewBox="0 0 24 24">
+        {asc
+          ? <path strokeLinecap="round" strokeLinejoin="round" d="M3 4h13M3 8h9m-9 4h6m4 0l4-4m0 0l4 4m-4-4v12" />
+          : <path strokeLinecap="round" strokeLinejoin="round" d="M3 4h13M3 8h9m-9 4h9m5-4v12m0 0l-4-4m4 4l4-4" />}
+      </svg>
+      {asc ? "Low → High" : "High → Low"}
+    </button>
+  );
+}
+
+// ── Panel section (Intelligence or Price) ────────────────────────────────────
+function ChartPanel({
+  title, subtitle, accentColor, propGrad, ossGrad,
+  models, chartKey, defaultAsc, stat, statLabel, fmtVal, filterOpenOnly,
+}: {
+  title: string; subtitle: string; accentColor: string;
+  propGrad: string; ossGrad: string;
+  models: Model[]; chartKey: "intel" | "price";
+  defaultAsc: boolean; stat: string; statLabel: string;
+  fmtVal: (v: number) => string;
+  filterOpenOnly: boolean;
+}) {
+  const [asc, setAsc] = useState(defaultAsc);
+
+  const visible = filterOpenOnly ? models.filter((m) => m.open) : models;
+
+  const sorted = [...visible].sort((a, b) => {
+    const av = chartKey === "intel" ? (a.intel ?? 0) : a.price;
+    const bv = chartKey === "intel" ? (b.intel ?? 0) : b.price;
+    return asc ? av - bv : bv - av;
+  });
+
+  const max = Math.max(...sorted.map((m) => chartKey === "intel" ? (m.intel ?? 0) : m.price), 1);
+
+  return (
+    <div className="p-5 flex flex-col">
+      {/* Title row */}
+      <div className="flex items-start justify-between mb-3">
+        <div>
+          <div className="flex items-center gap-2">
+            <span className="w-8 h-3 rounded-sm inline-block" style={{ background: propGrad }} />
+            <h3 className="font-bold text-[15px] text-[var(--text)]">{title}</h3>
+          </div>
+          <p className="text-[11px] text-[var(--text-faint)] mt-0.5 ml-10">{subtitle}</p>
+        </div>
+        <div className="text-right">
+          <div className="text-2xl font-black" style={{ color: accentColor }}>{stat}</div>
+          <div className="text-[10px] text-[var(--text-faint)]">{statLabel}</div>
+        </div>
+      </div>
+
+      {/* Sort control */}
+      <div className="flex items-center justify-between mb-3">
+        <span className="text-[11px] text-[var(--text-faint)]">{visible.length} models</span>
+        <SortBtn asc={asc} onToggle={() => setAsc((v) => !v)} />
+      </div>
+
+      {/* Bars */}
+      {sorted.length === 0 ? (
+        <p className="text-sm text-[var(--text-faint)] text-center py-8">
+          No data for this filter.
+        </p>
+      ) : (
+        <div className="space-y-1 overflow-y-auto" style={{ maxHeight: 420 }}>
+          {sorted.map((m) => (
+            <Bar
+              key={m.id}
+              model={m}
+              val={chartKey === "intel" ? (m.intel ?? 0) : m.price}
+              max={max}
+              fmt={fmtVal}
+              propGrad={propGrad}
+              ossGrad={ossGrad}
+            />
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ── Main exported button + modal ─────────────────────────────────────────────
 export function LLMBenchmarkButton() {
   const [open, setOpen] = useState(false);
   const [showOpenOnly, setShowOpenOnly] = useState(false);
-  const [data, setData] = useState<BenchmarkModel[]>([]);
+  const [apiData, setApiData] = useState<ApiResponse | null>(null);
   const [loading, setLoading] = useState(false);
-  const [updatedAt, setUpdatedAt] = useState<string>("");
   const [usingFallback, setUsingFallback] = useState(false);
 
-  // Fetch on first open
   useEffect(() => {
-    if (!open || data.length > 0) return;
+    if (!open || apiData) return;
     setLoading(true);
     fetch("/api/llm-benchmarks")
       .then((r) => r.json())
-      .then((json) => {
-        if (json.models?.length) {
-          setData(json.models);
-          setUpdatedAt(json.updatedAt ?? "");
+      .then((json: ApiResponse) => {
+        if (json.intelModels?.length) {
+          setApiData(json);
           setUsingFallback(false);
         } else {
-          setData(FALLBACK);
           setUsingFallback(true);
         }
       })
-      .catch(() => {
-        setData(FALLBACK);
-        setUsingFallback(true);
-      })
+      .catch(() => setUsingFallback(true))
       .finally(() => setLoading(false));
-  }, [open, data.length]);
+  }, [open, apiData]);
 
-  // ESC to close
   useEffect(() => {
     if (!open) return;
     const h = (e: KeyboardEvent) => { if (e.key === "Escape") setOpen(false); };
@@ -135,21 +204,22 @@ export function LLMBenchmarkButton() {
     return () => window.removeEventListener("keydown", h);
   }, [open]);
 
-  // Lock scroll
   useEffect(() => {
     document.body.style.overflow = open ? "hidden" : "";
     return () => { document.body.style.overflow = ""; };
   }, [open]);
 
-  const models = showOpenOnly ? data.filter((m) => m.open) : data;
-  const openCount = data.filter((m) => m.open).length;
-  const scoredCount = data.filter((m) => m.intel !== null).length;
+  const intelModels = usingFallback ? FALLBACK_INTEL : (apiData?.intelModels ?? []);
+  const priceModels = usingFallback ? FALLBACK_PRICE : (apiData?.priceModels ?? []);
+  const totalModels = usingFallback ? FALLBACK_INTEL.length : (apiData?.totalModels ?? 0);
+  const updatedAt   = apiData?.updatedAt ?? "";
 
-  // Gradient colors
-  const PROP = "linear-gradient(90deg,#7c3aed,#a78bfa)";
-  const OSS  = "linear-gradient(90deg,#0891b2,#22d3ee)";
-  const PRICE_PROP = "linear-gradient(90deg,#d97706,#fbbf24)";
-  const PRICE_OSS  = "linear-gradient(90deg,#059669,#34d399)";
+  const openCount  = intelModels.filter((m) => m.open).length;
+
+  const topIntel   = [...intelModels].sort((a, b) => (b.intel ?? 0) - (a.intel ?? 0))[0];
+  const cheapest   = [...priceModels].sort((a, b) => a.price - b.price)[0];
+
+  const fmtPrice = (v: number) => v < 1 ? `$${v}` : `$${v.toFixed(2)}`;
 
   return (
     <>
@@ -175,45 +245,35 @@ export function LLMBenchmarkButton() {
             className="relative w-full sm:max-w-5xl bg-[var(--bg-card)] border border-[var(--border)] rounded-t-3xl sm:rounded-2xl shadow-2xl flex flex-col"
             style={{ maxHeight: "92vh", animation: "slideUp 0.28s cubic-bezier(0.22,1,0.36,1)" }}
           >
-            {/* Header */}
+            {/* ── Header ── */}
             <div className="flex items-start justify-between px-6 pt-5 pb-4 border-b border-[var(--border)] shrink-0">
               <div>
                 <h2 className="text-xl font-bold text-[var(--text)]">⚡ LLM Benchmarks</h2>
-                <p className="text-xs text-[var(--text-faint)] mt-1">
-                  {loading ? "Loading live data…" : (
-                    <>
-                      {data.length} models · {scoredCount} with intelligence scores ·{" "}
-                      {usingFallback ? (
-                        <span className="text-amber-500">using cached data</span>
-                      ) : (
-                        <>
-                          Prices live from{" "}
-                          <a href="https://openrouter.ai" target="_blank" rel="noopener noreferrer"
-                            className="underline hover:text-[var(--accent-text)]">openrouter.ai</a>
-                          {updatedAt && ` · ${new Date(updatedAt).toLocaleDateString()}`}
-                        </>
-                      )}
-                    </>
-                  )}
+                <p className="text-[11px] text-[var(--text-faint)] mt-1">
+                  {loading ? "Loading live data…" : usingFallback
+                    ? <span className="text-amber-500">Using cached data — live prices unavailable</span>
+                    : <>
+                        {totalModels} models on{" "}
+                        <a href="https://openrouter.ai" target="_blank" rel="noopener noreferrer" className="underline hover:text-[var(--accent-text)]">openrouter.ai</a>
+                        {" · "}{intelModels.length} with intelligence scores
+                        {updatedAt && ` · ${new Date(updatedAt).toLocaleDateString("en-US", { month:"short", day:"numeric", year:"numeric" })}`}
+                      </>
+                  }
                 </p>
               </div>
               <div className="flex items-center gap-2 mt-0.5">
-                <div className="flex bg-[var(--bg-muted)] rounded-full p-1 border border-[var(--border)] gap-0.5">
+                <div className="flex bg-[var(--bg-muted)] rounded-full p-1 border border-[var(--border)] gap-0.5 text-xs font-semibold">
                   <button
                     onClick={() => setShowOpenOnly(false)}
-                    className={`px-3.5 py-1.5 rounded-full text-xs font-semibold transition-all ${
-                      !showOpenOnly ? "bg-[var(--accent)] text-white shadow-sm" : "text-[var(--text-muted)] hover:text-[var(--text)]"
-                    }`}
+                    className={`px-3 py-1.5 rounded-full transition-all ${!showOpenOnly ? "bg-[var(--accent)] text-white shadow-sm" : "text-[var(--text-muted)] hover:text-[var(--text)]"}`}
                   >
-                    All {data.length > 0 && `(${data.length})`}
+                    All models
                   </button>
                   <button
                     onClick={() => setShowOpenOnly(true)}
-                    className={`px-3.5 py-1.5 rounded-full text-xs font-semibold transition-all ${
-                      showOpenOnly ? "bg-cyan-500 text-white shadow-sm" : "text-[var(--text-muted)] hover:text-[var(--text)]"
-                    }`}
+                    className={`px-3 py-1.5 rounded-full transition-all ${showOpenOnly ? "bg-cyan-500 text-white shadow-sm" : "text-[var(--text-muted)] hover:text-[var(--text)]"}`}
                   >
-                    Open source {openCount > 0 && `(${openCount})`}
+                    Open source ({openCount})
                   </button>
                 </div>
                 <button
@@ -227,118 +287,69 @@ export function LLMBenchmarkButton() {
               </div>
             </div>
 
-            {/* Legend */}
-            <div className="flex items-center gap-5 px-6 py-2 border-b border-[var(--border)] bg-[var(--bg-muted)] shrink-0">
-              <span className="flex items-center gap-1.5 text-xs text-[var(--text-faint)]">
-                <span className="w-8 h-3 rounded-sm inline-block" style={{ background: "linear-gradient(90deg,#7c3aed,#a78bfa)" }} />
+            {/* ── Legend ── */}
+            <div className="flex items-center gap-5 px-6 py-2 border-b border-[var(--border)] bg-[var(--bg-muted)] shrink-0 text-xs text-[var(--text-faint)]">
+              <span className="flex items-center gap-1.5">
+                <span className="w-8 h-3 rounded-sm" style={{ background: "linear-gradient(90deg,#7c3aed,#a78bfa)" }} />
                 Proprietary
               </span>
-              <span className="flex items-center gap-1.5 text-xs text-[var(--text-faint)]">
-                <span className="w-8 h-3 rounded-sm inline-block" style={{ background: "linear-gradient(90deg,#0891b2,#22d3ee)" }} />
+              <span className="flex items-center gap-1.5">
+                <span className="w-8 h-3 rounded-sm" style={{ background: "linear-gradient(90deg,#0891b2,#22d3ee)" }} />
                 Open weight
+                <span className="text-[9px] font-bold px-1.5 py-0.5 rounded-full bg-cyan-100 text-cyan-700 dark:bg-cyan-900/30 dark:text-cyan-400 border border-cyan-200 dark:border-cyan-800">OSS</span>
               </span>
-              <span className="ml-auto text-[10px] text-[var(--text-faint)]">ESC to close</span>
+              <span className="ml-auto text-[10px]">ESC to close</span>
             </div>
 
-            {/* Charts */}
+            {/* ── Charts ── */}
             <div className="overflow-y-auto flex-1 overscroll-contain">
               {loading ? (
                 <div className="flex items-center justify-center py-24 text-[var(--text-muted)]">
-                  <div className="flex items-center gap-3">
-                    <div className="w-5 h-5 border-2 border-[var(--accent)] border-t-transparent rounded-full animate-spin" />
-                    Loading live model data…
-                  </div>
+                  <div className="w-5 h-5 border-2 border-[var(--accent)] border-t-transparent rounded-full animate-spin mr-3" />
+                  Loading live model data…
                 </div>
               ) : (
                 <div className="grid grid-cols-1 md:grid-cols-2 divide-y md:divide-y-0 md:divide-x divide-[var(--border)]">
-                  {/* Intelligence */}
-                  <div className="p-6">
-                    <div className="flex items-baseline justify-between mb-4">
-                      <div>
-                        <div className="flex items-center gap-2">
-                          <span className="w-8 h-3 rounded-sm inline-block" style={{ background: "linear-gradient(90deg,#7c3aed,#a78bfa)" }} />
-                          <h3 className="font-bold text-base text-[var(--text)]">Intelligence</h3>
-                        </div>
-                        <p className="text-[11px] text-[var(--text-faint)] mt-0.5 ml-10">
-                          AAII Score · Higher is better
-                        </p>
-                      </div>
-                      <div className="text-right">
-                        <div className="text-2xl font-black text-violet-500">
-                          {models.filter(m => m.intel !== null).sort((a,b) => (b.intel??0)-(a.intel??0))[0]?.intel ?? "—"}
-                        </div>
-                        <div className="text-[10px] text-[var(--text-faint)]">top score</div>
-                      </div>
-                    </div>
-                    {models.some(m => m.intel !== null) ? (
-                      <HorizChart
-                        models={models.filter(m => m.intel !== null)}
-                        chartKey="intel"
-                        higherBetter
-                        propColor={PROP}
-                        openColor={OSS}
-                      />
-                    ) : (
-                      <p className="text-sm text-[var(--text-faint)] text-center py-8">
-                        No intelligence scores for this filter.
-                      </p>
-                    )}
-                    <p className="text-[10px] text-[var(--text-faint)] mt-4">
-                      Scores from{" "}
-                      <a href="https://artificialanalysis.ai" target="_blank" rel="noopener noreferrer"
-                        className="underline hover:text-[var(--accent-text)]">artificialanalysis.ai</a>
-                      {" "}· manually updated
-                    </p>
-                  </div>
-
-                  {/* Price */}
-                  <div className="p-6">
-                    <div className="flex items-baseline justify-between mb-4">
-                      <div>
-                        <div className="flex items-center gap-2">
-                          <span className="w-8 h-3 rounded-sm inline-block" style={{ background: "linear-gradient(90deg,#d97706,#fbbf24)" }} />
-                          <h3 className="font-bold text-base text-[var(--text)]">Price</h3>
-                        </div>
-                        <p className="text-[11px] text-[var(--text-faint)] mt-0.5 ml-10">
-                          USD / 1M tokens · Lower is better · Live
-                        </p>
-                      </div>
-                      <div className="text-right">
-                        <div className="text-2xl font-black text-amber-500">
-                          ${Math.min(...models.filter(m=>m.price>0).map(m=>m.price)).toFixed(2)}
-                        </div>
-                        <div className="text-[10px] text-[var(--text-faint)]">cheapest</div>
-                      </div>
-                    </div>
-                    <HorizChart
-                      models={models}
-                      chartKey="price"
-                      higherBetter={false}
-                      propColor={PRICE_PROP}
-                      openColor={PRICE_OSS}
-                    />
-                    <p className="text-[10px] text-[var(--text-faint)] mt-4">
-                      Prices live from{" "}
-                      <a href="https://openrouter.ai" target="_blank" rel="noopener noreferrer"
-                        className="underline hover:text-[var(--accent-text)]">openrouter.ai</a>
-                      {" "}· cached 24h
-                    </p>
-                  </div>
+                  <ChartPanel
+                    title="Intelligence"
+                    subtitle="AAII Score · Higher is better"
+                    accentColor="#8b5cf6"
+                    propGrad="linear-gradient(90deg,#7c3aed,#a78bfa)"
+                    ossGrad="linear-gradient(90deg,#0891b2,#22d3ee)"
+                    models={intelModels}
+                    chartKey="intel"
+                    defaultAsc={false}
+                    stat={topIntel ? String(topIntel.intel) : "—"}
+                    statLabel="top score"
+                    fmtVal={(v) => String(v)}
+                    filterOpenOnly={showOpenOnly}
+                  />
+                  <ChartPanel
+                    title="Price"
+                    subtitle="USD / 1M tokens · Lower is better · Live"
+                    accentColor="#f59e0b"
+                    propGrad="linear-gradient(90deg,#d97706,#fbbf24)"
+                    ossGrad="linear-gradient(90deg,#059669,#34d399)"
+                    models={priceModels}
+                    chartKey="price"
+                    defaultAsc={true}
+                    stat={cheapest ? fmtPrice(cheapest.price) : "—"}
+                    statLabel="cheapest"
+                    fmtVal={fmtPrice}
+                    filterOpenOnly={showOpenOnly}
+                  />
                 </div>
               )}
             </div>
 
-            {/* Footer */}
+            {/* ── Footer ── */}
             <div className="px-6 py-3 border-t border-[var(--border)] shrink-0 flex items-center justify-between bg-[var(--bg-muted)] rounded-b-2xl">
               <p className="text-[10px] text-[var(--text-faint)]">
-                Intelligence scores: artificialanalysis.ai (manual) · Prices: openrouter.ai (live, 24h cache)
+                Intelligence: <a href="https://artificialanalysis.ai" target="_blank" rel="noopener noreferrer" className="underline">artificialanalysis.ai</a> (manual)
+                {" · "}Prices: <a href="https://openrouter.ai" target="_blank" rel="noopener noreferrer" className="underline">openrouter.ai</a> (live, 24h cache)
               </p>
-              <a
-                href="https://artificialanalysis.ai/leaderboards/models"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-xs text-[var(--accent-text)] hover:underline font-semibold"
-              >
+              <a href="https://artificialanalysis.ai/leaderboards/models" target="_blank" rel="noopener noreferrer"
+                className="text-xs text-[var(--accent-text)] hover:underline font-semibold">
                 Full leaderboard →
               </a>
             </div>
