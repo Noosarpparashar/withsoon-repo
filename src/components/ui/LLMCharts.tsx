@@ -33,12 +33,14 @@ const FALLBACK_INTEL: Model[] = [
 const FALLBACK_PRICE: Model[] = [...FALLBACK_INTEL].sort((a, b) => a.price - b.price);
 
 // ── Horizontal bar row ───────────────────────────────────────────────────────
-function Bar({ model, val, max, fmt, propGrad, ossGrad }: {
-  model: Model; val: number; max: number;
+function Bar({ model, val, min, max, fmt, propGrad, ossGrad }: {
+  model: Model; val: number; min: number; max: number;
   fmt: (v: number) => string;
   propGrad: string; ossGrad: string;
 }) {
-  const pct = Math.max((val / max) * 100, 2);
+  // Range-based scaling: min value → 15%, max value → 100%
+  const range = max - min || 1;
+  const pct = min === max ? 100 : Math.round(15 + ((val - min) / range) * 85);
   const grad = model.open ? ossGrad : propGrad;
   const inside = pct > 30;
 
@@ -123,7 +125,9 @@ function ChartPanel({
     return asc ? av - bv : bv - av;
   });
 
-  const max = Math.max(...sorted.map((m) => chartKey === "intel" ? (m.intel ?? 0) : m.price), 1);
+  const vals = sorted.map((m) => chartKey === "intel" ? (m.intel ?? 0) : m.price);
+  const max = Math.max(...vals, 1);
+  const min = vals.length > 0 ? Math.min(...vals) : 0;
 
   return (
     <div className="p-5 flex flex-col">
@@ -160,6 +164,7 @@ function ChartPanel({
               key={m.id}
               model={m}
               val={chartKey === "intel" ? (m.intel ?? 0) : m.price}
+              min={min}
               max={max}
               fmt={fmtVal}
               propGrad={propGrad}
