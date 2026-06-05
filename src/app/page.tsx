@@ -99,10 +99,10 @@ export default function Home() {
           <Link href="/ai" className="px-6 py-3 rounded-xl bg-[var(--accent)] hover:opacity-90 text-white font-semibold transition-opacity">
             🤖 AI & LLMs Hub
           </Link>
-          <Link href="/interview" className="px-6 py-3 rounded-xl border border-[var(--border)] bg-[var(--bg-card)] text-[var(--text)] hover:border-[var(--orange-text)]/60 font-semibold transition-colors">
+          <Link href="/interview" className="px-6 py-3 rounded-xl bg-[var(--orange)] hover:opacity-90 text-white font-semibold transition-opacity">
             🎯 Interview Prep
           </Link>
-          <Link href="/cheatsheets" className="px-6 py-3 rounded-xl border border-[var(--border)] bg-[var(--bg-card)] text-[var(--text)] hover:border-[var(--pink-text)]/60 font-semibold transition-colors">
+          <Link href="/cheatsheets" className="px-6 py-3 rounded-xl bg-[var(--pink)] hover:opacity-90 text-white font-semibold transition-opacity">
             📋 Cheatsheets
           </Link>
         </div>
