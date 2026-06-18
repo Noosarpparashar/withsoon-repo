@@ -1,7 +1,6 @@
 "use client";
 
-import { useState, useMemo, useCallback, Suspense } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useState, useMemo, useCallback, useEffect } from "react";
 import {
   SCALE_NUMBERS,
   SERVICES,
@@ -42,21 +41,23 @@ const CATEGORY_COLORS: Record<Service["category"], string> = {
 /* ═══════════════════════════════════════════════════════════════
    MAIN COMPONENT
    ═══════════════════════════════════════════════════════════════ */
-function NetflixPageInner() {
-  const router = useRouter();
-  const searchParams = useSearchParams();
-  const tabFromUrl = searchParams.get("tab") as Tab;
-  const [activeTab, setActiveTab] = useState<Tab>(
-    TABS.includes(tabFromUrl) ? tabFromUrl : "Architecture"
-  );
+export default function NetflixPage() {
+  const [activeTab, setActiveTab] = useState<Tab>("Architecture");
   const [selectedServiceId, setSelectedServiceId] = useState<string | null>("playback");
+
+  // Sync tab from URL on mount (client-only, no Suspense needed)
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const t = params.get("tab") as Tab;
+    if (t && TABS.includes(t)) setActiveTab(t);
+  }, []);
 
   const handleTabChange = useCallback((tab: Tab) => {
     setActiveTab(tab);
-    const params = new URLSearchParams(searchParams.toString());
+    const params = new URLSearchParams(window.location.search);
     params.set("tab", tab);
-    router.replace(`?${params.toString()}`, { scroll: false });
-  }, [router, searchParams]);
+    window.history.replaceState(null, "", `?${params.toString()}`);
+  }, []);
 
   const navigateToService = (serviceId: string) => {
     setSelectedServiceId(serviceId);
@@ -1930,10 +1931,3 @@ function CodeBlockWithCopy({ code, language }: { code: string; language?: string
   );
 }
 
-export default function NetflixPage() {
-  return (
-    <Suspense fallback={<div style={{ color: "var(--text)", padding: "2rem" }}>Loading...</div>}>
-      <NetflixPageInner />
-    </Suspense>
-  );
-}
