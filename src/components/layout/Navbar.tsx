@@ -18,7 +18,10 @@ export default function Navbar() {
   const pathname = usePathname();
   const [open, setOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
+  const [mounted, setMounted] = useState(false);
   const { resolvedTheme, setTheme } = useTheme();
+
+  useEffect(() => { setMounted(true); }, []);
 
   // ⌘K / Ctrl+K opens search
   useEffect(() => {
@@ -93,7 +96,9 @@ export default function Navbar() {
               className="p-2 rounded-lg border border-[var(--border)] text-[var(--text-muted)] hover:text-[var(--text)] hover:bg-[var(--bg-muted)] transition-colors"
               aria-label="Toggle theme"
             >
-              {resolvedTheme === "dark" ? (
+              {!mounted ? (
+                <span className="w-4 h-4 block" />
+              ) : resolvedTheme === "dark" ? (
                 <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364-6.364l-.707.707M6.343 17.657l-.707.707M18.364 17.657l-.707-.707M6.343 6.343l-.707-.707M12 7a5 5 0 100 10A5 5 0 0012 7z" />
                 </svg>

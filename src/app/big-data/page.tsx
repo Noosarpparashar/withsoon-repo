@@ -1,6 +1,8 @@
 import { getContentBySection } from "@/lib/content";
 import SectionHero from "@/components/ui/SectionHero";
 import SubsectionBrowser from "@/components/ui/SubsectionBrowser";
+import ArchitectureGallery from "@/components/ui/ArchitectureGallery";
+import BigDataLibraries from "@/components/ui/BigDataLibraries";
 
 export const metadata = {
   title: "Big Data — withsoon",
@@ -28,6 +30,13 @@ export default function BigDataPage() {
         subtitle="System design blueprints, step-by-step setup guides, deep dives, and cheatsheets — everything a Big Data engineer needs in one place."
         accentClass="text-[var(--blue-text)]"
       />
+      <div className="mb-14">
+        <ArchitectureGallery />
+      </div>
+
+      <div className="mb-14">
+        <BigDataLibraries />
+      </div>
       <SubsectionBrowser
         items={items}
         subsections={SUBSECTIONS}

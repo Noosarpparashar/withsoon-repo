@@ -139,7 +139,7 @@ export default function Home() {
                 ) : newsItems.map((item, i) => {
                   const dot = i === 0 ? "bg-red-400" : i === 1 ? "bg-orange-400" : i < 4 ? "bg-blue-400" : "bg-emerald-400";
                   return (
-                    <Link key={item.slug} href={`/tech-news/${item.slug}`}
+                    <Link key={`${item.section}-${item.slug}`} href={`/tech-news/${item.slug}`}
                       className="group flex gap-3 p-3 rounded-lg bg-white/5 hover:bg-white/10 border border-white/5 hover:border-white/20 transition-all">
                       <div className="shrink-0 pt-1.5"><div className={`w-2 h-2 rounded-full ${dot}`} /></div>
                       <div className="flex-1 min-w-0">
@@ -215,7 +215,7 @@ export default function Home() {
         {setupGuides.length > 0 ? (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
             {setupGuides.map((item) => (
-              <ContentCard key={item.slug} item={item} href={`/${item.section}/${item.slug}`} />
+              <ContentCard key={`${item.section}-${item.slug}`} item={item} href={`/${item.section}/${item.slug}`} />
             ))}
           </div>
         ) : (
@@ -238,7 +238,7 @@ export default function Home() {
           <h2 className="text-2xl font-bold mb-6 text-[var(--text)]">⭐ Featured</h2>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
             {featured.map((item) => (
-              <ContentCard key={item.slug} item={item} href={`/${item.section}/${item.slug}`} />
+              <ContentCard key={`${item.section}-${item.slug}`} item={item} href={`/${item.section}/${item.slug}`} />
             ))}
           </div>
         </section>
@@ -250,7 +250,7 @@ export default function Home() {
           <h2 className="text-2xl font-bold mb-6 text-[var(--text)]">🕐 Recently added</h2>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
             {recent.map((item) => (
-              <ContentCard key={item.slug} item={item} href={`/${item.section}/${item.slug}`} />
+              <ContentCard key={`${item.section}-${item.slug}`} item={item} href={`/${item.section}/${item.slug}`} />
             ))}
           </div>
         </section>
