@@ -1,0 +1,145 @@
+import type { Metadata } from "next";
+import Link from "next/link";
+
+export const metadata: Metadata = {
+  title: "System Design — withsoon",
+  description: "Interactive system design case studies for senior backend and data engineer interviews. Netflix, Uber, YouTube, WhatsApp — deep dives with diagrams, trade-offs, and mock interviews.",
+  alternates: { canonical: "https://withsoon.com/system-design" },
+};
+
+const COMPANIES = [
+  {
+    slug: "netflix",
+    name: "Netflix",
+    emoji: "🎬",
+    tagline: "Video-on-demand streaming",
+    tabs: ["Architecture", "Data Models", "Trade-offs", "Capacity", "Quiz"],
+    difficulty: "senior",
+    status: "live",
+    href: "/system-design/netflix/architecture",
+  },
+  {
+    slug: "uber",
+    name: "Uber",
+    emoji: "🚗",
+    tagline: "Real-time ride matching & dispatch",
+    tabs: ["Architecture", "Location Ingestion", "Surge Pricing", "Failures"],
+    difficulty: "senior",
+    status: "coming-soon",
+    href: "#",
+  },
+  {
+    slug: "youtube",
+    name: "YouTube",
+    emoji: "▶️",
+    tagline: "Video upload, transcoding, CDN",
+    tabs: ["Architecture", "Upload Pipeline", "CDN", "Recommendations"],
+    difficulty: "senior",
+    status: "coming-soon",
+    href: "#",
+  },
+  {
+    slug: "whatsapp",
+    name: "WhatsApp",
+    emoji: "💬",
+    tagline: "Real-time messaging at 2B users",
+    tabs: ["Architecture", "Message Delivery", "Presence", "E2E Encryption"],
+    difficulty: "senior",
+    status: "coming-soon",
+    href: "#",
+  },
+  {
+    slug: "bookmyshow",
+    name: "BookMyShow",
+    emoji: "🎟️",
+    tagline: "Seat inventory & flash-sale traffic",
+    tabs: ["Architecture", "Seat Locking", "Virtual Queue", "Payments"],
+    difficulty: "intermediate",
+    status: "coming-soon",
+    href: "#",
+  },
+  {
+    slug: "swiggy",
+    name: "Swiggy",
+    emoji: "🍕",
+    tagline: "Restaurant discovery & real-time tracking",
+    tabs: ["Architecture", "Order Lifecycle", "Real-time Tracking", "ETA"],
+    difficulty: "intermediate",
+    status: "coming-soon",
+    href: "#",
+  },
+];
+
+const DIFFICULTY_STYLE: Record<string, string> = {
+  senior: "bg-[var(--pink-soft)] text-[var(--pink-text)]",
+  intermediate: "bg-[var(--orange-soft)] text-[var(--orange-text)]",
+};
+
+export default function SystemDesignPage() {
+  return (
+    <div className="mx-auto max-w-7xl px-4 py-10">
+      <div className="mb-10">
+        <div className="flex items-center gap-2 text-sm text-[var(--text-faint)] mb-6 flex-wrap">
+          <Link href="/" className="hover:text-[var(--text)] transition-colors">Home</Link>
+          <span>/</span>
+          <span className="text-[var(--text-muted)]">System Design</span>
+        </div>
+        <h1 className="text-4xl font-bold mb-4 text-[var(--text)]">🏗️ System Design</h1>
+        <p className="text-lg text-[var(--text-muted)] max-w-3xl leading-relaxed">
+          Company-style system design case studies — interactive diagrams, trade-offs, data models, capacity estimates, and mock interview prep. Built for senior backend and data engineer interviews.
+        </p>
+      </div>
+
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
+        {COMPANIES.map((c) => {
+          const isLive = c.status === "live";
+          return (
+            <div key={c.slug}
+              className={`group flex flex-col p-5 rounded-xl border bg-[var(--bg-card)] transition-all ${isLive ? "border-[var(--border)] hover:border-[var(--accent)] hover:shadow-md cursor-pointer" : "border-dashed border-[var(--border)] opacity-60"}`}>
+              <div className="flex items-start justify-between mb-3">
+                <div className="flex items-center gap-2">
+                  <span className="text-2xl">{c.emoji}</span>
+                  <div>
+                    <h3 className="font-bold text-[var(--text)]">{c.name}</h3>
+                    <p className="text-xs text-[var(--text-muted)]">{c.tagline}</p>
+                  </div>
+                </div>
+                {isLive ? (
+                  <span className="text-[10px] px-1.5 py-0.5 rounded bg-[var(--green-soft)] text-[var(--green-text)] shrink-0">Live</span>
+                ) : (
+                  <span className="text-[10px] px-1.5 py-0.5 rounded bg-[var(--bg-muted)] text-[var(--text-faint)] border border-[var(--border)] shrink-0">Soon</span>
+                )}
+              </div>
+
+              <div className="flex flex-wrap gap-1 mb-4">
+                {c.tabs.map((tab) => (
+                  <span key={tab} className="text-[10px] px-1.5 py-0.5 rounded bg-[var(--bg-muted)] text-[var(--text-faint)] border border-[var(--border)]">{tab}</span>
+                ))}
+              </div>
+
+              <div className="mt-auto flex items-center justify-between">
+                <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${DIFFICULTY_STYLE[c.difficulty]}`}>
+                  {c.difficulty}
+                </span>
+                {isLive && (
+                  <Link href={c.href}
+                    className="text-xs font-medium text-[var(--accent-text)] group-hover:underline">
+                    Open →
+                  </Link>
+                )}
+              </div>
+            </div>
+          );
+        })}
+      </div>
+
+      <div className="mt-12 rounded-xl border border-[var(--border)] bg-[var(--bg-card)] p-6 text-center">
+        <h2 className="text-lg font-bold mb-2 text-[var(--text)]">More coming soon</h2>
+        <p className="text-sm text-[var(--text-muted)] mb-4">Uber, YouTube, and WhatsApp are next. Each will follow the same format: Start Here → Architecture → APIs → Data Models → Failures → Trade-offs → Mock Interview.</p>
+        <Link href="/about" className="text-sm text-[var(--accent-text)] hover:underline font-medium">
+          See what&apos;s planned →
+        </Link>
+      </div>
+    </div>
+  );
+}

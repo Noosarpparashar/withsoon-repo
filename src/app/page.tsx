@@ -16,6 +16,17 @@ const SECTIONS = [
     highlights: ["System Design", "Kafka", "Spark", "Setup Guides"],
   },
   {
+    href: "/system-design",
+    emoji: "🏗️",
+    label: "System Design",
+    tagline: "Ace the design round",
+    desc: "Netflix · Uber · YouTube · WhatsApp · BookMyShow",
+    detail: "Interactive architecture diagrams, trade-offs, capacity estimates, and mock interviews. Built for senior engineering roles.",
+    borderClass: "hover:border-[var(--green-text)]/60",
+    badgeClass: "bg-[var(--green-soft)] text-[var(--green-text)]",
+    highlights: ["Netflix", "Architecture Maps", "Mock Interview", "Capacity Math"],
+  },
+  {
     href: "/ai",
     emoji: "🤖",
     label: "AI & LLMs",
@@ -37,17 +48,6 @@ const SECTIONS = [
     badgeClass: "bg-[var(--orange-soft)] text-[var(--orange-text)]",
     highlights: ["System Design", "Kafka Q&A", "SQL Patterns", "Behavioral"],
   },
-  {
-    href: "/cheatsheets",
-    emoji: "📋",
-    label: "Cheatsheets",
-    tagline: "Bookmark this",
-    desc: "SQL · Kafka · Spark · System Design · Cloud · DSA",
-    detail: "Quick-reference cards from every section — built to be opened mid-work, not read end-to-end.",
-    borderClass: "hover:border-[var(--pink-text)]/60",
-    badgeClass: "bg-[var(--pink-soft)] text-[var(--pink-text)]",
-    highlights: ["SQL Windows", "Kafka CLI", "Cloud Services", "DSA Patterns"],
-  },
 ];
 
 const SETUP_SPOTLIGHTS = [
@@ -66,12 +66,21 @@ export default function Home() {
     .slice(0, 6);
   const setupGuides = getSetupGuides();
 
-  const newsItems = [
-    ...getContentBySection("tech-news"),
-    ...getContentBySection("radar"),
-  ]
-    .sort((a, b) => (a.date < b.date ? 1 : -1))
-    .slice(0, 8);
+  const newsItems = (() => {
+    const seen = new Set<string>();
+    return [
+      ...getContentBySection("tech-news"),
+      ...getContentBySection("radar"),
+    ]
+      .sort((a, b) => (a.date < b.date ? 1 : -1))
+      .filter((item) => {
+        const key = item.title.toLowerCase().trim();
+        if (seen.has(key)) return false;
+        seen.add(key);
+        return true;
+      })
+      .slice(0, 8);
+  })();
 
   return (
     <div className="mx-auto max-w-7xl px-4">
@@ -235,26 +244,78 @@ export default function Home() {
       {/* ── Featured ──────────────────────────────────────── */}
       {featured.length > 0 && (
         <section className="mb-20">
-          <h2 className="text-2xl font-bold mb-6 text-[var(--text)]">⭐ Featured</h2>
+          <div className="flex items-center justify-between mb-6">
+            <h2 className="text-2xl font-bold text-[var(--text)]">⭐ Featured</h2>
+            <Link href="/system-design/netflix/architecture" className="text-sm text-[var(--accent-text)] hover:underline font-medium">
+              View Netflix system design →
+            </Link>
+          </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
-            {featured.map((item) => (
+            {featured.slice(0, 6).map((item) => (
               <ContentCard key={`${item.section}-${item.slug}`} item={item} href={`/${item.section}/${item.slug}`} />
             ))}
           </div>
         </section>
       )}
 
-      {/* ── Recently added ────────────────────────────────── */}
+      {/* ── Latest ────────────────────────────────────────── */}
       {recent.length > 0 && (
         <section className="mb-20">
-          <h2 className="text-2xl font-bold mb-6 text-[var(--text)]">🕐 Recently added</h2>
+          <div className="flex items-center justify-between mb-6">
+            <h2 className="text-2xl font-bold text-[var(--text)]">🕐 Latest</h2>
+            <Link href="/big-data" className="text-sm text-[var(--accent-text)] hover:underline font-medium">
+              View all →
+            </Link>
+          </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
-            {recent.map((item) => (
+            {recent.slice(0, 3).map((item) => (
               <ContentCard key={`${item.section}-${item.slug}`} item={item} href={`/${item.section}/${item.slug}`} />
             ))}
           </div>
         </section>
       )}
+
+      {/* ── What this site is best for ────────────────────── */}
+      <section className="mb-20">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+          <div className="rounded-xl border border-[var(--border)] bg-[var(--bg-card)] p-6">
+            <h2 className="text-lg font-bold mb-3 text-[var(--text)]">What this site is best for</h2>
+            <ul className="space-y-2">
+              {[
+                "Preparing for senior data engineer and backend engineer interviews",
+                "Deep-diving Netflix, Uber, or distributed system architectures",
+                "Setting up Kafka, Spark, Airflow, or dbt in minutes — not hours",
+                "Quick-reference cheatsheets you can open mid-work",
+                "Understanding LLM trade-offs, RAG pipelines, and agent patterns",
+              ].map((item) => (
+                <li key={item} className="flex items-start gap-2 text-sm text-[var(--text-muted)]">
+                  <span className="text-[var(--accent-text)] mt-0.5 shrink-0">✓</span>
+                  {item}
+                </li>
+              ))}
+            </ul>
+          </div>
+          <div className="rounded-xl border border-[var(--border)] bg-[var(--bg-card)] p-6">
+            <h2 className="text-lg font-bold mb-3 text-[var(--text)]">Built from real interview prep</h2>
+            <p className="text-sm text-[var(--text-muted)] leading-relaxed mb-4">
+              Every guide, diagram, and Q&amp;A bank is drawn from real system design interview experience — production-style scenarios, not textbook theory.
+            </p>
+            <h3 className="text-sm font-bold mb-2 text-[var(--text)]">Coming next</h3>
+            <ul className="space-y-1.5">
+              {[
+                "Uber system design — ride matching, surge pricing, location ingestion",
+                "Kafka Q&A bank — questions 17–50 with full answers",
+                "Data Engineer roadmap — 6-week structured path",
+              ].map((item) => (
+                <li key={item} className="flex items-start gap-2 text-sm text-[var(--text-muted)]">
+                  <span className="text-[var(--text-faint)] mt-0.5 shrink-0">→</span>
+                  {item}
+                </li>
+              ))}
+            </ul>
+          </div>
+        </div>
+      </section>
 
       {/* ── CTA ───────────────────────────────────────────── */}
       <section className="mb-20 rounded-2xl border border-[var(--border)] bg-[var(--bg-card)] p-10 text-center">

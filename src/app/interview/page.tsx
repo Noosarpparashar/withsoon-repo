@@ -5,6 +5,13 @@ import SubsectionBrowser from "@/components/ui/SubsectionBrowser";
 export const metadata = {
   title: "Interview Prep — withsoon",
   description: "System design, Kafka, Spark, SQL, AI/ML — topic-wise Q&A and grilling sessions for Big Data and AI engineering roles.",
+  alternates: { canonical: "https://withsoon.com/interview" },
+  openGraph: {
+    title: "Interview Prep — withsoon",
+    description: "System design, Kafka, Spark, SQL, AI/ML — topic-wise Q&A and grilling sessions for Big Data and AI engineering roles.",
+    url: "https://withsoon.com/interview",
+    siteName: "withsoon",
+  },
 };
 
 const SUBSECTIONS = [

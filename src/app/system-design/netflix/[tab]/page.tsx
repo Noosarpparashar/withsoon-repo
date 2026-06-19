@@ -1,24 +1,61 @@
 import { redirect } from "next/navigation";
+import type { Metadata } from "next";
 import NetflixPage from "@/components/ui/NetflixPage";
 
-export async function generateMetadata({ params }: { params: Promise<{ tab: string }> }) {
+const TAB_META: Record<string, { title: string; description: string }> = {
+  architecture: {
+    title: "Netflix System Design — Architecture | withsoon.com",
+    description: "Interactive Netflix architecture diagram: 19 components, 7 request flows, CDN, DRM, microservices. Interview-ready depth for senior backend engineers.",
+  },
+  models: {
+    title: "Netflix System Design — Data Models | withsoon.com",
+    description: "Netflix data models: Aurora PostgreSQL, DynamoDB, Cassandra, Redis. Entity schemas, access patterns, DDL, and interview tips.",
+  },
+  tradeoffs: {
+    title: "Netflix System Design — Trade-offs | withsoon.com",
+    description: "Netflix architecture trade-offs: CAP theorem choices, database selection, push vs pull, microservices benefits and costs.",
+  },
+  capacity: {
+    title: "Netflix System Design — Capacity Estimation | withsoon.com",
+    description: "Netflix capacity numbers: 45 Tbps bandwidth, 260K RPS, 500K Kafka events/sec. Interactive calculator and step-by-step derivations.",
+  },
+  quiz: {
+    title: "Netflix System Design — Quiz | withsoon.com",
+    description: "75 Netflix system design flashcards: Auth, Streaming, CDN, Kafka, DynamoDB, Cassandra, Redis, CAP theorem, DRM. Spaced repetition built in.",
+  },
+};
+
+export async function generateMetadata({ params }: { params: Promise<{ tab: string }> }): Promise<Metadata> {
   const { tab } = await params;
-  return {
+  const meta = TAB_META[tab] ?? {
     title: `Netflix System Design — ${tab} | withsoon.com`,
-    description: "Interactive Netflix system design architecture map for senior backend engineers. Explore all 19 components, 7 request flows, deep-dive interview answers, and capacity estimates.",
+    description: "Interactive Netflix system design interview prep: architecture, data models, trade-offs, capacity estimation, and flashcards.",
+  };
+  return {
+    title: meta.title,
+    description: meta.description,
+    openGraph: {
+      title: meta.title,
+      description: meta.description,
+      url: `https://withsoon.com/system-design/netflix/${tab}`,
+      siteName: "withsoon",
+      type: "website",
+    },
+    alternates: {
+      canonical: `https://withsoon.com/system-design/netflix/${tab}`,
+    },
   };
 }
 
 export default async function TabPage({ params }: { params: Promise<{ tab: string }> }) {
   const { tab } = await params;
-  // Legacy tab redirects → architecture
   const LEGACY = [
     "start-here", "backend-track", "data-engineering", "architecture-map",
     "apis-data-model", "scale-estimation", "failures-tradeoffs",
     "interview-qa", "mock-interview", "cheat-sheet",
-    "requirements", "scale", "architecture", "services", "apis",
+    "requirements", "scale", "services", "apis",
     "data-design", "playback", "cdn", "encoding", "data-pipeline",
-    "recommendations", "failures", "tradeoffs", "security", "observability-cost",
+    "recommendations", "failures", "security", "observability-cost",
   ];
   const VALID = ["architecture", "models", "tradeoffs", "capacity", "quiz"];
   if (!VALID.includes(tab) && LEGACY.includes(tab)) {

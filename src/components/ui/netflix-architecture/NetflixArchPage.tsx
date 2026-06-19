@@ -852,8 +852,9 @@ function ArchitectureTab({
 }
 
 // ── Main shell ─────────────────────────────────────────────────────────────────
-export default function NetflixArchPage() {
-  const [activeTab, setActiveTab] = useState<TabId>("architecture");
+export default function NetflixArchPage({ initialTab }: { initialTab?: string }) {
+  const resolvedInitial = TABS.find(t => t.id === initialTab) ? (initialTab as TabId) : "architecture";
+  const [activeTab, setActiveTab] = useState<TabId>(resolvedInitial);
   const [tabVisible, setTabVisible] = useState(true);
   const [studiedNodes, setStudiedNodes] = useState<Set<NodeId>>(new Set());
   const [interviewMode, setInterviewMode] = useState(false);
@@ -929,7 +930,9 @@ export default function NetflixArchPage() {
             <span className="text-xs font-semibold hidden sm:block" style={{ color: "#666" }}>withsoon</span>
           </Link>
           <span className="hidden sm:block text-xs" style={{ color: N_FAINT }}>/</span>
-          <span className="text-xs font-semibold hidden sm:block" style={{ color: N_TEXT }}>Netflix System Design</span>
+          <Link href="/system-design" className="text-xs hidden sm:block hover:underline" style={{ color: N_FAINT }}>System Design</Link>
+          <span className="hidden sm:block text-xs" style={{ color: N_FAINT }}>/</span>
+          <span className="text-xs font-semibold hidden sm:block" style={{ color: N_TEXT }}>Netflix</span>
           <span className="text-[10px] px-1.5 py-0.5 rounded font-medium hidden md:block"
             style={{ background: N_GREEN + "18", color: N_GREEN, border: `1px solid ${N_GREEN}30` }}>
             Senior Backend
@@ -970,8 +973,8 @@ export default function NetflixArchPage() {
           </button>
         </div>
 
-        {/* Row 2: tabs with animated underline + keyboard nav */}
-        <div className="hidden sm:flex items-end px-4" style={{ height: 37 }}>
+        {/* Row 2: tabs with animated underline + keyboard nav + prev/next */}
+        <div className="hidden sm:flex items-end px-4 gap-0" style={{ height: 37 }}>
           {TABS.map((tab, idx) => (
             <button
               key={tab.id}
@@ -996,13 +999,37 @@ export default function NetflixArchPage() {
               )}
             </button>
           ))}
+          <div className="ml-auto flex items-center gap-2 pb-1.5">
+            {(() => {
+              const idx = TABS.findIndex(t => t.id === activeTab);
+              const prev = TABS[idx - 1];
+              const next = TABS[idx + 1];
+              return <>
+                <span className="text-[10px]" style={{ color: N_FAINT }}>{idx + 1}/{TABS.length}</span>
+                {prev && (
+                  <button onClick={() => switchTab(prev.id)} className="text-[10px] px-2 py-0.5 rounded transition-colors"
+                    style={{ color: N_MUTED, border: `1px solid ${N_BORDER}` }}>← {prev.label}</button>
+                )}
+                {next && (
+                  <button onClick={() => switchTab(next.id)} className="text-[10px] px-2 py-0.5 rounded transition-colors"
+                    style={{ color: N_MUTED, border: `1px solid ${N_BORDER}` }}>{next.label} →</button>
+                )}
+              </>;
+            })()}
+          </div>
         </div>
 
-        {/* Mobile: show active tab label */}
-        <div className="sm:hidden px-4 pb-2">
+        {/* Mobile: show active tab label + prev/next */}
+        <div className="sm:hidden px-4 pb-2 flex items-center justify-between">
           <span className="text-xs font-medium" style={{ color: N_TEXT }}>
             {TABS.find(t => t.id === activeTab)?.label}
           </span>
+          {(() => {
+            const idx = TABS.findIndex(t => t.id === activeTab);
+            return (
+              <span className="text-[10px]" style={{ color: N_FAINT }}>{idx + 1}/{TABS.length}</span>
+            );
+          })()}
         </div>
       </div>
 

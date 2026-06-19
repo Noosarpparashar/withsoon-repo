@@ -7,6 +7,13 @@ import BigDataLibraries from "@/components/ui/BigDataLibraries";
 export const metadata = {
   title: "Big Data — withsoon",
   description: "Kafka, Spark, Flink, Airflow, dbt — system design, setup guides, deep dives, cheatsheets, and interview prep.",
+  alternates: { canonical: "https://withsoon.com/big-data" },
+  openGraph: {
+    title: "Big Data Hub — withsoon",
+    description: "Kafka, Spark, Flink, Airflow, dbt — setup guides, deep dives, cheatsheets, and interview prep.",
+    url: "https://withsoon.com/big-data",
+    siteName: "withsoon",
+  },
 };
 
 const SUBSECTIONS = [

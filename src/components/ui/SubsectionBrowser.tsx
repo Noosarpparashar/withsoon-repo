@@ -85,40 +85,61 @@ export default function SubsectionBrowser({ items, subsections, section, accentC
     );
   }
 
-  // Subsection tiles view
+  // Subsection tiles view — only show subsections that have content
+  const subsectionsWithContent = subsections.filter(({ key }) => getItems(key).length > 0);
+  const emptySubsections = subsections.filter(({ key }) => getItems(key).length === 0);
+
   return (
     <div>
-      {items.length === 0 ? (
+      {subsectionsWithContent.length === 0 ? (
         <div className="rounded-xl border border-[var(--border)] bg-[var(--bg-card)] p-12 text-center text-[var(--text-muted)]">
           Content is being added — check back soon.
         </div>
       ) : (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
-          {subsections.map(({ key, label, emoji, desc }) => {
-            const count = getItems(key).length;
-            return (
-              <button
+        <>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
+            {subsectionsWithContent.map(({ key, label, emoji, desc }) => {
+              const count = getItems(key).length;
+              return (
+                <button
+                  key={key}
+                  onClick={() => setActive(key)}
+                  className="group text-left p-6 rounded-xl border border-[var(--border)] bg-[var(--bg-card)] hover:border-[var(--accent)] hover:shadow-md transition-all"
+                >
+                  <div className="flex items-center justify-between mb-3">
+                    <span className="text-3xl">{emoji}</span>
+                    <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${softClass}`}>
+                      {count} {count === 1 ? "item" : "items"}
+                    </span>
+                  </div>
+                  <h3 className={`font-semibold text-[var(--text)] group-hover:${accentClass} transition-colors mb-1`}>
+                    {label}
+                  </h3>
+                  <p className="text-sm text-[var(--text-muted)] leading-relaxed">{desc}</p>
+                  <div className={`mt-4 text-xs font-medium ${accentClass} opacity-0 group-hover:opacity-100 transition-opacity`}>
+                    Browse {label} →
+                  </div>
+                </button>
+              );
+            })}
+            {/* Coming Soon tiles for empty subsections */}
+            {emptySubsections.map(({ key, label, emoji, desc }) => (
+              <div
                 key={key}
-                onClick={() => setActive(key)}
-                className="group text-left p-6 rounded-xl border border-[var(--border)] bg-[var(--bg-card)] hover:border-[var(--accent)] hover:shadow-md transition-all"
+                className="text-left p-6 rounded-xl border border-dashed border-[var(--border)] bg-[var(--bg-muted)] opacity-60 cursor-default"
               >
                 <div className="flex items-center justify-between mb-3">
-                  <span className="text-3xl">{emoji}</span>
-                  <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${softClass}`}>
-                    {count} {count === 1 ? "item" : "items"}
+                  <span className="text-3xl grayscale">{emoji}</span>
+                  <span className="text-xs px-2 py-0.5 rounded-full font-medium bg-[var(--bg-card)] text-[var(--text-faint)] border border-[var(--border)]">
+                    Coming soon
                   </span>
                 </div>
-                <h3 className={`font-semibold text-[var(--text)] group-hover:${accentClass} transition-colors mb-1`}>
-                  {label}
-                </h3>
-                <p className="text-sm text-[var(--text-muted)] leading-relaxed">{desc}</p>
-                <div className={`mt-4 text-xs font-medium ${accentClass} opacity-0 group-hover:opacity-100 transition-opacity`}>
-                  Browse {label} →
-                </div>
-              </button>
-            );
-          })}
-        </div>
+                <h3 className="font-semibold text-[var(--text-muted)] mb-1">{label}</h3>
+                <p className="text-sm text-[var(--text-faint)] leading-relaxed">{desc}</p>
+              </div>
+            ))}
+          </div>
+        </>
       )}
     </div>
   );

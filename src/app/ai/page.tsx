@@ -5,6 +5,13 @@ import SubsectionBrowser from "@/components/ui/SubsectionBrowser";
 export const metadata = {
   title: "AI & LLMs — withsoon",
   description: "OpenAI, Claude, Gemini, Llama — RAG pipelines, agents, prompt engineering, fine-tuning, setup guides.",
+  alternates: { canonical: "https://withsoon.com/ai" },
+  openGraph: {
+    title: "AI & LLMs Hub — withsoon",
+    description: "RAG pipelines, LLM agents, model comparisons, and setup guides for production AI systems.",
+    url: "https://withsoon.com/ai",
+    siteName: "withsoon",
+  },
 };
 
 const SUBSECTIONS = [

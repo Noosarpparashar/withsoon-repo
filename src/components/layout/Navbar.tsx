@@ -7,11 +7,12 @@ import { useTheme } from "next-themes";
 import SearchModal from "@/components/ui/SearchModal";
 
 const NAV = [
-  { href: "/tech-news",   label: "Tech News",   emoji: "📰", desc: "Latest AI & Data news" },
-  { href: "/big-data",    label: "Big Data",    emoji: "🗄️", desc: "Kafka, Spark, Flink, System Design" },
-  { href: "/ai",          label: "AI & LLMs",   emoji: "🤖", desc: "RAG, Agents, Providers, Setups" },
-  { href: "/interview",   label: "Interview",   emoji: "🎯", desc: "System Design, Kafka, SQL, Behavioral" },
-  { href: "/cheatsheets", label: "Cheatsheets", emoji: "📋", desc: "SQL, Kafka, Spark, Cloud — quick ref" },
+  { href: "/tech-news",      label: "Tech News",      emoji: "📰", desc: "Latest AI & Data news" },
+  { href: "/big-data",       label: "Big Data",       emoji: "🗄️", desc: "Kafka, Spark, Flink, System Design" },
+  { href: "/ai",             label: "AI & LLMs",      emoji: "🤖", desc: "RAG, Agents, Providers, Setups" },
+  { href: "/system-design",  label: "System Design",  emoji: "🏗️", desc: "Netflix, Uber, YouTube — deep dives" },
+  { href: "/interview",      label: "Interview",      emoji: "🎯", desc: "System Design, Kafka, SQL, Behavioral" },
+  { href: "/cheatsheets",    label: "Cheatsheets",    emoji: "📋", desc: "SQL, Kafka, Spark, Cloud — quick ref" },
 ];
 
 export default function Navbar() {
