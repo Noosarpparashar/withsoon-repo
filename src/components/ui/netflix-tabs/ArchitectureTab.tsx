@@ -2,8 +2,7 @@
 
 import { useState } from "react";
 import { SayThisBlock, ScaleDerivationSection } from "./shared";
-
-type Tab = "Start Here" | "Architecture" | "Services" | "Data Design" | "Data Pipeline" | "ML & Recs" | "Failures & Tradeoffs" | "Interview Q&A" | "Cheat Sheet";
+import type { TabSlug } from "@/components/ui/NetflixPage";
 
 const PLATFORM_OVERVIEW_PLANES = [
   {
@@ -681,7 +680,7 @@ function CDNSection() {
 /* ═══════════════════════════════════════════════════════════════
    ARCHITECTURE TAB
    ═══════════════════════════════════════════════════════════════ */
-function ArchitectureTab({ onNavigateService, onNavigateTab }: { onNavigateService: (id: string) => void; onNavigateTab: (tab: Tab) => void }) {
+function ArchitectureTab({ onNavigateService, onNavigateTab }: { onNavigateService: (id: string) => void; onNavigateTab: (tab: TabSlug) => void }) {
   return (
     <div className="space-y-10">
       {/* Platform Overview — Two-Plane Mental Model */}
@@ -945,7 +944,7 @@ function ArchitectureTab({ onNavigateService, onNavigateTab }: { onNavigateServi
         <p className="text-sm" style={{ color: "var(--text)" }}>
           <strong style={{ color: "var(--blue-text)" }}>Data Model &amp; Access Patterns</strong> — detailed ERD, Cassandra CQL schemas, and per-table database rationale are in the{" "}
           <button
-            onClick={() => onNavigateTab("Data Design")}
+            onClick={() => onNavigateTab("data-design")}
             style={{ color: "var(--blue-text)", textDecoration: "underline", cursor: "pointer", background: "none", border: "none"  }}
           >
             Data Design tab

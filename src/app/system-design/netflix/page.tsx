@@ -1,10 +1,5 @@
-import NetflixPage from "@/components/ui/NetflixPage";
-
-export const metadata = {
-  title: "Netflix System Design — withsoon",
-  description: "Complete Netflix system design reference: microservices, data pipeline, 60 interview Q&As, and cheat sheet.",
-};
+import { redirect } from "next/navigation";
 
 export default function Page() {
-  return <NetflixPage />;
+  redirect("/system-design/netflix/start-here");
 }

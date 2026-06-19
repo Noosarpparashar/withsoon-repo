@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { SayThisBlock, FollowUpsAccordion } from "./shared";
+import type { TabSlug } from "@/components/ui/NetflixPage";
 
 /* ═══════════════════════════════════════════════════════════════
    ML & RECS TAB
@@ -74,7 +75,7 @@ const ML_RECS_DATA = {
   ],
 };
 
-function MLRecsTab() {
+function MLRecsTab({ onNavigateTab: _onNavigateTab }: { onNavigateTab?: (tab: TabSlug) => void }) {
   const ML_SECTIONS = ["Overview","Two-Tower Model","Cold Start","Feature Store","A/B Testing & Feedback Loop","Metrics & Evaluation"];
   const [activeMLSection, setActiveMLSection] = useState("Overview");
   const d = ML_RECS_DATA;

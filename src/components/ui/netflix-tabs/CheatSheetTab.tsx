@@ -3,8 +3,9 @@
 import { CHEAT_SHEET } from "@/components/ui/netflix-system-data";
 import { DbTablesView, CodeBlockWithCopy } from "./shared";
 import { DbDecisionTree } from "./InterviewTab";
+import type { TabSlug } from "@/components/ui/NetflixPage";
 
-function CheatSheetTab() {
+function CheatSheetTab({ onNavigateTab: _onNavigateTab }: { onNavigateTab?: (tab: TabSlug) => void }) {
   return (
     <div className="space-y-10">
       {/* Critical Numbers */}

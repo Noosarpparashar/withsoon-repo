@@ -8,6 +8,7 @@ import {
   HOUSEHOLD_ENFORCEMENT,
 } from "@/components/ui/netflix-system-data";
 import { SayThisBlock, FollowUpsAccordion, DbTablesView, CodeBlock, CodeBlockWithCopy } from "./shared";
+import type { TabSlug } from "@/components/ui/NetflixPage";
 
 const ENTITY_DOMAINS = [
   {
@@ -988,7 +989,7 @@ function DataLakeSection() {
 /* ═══════════════════════════════════════════════════════════════
    DATA DESIGN TAB
    ═══════════════════════════════════════════════════════════════ */
-function DataDesignTab() {
+function DataDesignTab({ onNavigateTab: _onNavigateTab }: { onNavigateTab?: (tab: TabSlug) => void }) {
   const [openCqlIdx, setOpenCqlIdx] = useState<number | null>(null);
 
   return (

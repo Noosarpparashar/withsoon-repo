@@ -2,9 +2,9 @@
 
 import { useState } from "react";
 
-type Tab = "Start Here" | "Architecture" | "Services" | "Data Design" | "Data Pipeline" | "ML & Recs" | "Failures & Tradeoffs" | "Interview Q&A" | "Cheat Sheet";
+import type { TabSlug } from "@/components/ui/NetflixPage";
 
-function StartHereTab({ onNavigateTab }: { onNavigateTab: (tab: Tab) => void }) {
+function StartHereTab({ onNavigateTab }: { onNavigateTab: (tab: TabSlug) => void }) {
   const [copiedIdx, setCopiedIdx] = useState<number | null>(null);
   const [openClarifyIdx, setOpenClarifyIdx] = useState<number | null>(null);
   const [openScaleIdx, setOpenScaleIdx] = useState<number | null>(null);
@@ -419,14 +419,14 @@ Derived:
 
         <div className="mt-4 flex gap-3">
           <button
-            onClick={() => onNavigateTab("Architecture")}
+            onClick={() => onNavigateTab("architecture")}
             className="flex-1 py-3 rounded-xl text-sm font-bold transition-all"
             style={{ background: "var(--blue-soft)", color: "var(--blue-text)", border: "1px solid var(--blue-text)", cursor: "pointer"  }}
           >
             Next: Architecture →
           </button>
           <button
-            onClick={() => onNavigateTab("Interview Q&A")}
+            onClick={() => onNavigateTab("interview-qa")}
             className="flex-1 py-3 rounded-xl text-sm font-bold transition-all"
             style={{ background: "var(--bg)", color: "var(--text-muted)", border: "1px solid var(--border)", cursor: "pointer"  }}
           >
