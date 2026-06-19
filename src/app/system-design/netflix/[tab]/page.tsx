@@ -20,7 +20,8 @@ export default async function TabPage({ params }: { params: Promise<{ tab: strin
     "data-design", "playback", "cdn", "encoding", "data-pipeline",
     "recommendations", "failures", "tradeoffs", "security", "observability-cost",
   ];
-  if (!["architecture"].includes(tab) && LEGACY.includes(tab)) {
+  const VALID = ["architecture", "models", "tradeoffs", "capacity", "quiz"];
+  if (!VALID.includes(tab) && LEGACY.includes(tab)) {
     redirect("/system-design/netflix/architecture");
   }
   return <NetflixPage initialTab={tab} />;
