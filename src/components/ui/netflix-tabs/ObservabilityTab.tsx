@@ -1,7 +1,7 @@
 "use client";
 
 import { SayThisBlock } from "./shared";
-import type { TabSlug } from "@/components/ui/NetflixPage";
+import type { TabSlug } from "./types";
 
 const KEY_METRICS = [
   { metric: "Playback Start Time", p50: "<500ms", p95: "<1.5s", p99: "<2s", category: "QoE", alert: ">2s P99 for >0.1% of sessions" },

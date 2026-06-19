@@ -1,7 +1,7 @@
 "use client";
 
 import { SayThisBlock } from "./shared";
-import type { TabSlug } from "@/components/ui/NetflixPage";
+import type { TabSlug } from "./types";
 
 const PLAYBACK_STEPS = [
   { step: 1,  actor: "Client",                    action: "POST /playback/session  { titleId, episodeId, deviceId, drmScheme }",                           latency: "" },

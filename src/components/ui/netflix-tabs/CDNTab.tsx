@@ -1,7 +1,7 @@
 "use client";
 
 import { SayThisBlock } from "./shared";
-import type { TabSlug } from "@/components/ui/NetflixPage";
+import type { TabSlug } from "./types";
 
 const OCA_SELECTION_STEPS = [
   { step: "Client IP → ASN lookup", detail: "Determine client's ISP and geographic region from IP address." },

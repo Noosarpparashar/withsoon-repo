@@ -441,7 +441,7 @@ function DataEngineeringTrackTab({ seniorDepth }: { seniorDepth: boolean }) {
           {FLOW_STEPS.map((step) => {
             const isOpen = openSteps.has(step.n);
             return (
-              <div key={step.n} className="rounded-xl overflow-hidden" style={{ border: `1px solid ${isOpen ? "#10b98160" : "var(--border)"}`, borderTop: "3px solid #10b981" }}>
+              <div key={step.n} className="rounded-xl overflow-hidden" style={{ borderTop: "3px solid #10b981", borderRight: `1px solid ${isOpen ? "#10b98160" : "var(--border)"}`, borderBottom: `1px solid ${isOpen ? "#10b98160" : "var(--border)"}`, borderLeft: `1px solid ${isOpen ? "#10b98160" : "var(--border)"}` }}>
                 <button
                   onClick={() => toggleStep(step.n)}
                   className="w-full flex items-center gap-3 px-4 py-3 text-left"

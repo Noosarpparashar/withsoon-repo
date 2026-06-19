@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import type { TabSlug, Role } from "@/components/ui/NetflixPage";
+import type { TabSlug, Role } from "./types";
 
 type NodeInfo = {
   id: string;

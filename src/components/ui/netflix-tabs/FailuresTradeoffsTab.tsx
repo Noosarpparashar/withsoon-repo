@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import type { Role } from "@/components/ui/NetflixPage";
+import type { Role } from "./types";
 
 function SayThisBlock({ text }: { text: string }) {
   const [copied, setCopied] = useState(false);
@@ -406,7 +406,7 @@ function FailuresTradeoffsTab({ role }: { role: Role }) {
               const modeLabel = "mode" in item ? item.mode.replace("-", " ").toUpperCase() : "DEGRADED";
 
               return (
-                <div key={key} className="rounded-xl overflow-hidden" style={{ border: "1px solid var(--border)", borderTop: `3px solid ${modeColor}` }}>
+                <div key={key} className="rounded-xl overflow-hidden" style={{ borderTop: `3px solid ${modeColor}`, borderRight: "1px solid var(--border)", borderBottom: "1px solid var(--border)", borderLeft: "1px solid var(--border)" }}>
                   <div className="flex items-center justify-between px-4 py-3.5 cursor-pointer"
                     style={{ background: "var(--bg)" }}
                     onClick={() => toggleFailure(key)}
@@ -493,7 +493,7 @@ function FailuresTradeoffsTab({ role }: { role: Role }) {
             {TRADEOFF_CARDS.map((item) => {
               const isOpen = expandedTradeoffs.has(item.title);
               return (
-                <div key={item.title} className="rounded-xl overflow-hidden" style={{ border: `1px solid ${isOpen ? `${item.color}40` : "var(--border)"}`, borderTop: `3px solid ${item.color}` }}>
+                <div key={item.title} className="rounded-xl overflow-hidden" style={{ borderTop: `3px solid ${item.color}`, borderRight: `1px solid ${isOpen ? `${item.color}40` : "var(--border)"}`, borderBottom: `1px solid ${isOpen ? `${item.color}40` : "var(--border)"}`, borderLeft: `1px solid ${isOpen ? `${item.color}40` : "var(--border)"}` }}>
                   <div className="px-4 py-4 cursor-pointer"
                     style={{ background: "var(--bg)" }}
                     onClick={() => toggleTradeoff(item.title)}

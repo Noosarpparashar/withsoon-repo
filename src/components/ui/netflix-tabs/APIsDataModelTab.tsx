@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import type { Dispatch, SetStateAction } from "react";
-import type { Role } from "@/components/ui/NetflixPage";
+import type { Role } from "./types";
 
 function CopyButton({ text }: { text: string }) {
   const [c, setC] = useState(false);
@@ -200,7 +200,7 @@ function APIsDataModelTab({ role }: { role: Role }) {
                 const isOpen = openApis.has(i);
                 const mc = api.method === "GET" ? "#10b981" : api.method === "POST" ? "#3b82f6" : "#ef4444";
                 return (
-                  <div key={i} className="rounded-xl overflow-hidden" style={{ border: `1px solid ${isOpen ? `${mc}40` : "var(--border)"}`, borderTop: `3px solid ${mc}` }}>
+                  <div key={i} className="rounded-xl overflow-hidden" style={{ borderTop: `3px solid ${mc}`, borderRight: `1px solid ${isOpen ? `${mc}40` : "var(--border)"}`, borderBottom: `1px solid ${isOpen ? `${mc}40` : "var(--border)"}`, borderLeft: `1px solid ${isOpen ? `${mc}40` : "var(--border)"}` }}>
                     <div className="w-full flex items-center gap-3 px-4 py-3 cursor-pointer"
                       style={{ background: "var(--bg)" }}
                       onClick={() => toggle(setOpenApis, i)}
@@ -237,7 +237,7 @@ function APIsDataModelTab({ role }: { role: Role }) {
               {BACKEND_TABLES.map((tbl, i) => {
                 const isOpen = openTables.has(i);
                 return (
-                  <div key={i} className="rounded-xl overflow-hidden" style={{ border: `1px solid ${isOpen ? `${tbl.color}40` : "var(--border)"}`, borderTop: `3px solid ${tbl.color}` }}>
+                  <div key={i} className="rounded-xl overflow-hidden" style={{ borderTop: `3px solid ${tbl.color}`, borderRight: `1px solid ${isOpen ? `${tbl.color}40` : "var(--border)"}`, borderBottom: `1px solid ${isOpen ? `${tbl.color}40` : "var(--border)"}`, borderLeft: `1px solid ${isOpen ? `${tbl.color}40` : "var(--border)"}` }}>
                     <div className="w-full flex items-center gap-3 px-4 py-3 cursor-pointer"
                       style={{ background: "var(--bg)" }}
                       onClick={() => toggle(setOpenTables, i)}
@@ -305,7 +305,7 @@ function APIsDataModelTab({ role }: { role: Role }) {
               {DATA_EVENTS.map((ev, i) => {
                 const isOpen = openEvents.has(i);
                 return (
-                  <div key={i} className="rounded-xl overflow-hidden" style={{ border: `1px solid ${isOpen ? "#10b98140" : "var(--border)"}`, borderTop: "3px solid #10b981" }}>
+                  <div key={i} className="rounded-xl overflow-hidden" style={{ borderTop: "3px solid #10b981", borderRight: `1px solid ${isOpen ? "#10b98140" : "var(--border)"}`, borderBottom: `1px solid ${isOpen ? "#10b98140" : "var(--border)"}`, borderLeft: `1px solid ${isOpen ? "#10b98140" : "var(--border)"}` }}>
                     <div className="w-full flex items-center gap-3 px-4 py-3 cursor-pointer"
                       style={{ background: "var(--bg)" }}
                       onClick={() => toggle(setOpenEvents, i)}
@@ -341,7 +341,7 @@ function APIsDataModelTab({ role }: { role: Role }) {
               {LAKEHOUSE_SCHEMA.map((tbl, i) => {
                 const isOpen = openSchemas.has(i);
                 return (
-                  <div key={i} className="rounded-xl overflow-hidden" style={{ border: `1px solid ${isOpen ? `${tbl.color}40` : "var(--border)"}`, borderTop: `3px solid ${tbl.color}` }}>
+                  <div key={i} className="rounded-xl overflow-hidden" style={{ borderTop: `3px solid ${tbl.color}`, borderRight: `1px solid ${isOpen ? `${tbl.color}40` : "var(--border)"}`, borderBottom: `1px solid ${isOpen ? `${tbl.color}40` : "var(--border)"}`, borderLeft: `1px solid ${isOpen ? `${tbl.color}40` : "var(--border)"}` }}>
                     <div className="w-full flex items-center gap-3 px-4 py-3 cursor-pointer"
                       style={{ background: "var(--bg)" }}
                       onClick={() => toggle(setOpenSchemas, i)}

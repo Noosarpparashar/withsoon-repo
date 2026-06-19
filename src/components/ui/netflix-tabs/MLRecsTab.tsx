@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { SayThisBlock, FollowUpsAccordion } from "./shared";
-import type { TabSlug } from "@/components/ui/NetflixPage";
+import type { TabSlug } from "./types";
 
 /* ═══════════════════════════════════════════════════════════════
    ML & RECS TAB

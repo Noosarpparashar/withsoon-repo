@@ -7,7 +7,7 @@ import {
   HOUSEHOLD_ENFORCEMENT,
 } from "@/components/ui/netflix-system-data";
 import { SayThisBlock, CodeBlock, CodeBlockWithCopy } from "./shared";
-import type { TabSlug } from "@/components/ui/NetflixPage";
+import type { TabSlug } from "./types";
 
 function DataPipelineTab({ onNavigateTab: _onNavigateTab }: { onNavigateTab?: (tab: TabSlug) => void }) {
   const [expandedCard, setExpandedCard] = useState<string | null>(null);

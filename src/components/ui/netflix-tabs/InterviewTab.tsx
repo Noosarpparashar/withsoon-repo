@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useMemo, useEffect, useCallback } from "react";
-import type { Role } from "@/components/ui/NetflixPage";
+import type { Role } from "./types";
 
 type Difficulty = "Medium" | "Hard";
 

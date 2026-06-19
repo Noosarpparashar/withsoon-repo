@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useMemo } from "react";
-import type { Role } from "@/components/ui/NetflixPage";
+import type { Role } from "./types";
 
 function CopyButton({ text, label }: { text: string; label?: string }) {
   const [c, setC] = useState(false);

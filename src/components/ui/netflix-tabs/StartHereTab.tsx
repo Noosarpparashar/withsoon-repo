@@ -1,8 +1,8 @@
 "use client";
 
 import { useState } from "react";
-import type { TabSlug } from "@/components/ui/NetflixPage";
-import type { Role } from "@/components/ui/NetflixPage";
+import type { TabSlug } from "./types";
+import type { Role } from "./types";
 
 function CopyButton({ text }: { text: string }) {
   const [copied, setCopied] = useState(false);

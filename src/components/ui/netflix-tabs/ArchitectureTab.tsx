@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { SayThisBlock, ScaleDerivationSection } from "./shared";
-import type { TabSlug } from "@/components/ui/NetflixPage";
+import type { TabSlug } from "./types";
 
 const PLATFORM_OVERVIEW_PLANES = [
   {

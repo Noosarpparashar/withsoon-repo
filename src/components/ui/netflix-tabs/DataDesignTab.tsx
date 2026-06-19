@@ -8,7 +8,7 @@ import {
   HOUSEHOLD_ENFORCEMENT,
 } from "@/components/ui/netflix-system-data";
 import { SayThisBlock, FollowUpsAccordion, DbTablesView, CodeBlock, CodeBlockWithCopy } from "./shared";
-import type { TabSlug } from "@/components/ui/NetflixPage";
+import type { TabSlug } from "./types";
 
 const ENTITY_DOMAINS = [
   {

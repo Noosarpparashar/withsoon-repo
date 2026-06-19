@@ -1,7 +1,7 @@
 "use client";
 
 import { SayThisBlock } from "./shared";
-import type { TabSlug } from "@/components/ui/NetflixPage";
+import type { TabSlug } from "./types";
 
 const DRM_STEPS = [
   { step: 1, actor: "Client", action: "User clicks Play. Client sends POST /playback/session with deviceId and drmScheme (WIDEVINE/FAIRPLAY/PLAYREADY)." },

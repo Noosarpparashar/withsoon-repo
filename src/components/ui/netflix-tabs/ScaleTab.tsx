@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { SayThisBlock } from "./shared";
-import type { TabSlug } from "@/components/ui/NetflixPage";
+import type { TabSlug } from "./types";
 
 const ASSUMPTIONS = [
   { label: "Registered users", value: "300M", variable: true },

@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useRef, useCallback } from "react";
-import type { Role } from "@/components/ui/NetflixPage";
+import type { Role } from "./types";
 
 type MockQuestion = {
   step: number;
