@@ -537,7 +537,7 @@ function CDNSection() {
         {/* Control Plane */}
         <div
           className="rounded-2xl p-6"
-          style={{ background: "var(--bg-card)", border: "1px solid var(--border)", borderTop: "3px solid #3b82f6"  }}
+          style={{ background: "var(--bg-card)", borderTop: "3px solid #3b82f6", borderRight: "1px solid var(--border)", borderBottom: "1px solid var(--border)", borderLeft: "1px solid var(--border)" }}
         >
           <h3 className="text-xs font-bold uppercase tracking-wider mb-4" style={{ color: "#3b82f6" }}>
             Control Plane — API Path
@@ -570,7 +570,7 @@ function CDNSection() {
         {/* Video Data Plane */}
         <div
           className="rounded-2xl p-6"
-          style={{ background: "var(--bg-card)", border: "1px solid var(--border)", borderTop: "3px solid #f59e0b"  }}
+          style={{ background: "var(--bg-card)", borderTop: "3px solid #f59e0b", borderRight: "1px solid var(--border)", borderBottom: "1px solid var(--border)", borderLeft: "1px solid var(--border)" }}
         >
           <h3 className="text-xs font-bold uppercase tracking-wider mb-4" style={{ color: "#f59e0b" }}>
             Video Data Plane — After Manifest

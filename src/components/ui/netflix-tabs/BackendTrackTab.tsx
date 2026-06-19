@@ -428,7 +428,7 @@ function BackendTrackTab({ seniorDepth }: { seniorDepth: boolean }) {
           {FLOW_STEPS.map((step) => {
             const isOpen = openSteps.has(step.n);
             return (
-              <div key={step.n} className="rounded-xl overflow-hidden" style={{ border: `1px solid ${isOpen ? "#3b82f660" : "var(--border)"}`, borderTop: "3px solid #3b82f6" }}>
+              <div key={step.n} className="rounded-xl overflow-hidden" style={{ borderTop: "3px solid #3b82f6", borderRight: `1px solid ${isOpen ? "#3b82f660" : "var(--border)"}`, borderBottom: `1px solid ${isOpen ? "#3b82f660" : "var(--border)"}`, borderLeft: `1px solid ${isOpen ? "#3b82f660" : "var(--border)"}` }}>
                 <button
                   onClick={() => toggle(setOpenSteps, step.n)}
                   className="w-full flex items-center gap-3 px-4 py-3 text-left"
@@ -479,7 +479,7 @@ function BackendTrackTab({ seniorDepth }: { seniorDepth: boolean }) {
           {PLAYBACK_SEQUENCE.map((s) => {
             const isOpen = openSeqSteps.has(s.step);
             return (
-              <div key={s.step} className="rounded-xl overflow-hidden" style={{ border: "1px solid var(--border)", borderTop: "3px solid #3b82f6" }}>
+              <div key={s.step} className="rounded-xl overflow-hidden" style={{ borderTop: "3px solid #3b82f6", borderRight: "1px solid var(--border)", borderBottom: "1px solid var(--border)", borderLeft: "1px solid var(--border)" }}>
                 <button
                   onClick={() => toggle(setOpenSeqSteps, s.step)}
                   className="w-full flex items-start gap-3 px-4 py-3 text-left"
@@ -528,7 +528,7 @@ function BackendTrackTab({ seniorDepth }: { seniorDepth: boolean }) {
             const isOpen = openApis.has(i);
             const methodColor = api.method === "GET" ? "#10b981" : api.method === "POST" ? "#3b82f6" : "#ef4444";
             return (
-              <div key={i} className="rounded-xl overflow-hidden" style={{ border: `1px solid ${isOpen ? `${methodColor}50` : "var(--border)"}`, borderTop: `3px solid ${methodColor}` }}>
+              <div key={i} className="rounded-xl overflow-hidden" style={{ borderTop: `3px solid ${methodColor}`, borderRight: `1px solid ${isOpen ? `${methodColor}50` : "var(--border)"}`, borderBottom: `1px solid ${isOpen ? `${methodColor}50` : "var(--border)"}`, borderLeft: `1px solid ${isOpen ? `${methodColor}50` : "var(--border)"}` }}>
                 <button
                   onClick={() => toggle(setOpenApis, i)}
                   className="w-full flex items-center gap-3 px-4 py-3 text-left"
@@ -604,7 +604,7 @@ function BackendTrackTab({ seniorDepth }: { seniorDepth: boolean }) {
           {DB_TABLES.map((tbl, i) => {
             const isOpen = openTables.has(i);
             return (
-              <div key={i} className="rounded-xl overflow-hidden" style={{ border: `1px solid ${isOpen ? `${tbl.color}50` : "var(--border)"}`, borderTop: `3px solid ${tbl.color}` }}>
+              <div key={i} className="rounded-xl overflow-hidden" style={{ borderTop: `3px solid ${tbl.color}`, borderRight: `1px solid ${isOpen ? `${tbl.color}50` : "var(--border)"}`, borderBottom: `1px solid ${isOpen ? `${tbl.color}50` : "var(--border)"}`, borderLeft: `1px solid ${isOpen ? `${tbl.color}50` : "var(--border)"}` }}>
                 <button
                   onClick={() => toggle(setOpenTables, i)}
                   className="w-full flex items-center gap-3 px-4 py-3 text-left"

@@ -37,7 +37,7 @@ export function CDNTab({ onNavigateTab }: { onNavigateTab?: (tab: TabSlug) => vo
           This is the single most important mental model for Netflix architecture. Interviewers expect you to state it clearly.
         </p>
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
-          <div className="rounded-2xl p-6" style={{ background: "var(--bg-card)", border: "1px solid var(--border)", borderTop: "3px solid #3b82f6" }}>
+          <div className="rounded-2xl p-6" style={{ background: "var(--bg-card)", borderTop: "3px solid #3b82f6", borderRight: "1px solid var(--border)", borderBottom: "1px solid var(--border)", borderLeft: "1px solid var(--border)" }}>
             <h3 className="text-xs font-bold uppercase tracking-wider mb-4" style={{ color: "#3b82f6" }}>Control Plane — API Path</h3>
             <div className="space-y-2">
               {[
@@ -64,7 +64,7 @@ export function CDNTab({ onNavigateTab }: { onNavigateTab?: (tab: TabSlug) => vo
             </div>
           </div>
 
-          <div className="rounded-2xl p-6" style={{ background: "var(--bg-card)", border: "1px solid var(--border)", borderTop: "3px solid #f59e0b" }}>
+          <div className="rounded-2xl p-6" style={{ background: "var(--bg-card)", borderTop: "3px solid #f59e0b", borderRight: "1px solid var(--border)", borderBottom: "1px solid var(--border)", borderLeft: "1px solid var(--border)" }}>
             <h3 className="text-xs font-bold uppercase tracking-wider mb-4" style={{ color: "#f59e0b" }}>Data Plane — After Manifest</h3>
             <div className="space-y-2 mb-4">
               {FALLBACK_CHAIN.map((level, i, arr) => (
