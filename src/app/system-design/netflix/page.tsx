@@ -1,5 +1,5 @@
 import { redirect } from "next/navigation";
 
 export default function Page() {
-  redirect("/system-design/netflix/start-here");
+  redirect("/system-design/netflix/architecture");
 }
