@@ -173,7 +173,7 @@ export function SecurityTab({ onNavigateTab }: { onNavigateTab?: (tab: TabSlug) 
       <SayThisBlock text="Netflix content security has two layers. Control plane: JWT auth (15-min TTL), entitlement check, concurrency check via atomic Redis Lua. After authorization, the client gets a signed manifest URL (HMAC-SHA256, 6h TTL) and a DRM license URL. Data plane: video segments are AES-128 encrypted. The Content Encryption Key is device-bound via the DRM license — it lives in the device's TEE and can never be extracted. Even if someone captures the CDN URL, they can't decrypt the segments without the device-bound license." />
 
       {onNavigateTab && (
-        <button onClick={() => onNavigateTab("observability-cost")} className="w-full py-4 rounded-2xl text-sm font-semibold"
+        <button onClick={() => onNavigateTab("failures-tradeoffs" as never)} className="w-full py-4 rounded-2xl text-sm font-semibold"
           style={{ background: "var(--blue-soft)", color: "var(--blue-text)", border: "1px solid var(--border)", cursor: "pointer" }}>
           Next: Observability / Cost →
         </button>

@@ -160,7 +160,7 @@ export function CDNTab({ onNavigateTab }: { onNavigateTab?: (tab: TabSlug) => vo
       <SayThisBlock text="95% of Netflix traffic is video bytes flowing client-to-OCA. The control plane — auth, entitlement, session, DRM — handles <300ms of the user's click. After that, the API tier is completely out of the path. Netflix built Open Connect because at 300 Tbps, commercial CDN transit fees would cost hundreds of millions per year. OCA hardware inside ISP networks eliminates that cost entirely. The Steering Service picks the best OCA per client using ASN, title availability, health, and load — returning a ranked list so the player can retry down the list without another API call." />
 
       {onNavigateTab && (
-        <button onClick={() => onNavigateTab("encoding")} className="w-full py-4 rounded-2xl text-sm font-semibold"
+        <button onClick={() => onNavigateTab("backend-track" as never)} className="w-full py-4 rounded-2xl text-sm font-semibold"
           style={{ background: "var(--blue-soft)", color: "var(--blue-text)", border: "1px solid var(--border)", cursor: "pointer" }}>
           Next: Content Upload + Encoding →
         </button>

@@ -371,7 +371,7 @@ function ArchitectureMapTab({ role, onNavigateTab: _onNavigateTab }: { role: Rol
           {mode === "backend" ? "Backend Architecture — Key Interview Points" : "Data Architecture — Key Interview Points"}
         </h3>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-          {mode === "backend" ? [
+          {(mode === "backend" ? [
             { point: "API path vs data path", detail: "95% of Netflix bandwidth flows CDN-direct. The API path (Gateway→Auth→Playback→DRM→Manifest) is only for session setup." },
             { point: "Fail open vs fail closed", detail: "DRM fails closed (legal requirement). Everything else fails open with degraded experience." },
             { point: "Consistency boundaries", detail: "Concurrency limit → Redis (strong). Watch progress → Cassandra (eventual). Billing → MySQL (ACID)." },
@@ -381,7 +381,7 @@ function ArchitectureMapTab({ role, onNavigateTab: _onNavigateTab }: { role: Rol
             { point: "Bronze is immutable", detail: "Never modify Bronze. Reprocessing always starts from Bronze. It is the canonical source of truth." },
             { point: "Dedup before any aggregation", detail: "Counting raw heartbeats gives wrong watch time. Always dedup by event_id first." },
             { point: "Watermark for late events", detail: "30-minute watermark for heartbeats. Events after watermark go to DLQ, not silently dropped." },
-          ].map((item) => (
+          ]).map((item) => (
             <div key={item.point} className="rounded-lg p-3" style={{ background: "var(--bg)", border: "1px solid var(--border)" }}>
               <p className="text-xs font-bold mb-1" style={{ color }}>▸ {item.point}</p>
               <p className="text-xs leading-relaxed" style={{ color: "var(--text-muted)" }}>{item.detail}</p>

@@ -206,7 +206,7 @@ export function EncodingTab({ onNavigateTab }: { onNavigateTab?: (tab: TabSlug) 
       <SayThisBlock text="Content encoding is an async pipeline with a well-defined state machine: UPLOADED → VALIDATED → ENCODING → QC → PACKAGED → ENCRYPTED → DISTRIBUTING → PUBLISHED. Each stage is an independent idempotent job. Encoding generates 15–20 variants per title for adaptive bitrate. The DRM encryption step wraps each segment in AES-128 using a CEK stored in HSM. A title is never published until all required variants pass automated QC. The nightly fill algorithm then proactively pushes high-demand titles to OCA edges before peak viewing." />
 
       {onNavigateTab && (
-        <button onClick={() => onNavigateTab("data-pipeline")} className="w-full py-4 rounded-2xl text-sm font-semibold"
+        <button onClick={() => onNavigateTab("data-engineering" as never)} className="w-full py-4 rounded-2xl text-sm font-semibold"
           style={{ background: "var(--blue-soft)", color: "var(--blue-text)", border: "1px solid var(--border)", cursor: "pointer" }}>
           Next: Data Pipeline →
         </button>

@@ -198,7 +198,7 @@ export function PlaybackTab({ onNavigateTab }: { onNavigateTab?: (tab: TabSlug) 
       <SayThisBlock text="The Playback Service is intentionally thin — it validates auth, checks entitlement via EVCache, acquires a stream slot atomically via Redis Lua, gets a DRM license token, and returns a signed manifest URL. Steps 5–9 run in parallel so total latency is ~85ms, not the sum of each step. After step 13, Netflix's API servers are completely out of the video path. 95% of Netflix traffic is video bytes flowing directly client-to-OCA." />
 
       {onNavigateTab && (
-        <button onClick={() => onNavigateTab("cdn")} className="w-full py-4 rounded-2xl text-sm font-semibold"
+        <button onClick={() => onNavigateTab("backend-track" as never)} className="w-full py-4 rounded-2xl text-sm font-semibold"
           style={{ background: "var(--blue-soft)", color: "var(--blue-text)", border: "1px solid var(--border)", cursor: "pointer" }}>
           Next: CDN / Open Connect →
         </button>

@@ -944,7 +944,7 @@ function ArchitectureTab({ onNavigateService, onNavigateTab }: { onNavigateServi
         <p className="text-sm" style={{ color: "var(--text)" }}>
           <strong style={{ color: "var(--blue-text)" }}>Data Model &amp; Access Patterns</strong> — detailed ERD, Cassandra CQL schemas, and per-table database rationale are in the{" "}
           <button
-            onClick={() => onNavigateTab("data-design")}
+            onClick={() => onNavigateTab("apis-data-model" as never)}
             style={{ color: "var(--blue-text)", textDecoration: "underline", cursor: "pointer", background: "none", border: "none"  }}
           >
             Data Design tab

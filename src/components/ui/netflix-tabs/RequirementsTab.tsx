@@ -243,7 +243,7 @@ export function RequirementsTab({ onNavigateTab }: { onNavigateTab?: (tab: TabSl
       {/* CTA */}
       {onNavigateTab && (
         <button
-          onClick={() => onNavigateTab("scale")}
+          onClick={() => onNavigateTab("scale-estimation" as never)}
           className="w-full py-4 rounded-2xl text-sm font-semibold transition-colors"
           style={{ background: "var(--blue-soft)", color: "var(--blue-text)", border: "1px solid var(--border)", cursor: "pointer" }}
         >

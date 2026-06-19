@@ -240,7 +240,7 @@ export function FailuresTab({ onNavigateTab }: { onNavigateTab?: (tab: TabSlug) 
       <SayThisBlock text="The guiding principle: fail open for user experience, fail closed for security and legal obligations. Playback fails open because a degraded stream beats a black screen. DRM fails closed because studio contracts require it. Billing fails open for active users with cached entitlement — fail closed only for new or unknown users. Recommendations always have a three-tier fallback. Analytics and watch history writes are async and never block playback." />
 
       {onNavigateTab && (
-        <button onClick={() => onNavigateTab("tradeoffs")} className="w-full py-4 rounded-2xl text-sm font-semibold"
+        <button onClick={() => onNavigateTab("failures-tradeoffs" as never)} className="w-full py-4 rounded-2xl text-sm font-semibold"
           style={{ background: "var(--blue-soft)", color: "var(--blue-text)", border: "1px solid var(--border)", cursor: "pointer" }}>
           Next: Tradeoffs →
         </button>

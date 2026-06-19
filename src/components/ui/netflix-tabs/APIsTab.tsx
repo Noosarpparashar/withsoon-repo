@@ -408,7 +408,7 @@ export function APIsTab({ onNavigateTab }: { onNavigateTab?: (tab: TabSlug) => v
 
       {onNavigateTab && (
         <button
-          onClick={() => onNavigateTab("data-design")}
+          onClick={() => onNavigateTab("apis-data-model" as never)}
           className="w-full py-4 rounded-2xl text-sm font-semibold"
           style={{ background: "var(--blue-soft)", color: "var(--blue-text)", border: "1px solid var(--border)", cursor: "pointer" }}
         >

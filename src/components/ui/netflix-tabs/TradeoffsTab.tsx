@@ -195,7 +195,7 @@ export function TradeoffsTab({ onNavigateTab }: { onNavigateTab?: (tab: TabSlug)
       </div>
 
       {onNavigateTab && (
-        <button onClick={() => onNavigateTab("security")} className="w-full py-4 rounded-2xl text-sm font-semibold"
+        <button onClick={() => onNavigateTab("failures-tradeoffs" as never)} className="w-full py-4 rounded-2xl text-sm font-semibold"
           style={{ background: "var(--blue-soft)", color: "var(--blue-text)", border: "1px solid var(--border)", cursor: "pointer" }}>
           Next: Security / DRM →
         </button>

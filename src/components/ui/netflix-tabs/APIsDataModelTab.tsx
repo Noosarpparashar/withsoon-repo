@@ -278,7 +278,7 @@ function APIsDataModelTab({ role }: { role: Role }) {
                         {[["Kafka topic", ev.kafka], ["Partition key", ev.key], ["Frequency", ev.frequency], ["Critical fields", ev.criticalFields.join(", ")]].map(([k, v]) => (
                           <div key={k as string} className="rounded-lg p-2.5" style={{ background: "var(--bg)", border: "1px solid var(--border)" }}>
                             <div className="text-[10px] font-bold uppercase mb-1" style={{ color: "var(--text-faint)" }}>{k}</div>
-                            <div className="text-xs" style={{ color: "var(--text-muted)" }}>{v instanceof Array ? v.join(", ") : v}</div>
+                            <div className="text-xs" style={{ color: "var(--text-muted)" }}>{Array.isArray(v) ? (v as string[]).join(", ") : v}</div>
                           </div>
                         ))}
                       </div>
