@@ -3,59 +3,66 @@ import NetflixPage from "@/components/ui/NetflixPage";
 
 const VALID_TABS = [
   "start-here",
-  "requirements",
-  "scale",
-  "architecture",
-  "services",
-  "apis",
-  "data-design",
-  "playback",
-  "cdn",
-  "encoding",
-  "data-pipeline",
-  "recommendations",
-  "failures",
-  "tradeoffs",
-  "security",
-  "observability-cost",
+  "backend-track",
+  "data-engineering",
+  "architecture-map",
+  "apis-data-model",
+  "scale-estimation",
+  "failures-tradeoffs",
   "interview-qa",
   "mock-interview",
   "cheat-sheet",
+  // Legacy redirects — old slugs still handled by the redirect below
 ] as const;
 
 type TabSlug = (typeof VALID_TABS)[number];
 
+const LEGACY_REDIRECTS: Record<string, TabSlug> = {
+  "requirements":       "start-here",
+  "scale":              "scale-estimation",
+  "architecture":       "architecture-map",
+  "services":           "architecture-map",
+  "apis":               "apis-data-model",
+  "data-design":        "apis-data-model",
+  "playback":           "backend-track",
+  "cdn":                "backend-track",
+  "encoding":           "backend-track",
+  "data-pipeline":      "data-engineering",
+  "recommendations":    "data-engineering",
+  "failures":           "failures-tradeoffs",
+  "tradeoffs":          "failures-tradeoffs",
+  "security":           "failures-tradeoffs",
+  "observability-cost": "failures-tradeoffs",
+};
+
 export async function generateMetadata({ params }: { params: Promise<{ tab: string }> }) {
   const { tab } = await params;
   const titles: Record<string, string> = {
-    "start-here": "Start Here — Netflix System Design",
-    "requirements": "Requirements — Netflix System Design",
-    "scale": "Scale Estimation — Netflix System Design",
-    "architecture": "Full Architecture — Netflix System Design",
-    "services": "Services — Netflix System Design",
-    "apis": "APIs — Netflix System Design",
-    "data-design": "Data Design — Netflix System Design",
-    "playback": "Playback Deep Dive — Netflix System Design",
-    "cdn": "CDN / Open Connect — Netflix System Design",
-    "encoding": "Content Encoding — Netflix System Design",
-    "data-pipeline": "Data Pipeline — Netflix System Design",
-    "recommendations": "ML & Recommendations — Netflix System Design",
-    "failures": "Reliability & Failures — Netflix System Design",
-    "tradeoffs": "Tradeoffs — Netflix System Design",
-    "security": "Security & DRM — Netflix System Design",
-    "observability-cost": "Observability & Cost — Netflix System Design",
-    "interview-qa": "Interview Q&A — Netflix System Design",
-    "mock-interview": "Mock Interview — Netflix System Design",
-    "cheat-sheet": "Cheat Sheet — Netflix System Design",
+    "start-here":         "Start Here — Netflix System Design for Backend & Data Engineers",
+    "backend-track":      "Backend Engineer Track — Netflix System Design",
+    "data-engineering":   "Data Engineering Track — Netflix System Design",
+    "architecture-map":   "Architecture Map — Netflix System Design",
+    "apis-data-model":    "APIs + Data Model — Netflix System Design",
+    "scale-estimation":   "Scale Estimation — Netflix System Design",
+    "failures-tradeoffs": "Failures + Tradeoffs — Netflix System Design",
+    "interview-qa":       "Interview Q&A — Netflix System Design",
+    "mock-interview":     "Mock Interview — Netflix System Design",
+    "cheat-sheet":        "Cheat Sheet — Netflix System Design",
   };
   return {
     title: titles[tab] ?? "Netflix System Design — withsoon",
-    description: "Complete Netflix system design interview prep: architecture, data pipeline, ML, failures, tradeoffs, and 60+ Q&As.",
+    description: "Role-specific Netflix system design interview prep for Backend Engineers and Data Engineers. Backend playback architecture, data pipeline, Kafka, Iceberg, failures, tradeoffs, and 60+ Q&As.",
   };
 }
 
 export default async function TabPage({ params }: { params: Promise<{ tab: string }> }) {
   const { tab } = await params;
+
+  // Handle legacy URLs
+  if (LEGACY_REDIRECTS[tab]) {
+    redirect(`/system-design/netflix/${LEGACY_REDIRECTS[tab]}`);
+  }
+
   if (!VALID_TABS.includes(tab as TabSlug)) {
     redirect("/system-design/netflix/start-here");
   }
