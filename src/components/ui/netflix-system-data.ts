@@ -20,6 +20,7 @@ export const SCALE_NUMBERS = [
 
 
 
+// PART 1
 export type Service = {
   id: string;
   section: string;
@@ -32,6 +33,13 @@ export type Service = {
   classesAndMethods: string;
   dbTables?: string;
   keyInsight?: string;
+  sayThis?: string;
+  interviewFollowUps?: string[];
+  slo?: string;
+  eventsProduced?: string[];
+  eventsConsumed?: string[];
+  failureModes?: Array<{ scenario: string; mode: "fail-open" | "fail-closed"; recovery: string }>;
+  scalingStrategy?: string;
 };
 
 export const SERVICES: Service[] = [
@@ -90,6 +98,13 @@ QoEReporter
   reportBitrateChange(sessionId, fromKbps, toKbps)
   reportError(sessionId, errorCode, message)`,
     keyInsight: undefined,
+    sayThis: "The client is the most complex component in the Netflix stack — it runs the BOLA adaptive bitrate algorithm, manages DRM decryption inside the TEE, batches QoE events, and streams video directly from the nearest OCA. After the Playback Service returns a manifest URL, the API tier is completely out of the video path.",
+    interviewFollowUps: [
+      "How does the BOLA algorithm decide when to switch bitrate?",
+      "What happens if the client loses network mid-stream?",
+      "How does DRM decryption happen without exposing the key?",
+      "How does the client handle an OCA that is slow or erroring?",
+    ],
   },
   {
     id: "oca",
@@ -127,6 +142,13 @@ CacheFillScheduler
   executeFill(fillJobId) → void
   getFillStatus(fillJobId) → FillStatus`,
     keyInsight: "During Chaos Kong tests, Netflix takes down an entire AWS region and verifies Route53 shifts traffic automatically within 30s.",
+    sayThis: "Open Connect is Netflix's own CDN — ~17,000 appliances co-located inside ISPs globally. 95% of Netflix traffic is video bytes flowing Client ↔ OCA. The API tier never touches video bytes after the manifest URL is issued. ISPs accept free hardware in exchange for peering — Netflix pays for hardware, not bandwidth fees. At 300 Tbps, commercial CDN pricing would be hundreds of millions per year.",
+    interviewFollowUps: [
+      "Why not just use CloudFront or Akamai?",
+      "What happens on an OCA cache miss?",
+      "How does the nightly fill algorithm predict what to pre-cache?",
+      "What if an entire ISP's OCAs go down simultaneously?",
+    ],
   },
   {
     id: "elb",
@@ -147,6 +169,12 @@ CacheFillScheduler
   isRegionHealthy(region) → Boolean
   failover(fromRegion, toRegion) → void`,
     keyInsight: "During Chaos Kong tests, Netflix takes down an entire AWS region and verifies Route53 shifts traffic automatically within 30s.",
+    sayThis: "Route53 uses latency-based routing with health checks on every Zuul2 instance. When a region fails health checks, DNS shifts to the next closest healthy region within ~30 seconds. Netflix runs active-active across us-east-1, eu-west-1, and ap-south-1 — not active-passive. There is no warm-up delay because all regions serve live traffic.",
+    interviewFollowUps: [
+      "What is the RTO if an entire AWS region fails?",
+      "How does Netflix test region failover in production?",
+      "Why active-active instead of active-passive?",
+    ],
   },
   {
     id: "eureka",
@@ -184,6 +212,12 @@ Archaius
   getProperty(key) → String
   setProperty(key, value) → void    // hot-reload without restart
   getDynamicIntProperty(key, default) → DynamicIntProperty`,
+    sayThis: "Eureka is client-side service discovery — every service registers itself and sends heartbeats every 30s. Ribbon on each client picks the instance using zone-aware round-robin, with no central proxy hop. The key insight: a central load balancer at this scale would itself be a bottleneck. Self-preservation mode prevents Eureka from evicting all services during a network partition, which would cascade into total failure.",
+    interviewFollowUps: [
+      "Why client-side load balancing instead of a central proxy like Envoy?",
+      "What is self-preservation mode and why does it matter?",
+      "What happens if Eureka itself goes down?",
+    ],
   },
   {
     id: "zuul",
@@ -233,6 +267,12 @@ LoggingFilter extends ZuulFilter
   injectCorrelationId(request) → String
   logRequest(correlationId, userId, path, ms)
   publishToKafka(accessLog)`,
+    sayThis: "Zuul2 switched from Zuul1's thread-per-request model to async non-blocking I/O on Netty. At 1M requests/second, a thread-per-request model would require ~1M threads. Zuul2 handles that with far fewer threads. Every request flows through a filter chain: pre-filters for auth and rate limiting, routing filters to discover the right microservice via Eureka/Ribbon, and post-filters for logging and correlation ID injection.",
+    interviewFollowUps: [
+      "Why did Netflix switch from Zuul1 to Zuul2?",
+      "How does Zuul handle rate limiting at 1M req/s without a central DB?",
+      "How does Zuul route A/B test traffic?",
+    ],
   },
   {
     id: "auth",
@@ -341,6 +381,12 @@ CREATE TABLE oauth_accounts (
 -- refresh:{token_uuid}         → { userId, deviceId, expiresAt }   TTL 30d
 -- reset:{token}                → userId                             TTL 1h
 -- notif_sent:{userId}:{type}   → 1                                  TTL 24h`,
+    sayThis: "Access tokens are 15-minute RS256 JWTs — short window if stolen. Refresh tokens are 30 days but stored server-side in Redis and can be instantly revoked. If an account is compromised, DELETE /auth/sessions wipes all refresh tokens and every session is invalidated within 15 minutes as access tokens expire naturally. Password hashes use bcrypt at cost 12 — deliberately slow to thwart brute force.",
+    interviewFollowUps: [
+      "Why 15-minute access token TTL instead of longer?",
+      "How do you revoke all sessions instantly?",
+      "How does OAuth2 account linking work without storing passwords?",
+    ],
   },
   {
     id: "user",
@@ -439,6 +485,11 @@ PRIMARY KEY ((profile_id, year), watched_at) WITH CLUSTERING ORDER BY (watched_a
   position_ms   BIGINT
   duration_ms   BIGINT
   completed     BOOLEAN`,
+    sayThis: "Each Netflix account gets up to 5 profiles, each isolated — their own watch history, recommendations, maturity settings, and language preferences. Watch history is in Cassandra (not MySQL) because the write volume from heartbeats would saturate any relational DB. The composite partition key (profile_id, year) prevents unbounded partition growth for heavy viewers.",
+    interviewFollowUps: [
+      "Why profile-level isolation instead of account-level?",
+      "How does watch history deletion (GDPR) work when it's in Cassandra?",
+    ],
   },
   {
     id: "catalog",
@@ -544,6 +595,12 @@ episodes table
   duration_ms      BIGINT
   thumbnail_url    TEXT
   release_date     DATE`,
+    sayThis: "Catalog reads happen on every page load. The Catalog Service uses a multi-layer cache: EVCache (Memcached) with 5-minute TTL serves reads at sub-millisecond latency across all AZs. On cache miss, Cassandra is hit — partitioned by titleId for O(1) reads. Writes to catalog are rare (new content launches), so 5-minute staleness is always acceptable. Search uses Elasticsearch with BM25 + dense vector kNN for semantic matching.",
+    interviewFollowUps: [
+      "How does catalog stay consistent when a title is removed in some countries?",
+      "How does maturity filtering work per profile?",
+      "What happens if EVCache is cold after a region failure?",
+    ],
   },
   {
     id: "playback",
@@ -621,6 +678,24 @@ active_sessions table
   last_beat_at TIMESTAMP
   oca_id       TEXT`,
     keyInsight: "startPlayback() target: < 300ms p99. After manifest returned, API servers are completely out of the hot path — all video bytes flow Client ↔ OCA.",
+    sayThis: "Playback Service is the most latency-critical endpoint — P99 < 300ms. It checks entitlement via EVCache (falls back to Billing if miss), acquires a stream slot atomically via Redis Lua, calls Steering Service for the best OCA, issues a DRM license token, and returns a signed manifest URL. After this, the API tier is completely out of the video path. If Billing is unreachable, we fail open — assume active and reconcile later. Losing a revenue check is better than blocking a valid user's stream.",
+    interviewFollowUps: [
+      "How does the latency budget break down across the 300ms P99?",
+      "Why fail open when Billing is unreachable?",
+      "How does the 36-second stream slot TTL prevent stuck slots after a crash?",
+      "What if DRM Service is down?",
+    ],
+    // PART 2 — playback service new fields
+    slo: "P99 < 300ms for manifest URL delivery",
+    eventsProduced: ["playback.started.v3", "playback.heartbeat.v5", "playback.stopped.v3", "playback.error.v4"],
+    eventsConsumed: ["entitlement.updated.v2", "billing.subscription_changed.v4"],
+    failureModes: [
+      { scenario: "Billing Service unreachable", mode: "fail-open", recovery: "Allow playback, assume active subscription, flag for async billing reconciliation" },
+      { scenario: "DRM Service unavailable", mode: "fail-closed", recovery: "Return 503 — cannot decrypt content without valid license (contractual requirement)" },
+      { scenario: "Cassandra slow (heartbeat write)", mode: "fail-open", recovery: "Write heartbeat to Kafka instead, async persist via consumer" },
+      { scenario: "Redis concurrency check fails", mode: "fail-open", recovery: "Allow stream, alert ops, reconcile concurrency count asynchronously" },
+    ],
+    scalingStrategy: "Stateless, horizontally scalable. All state externalized to Cassandra (sessions), Redis (concurrency slots), EVCache (entitlement). Redis Cluster with consistent hashing by user_id for stream slots. Cassandra ring partitioned by profile_id.",
   },
   {
     id: "billing",
@@ -723,6 +798,12 @@ CREATE TABLE invoices (
     INDEX idx_status_created (status, created_at)
 );`,
     keyInsight: "BASIC: $6.99/mo | 1 stream | 480p | no downloads. STANDARD: $15.49/mo | 2 streams | 1080p | 2 devices. PREMIUM: $22.99/mo | 4 streams | 4K + HDR | 6 devices.",
+    sayThis: "Billing requires ACID — money operations cannot use eventual consistency. MySQL with SELECT FOR UPDATE prevents double-charge races. Payment cards are never stored raw — tokenized via Stripe/Braintree. The Billing Service publishes entitlement events to Kafka; the Playback Service caches these in EVCache. On a cache miss during playback, we call Billing. If Billing is unreachable, we fail open — better to give a free stream than block a paying user.",
+    interviewFollowUps: [
+      "Why MySQL for billing instead of Cassandra?",
+      "How does the payment retry schedule work on failure?",
+      "How does plan downgrade affect active streams?",
+    ],
   },
   {
     id: "recommendation",
@@ -789,6 +870,23 @@ PRIMARY KEY (profile_id, row_type, rank)
   artwork_id   TEXT
   computed_at  TIMESTAMP`,
     keyInsight: "Artwork personalization — a romance viewer sees a couple, an action viewer sees an explosion for the same title. Drives ~20% uplift in click-through rate.",
+    sayThis: "The recommendation system has three layers: offline (Spark trains the model nightly on S3 Iceberg data), nearline (Flink updates features in minutes from Kafka events), and online (the two-tower model scores candidates at homepage load using sub-5ms feature lookups from DynamoDB/Redis). If the recommendation service is slow or down, we fall back to a pre-computed trending list from EVCache — the user always sees a populated homepage.",
+    interviewFollowUps: [
+      "How do you handle cold start for a brand new user?",
+      "What is training-serving skew and how do you prevent it?",
+      "How does artwork personalization work?",
+      "How do you A/B test a new recommendation model safely?",
+    ],
+    // PART 2 — recommendation service new fields
+    slo: "P99 < 150ms for homepage recommendation response",
+    eventsProduced: ["recommendation.served.v2", "recommendation.clicked.v2"],
+    eventsConsumed: ["playback.started.v3", "playback.stopped.v3", "ui.impression.v7", "experiment.assignment.v3"],
+    failureModes: [
+      { scenario: "ML model serving unavailable", mode: "fail-open", recovery: "Tier 1: pre-computed Cassandra recs. Tier 2: trending by region. Tier 3: global top-10." },
+      { scenario: "Feature Store unavailable (<5ms lookup fails)", mode: "fail-open", recovery: "Fallback to cached embeddings from EVCache. Staleness acceptable — recs degrade gracefully." },
+      { scenario: "A/B experiment config missing", mode: "fail-open", recovery: "Serve default model (experiment_id=0 hash). Log the fallback for analysis." },
+    ],
+    scalingStrategy: "ANN index (FAISS/ScaNN) pre-built offline, loaded into memory on recommendation servers. User embeddings fetched from DynamoDB (<5ms). Online layer is stateless — scale horizontally. Pre-materialized recs in Cassandra as last-resort fallback.",
   },
   {
     id: "concurrency",
@@ -829,6 +927,12 @@ Redis Key Design:
   streams:{userId}        → count (INCR/DECR, TTL 36s refreshed by heartbeat)
   stream_set:{userId}     → Set<sessionId> (SADD/SREM)`,
     keyInsight: "The acquire uses a Lua script: check count < limit, INCR, SADD in a single atomic operation — prevents TOCTOU race conditions.",
+    sayThis: "Concurrency control must be atomic and sub-millisecond. A relational database would need a transaction with SELECT FOR UPDATE — too slow at this scale. Redis Lua executes check+INCR+SADD as one atomic operation. The slot TTL is 36 seconds. The client heartbeats every 30 seconds, refreshing the TTL. If the client crashes, the slot auto-expires in 36 seconds — no manual cleanup, no stuck slots.",
+    interviewFollowUps: [
+      "Why use a Lua script instead of a Redis transaction (MULTI/EXEC)?",
+      "What if Redis itself goes down during a playback start?",
+      "How do you handle the case where a user buys a higher plan mid-stream?",
+    ],
   },
   {
     id: "drm",
@@ -858,6 +962,12 @@ ContentKey
     algorithm: AES128_CBC | AES128_CTR
     rotatedAt: Timestamp`,
     keyInsight: "Decryption keys only ever exist in the device TEE (ARM TrustZone / Intel SGX). If the device is jailbroken, Widevine L1 is refused; L3 (software-only) is issued with lower quality cap (max 480p).",
+    sayThis: "DRM key delivery is decoupled from video bytes — the key never travels with the content. Even if an OCA is physically compromised, the encrypted content is unplayable without the license. Netflix uses three DRM systems: Widevine (Android, Chrome, Smart TVs), FairPlay (Apple), PlayReady (Windows, Xbox). If DRM Service is down, we fail closed — no silent degradation. A user without a valid license cannot watch protected content.",
+    interviewFollowUps: [
+      "Why three separate DRM systems instead of one?",
+      "What is the difference between Widevine L1 and L3?",
+      "How does offline DRM work when there is no internet?",
+    ],
   },
   {
     id: "encoding",
@@ -906,6 +1016,12 @@ SceneAnalyzer
   detectSceneBoundaries(video) → List<Long>       // timestamps
   assignBitratePerScene(complexities) → Map<SceneId, Int>`,
     keyInsight: "Per-title encoding example: A simple animated film gets ~1,000 kbps for 1080p. A dark action film gets ~4,000 kbps for the same resolution at the same VMAF quality score.",
+    sayThis: "Netflix's encoding pipeline produces 1,200+ variants per title. The key innovation is per-title encoding: instead of a fixed bitrate ladder, we analyze each title's visual complexity (DCT spatial + motion vector temporal) and assign bitrates based on actual difficulty. A simple animated series can be encoded at 800 kbps at 1080p with the same VMAF perceptual quality as a live-action thriller at 4000 kbps. This saves ~20% bandwidth at 300 Tbps scale.",
+    interviewFollowUps: [
+      "What is VMAF and why does Netflix use it instead of PSNR?",
+      "What is CMAF and why does it allow segment reuse across DRM systems?",
+      "How does per-shot encoding differ from per-title encoding?",
+    ],
   },
   {
     id: "kafka",
@@ -969,6 +1085,23 @@ Producer settings for zero message loss:
   max.in.flight.requests.per.connection=5
   compression.type=zstd
   delivery.timeout.ms=120000`,
+    sayThis: "Kafka is Netflix's event backbone — ~700 billion events per day across ~40 clusters and ~720 brokers. The critical config: acks=all, min.insync.replicas=2, unclean.leader.election=false — these together guarantee no data loss. We partition playback events by playback_id, not title_id, to avoid hot partitions when a new title launches. 7-day Kafka retention + S3 Iceberg as the long-term truth — you replay from S3, not Kafka.",
+    interviewFollowUps: [
+      "Why partition by playback_id instead of title_id?",
+      "How do you prevent a popular title from causing a hot partition?",
+      "What is the difference between at-least-once and exactly-once in Kafka?",
+      "How does consumer group rebalancing affect your Flink pipeline?",
+    ],
+    // PART 2 — kafka service new fields
+    slo: "P99 produce latency < 5ms (async producer)",
+    eventsProduced: [],
+    eventsConsumed: ["All event topics"],
+    failureModes: [
+      { scenario: "Broker loses data before consumer ACK", mode: "fail-closed", recovery: "acks=all + min.insync.replicas=2 prevents ack until 2+ replicas written. Idempotent producer prevents duplicates on retry." },
+      { scenario: "Consumer lag grows (backpressure)", mode: "fail-open", recovery: "Kafka retains up to 7 days. Lag alerts at 1M events. Flink auto-scales consumers. DLQ for poison pills." },
+      { scenario: "Leader election", mode: "fail-open", recovery: "unclean.leader.election=false — only ISR members can become leader. Prevents data loss at cost of brief unavailability." },
+    ],
+    scalingStrategy: "~720 brokers, ~40 clusters. Partitioned by profile_id (not title_id) to avoid hot partitions on popular titles. Partition count = estimated peak events/s ÷ 5K events/partition/s. Cross-region MirrorMaker2 for disaster recovery.",
   },
   {
     id: "cassandra",
@@ -1017,6 +1150,23 @@ CREATE TABLE recommendations (
     PRIMARY KEY (profile_id, row_type, rank)
 );`,
     keyInsight: "The rule: Every query must hit a single partition. No ALLOW FILTERING. No joins. Design tables around query patterns, not normalization.",
+    sayThis: "Cassandra at Netflix is ~10,000 nodes — the world's largest deployment. Used for any workload that is write-heavy and access-pattern-predictable: watch history (partition by profile_id + year), resume positions, pre-computed recommendations. The design rule: every query must hit a single partition. No ALLOW FILTERING, no joins. You design tables around queries, not the other way around. Watch history uses composite partition (profile_id, year) to prevent unbounded partition growth for power users.",
+    interviewFollowUps: [
+      "Why composite partition key (profile_id, year) instead of just profile_id?",
+      "What consistency level does Netflix use for watch history writes?",
+      "How does Cassandra handle a node failure during a write?",
+      "When would you choose MySQL over Cassandra?",
+    ],
+    // PART 2 — cassandra service new fields
+    slo: "P99 < 10ms for single-partition reads, P99 < 15ms for writes",
+    eventsProduced: [],
+    eventsConsumed: [],
+    failureModes: [
+      { scenario: "Node failure during write", mode: "fail-open", recovery: "With RF=3 and QUORUM consistency (2/3 ACK), one node can fail without blocking writes. Hinted handoff delivers missed writes on recovery." },
+      { scenario: "Hot partition (unbounded watch history)", mode: "fail-open", recovery: "Composite partition key (profile_id, year) bounds partition size. No single user can create an unbounded partition." },
+      { scenario: "Cross-datacenter partition", mode: "fail-open", recovery: "LOCAL_QUORUM reads only require 2/3 in local DC — cross-DC partition doesn't block. Data syncs when partition heals." },
+    ],
+    scalingStrategy: "~10,000 nodes across 3 regions. Linear horizontal scaling: add nodes, Cassandra auto-rebalances via virtual nodes (vnodes). Each node owns 1/N of the token ring. No single point of failure. Compaction strategy: TWCS for time-series (watch history), STCS for random-access (resume positions).",
   },
   {
     id: "mysql",
@@ -1064,6 +1214,12 @@ CREATE TABLE payment_methods (
     FOREIGN KEY (user_id) REFERENCES users(user_id)
 );`,
     keyInsight: "Rule: Never use Cassandra for billing — eventual consistency + money = disaster.",
+    sayThis: "MySQL is used for any entity requiring ACID transactions: subscriptions, payments, user accounts. We use RDS Multi-AZ for availability and read replicas for read scaling. The critical rule: billing data must use SELECT FOR UPDATE to prevent double-charge races. Sharded by user_id. Cross-shard queries are avoided by design — billing never needs to join across users.",
+    interviewFollowUps: [
+      "Why MySQL instead of PostgreSQL?",
+      "How do you handle a MySQL shard that becomes hot?",
+      "How do you do zero-downtime schema migrations on a live billing table?",
+    ],
   },
   {
     id: "redis",
@@ -1103,6 +1259,12 @@ RateLimiter
   checkLimit(userId, endpoint, limitPerMin) → Boolean
   incrementCounter(userId, endpoint) → Int
   getRemainingQuota(userId, endpoint) → Int`,
+    sayThis: "Redis handles the use cases where Memcached falls short: atomic Lua scripts for stream slot acquisition, sorted sets for search autocomplete (ZRANGEBYLEX), TTL-precision session management (15-min JWT refresh tokens), sliding-window rate limiting, and deduplication keys with 24h TTL. The key design rule: Redis is for operations that require atomicity or data structures. EVCache is for hot read-heavy key-value lookups.",
+    interviewFollowUps: [
+      "When would you choose Redis over EVCache at Netflix?",
+      "How does Redis Cluster handle a node failure during a Lua script?",
+      "How do you prevent Redis from becoming a bottleneck for rate limiting?",
+    ],
   },
   {
     id: "evcache",
@@ -1127,6 +1289,12 @@ EVCacheClient
   delete(key) → void                         // deletes from all AZs
   getOrLoad(key, loader, ttl) → Value        // cache-aside pattern
   getBulk(keys) → Map<String, Value>`,
+    sayThis: "EVCache is Netflix's Memcached wrapper. The key feature: it replicates writes to all AZs on every set, so reads are always served from the local AZ at sub-millisecond latency. An AZ failure is transparent — the other AZs already have the data. ~30M requests/second at peak. Used for: catalog metadata, homepage rows, entitlement, A/B variant assignments. Request coalescing prevents cache stampedes — when a cache key expires, only one thread fetches while others wait.",
+    interviewFollowUps: [
+      "What is the difference between EVCache and Redis at Netflix?",
+      "How does request coalescing work in EVCache?",
+      "What happens when a new region is brought up with a cold cache?",
+    ],
   },
   {
     id: "abtest",
@@ -1166,6 +1334,12 @@ KayentaCanaryAnalyzer
   startAnalysis(canaryConfig) → AnalysisId
   getScore(analysisId) → CanaryScore     // 0–100
   shouldRollback(analysisId) → Boolean   // score < 75 triggers rollback`,
+    sayThis: "A/B test variant assignment uses deterministic hashing: hash(userId + experimentId) % 100. No DB lookup, no network call — sub-microsecond. Cached in EVCache for 24 hours. The determinism guarantee means a user always sees the same variant in the same experiment — critical for experiment validity. Kayenta is the canary analyzer: it compares metrics between canary and baseline, auto-rolls back if score drops below 75/100.",
+    interviewFollowUps: [
+      "Why deterministic hashing instead of server-side random assignment?",
+      "How does Kayenta auto-rollback work?",
+      "How do you avoid interaction effects between two simultaneous experiments?",
+    ],
   },
   {
     id: "chaos",
@@ -1205,6 +1379,12 @@ Fallback Matrix:
   DRM service down           → graceful "unavailable" error
   Billing unreachable        → allow stream, reconcile later (fail open)
   Concurrency check fails    → allow stream, alert ops`,
+    sayThis: "Chaos Engineering at Netflix is not just chaos monkey (random instance kills) — Chaos Kong kills an entire AWS region in production. The system must auto-recover with zero user-visible downtime via Route53 failover. The Resilience4j circuit breaker (which replaced Hystrix) follows a CLOSED → OPEN → HALF_OPEN state machine. At 50% error rate, the breaker opens, and every call immediately returns the fallback (cached or degraded response) without waiting for a timeout.",
+    interviewFollowUps: [
+      "What is the difference between Hystrix and Resilience4j?",
+      "What is Chaos Kong and how does it differ from Chaos Monkey?",
+      "How does the half-open state prevent thundering herd on recovery?",
+    ],
   },
   {
     id: "search",
@@ -1261,6 +1441,12 @@ AutocompleteService
 -- Redis: Autocomplete sorted set
 search:autocomplete:{prefix}   → sorted set of (query, score)   TTL 24h`,
     keyInsight: `Search uses two-stage retrieval: first Elasticsearch BM25 + kNN finds candidates quickly, then a lightweight ML model re-ranks them using the user's watch history. This means two users searching "action" get different orderings — a K-drama fan sees Korean action titles ranked higher. Why Elasticsearch over a pure vector DB? Because BM25 handles exact keyword matches (actor names, exact titles) far better than vector similarity alone.`,
+    sayThis: "Search is two-stage: Elasticsearch BM25 + kNN retrieves candidates in one call, then a personalization ranker re-orders them using the user's watch history from the Recommendation Service. This means two users searching the same term get different rankings. Autocomplete uses Redis sorted sets with ZRANGEBYLEX — O(log N + M) prefix lookup without Elasticsearch overhead.",
+    interviewFollowUps: [
+      "Why not use pure vector search instead of BM25?",
+      "How do you handle spell correction before hitting Elasticsearch?",
+      "How does catalog indexing stay in sync when a title is added or removed?",
+    ],
   },
   {
     id: "download",
@@ -1322,6 +1508,12 @@ CREATE TABLE downloads (
   PRIMARY KEY ((device_id), downloaded_at, download_id)
 ) WITH CLUSTERING ORDER BY (downloaded_at DESC);`,
     keyInsight: `DRM licenses are device-bound — a video file downloaded on iPhone A cannot be played on iPhone B even on the same account. The license contains the decryption key encrypted for that device's hardware key. Expiry is enforced purely client-side by the DRM system — Netflix does not need to call home to check expiry, reducing infrastructure load and enabling true offline playback.`,
+    sayThis: "Downloads use device-bound DRM licenses — the decryption key is encrypted specifically for that device's hardware TEE. Copying a downloaded file to another device is physically impossible without the matching hardware key. Expiry rules: 30 days from download OR 48 hours from first play. Expiry is enforced client-side by the DRM system — no server-side TTL polling required, enabling true offline playback.",
+    interviewFollowUps: [
+      "How does the expiry work when the device is completely offline?",
+      "How does Netflix revoke a downloaded license remotely?",
+      "What prevents a user from storing video files and sharing them?",
+    ],
   },
   {
     id: "notification",
@@ -1357,6 +1549,12 @@ NotificationScheduler
   enqueueFuture(userId, type, payload, triggerAt) → void  // ZADD score=triggerAt
   processDue() → List<Notification>      // ZRANGEBYSCORE 0 now()`,
     keyInsight: `Redis deduplication key: notif_sent:{userId}:{type} with 24h TTL ensures the same notification type (new episode, payment reminder) is never sent more than once per day per user. Scheduled notifications use a Redis sorted set — the score is the Unix timestamp when the notification should fire. A polling job runs every 30 seconds fetching ZRANGEBYSCORE 0 to now(). This avoids cron complexity and scales horizontally.`,
+    sayThis: "The Notification Service uses Redis for two patterns: a 24h dedup key (notif_sent:{userId}:{type}) ensures the same notification is never sent twice in one day, and a sorted set (score = triggerAt Unix timestamp) handles scheduled notifications without cron. A polling job every 30 seconds fetches ZRANGEBYSCORE 0 to now() to fire due notifications. APNs for iOS, FCM for Android, AWS SES for email.",
+    interviewFollowUps: [
+      "How do you handle notification delivery failures to APNs/FCM?",
+      "How do you ensure order of notifications for a user?",
+      "How do you scale the notification service during a major release event?",
+    ],
   },
 ];
 
