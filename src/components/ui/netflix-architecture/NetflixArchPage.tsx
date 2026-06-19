@@ -8,14 +8,18 @@ import ModelsTab from "./ModelsTab";
 import TradeoffsTab from "./TradeoffsTab";
 import CapacityTab from "./CapacityTab";
 import QuizTab from "./QuizTab";
+import { MockInterviewTab } from "../netflix-tabs/MockInterviewTab";
+import { CheatSheetTab } from "../netflix-tabs/CheatSheetTab";
 
 // ── Tab config ─────────────────────────────────────────────────────────────────
 const TABS = [
-  { id: "architecture", label: "Architecture" },
-  { id: "models",       label: "Data Models"  },
-  { id: "tradeoffs",    label: "Trade-offs"   },
-  { id: "capacity",     label: "Capacity"     },
-  { id: "quiz",         label: "Quiz"         },
+  { id: "architecture",   label: "Architecture"   },
+  { id: "models",         label: "Data Models"    },
+  { id: "tradeoffs",      label: "Trade-offs"     },
+  { id: "capacity",       label: "Capacity"       },
+  { id: "quiz",           label: "Quiz"           },
+  { id: "mock-interview", label: "Mock Interview" },
+  { id: "cheat-sheet",    label: "Cheat Sheet"    },
 ] as const;
 type TabId = typeof TABS[number]["id"];
 
@@ -1068,13 +1072,21 @@ export default function NetflixArchPage({ initialTab }: { initialTab?: string })
       {/* ── Tab content with crossfade ── */}
       <div className="flex-1 overflow-hidden flex flex-col"
         style={{ opacity: tabVisible ? 1 : 0, transition: "opacity 0.1s ease" }}>
-        {activeTab === "architecture" && (
-          <ArchitectureTab studiedNodes={studiedNodes} onMarkStudied={handleMarkStudied} interviewMode={interviewMode} />
+        {activeTab === "architecture"   && <ArchitectureTab studiedNodes={studiedNodes} onMarkStudied={handleMarkStudied} interviewMode={interviewMode} />}
+        {activeTab === "models"         && <ModelsTab />}
+        {activeTab === "tradeoffs"      && <TradeoffsTab interviewMode={interviewMode} />}
+        {activeTab === "capacity"       && <CapacityTab />}
+        {activeTab === "quiz"           && <QuizTab />}
+        {activeTab === "mock-interview" && (
+          <div className="flex-1 overflow-y-auto" style={{ background: "#0d0d0d" }}>
+            <MockInterviewTab role="Backend Engineer" />
+          </div>
         )}
-        {activeTab === "models"    && <ModelsTab />}
-        {activeTab === "tradeoffs" && <TradeoffsTab interviewMode={interviewMode} />}
-        {activeTab === "capacity"  && <CapacityTab />}
-        {activeTab === "quiz"      && <QuizTab />}
+        {activeTab === "cheat-sheet"    && (
+          <div className="flex-1 overflow-y-auto" style={{ background: "#0d0d0d" }}>
+            <CheatSheetTab role="Backend Engineer" />
+          </div>
+        )}
       </div>
 
       {shortcutsOpen && <ShortcutsModal onClose={() => setShortcutsOpen(false)} />}

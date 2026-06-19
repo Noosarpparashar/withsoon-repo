@@ -23,6 +23,14 @@ const TAB_META: Record<string, { title: string; description: string }> = {
     title: "Netflix System Design — Quiz | withsoon.com",
     description: "75 Netflix system design flashcards: Auth, Streaming, CDN, Kafka, DynamoDB, Cassandra, Redis, CAP theorem, DRM. Spaced repetition built in.",
   },
+  "mock-interview": {
+    title: "Netflix System Design — Mock Interview | withsoon.com",
+    description: "Full mock interview for Netflix system design: 12 grilling questions with pushback responses, rubric, timers, and self-rating. For senior backend and data engineers.",
+  },
+  "cheat-sheet": {
+    title: "Netflix System Design — Cheat Sheet | withsoon.com",
+    description: "Netflix system design cheat sheet: key numbers, 30-second answer, opening statement, component chain, and interview scripts. Print-ready.",
+  },
 };
 
 export async function generateMetadata({ params }: { params: Promise<{ tab: string }> }): Promise<Metadata> {
@@ -52,12 +60,12 @@ export default async function TabPage({ params }: { params: Promise<{ tab: strin
   const LEGACY = [
     "start-here", "backend-track", "data-engineering", "architecture-map",
     "apis-data-model", "scale-estimation", "failures-tradeoffs",
-    "interview-qa", "mock-interview", "cheat-sheet",
+    "interview-qa",
     "requirements", "scale", "services", "apis",
     "data-design", "playback", "cdn", "encoding", "data-pipeline",
     "recommendations", "failures", "security", "observability-cost",
   ];
-  const VALID = ["architecture", "models", "tradeoffs", "capacity", "quiz"];
+  const VALID = ["architecture", "models", "tradeoffs", "capacity", "quiz", "mock-interview", "cheat-sheet"];
   if (!VALID.includes(tab) && LEGACY.includes(tab)) {
     redirect("/system-design/netflix/architecture");
   }

@@ -1,0 +1,265 @@
+---
+title: "SQL Interview Questions — Window Functions, CTEs, and Scenario Problems"
+date: "2026-06-15"
+type: "interview-qa"
+subsection: "sql"
+summary: "The most-asked SQL questions in data engineer and analytics engineer interviews — window functions, CTEs, sessionization, deduplication, and funnel analysis."
+tags: ["sql", "interview", "window-functions", "data-engineering"]
+difficulty: "intermediate"
+featured: false
+---
+
+## Window Functions
+
+**Q1: What is the difference between ROW_NUMBER(), RANK(), and DENSE_RANK()?**
+
+All three assign a rank to each row within a partition. The difference is how they handle ties:
+
+- `ROW_NUMBER()` — assigns unique sequential numbers, no ties (1, 2, 3, 4)
+- `RANK()` — ties get the same rank, next rank skips (1, 2, 2, 4)
+- `DENSE_RANK()` — ties get the same rank, next rank does NOT skip (1, 2, 2, 3)
+
+```sql
+SELECT 
+  employee_id,
+  salary,
+  ROW_NUMBER() OVER (PARTITION BY department_id ORDER BY salary DESC) AS row_num,
+  RANK()       OVER (PARTITION BY department_id ORDER BY salary DESC) AS rnk,
+  DENSE_RANK() OVER (PARTITION BY department_id ORDER BY salary DESC) AS dense_rnk
+FROM employees;
+```
+
+**Interview tip:** Start by asking "does the interviewer care about ties?" If so, use `DENSE_RANK()`. If they want unique ordering (e.g. for deduplication), use `ROW_NUMBER()`.
+
+---
+
+**Q2: How do you find the top N records per group without a subquery?**
+
+Use `ROW_NUMBER()` with a CTE:
+
+```sql
+WITH ranked AS (
+  SELECT *,
+    ROW_NUMBER() OVER (PARTITION BY department_id ORDER BY salary DESC) AS rn
+  FROM employees
+)
+SELECT * FROM ranked WHERE rn <= 3;
+```
+
+Common mistake: using `WHERE` inside the window function. You must filter in an outer query or CTE.
+
+---
+
+**Q3: What is LAG() and LEAD()? When would you use them?**
+
+- `LAG(col, n)` — gets the value from n rows *before* the current row (within partition)
+- `LEAD(col, n)` — gets the value from n rows *after* the current row
+
+Use cases:
+- Calculate day-over-day revenue change: `revenue - LAG(revenue, 1) OVER (ORDER BY date)`
+- Sessionization: detect gap between current event and previous event
+- Churn detection: find users whose last purchase was >30 days before current
+
+```sql
+SELECT
+  user_id,
+  event_time,
+  LAG(event_time) OVER (PARTITION BY user_id ORDER BY event_time) AS prev_event,
+  DATEDIFF(event_time, LAG(event_time) OVER (PARTITION BY user_id ORDER BY event_time)) AS gap_days
+FROM user_events;
+```
+
+---
+
+## CTEs and Subqueries
+
+**Q4: When would you use a CTE vs a subquery?**
+
+CTEs are preferred when:
+- The subquery is referenced more than once (avoids repeating logic)
+- You need to chain multiple transformations readably
+- You're building a recursive query (hierarchical data)
+
+Subqueries are fine when:
+- The filter is simple and single-use
+- You're writing an EXISTS / NOT EXISTS check
+
+```sql
+-- CTE: cleaner for multi-step logic
+WITH active_users AS (
+  SELECT user_id FROM users WHERE status = 'active'
+),
+user_orders AS (
+  SELECT user_id, COUNT(*) AS order_count FROM orders GROUP BY user_id
+)
+SELECT a.user_id, COALESCE(o.order_count, 0) AS orders
+FROM active_users a
+LEFT JOIN user_orders o ON a.user_id = o.user_id;
+```
+
+---
+
+**Q5: Write a query to find users who logged in on consecutive days.**
+
+```sql
+WITH daily_logins AS (
+  SELECT DISTINCT user_id, DATE(login_time) AS login_date
+  FROM logins
+),
+with_prev AS (
+  SELECT 
+    user_id,
+    login_date,
+    LAG(login_date) OVER (PARTITION BY user_id ORDER BY login_date) AS prev_date
+  FROM daily_logins
+)
+SELECT DISTINCT user_id
+FROM with_prev
+WHERE DATEDIFF(login_date, prev_date) = 1;
+```
+
+**Senior answer:** Ask about "at least 2 consecutive days" vs "longest streak." For streaks, use the `login_date - ROW_NUMBER()` island technique.
+
+---
+
+## Sessionization
+
+**Q6: What is sessionization? How do you implement it in SQL?**
+
+Sessionization groups user events into sessions — a session ends when there's a gap > N minutes since the last event.
+
+```sql
+WITH gaps AS (
+  SELECT
+    user_id,
+    event_time,
+    LAG(event_time) OVER (PARTITION BY user_id ORDER BY event_time) AS prev_time
+  FROM events
+),
+session_starts AS (
+  SELECT
+    user_id,
+    event_time,
+    CASE
+      WHEN prev_time IS NULL 
+        OR TIMESTAMPDIFF(MINUTE, prev_time, event_time) > 30
+      THEN 1 ELSE 0
+    END AS is_new_session
+  FROM gaps
+),
+with_session_id AS (
+  SELECT
+    user_id,
+    event_time,
+    SUM(is_new_session) OVER (PARTITION BY user_id ORDER BY event_time) AS session_id
+  FROM session_starts
+)
+SELECT user_id, session_id, MIN(event_time) AS session_start, MAX(event_time) AS session_end, COUNT(*) AS events
+FROM with_session_id
+GROUP BY user_id, session_id;
+```
+
+---
+
+## Deduplication
+
+**Q7: How do you deduplicate rows while keeping the most recent record per user?**
+
+```sql
+WITH deduped AS (
+  SELECT *,
+    ROW_NUMBER() OVER (PARTITION BY user_id ORDER BY updated_at DESC) AS rn
+  FROM users_raw
+)
+SELECT * FROM deduped WHERE rn = 1;
+```
+
+**Common mistake:** Using `MAX(updated_at)` with a subquery. That forces two scans. The CTE with `ROW_NUMBER()` is one pass.
+
+---
+
+## Funnel Analysis
+
+**Q8: How do you write a funnel query (e.g. page_view → add_to_cart → purchase)?**
+
+```sql
+WITH funnel AS (
+  SELECT
+    user_id,
+    MAX(CASE WHEN event_type = 'page_view'   THEN 1 ELSE 0 END) AS viewed,
+    MAX(CASE WHEN event_type = 'add_to_cart' THEN 1 ELSE 0 END) AS added,
+    MAX(CASE WHEN event_type = 'purchase'    THEN 1 ELSE 0 END) AS purchased
+  FROM events
+  WHERE event_date = '2026-06-01'
+  GROUP BY user_id
+)
+SELECT
+  SUM(viewed)    AS step1_views,
+  SUM(added)     AS step2_adds,
+  SUM(purchased) AS step3_purchases,
+  ROUND(SUM(added)     / NULLIF(SUM(viewed),    0) * 100, 1) AS view_to_add_pct,
+  ROUND(SUM(purchased) / NULLIF(SUM(added),     0) * 100, 1) AS add_to_purchase_pct
+FROM funnel;
+```
+
+---
+
+## Optimization
+
+**Q9: How do you optimize a slow SQL query?**
+
+1. **Check the query plan** — `EXPLAIN` or `EXPLAIN ANALYZE` first, don't guess
+2. **Add indexes** on filter/join columns: `WHERE`, `JOIN ON`, `ORDER BY`
+3. **Avoid SELECT *** — only pull columns you need
+4. **Filter early** — push WHERE clauses before joins, not after
+5. **Avoid functions on indexed columns** — `WHERE YEAR(date_col) = 2026` skips the index; use range: `WHERE date_col >= '2026-01-01' AND date_col < '2027-01-01'`
+6. **Use covering indexes** for read-heavy queries
+7. **Partition large tables** by date if querying by date range
+
+---
+
+**Q10: What is the N+1 query problem?**
+
+N+1 occurs when you run 1 query to get N rows, then N additional queries to fetch related data for each row. This happens implicitly in ORMs (e.g. fetching users then looping over each to fetch their orders).
+
+Fix: use a single query with a `JOIN`, or use `WHERE id IN (...)` to batch-load related rows.
+
+---
+
+## SCD and Incremental Patterns
+
+**Q11: What is SCD Type 2 and how do you implement it?**
+
+Slowly Changing Dimension Type 2 keeps full history by adding a new row for each change, with `valid_from` and `valid_to` timestamps:
+
+```sql
+-- Current record: valid_to IS NULL
+-- Historical record: valid_to IS NOT NULL
+
+CREATE TABLE dim_customer (
+  customer_key   BIGINT PRIMARY KEY AUTO_INCREMENT,
+  customer_id    INT NOT NULL,
+  name           VARCHAR(200),
+  email          VARCHAR(200),
+  valid_from     DATETIME NOT NULL,
+  valid_to       DATETIME,           -- NULL means current
+  is_current     BOOLEAN DEFAULT TRUE
+);
+
+-- On change: update old row's valid_to, insert new row
+UPDATE dim_customer SET valid_to = NOW(), is_current = FALSE
+WHERE customer_id = 42 AND is_current = TRUE;
+
+INSERT INTO dim_customer (customer_id, name, email, valid_from, valid_to, is_current)
+VALUES (42, 'New Name', 'new@email.com', NOW(), NULL, TRUE);
+```
+
+---
+
+## Common Mistakes
+
+- **Using HAVING without GROUP BY** — HAVING filters groups, it needs an aggregation
+- **NULL comparisons** — `NULL = NULL` is false; use `IS NULL` or `IS NOT NULL`
+- **Implicit cartesian join** — forgetting a JOIN condition creates a cartesian product
+- **Order of operations** — WHERE runs before GROUP BY, which runs before HAVING, which runs before ORDER BY
+- **DISTINCT vs GROUP BY** — GROUP BY is usually more explicit and optimizable

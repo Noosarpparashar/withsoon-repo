@@ -3,6 +3,7 @@ import { MDXRemote } from "next-mdx-remote/rsc";
 import type { Content } from "@/lib/content";
 import ReadingProgress from "./ReadingProgress";
 import CopyCodeButton from "./CopyCodeButton";
+import BackToTop from "./BackToTop";
 
 const SECTION_META: Record<string, { label: string; colorClass: string; softClass: string; href: string }> = {
   "tech-news": { label: "Tech News",  colorClass: "text-[var(--yellow-text)]",  softClass: "bg-[var(--yellow-soft)] text-[var(--yellow-text)]",  href: "/tech-news" },
@@ -29,10 +30,28 @@ export default function ArticlePage({ post }: { post: Content }) {
   const mins = readingTime(post.content);
   const correctionUrl = `https://github.com/Noosarpparashar/withsoon-repo/issues/new?title=Content+correction&body=Page:%20/${post.section}/${post.slug}%0A%0AIssue:`;
 
+  const shareText = encodeURIComponent(`${post.title} — ${post.summary}`);
+  const shareUrl = encodeURIComponent(`https://withsoon.com/${post.section}/${post.slug}`);
+  const twitterUrl = `https://twitter.com/intent/tweet?text=${shareText}&url=${shareUrl}`;
+  const linkedinUrl = `https://www.linkedin.com/sharing/share-offsite/?url=${shareUrl}`;
+
+  const jsonLd = {
+    "@context": "https://schema.org",
+    "@type": "Article",
+    "headline": post.title,
+    "description": post.summary,
+    "author": { "@type": "Person", "name": "Prasoon Parashar" },
+    "publisher": { "@type": "Organization", "name": "withsoon", "url": "https://withsoon.com" },
+    "datePublished": post.date,
+    "url": `https://withsoon.com/${post.section}/${post.slug}`,
+  };
+
   return (
     <>
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
       <ReadingProgress />
       <CopyCodeButton />
+      <BackToTop />
       <div className="mx-auto max-w-4xl px-4 py-10">
         {/* Breadcrumb */}
         <div className="flex items-center gap-2 text-sm text-[var(--text-faint)] mb-8 flex-wrap">
@@ -96,19 +115,40 @@ export default function ArticlePage({ post }: { post: Content }) {
           <MDXRemote source={post.content} />
         </article>
 
-        {/* Footer: suggest correction + back link */}
-        <div className="mt-12 pt-8 border-t border-[var(--border)] flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-          <Link href={meta.href} className={`text-sm font-medium hover:underline ${meta.colorClass}`}>
-            ← Back to {meta.label}
-          </Link>
-          <a
-            href={correctionUrl}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="text-xs text-[var(--text-faint)] hover:text-[var(--text-muted)] transition-colors"
-          >
-            Suggest a correction →
-          </a>
+        {/* Footer: share + suggest correction + back link */}
+        <div className="mt-12 pt-8 border-t border-[var(--border)]">
+          <div className="flex flex-wrap items-center gap-3 mb-6">
+            <span className="text-sm font-medium text-[var(--text-muted)]">Share:</span>
+            <a
+              href={twitterUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-[var(--border)] text-xs text-[var(--text-muted)] hover:text-[var(--text)] hover:border-[var(--accent)] transition-colors"
+            >
+              𝕏 Twitter
+            </a>
+            <a
+              href={linkedinUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-[var(--border)] text-xs text-[var(--text-muted)] hover:text-[var(--text)] hover:border-[var(--accent)] transition-colors"
+            >
+              in LinkedIn
+            </a>
+          </div>
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+            <Link href={meta.href} className={`text-sm font-medium hover:underline ${meta.colorClass}`}>
+              ← Back to {meta.label}
+            </Link>
+            <a
+              href={correctionUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-xs text-[var(--text-faint)] hover:text-[var(--text-muted)] transition-colors"
+            >
+              Suggest a correction →
+            </a>
+          </div>
         </div>
       </div>
     </>
