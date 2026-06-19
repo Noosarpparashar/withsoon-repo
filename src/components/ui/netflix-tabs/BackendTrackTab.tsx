@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import type { Dispatch, SetStateAction } from "react";
 
 function CopyButton({ text, label = "Copy" }: { text: string; label?: string }) {
   const [copied, setCopied] = useState(false);
@@ -362,11 +363,17 @@ APIs: POST /playback/sessions (idempotent on client session_id), POST /playback/
 };
 
 function BackendTrackTab({ seniorDepth }: { seniorDepth: boolean }) {
-  const [activeStep, setActiveStep] = useState<number | null>(null);
-  const [activeApi, setActiveApi] = useState<number | null>(null);
-  const [activeTable, setActiveTable] = useState<number | null>(null);
-  const [activeSeqStep, setActiveSeqStep] = useState<number | null>(null);
+  const [openSteps, setOpenSteps] = useState<Set<number>>(new Set());
+  const [openApis, setOpenApis] = useState<Set<number>>(new Set());
+  const [openTables, setOpenTables] = useState<Set<number>>(new Set());
+  const [openSeqSteps, setOpenSeqSteps] = useState<Set<number>>(new Set());
   const [copyAnswer, setCopyAnswer] = useState<string | null>(null);
+
+  const toggle = (setter: React.Dispatch<React.SetStateAction<Set<number>>>, idx: number) =>
+    setter(prev => { const n = new Set(prev); if (n.has(idx)) n.delete(idx); else n.add(idx); return n; });
+  const expandAll = (setter: React.Dispatch<React.SetStateAction<Set<number>>>, count: number) =>
+    setter(new Set(Array.from({ length: count }, (_, i) => i)));
+  const collapseAll = (setter: React.Dispatch<React.SetStateAction<Set<number>>>) => setter(new Set());
 
   const copy = (text: string, key: string) => {
     navigator.clipboard.writeText(text).then(() => {
@@ -376,10 +383,10 @@ function BackendTrackTab({ seniorDepth }: { seniorDepth: boolean }) {
   };
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-6">
 
       {/* Header */}
-      <div className="rounded-2xl p-6 relative overflow-hidden" style={{ background: "var(--bg-card)", border: "1px solid #3b82f640" }}>
+      <div className="rounded-xl p-5 relative overflow-hidden" style={{ background: "var(--bg-card)", border: "1px solid #3b82f640" }}>
         <div className="absolute top-0 left-0 w-full h-1" style={{ background: "linear-gradient(90deg, #3b82f6, #06b6d4, #8b5cf6)" }} />
         <div className="flex items-start justify-between gap-4 flex-wrap">
           <div>
@@ -387,7 +394,7 @@ function BackendTrackTab({ seniorDepth }: { seniorDepth: boolean }) {
               <span className="text-xs px-2 py-0.5 rounded-full font-bold" style={{ background: "rgba(59,130,246,0.15)", color: "#3b82f6" }}>Backend Engineer Track</span>
               {seniorDepth && <span className="text-xs px-2 py-0.5 rounded-full font-bold" style={{ background: "rgba(139,92,246,0.15)", color: "#8b5cf6" }}>Senior/Staff Depth ON</span>}
             </div>
-            <h2 className="text-2xl font-bold mb-1" style={{ color: "var(--text)" }}>Netflix Playback Backend Design</h2>
+            <h2 className="text-xl font-bold mb-1" style={{ color: "var(--text)" }}>Netflix Playback Backend Design</h2>
             <p className="text-sm" style={{ color: "var(--text-muted)" }}>15-step guided flow covering every aspect of the backend playback system.</p>
           </div>
           <div className="grid grid-cols-3 gap-2 shrink-0">
@@ -402,17 +409,30 @@ function BackendTrackTab({ seniorDepth }: { seniorDepth: boolean }) {
       </div>
 
       {/* Flow steps */}
-      <div className="rounded-2xl p-6" style={{ background: "var(--bg-card)", border: "1px solid var(--border)" }}>
-        <h2 className="text-xl font-bold mb-1" style={{ color: "var(--text)" }}>Backend Engineer Track — 15-Step Flow</h2>
-        <p className="text-sm mb-5" style={{ color: "var(--text-muted)" }}>Click any step to expand the detail and the interview answer.</p>
+      <div className="rounded-xl p-5" style={{ background: "var(--bg-card)", border: "1px solid var(--border)" }}>
+        <div className="flex items-center justify-between mb-3 flex-wrap gap-2">
+          <div>
+            <h2 className="text-base font-bold" style={{ color: "var(--text)" }}>
+              15-Step Design Flow <span className="text-xs font-normal" style={{ color: "var(--text-faint)" }}>({FLOW_STEPS.length} steps)</span>
+            </h2>
+            <p className="text-xs mt-0.5" style={{ color: "var(--text-muted)" }}>Each step has a detail + interview answer. Steps with failure cases are flagged.</p>
+          </div>
+          <div className="flex gap-2">
+            <button onClick={() => expandAll(setOpenSteps, FLOW_STEPS.length)} className="text-xs px-3 py-1.5 rounded-lg"
+              style={{ background: "var(--blue-soft)", color: "var(--blue-text)", cursor: "pointer", border: "none" }}>Expand All</button>
+            <button onClick={() => collapseAll(setOpenSteps)} className="text-xs px-3 py-1.5 rounded-lg"
+              style={{ background: "var(--bg)", border: "1px solid var(--border)", color: "var(--text-muted)", cursor: "pointer" }}>Collapse</button>
+          </div>
+        </div>
         <div className="space-y-1.5">
           {FLOW_STEPS.map((step) => {
-            const isOpen = activeStep === step.n;
+            const isOpen = openSteps.has(step.n);
             return (
-              <div key={step.n} className="rounded-xl overflow-hidden" style={{ border: `1px solid ${isOpen ? "#3b82f660" : "var(--border)"}` }}>
+              <div key={step.n} className="rounded-xl overflow-hidden" style={{ border: `1px solid ${isOpen ? "#3b82f660" : "var(--border)"}`, borderTop: "3px solid #3b82f6" }}>
                 <button
-                  onClick={() => setActiveStep(isOpen ? null : step.n)}
+                  onClick={() => toggle(setOpenSteps, step.n)}
                   className="w-full flex items-center gap-3 px-4 py-3 text-left"
+                  aria-expanded={isOpen}
                   style={{ background: isOpen ? "rgba(59,130,246,0.06)" : "var(--bg)", cursor: "pointer", border: "none" }}
                 >
                   <span className="w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold shrink-0" style={{ background: "rgba(59,130,246,0.15)", color: "#3b82f6" }}>{step.n}</span>
@@ -422,10 +442,10 @@ function BackendTrackTab({ seniorDepth }: { seniorDepth: boolean }) {
                 </button>
                 {isOpen && (
                   <div className="px-4 pb-4 pt-3 space-y-3" style={{ borderTop: "1px solid var(--border)" }}>
-                    <p className="text-sm" style={{ color: "var(--text-muted)" }}>{step.detail}</p>
+                    <p className="text-sm leading-relaxed" style={{ color: "var(--text-muted)" }}>{step.detail}</p>
                     {step.fail !== "—" && (
                       <div className="rounded-lg p-3" style={{ background: "#fee2e2", border: "1px solid #fca5a5" }}>
-                        <span className="text-xs font-bold" style={{ color: "#7f1d1d" }}>⚠ Failure case: </span>
+                        <span className="text-xs font-bold" style={{ color: "#7f1d1d" }}>Failure case: </span>
                         <span className="text-xs" style={{ color: "#991b1b" }}>{step.fail}</span>
                       </div>
                     )}
@@ -439,35 +459,44 @@ function BackendTrackTab({ seniorDepth }: { seniorDepth: boolean }) {
       </div>
 
       {/* Playback sequence */}
-      <div className="rounded-2xl p-6" style={{ background: "var(--bg-card)", border: "1px solid var(--border)" }}>
-        <div className="flex items-center justify-between mb-5">
+      <div className="rounded-xl p-5" style={{ background: "var(--bg-card)", border: "1px solid var(--border)" }}>
+        <div className="flex items-center justify-between mb-3 flex-wrap gap-2">
           <div>
-            <h2 className="text-xl font-bold mb-1" style={{ color: "var(--text)" }}>Full Playback Sequence</h2>
-            <p className="text-sm" style={{ color: "var(--text-muted)" }}>Click any step to expand failure case and interview answer.</p>
+            <h2 className="text-base font-bold" style={{ color: "var(--text)" }}>
+              Full Playback Sequence <span className="text-xs font-normal" style={{ color: "var(--text-faint)" }}>({PLAYBACK_SEQUENCE.length} steps)</span>
+            </h2>
+            <p className="text-xs mt-0.5" style={{ color: "var(--text-muted)" }}>Click any step to expand the failure case.</p>
           </div>
-          <CopyButton text={PLAYBACK_SEQUENCE.map(s => `${s.step}. ${s.actor}: ${s.action}`).join("\n")} label="Copy sequence" />
+          <div className="flex gap-2">
+            <CopyButton text={PLAYBACK_SEQUENCE.map(s => `${s.step}. ${s.actor}: ${s.action}`).join("\n")} label="Copy sequence" />
+            <button onClick={() => expandAll(setOpenSeqSteps, PLAYBACK_SEQUENCE.length)} className="text-xs px-3 py-1.5 rounded-lg"
+              style={{ background: "var(--blue-soft)", color: "var(--blue-text)", cursor: "pointer", border: "none" }}>Expand All</button>
+            <button onClick={() => collapseAll(setOpenSeqSteps)} className="text-xs px-3 py-1.5 rounded-lg"
+              style={{ background: "var(--bg)", border: "1px solid var(--border)", color: "var(--text-muted)", cursor: "pointer" }}>Collapse</button>
+          </div>
         </div>
         <div className="space-y-1.5">
           {PLAYBACK_SEQUENCE.map((s) => {
-            const isOpen = activeSeqStep === s.step;
+            const isOpen = openSeqSteps.has(s.step);
             return (
-              <div key={s.step} className="rounded-xl overflow-hidden" style={{ border: "1px solid var(--border)" }}>
+              <div key={s.step} className="rounded-xl overflow-hidden" style={{ border: "1px solid var(--border)", borderTop: "3px solid #3b82f6" }}>
                 <button
-                  onClick={() => setActiveSeqStep(isOpen ? null : s.step)}
+                  onClick={() => toggle(setOpenSeqSteps, s.step)}
                   className="w-full flex items-start gap-3 px-4 py-3 text-left"
+                  aria-expanded={isOpen}
                   style={{ background: "var(--bg)", cursor: "pointer", border: "none" }}
                 >
                   <span className="w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold shrink-0 mt-0.5" style={{ background: "rgba(59,130,246,0.15)", color: "#3b82f6" }}>{s.step}</span>
                   <div className="flex-1 min-w-0">
                     <span className="text-[11px] font-bold" style={{ color: "#3b82f6" }}>{s.actor}</span>
-                    <p className="text-sm mt-0.5" style={{ color: "var(--text)" }}>{s.action}</p>
+                    <p className="text-sm mt-0.5 leading-relaxed" style={{ color: "var(--text)" }}>{s.action}</p>
                   </div>
                   <span className="text-xs shrink-0 transition-transform duration-200 mt-1" style={{ color: "var(--text-muted)", display: "inline-block", transform: isOpen ? "rotate(180deg)" : "rotate(0deg)" }}>▼</span>
                 </button>
                 {isOpen && s.fail !== "—" && (
                   <div className="px-4 pb-3 pt-2" style={{ borderTop: "1px solid var(--border)", background: "var(--bg-card)" }}>
                     <div className="rounded-lg p-3" style={{ background: "#fee2e2", border: "1px solid #fca5a5" }}>
-                      <span className="text-xs font-bold" style={{ color: "#7f1d1d" }}>⚠ What can fail here: </span>
+                      <span className="text-xs font-bold" style={{ color: "#7f1d1d" }}>What can fail here: </span>
                       <span className="text-xs" style={{ color: "#991b1b" }}>{s.fail}</span>
                     </div>
                   </div>
@@ -479,28 +508,42 @@ function BackendTrackTab({ seniorDepth }: { seniorDepth: boolean }) {
       </div>
 
       {/* API Design */}
-      <div className="rounded-2xl p-6" style={{ background: "var(--bg-card)", border: "1px solid var(--border)" }}>
-        <h2 className="text-xl font-bold mb-1" style={{ color: "var(--text)" }}>Backend API Design</h2>
-        <p className="text-sm mb-5" style={{ color: "var(--text-muted)" }}>Click any API to see full request/response, auth, idempotency, and failure behavior.</p>
+      <div className="rounded-xl p-5" style={{ background: "var(--bg-card)", border: "1px solid var(--border)" }}>
+        <div className="flex items-center justify-between mb-3 flex-wrap gap-2">
+          <div>
+            <h2 className="text-base font-bold" style={{ color: "var(--text)" }}>
+              Backend API Design <span className="text-xs font-normal" style={{ color: "var(--text-faint)" }}>({APIS.length} endpoints)</span>
+            </h2>
+            <p className="text-xs mt-0.5" style={{ color: "var(--text-muted)" }}>Full request/response, auth, idempotency, and failure behavior for each endpoint.</p>
+          </div>
+          <div className="flex gap-2">
+            <button onClick={() => expandAll(setOpenApis, APIS.length)} className="text-xs px-3 py-1.5 rounded-lg"
+              style={{ background: "var(--blue-soft)", color: "var(--blue-text)", cursor: "pointer", border: "none" }}>Expand All</button>
+            <button onClick={() => collapseAll(setOpenApis)} className="text-xs px-3 py-1.5 rounded-lg"
+              style={{ background: "var(--bg)", border: "1px solid var(--border)", color: "var(--text-muted)", cursor: "pointer" }}>Collapse</button>
+          </div>
+        </div>
         <div className="space-y-2">
           {APIS.map((api, i) => {
-            const isOpen = activeApi === i;
+            const isOpen = openApis.has(i);
             const methodColor = api.method === "GET" ? "#10b981" : api.method === "POST" ? "#3b82f6" : "#ef4444";
             return (
-              <div key={i} className="rounded-xl overflow-hidden" style={{ border: `1px solid ${isOpen ? `${methodColor}50` : "var(--border)"}` }}>
+              <div key={i} className="rounded-xl overflow-hidden" style={{ border: `1px solid ${isOpen ? `${methodColor}50` : "var(--border)"}`, borderTop: `3px solid ${methodColor}` }}>
                 <button
-                  onClick={() => setActiveApi(isOpen ? null : i)}
+                  onClick={() => toggle(setOpenApis, i)}
                   className="w-full flex items-center gap-3 px-4 py-3 text-left"
+                  aria-expanded={isOpen}
                   style={{ background: "var(--bg)", cursor: "pointer", border: "none" }}
                 >
                   <span className="text-[10px] font-bold px-2 py-1 rounded shrink-0" style={{ background: `${methodColor}20`, color: methodColor }}>{api.method}</span>
                   <code className="text-sm font-mono flex-1" style={{ color: "var(--text)" }}>{api.path}</code>
+                  <CopyButton text={api.path} />
                   <span className="text-xs hidden sm:inline" style={{ color: "var(--text-faint)" }}>{api.purpose}</span>
                   <span className="text-xs shrink-0 ml-2 transition-transform duration-200" style={{ color: "var(--text-muted)", display: "inline-block", transform: isOpen ? "rotate(180deg)" : "rotate(0deg)" }}>▼</span>
                 </button>
                 {isOpen && (
                   <div className="px-4 pb-4 pt-3 space-y-3" style={{ borderTop: "1px solid var(--border)" }}>
-                    <p className="text-sm" style={{ color: "var(--text-muted)" }}>{api.purpose}</p>
+                    <p className="text-sm leading-relaxed" style={{ color: "var(--text-muted)" }}>{api.purpose}</p>
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                       <div>
                         <p className="text-[11px] font-bold uppercase tracking-wider mb-1.5" style={{ color: "var(--text-faint)" }}>Request body</p>
@@ -519,7 +562,7 @@ function BackendTrackTab({ seniorDepth }: { seniorDepth: boolean }) {
                       {[["Auth", api.auth], ["Idempotency", api.idempotency], ["Rate limit", api.rateLimit], ["Service owner", api.serviceOwner]].map(([k, v]) => (
                         <div key={k} className="rounded-lg p-2.5" style={{ background: "var(--bg)", border: "1px solid var(--border)" }}>
                           <div className="text-[10px] font-bold uppercase tracking-wider mb-1" style={{ color: "var(--text-faint)" }}>{k}</div>
-                          <div className="text-xs" style={{ color: "var(--text-muted)" }}>{v}</div>
+                          <div className="text-xs leading-relaxed" style={{ color: "var(--text-muted)" }}>{v}</div>
                         </div>
                       ))}
                     </div>
@@ -542,21 +585,35 @@ function BackendTrackTab({ seniorDepth }: { seniorDepth: boolean }) {
       </div>
 
       {/* Database design */}
-      <div className="rounded-2xl p-6" style={{ background: "var(--bg-card)", border: "1px solid var(--border)" }}>
-        <h2 className="text-xl font-bold mb-1" style={{ color: "var(--text)" }}>Database Design</h2>
-        <p className="text-sm mb-5" style={{ color: "var(--text-muted)" }}>Click any table to see columns, access patterns, consistency requirements, and why this database was chosen.</p>
+      <div className="rounded-xl p-5" style={{ background: "var(--bg-card)", border: "1px solid var(--border)" }}>
+        <div className="flex items-center justify-between mb-3 flex-wrap gap-2">
+          <div>
+            <h2 className="text-base font-bold" style={{ color: "var(--text)" }}>
+              Database Design <span className="text-xs font-normal" style={{ color: "var(--text-faint)" }}>({DB_TABLES.length} tables)</span>
+            </h2>
+            <p className="text-xs mt-0.5" style={{ color: "var(--text-muted)" }}>Columns, access patterns, consistency requirements, and why each database was chosen.</p>
+          </div>
+          <div className="flex gap-2">
+            <button onClick={() => expandAll(setOpenTables, DB_TABLES.length)} className="text-xs px-3 py-1.5 rounded-lg"
+              style={{ background: "var(--blue-soft)", color: "var(--blue-text)", cursor: "pointer", border: "none" }}>Expand All</button>
+            <button onClick={() => collapseAll(setOpenTables)} className="text-xs px-3 py-1.5 rounded-lg"
+              style={{ background: "var(--bg)", border: "1px solid var(--border)", color: "var(--text-muted)", cursor: "pointer" }}>Collapse</button>
+          </div>
+        </div>
         <div className="space-y-2">
           {DB_TABLES.map((tbl, i) => {
-            const isOpen = activeTable === i;
+            const isOpen = openTables.has(i);
             return (
-              <div key={i} className="rounded-xl overflow-hidden" style={{ border: `1px solid ${isOpen ? `${tbl.color}50` : "var(--border)"}` }}>
+              <div key={i} className="rounded-xl overflow-hidden" style={{ border: `1px solid ${isOpen ? `${tbl.color}50` : "var(--border)"}`, borderTop: `3px solid ${tbl.color}` }}>
                 <button
-                  onClick={() => setActiveTable(isOpen ? null : i)}
+                  onClick={() => toggle(setOpenTables, i)}
                   className="w-full flex items-center gap-3 px-4 py-3 text-left"
+                  aria-expanded={isOpen}
                   style={{ background: "var(--bg)", cursor: "pointer", border: "none" }}
                 >
                   <span className="text-[10px] font-bold px-2 py-0.5 rounded" style={{ background: `${tbl.color}20`, color: tbl.color }}>{tbl.db}</span>
-                  <span className="text-sm font-mono font-bold flex-1" style={{ color: "var(--text)" }}>{tbl.name}</span>
+                  <code className="text-sm font-mono font-bold flex-1" style={{ color: "var(--text)" }}>{tbl.name}</code>
+                  <CopyButton text={tbl.name} />
                   <span className="text-[11px] hidden sm:inline" style={{ color: "var(--text-faint)" }}>PK: {tbl.pk}</span>
                   <span className="text-xs shrink-0 ml-2 transition-transform duration-200" style={{ color: "var(--text-muted)", display: "inline-block", transform: isOpen ? "rotate(180deg)" : "rotate(0deg)" }}>▼</span>
                 </button>

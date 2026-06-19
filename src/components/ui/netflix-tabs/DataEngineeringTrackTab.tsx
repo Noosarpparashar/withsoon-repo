@@ -359,19 +359,22 @@ Data quality: DQ checks at Silver ingestion. Bad records quarantined, never sile
 };
 
 function DataEngineeringTrackTab({ seniorDepth }: { seniorDepth: boolean }) {
-  const [activeStep, setActiveStep] = useState<number | null>(null);
+  const [openSteps, setOpenSteps] = useState<Set<number>>(new Set());
   const [activeSnippet, setActiveSnippet] = useState<string>("watchHours");
   const [copyAnswer, setCopyAnswer] = useState<string | null>(null);
+
+  const toggleStep = (n: number) =>
+    setOpenSteps(prev => { const s = new Set(prev); if (s.has(n)) s.delete(n); else s.add(n); return s; });
 
   const copy = (text: string, key: string) => {
     navigator.clipboard.writeText(text).then(() => { setCopyAnswer(key); setTimeout(() => setCopyAnswer(null), 2000); });
   };
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-6">
 
       {/* Header */}
-      <div className="rounded-2xl p-6 relative overflow-hidden" style={{ background: "var(--bg-card)", border: "1px solid #10b98140" }}>
+      <div className="rounded-xl p-5 relative overflow-hidden" style={{ background: "var(--bg-card)", border: "1px solid #10b98140" }}>
         <div className="absolute top-0 left-0 w-full h-1" style={{ background: "linear-gradient(90deg, #10b981, #3b82f6, #8b5cf6)" }} />
         <div className="flex items-start justify-between gap-4 flex-wrap">
           <div>
@@ -379,7 +382,7 @@ function DataEngineeringTrackTab({ seniorDepth }: { seniorDepth: boolean }) {
               <span className="text-xs px-2 py-0.5 rounded-full font-bold" style={{ background: "rgba(16,185,129,0.15)", color: "#10b981" }}>Data Engineering Track</span>
               {seniorDepth && <span className="text-xs px-2 py-0.5 rounded-full font-bold" style={{ background: "rgba(139,92,246,0.15)", color: "#8b5cf6" }}>Senior/Staff Depth ON</span>}
             </div>
-            <h2 className="text-2xl font-bold mb-1" style={{ color: "var(--text)" }}>Netflix Streaming Analytics Pipeline</h2>
+            <h2 className="text-xl font-bold mb-1" style={{ color: "var(--text)" }}>Netflix Streaming Analytics Pipeline</h2>
             <p className="text-sm" style={{ color: "var(--text-muted)" }}>18-step guided flow from raw events to business metrics.</p>
           </div>
           <div className="grid grid-cols-3 gap-2 shrink-0">
@@ -394,8 +397,8 @@ function DataEngineeringTrackTab({ seniorDepth }: { seniorDepth: boolean }) {
       </div>
 
       {/* Clarifying questions */}
-      <div className="rounded-2xl p-5" style={{ background: "var(--bg-card)", border: "1px solid var(--border)" }}>
-        <h2 className="text-lg font-bold mb-1" style={{ color: "var(--text)" }}>Clarifying Questions — ask these first</h2>
+      <div className="rounded-xl p-5" style={{ background: "var(--bg-card)", border: "1px solid var(--border)" }}>
+        <h2 className="text-base font-bold mb-1" style={{ color: "var(--text)" }}>Clarifying Questions — ask these first</h2>
         <p className="text-xs mb-4" style={{ color: "var(--text-muted)" }}>Data engineering interviews stall when you start designing before understanding the analytics goal. Ask these first.</p>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
           {[
@@ -419,17 +422,30 @@ function DataEngineeringTrackTab({ seniorDepth }: { seniorDepth: boolean }) {
       </div>
 
       {/* Flow steps */}
-      <div className="rounded-2xl p-6" style={{ background: "var(--bg-card)", border: "1px solid var(--border)" }}>
-        <h2 className="text-xl font-bold mb-1" style={{ color: "var(--text)" }}>Data Engineering Track — 18-Step Flow</h2>
-        <p className="text-sm mb-5" style={{ color: "var(--text-muted)" }}>Click any step for the interview answer.</p>
+      <div className="rounded-xl p-5" style={{ background: "var(--bg-card)", border: "1px solid var(--border)" }}>
+        <div className="flex items-center justify-between mb-3 flex-wrap gap-2">
+          <div>
+            <h2 className="text-base font-bold" style={{ color: "var(--text)" }}>
+              18-Step Design Flow <span className="text-xs font-normal" style={{ color: "var(--text-faint)" }}>({FLOW_STEPS.length} steps)</span>
+            </h2>
+            <p className="text-xs mt-0.5" style={{ color: "var(--text-muted)" }}>Each step has an interview answer to copy and practice.</p>
+          </div>
+          <div className="flex gap-2">
+            <button onClick={() => setOpenSteps(new Set(FLOW_STEPS.map(s => s.n)))} className="text-xs px-3 py-1.5 rounded-lg"
+              style={{ background: "var(--blue-soft)", color: "var(--blue-text)", cursor: "pointer", border: "none" }}>Expand All</button>
+            <button onClick={() => setOpenSteps(new Set())} className="text-xs px-3 py-1.5 rounded-lg"
+              style={{ background: "var(--bg)", border: "1px solid var(--border)", color: "var(--text-muted)", cursor: "pointer" }}>Collapse</button>
+          </div>
+        </div>
         <div className="space-y-1.5">
           {FLOW_STEPS.map((step) => {
-            const isOpen = activeStep === step.n;
+            const isOpen = openSteps.has(step.n);
             return (
-              <div key={step.n} className="rounded-xl overflow-hidden" style={{ border: `1px solid ${isOpen ? "#10b98160" : "var(--border)"}` }}>
+              <div key={step.n} className="rounded-xl overflow-hidden" style={{ border: `1px solid ${isOpen ? "#10b98160" : "var(--border)"}`, borderTop: "3px solid #10b981" }}>
                 <button
-                  onClick={() => setActiveStep(isOpen ? null : step.n)}
+                  onClick={() => toggleStep(step.n)}
                   className="w-full flex items-center gap-3 px-4 py-3 text-left"
+                  aria-expanded={isOpen}
                   style={{ background: isOpen ? "rgba(16,185,129,0.06)" : "var(--bg)", cursor: "pointer", border: "none" }}
                 >
                   <span className="w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold shrink-0" style={{ background: "rgba(16,185,129,0.15)", color: "#10b981" }}>{step.n}</span>
@@ -478,9 +494,9 @@ function DataEngineeringTrackTab({ seniorDepth }: { seniorDepth: boolean }) {
       </Accordion>
 
       {/* Event schema */}
-      <div className="rounded-2xl p-6" style={{ background: "var(--bg-card)", border: "1px solid var(--border)" }}>
+      <div className="rounded-xl p-5" style={{ background: "var(--bg-card)", border: "1px solid var(--border)" }}>
         <div className="flex items-center justify-between mb-4">
-          <h2 className="text-xl font-bold" style={{ color: "var(--text)" }}>Event Schema</h2>
+          <h2 className="text-base font-bold" style={{ color: "var(--text)" }}>Event Schema</h2>
           <CopyButton text={EVENT_SCHEMA} label="Copy schema" />
         </div>
         <div className="rounded-lg overflow-hidden" style={{ background: "#1a1b26" }}>
@@ -501,8 +517,8 @@ function DataEngineeringTrackTab({ seniorDepth }: { seniorDepth: boolean }) {
       </div>
 
       {/* Kafka topics */}
-      <div className="rounded-2xl p-6" style={{ background: "var(--bg-card)", border: "1px solid var(--border)" }}>
-        <h2 className="text-xl font-bold mb-4" style={{ color: "var(--text)" }}>Kafka Topic Design</h2>
+      <div className="rounded-xl p-5" style={{ background: "var(--bg-card)", border: "1px solid var(--border)" }}>
+        <h2 className="text-base font-bold mb-3" style={{ color: "var(--text)" }}>Kafka Topic Design</h2>
         <div className="overflow-x-auto rounded-lg" style={{ border: "1px solid var(--border)" }}>
           <table className="w-full text-xs">
             <thead>
@@ -589,8 +605,8 @@ function DataEngineeringTrackTab({ seniorDepth }: { seniorDepth: boolean }) {
       </Accordion>
 
       {/* Bronze/Silver/Gold */}
-      <div className="rounded-2xl p-6" style={{ background: "var(--bg-card)", border: "1px solid var(--border)" }}>
-        <h2 className="text-xl font-bold mb-4" style={{ color: "var(--text)" }}>Bronze / Silver / Gold Lakehouse</h2>
+      <div className="rounded-xl p-5" style={{ background: "var(--bg-card)", border: "1px solid var(--border)" }}>
+        <h2 className="text-base font-bold mb-3" style={{ color: "var(--text)" }}>Bronze / Silver / Gold Lakehouse</h2>
         <div className="space-y-4">
           {LAKEHOUSE_TABLES.map((layer) => (
             <div key={layer.layer} className="rounded-xl overflow-hidden" style={{ border: `1px solid ${layer.color}30` }}>
@@ -613,8 +629,8 @@ function DataEngineeringTrackTab({ seniorDepth }: { seniorDepth: boolean }) {
       </div>
 
       {/* Data quality */}
-      <div className="rounded-2xl p-6" style={{ background: "var(--bg-card)", border: "1px solid var(--border)" }}>
-        <h2 className="text-xl font-bold mb-4" style={{ color: "var(--text)" }}>Data Quality Checks</h2>
+      <div className="rounded-xl p-5" style={{ background: "var(--bg-card)", border: "1px solid var(--border)" }}>
+        <h2 className="text-base font-bold mb-3" style={{ color: "var(--text)" }}>Data Quality Checks</h2>
         <div className="overflow-x-auto rounded-lg" style={{ border: "1px solid var(--border)" }}>
           <table className="w-full text-xs">
             <thead>
@@ -641,8 +657,8 @@ function DataEngineeringTrackTab({ seniorDepth }: { seniorDepth: boolean }) {
       </div>
 
       {/* Code snippets */}
-      <div className="rounded-2xl p-6" style={{ background: "var(--bg-card)", border: "1px solid var(--border)" }}>
-        <h2 className="text-xl font-bold mb-4" style={{ color: "var(--text)" }}>Code Snippets</h2>
+      <div className="rounded-xl p-5" style={{ background: "var(--bg-card)", border: "1px solid var(--border)" }}>
+        <h2 className="text-base font-bold mb-3" style={{ color: "var(--text)" }}>Code Snippets</h2>
         <div className="flex flex-wrap gap-2 mb-4">
           {Object.entries(CODE_SNIPPETS).map(([key, s]) => (
             <button
@@ -668,10 +684,10 @@ function DataEngineeringTrackTab({ seniorDepth }: { seniorDepth: boolean }) {
 
       {/* Senior/Staff depth */}
       {seniorDepth && (
-        <div className="rounded-2xl p-6" style={{ background: "rgba(139,92,246,0.06)", border: "1px solid #8b5cf640" }}>
+        <div className="rounded-xl p-5" style={{ background: "rgba(139,92,246,0.06)", border: "1px solid #8b5cf640" }}>
           <div className="flex items-center gap-2 mb-4">
             <span className="text-xs px-2 py-0.5 rounded-full font-bold" style={{ background: "rgba(139,92,246,0.15)", color: "#8b5cf6" }}>Senior/Staff Depth</span>
-            <h3 className="text-lg font-bold" style={{ color: "var(--text)" }}>Scale decisions and advanced patterns</h3>
+            <h3 className="text-base font-bold" style={{ color: "var(--text)" }}>Scale decisions and advanced patterns</h3>
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             {[
@@ -690,9 +706,9 @@ function DataEngineeringTrackTab({ seniorDepth }: { seniorDepth: boolean }) {
       )}
 
       {/* Final answers */}
-      <div className="rounded-2xl p-6" style={{ background: "var(--bg-card)", border: "1px solid var(--border)" }}>
-        <h2 className="text-xl font-bold mb-1" style={{ color: "var(--text)" }}>Final Spoken Answer</h2>
-        <p className="text-sm mb-5" style={{ color: "var(--text-muted)" }}>Copy the version that matches your available time.</p>
+      <div className="rounded-xl p-5" style={{ background: "var(--bg-card)", border: "1px solid var(--border)" }}>
+        <h2 className="text-base font-bold mb-1" style={{ color: "var(--text)" }}>Final Spoken Answer</h2>
+        <p className="text-sm mb-4" style={{ color: "var(--text-muted)" }}>Copy the version that matches your available time.</p>
         <div className="space-y-3">
           {(Object.entries(FINAL_DATA_ANSWERS) as [string, string][]).map(([duration, text]) => (
             <div key={duration} className="rounded-xl overflow-hidden" style={{ border: "1px solid var(--border)" }}>

@@ -1,191 +1,329 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import type { Role } from "@/components/ui/NetflixPage";
 
-function CopyButton({ text }: { text: string }) {
+function CopyButton({ text, label }: { text: string; label?: string }) {
   const [c, setC] = useState(false);
   return (
-    <button onClick={() => { navigator.clipboard.writeText(text).then(() => { setC(true); setTimeout(() => setC(false), 2000); }); }}
-      className="text-[11px] px-3 py-1 rounded font-medium transition-colors"
-      style={{ background: c ? "#22c55e" : "#2a2b3d", color: c ? "#fff" : "#a9b1d6", cursor: "pointer", border: "none" }}
-    >{c ? "Copied!" : "Copy"}</button>
+    <button
+      onClick={() => { navigator.clipboard.writeText(text).then(() => { setC(true); setTimeout(() => setC(false), 2000); }); }}
+      className="text-[11px] px-3 py-1 rounded-lg font-medium transition-colors"
+      style={{ background: c ? "#22c55e" : "var(--bg)", color: c ? "#fff" : "var(--text-muted)", border: "1px solid var(--border)", cursor: "pointer" }}
+      aria-label={`Copy ${label || "text"} to clipboard`}
+    >
+      {c ? "✓ Copied!" : "Copy"}
+    </button>
   );
 }
 
-const BACKEND_METRICS = [
-  { label: "Daily active users", value: "220M", formula: "300M × 0.73 daily engagement", why: "Anchors all per-user storage calculations." },
-  { label: "Peak concurrent streams", value: "60M", formula: "220M DAU × peak 27% concurrency factor", why: "This single number drives CDN capacity, Cassandra write load, and Redis concurrency store size." },
-  { label: "Playback start QPS", value: "~600K/sec", formula: "60M sessions ÷ avg session length 6h × some new starts/hour", why: "Drives Playback Service horizontal scaling and concurrency check frequency." },
-  { label: "Heartbeat QPS", value: "2M/sec", formula: "60M concurrent streams ÷ 30s heartbeat interval", why: "Rules out MySQL. Only Cassandra handles 2M writes/sec on a single access pattern." },
-  { label: "Metadata read QPS", value: "30M/sec", formula: "60M streams × avg 0.5 metadata reads/sec (catalog browsing)", why: "EVCache serves 99.9% at 30M req/s. Without EVCache, Cassandra would be saturated." },
-  { label: "Watch progress write QPS", value: "2M/sec", formula: "Same as heartbeat — each heartbeat = 1 Cassandra upsert", why: "Justifies Cassandra (not MySQL) for watch_progress table." },
-  { label: "CDN bandwidth", value: "300 Tbps", formula: "60M streams × 5 Mbps avg bitrate", why: "Justifies building Open Connect. Commercial CDN at 300 Tbps would cost hundreds of millions/year." },
-  { label: "Cache hit ratio", value: ">99.9%", formula: "30M metadata reads/sec → ~30K Cassandra reads/sec (0.1%)", why: "Each 0.1% drop in cache hit rate = 30K extra Cassandra reads/sec = significant load." },
-  { label: "Active session storage", value: "~60 GB", formula: "60M session_ids × ~1KB per SET entry in Redis", why: "Fits comfortably in Redis. No need for external storage for concurrency state." },
-  { label: "Cassandra nodes (watch history)", value: "~10,000 nodes", formula: "2M writes/sec ÷ ~200 writes/sec/node capacity", why: "Cassandra's linear scaling: add nodes, throughput scales. No sharding complexity." },
+type Preset = {
+  name: string;
+  color: string;
+  subscribers: number;
+  dauRatio: number;
+  concurrencyRatio: number;
+  avgBitrateMbps: number;
+  heartbeatIntervalSec: number;
+  devicesPerAccount: number;
+  avgSessionMin: number;
+};
+
+const PRESETS: Preset[] = [
+  { name: "Netflix (real)", color: "#e50914", subscribers: 300, dauRatio: 0.73, concurrencyRatio: 0.27, avgBitrateMbps: 5, heartbeatIntervalSec: 30, devicesPerAccount: 4, avgSessionMin: 90 },
+  { name: "Startup (10M)", color: "#10b981", subscribers: 10, dauRatio: 0.60, concurrencyRatio: 0.20, avgBitrateMbps: 4, heartbeatIntervalSec: 30, devicesPerAccount: 2, avgSessionMin: 60 },
+  { name: "FAANG Scale (1B)", color: "#8b5cf6", subscribers: 1000, dauRatio: 0.75, concurrencyRatio: 0.30, avgBitrateMbps: 6, heartbeatIntervalSec: 30, devicesPerAccount: 5, avgSessionMin: 100 },
 ];
 
-const DATA_METRICS = [
-  { label: "Events per second (peak)", value: "15M/sec", formula: "60M streams × mix of heartbeat + quality + search + recs", why: "Drives Kafka broker count and stream processor vCPU sizing." },
-  { label: "Events per day", value: "~700B events/day", formula: "15M/sec × 86,400s ÷ (1 - off-peak reduction)", why: "Daily data volume baseline for storage and cost estimation." },
-  { label: "Average event size", value: "~2 KB", formula: "JSON event with all fields: ~800 bytes compressed, ~2KB raw", why: "Compressed Kafka messages save 60-70% vs uncompressed." },
-  { label: "Daily raw data volume (Bronze)", value: "~1.5 PB/day", formula: "700B events × 2KB avg × 0.45 zstd compression ratio", why: "Drives S3 storage cost and retention policy decisions." },
-  { label: "Kafka broker estimate", value: "~720 brokers", formula: "15M/sec × 2KB × RF3 ÷ 200 MB/s per broker", why: "RF3 means each byte lands on 3 brokers. 200 MB/s is a conservative broker throughput estimate." },
-  { label: "Kafka partitions (heartbeat)", value: "~1,000 partitions", formula: "2M heartbeat/sec ÷ 2,000 events/sec per partition", why: "Partition count determines parallelism of stream processing." },
-  { label: "Stream processing throughput", value: "~3,000 Flink vCPUs", formula: "15M events/sec ÷ 5K events/sec per vCPU (dedup + session)", why: "Flink stateful operations are expensive. 5K events/vCPU is a conservative estimate." },
-  { label: "Flink state size", value: "~20 TB", formula: "Active sessions × session state size (dedup keys + window state)", why: "RocksDB on NVMe. Checkpointed to S3 every 5 minutes for fault tolerance." },
-  { label: "Gold table size per day", value: "~10 GB/day", formula: "Pre-aggregated: 700B events compressed → 10GB aggregated metrics", why: "Gold tables are small because they are aggregates, not row-level data." },
-  { label: "Backfill volume (90 days)", value: "~135 PB", formula: "1.5 PB/day × 90 days Bronze retention", why: "Full Bronze retention for reprocessing. Cold storage on S3 Glacier after 30 days." },
+type Inputs = {
+  subscribers: number;       // millions
+  dauRatio: number;          // 0-1
+  concurrencyRatio: number;  // 0-1 of DAU
+  avgBitrateMbps: number;
+  heartbeatIntervalSec: number;
+  devicesPerAccount: number;
+  avgSessionMin: number;
+};
+
+function fmt(n: number): string {
+  if (n >= 1_000_000) return `${(n / 1_000_000).toFixed(1)}T`;
+  if (n >= 1_000) return `${(n / 1_000).toFixed(n >= 100_000 ? 0 : 1)}B`;
+  if (n >= 1) return `${n.toFixed(n >= 100 ? 0 : 1)}M`;
+  return `${(n * 1000).toFixed(0)}K`;
+}
+function fmtN(n: number): string {
+  if (n >= 1e12) return `${(n / 1e12).toFixed(1)} T`;
+  if (n >= 1e9) return `${(n / 1e9).toFixed(1)} B`;
+  if (n >= 1e6) return `${(n / 1e6).toFixed(1)} M`;
+  if (n >= 1e3) return `${(n / 1e3).toFixed(0)} K`;
+  return `${n.toFixed(0)}`;
+}
+
+function useCalc(inp: Inputs) {
+  return useMemo(() => {
+    const sub = inp.subscribers * 1e6;
+    const dau = sub * inp.dauRatio;
+    const concurrent = dau * inp.concurrencyRatio;
+    const heartbeatQps = concurrent / inp.heartbeatIntervalSec;
+    const cdnBandwidthGbps = (concurrent * inp.avgBitrateMbps) / 1000;
+    const metadataQps = concurrent * 0.5;
+    const sessionStartQps = (dau * 2) / 86400;
+    const dailyHeartbeats = heartbeatQps * 86400;
+    const avgEventSizeKb = 2;
+    const eventsPerSec = concurrent * (1 / inp.heartbeatIntervalSec + 0.05); // heartbeat + other
+    const dailyEvents = eventsPerSec * 86400;
+    const bronzePbPerDay = (dailyEvents * avgEventSizeKb * 1024 * 0.45) / 1e15;
+    const kafkaBrokers = Math.ceil((eventsPerSec * avgEventSizeKb * 1024 * 3) / (200 * 1024 * 1024));
+    const kafkaPartitions = Math.ceil(heartbeatQps / 2000);
+    const flinkVcpus = Math.ceil(eventsPerSec / 5000);
+    const cassandraNodes = Math.ceil(heartbeatQps / 200);
+    const redisMemGb = (concurrent * 1024) / 1e9;
+
+    // Threshold warnings
+    const warnings: string[] = [];
+    if (heartbeatQps > 200_000) warnings.push(`${fmtN(heartbeatQps)} writes/sec → MySQL can't handle this. Use Cassandra.`);
+    if (cdnBandwidthGbps > 50_000) warnings.push(`${(cdnBandwidthGbps / 1000).toFixed(0)} Tbps CDN bandwidth → requires own CDN like Open Connect.`);
+    if (metadataQps > 1_000_000) warnings.push(`${fmtN(metadataQps)} metadata reads/sec → must use EVCache/Memcached.`);
+    if (kafkaBrokers > 100) warnings.push(`${kafkaBrokers} Kafka brokers → significant cluster management overhead.`);
+    if (redisMemGb > 100) warnings.push(`${redisMemGb.toFixed(0)} GB in Redis for concurrency → consider clustering.`);
+
+    return { sub, dau, concurrent, heartbeatQps, cdnBandwidthGbps, metadataQps, sessionStartQps, dailyHeartbeats, eventsPerSec, dailyEvents, bronzePbPerDay, kafkaBrokers, kafkaPartitions, flinkVcpus, cassandraNodes, redisMemGb, warnings };
+  }, [inp]);
+}
+
+type SliderField = { key: keyof Inputs; label: string; min: number; max: number; step: number; format: (v: number) => string };
+
+const SLIDER_FIELDS: SliderField[] = [
+  { key: "subscribers", label: "Subscribers", min: 1, max: 1000, step: 1, format: v => `${v}M` },
+  { key: "dauRatio", label: "DAU / Subscriber ratio", min: 0.3, max: 0.9, step: 0.01, format: v => `${(v * 100).toFixed(0)}%` },
+  { key: "concurrencyRatio", label: "Peak concurrency ratio (of DAU)", min: 0.1, max: 0.5, step: 0.01, format: v => `${(v * 100).toFixed(0)}%` },
+  { key: "avgBitrateMbps", label: "Avg bitrate (Mbps)", min: 1, max: 25, step: 0.5, format: v => `${v} Mbps` },
+  { key: "heartbeatIntervalSec", label: "Heartbeat interval (sec)", min: 5, max: 120, step: 5, format: v => `${v}s` },
+  { key: "devicesPerAccount", label: "Devices per account", min: 1, max: 6, step: 1, format: v => `${v}` },
+  { key: "avgSessionMin", label: "Avg session duration (min)", min: 10, max: 240, step: 5, format: v => `${v} min` },
 ];
 
 const FORMULAS = [
   { label: "Heartbeat QPS", formula: "concurrent_streams / heartbeat_interval_sec", example: "60M / 30 = 2M/sec", color: "#3b82f6" },
-  { label: "Daily raw data (Bronze)", formula: "events_per_day × avg_event_size × compression_ratio", example: "700B × 2KB × 0.45 = 1.5 PB/day", color: "#10b981" },
-  { label: "Kafka partitions", formula: "peak_throughput_per_topic / throughput_per_partition", example: "2M heartbeats/sec / 2K per partition = 1,000 partitions", color: "#f59e0b" },
-  { label: "Kafka brokers", formula: "(ingest_rate × replication_factor) / broker_disk_throughput", example: "(30 GB/s × 3) / 200 MB/s = 450 brokers (+ 20% headroom = 540)", color: "#8b5cf6" },
-  { label: "Watch hours (Gold)", formula: "SUM(watched_seconds) / 3600", example: "All sessions for content X: 3.6B seconds / 3600 = 1M watch hours", color: "#06b6d4" },
-  { label: "Completion rate", formula: "sessions_completed / sessions_started × 100", example: "completions where watched_pct >= 0.9", color: "#10b981" },
-  { label: "Flink vCPUs", formula: "events_per_sec / events_per_vcpu", example: "15M / 5K = 3,000 vCPUs", color: "#ec4899" },
-  { label: "EVCache hit impact", formula: "cache_hit_rate × total_reads = reads_served_by_cache", example: "0.999 × 30M/sec = 29.97M/sec from cache, 30K/sec to Cassandra", color: "#f97316" },
-  { label: "Redis active_streams memory", formula: "concurrent_sessions × avg_entry_size", example: "60M × 1KB ≈ 60 GB in Redis", color: "#a855f7" },
-  { label: "Cassandra nodes for writes", formula: "write_qps / writes_per_node_per_sec", example: "2M / 200 = 10,000 nodes", color: "#84cc16" },
+  { label: "CDN Bandwidth", formula: "concurrent_streams × avg_bitrate", example: "60M × 5 Mbps = 300 Tbps", color: "#10b981" },
+  { label: "Daily raw data (Bronze)", formula: "events_per_day × avg_event_size × compression_ratio", example: "700B × 2KB × 0.45 = 1.5 PB/day", color: "#f59e0b" },
+  { label: "Kafka partitions", formula: "peak_throughput / throughput_per_partition", example: "2M heartbeats/sec / 2K = 1,000 partitions", color: "#8b5cf6" },
+  { label: "Kafka brokers", formula: "(ingest_rate × RF) / broker_throughput", example: "(30 GB/s × 3) / 200 MB/s = 450 brokers", color: "#06b6d4" },
+  { label: "Watch hours (Gold)", formula: "SUM(watched_seconds) / 3600", example: "3.6B seconds / 3600 = 1M watch hours", color: "#ec4899" },
+  { label: "Completion rate", formula: "sessions_completed / sessions_started × 100", example: "where watched_pct >= 0.9", color: "#10b981" },
+  { label: "Flink vCPUs", formula: "events_per_sec / events_per_vcpu", example: "15M / 5K = 3,000 vCPUs", color: "#f97316" },
+  { label: "EVCache hit impact", formula: "cache_hit_rate × total_reads", example: "0.999 × 30M/sec = 30K/sec to Cassandra", color: "#a855f7" },
+  { label: "Cassandra nodes", formula: "write_qps / writes_per_node", example: "2M / 200 = 10,000 nodes", color: "#84cc16" },
 ];
 
-const BACKEND_COPY = `BACKEND SCALE ASSUMPTIONS:
-300M subscribers, 220M DAU
-60M peak concurrent streams
-5 Mbps avg bitrate, 30s heartbeat interval
+export function ScaleEstimationTab({ role }: { role: Role }) {
+  const [subTab, setSubTab] = useState<"calculator" | "formulas">("calculator");
+  const [activeSection, setActiveSection] = useState<"backend" | "data">(role === "Data Engineer" ? "data" : "backend");
+  const [copiedFormula, setCopiedFormula] = useState<string | null>(null);
+  const [inputs, setInputs] = useState<Inputs>({
+    subscribers: 300, dauRatio: 0.73, concurrencyRatio: 0.27,
+    avgBitrateMbps: 5, heartbeatIntervalSec: 30, devicesPerAccount: 4, avgSessionMin: 90,
+  });
+
+  const calc = useCalc(inputs);
+  const color = activeSection === "backend" ? "#3b82f6" : "#10b981";
+
+  function applyPreset(p: Preset) {
+    setInputs({ subscribers: p.subscribers, dauRatio: p.dauRatio, concurrencyRatio: p.concurrencyRatio, avgBitrateMbps: p.avgBitrateMbps, heartbeatIntervalSec: p.heartbeatIntervalSec, devicesPerAccount: p.devicesPerAccount, avgSessionMin: p.avgSessionMin });
+  }
+
+  const copyAnswer = activeSection === "backend"
+    ? `BACKEND SCALE ASSUMPTIONS:
+${inputs.subscribers}M subscribers × ${(inputs.dauRatio * 100).toFixed(0)}% DAU = ${fmt(calc.dau)} DAU
+${fmt(calc.dau)} DAU × ${(inputs.concurrencyRatio * 100).toFixed(0)}% peak = ${fmt(calc.concurrent)} concurrent streams
 
 DERIVED:
-60M × 5 Mbps         = 300 Tbps  CDN bandwidth
-60M ÷ 30s            = 2M/sec    heartbeat writes → Cassandra
-30M req/s metadata   × 99.9% cache hit → 30K/sec reaches Cassandra
-2M writes/sec ÷ 200  = ~10,000 Cassandra nodes
-60M × 1KB            = ~60 GB   active sessions in Redis`;
-
-const DATA_COPY = `DATA ENGINEERING SCALE ASSUMPTIONS:
-60M concurrent streams, 15M events/sec peak
+${fmt(calc.concurrent)} × ${inputs.avgBitrateMbps} Mbps    = ${(calc.cdnBandwidthGbps / 1000).toFixed(0)} Tbps CDN bandwidth
+${fmt(calc.concurrent)} ÷ ${inputs.heartbeatIntervalSec}s         = ${fmtN(calc.heartbeatQps)}/sec heartbeat writes → Cassandra
+${fmtN(calc.heartbeatQps)} writes/sec ÷ 200   = ~${fmtN(calc.cassandraNodes)} Cassandra nodes
+${fmt(calc.concurrent)} × 1KB             = ~${calc.redisMemGb.toFixed(0)} GB active sessions in Redis`
+    : `DATA ENGINEERING SCALE ASSUMPTIONS:
+${fmt(calc.concurrent)} concurrent streams, ${fmtN(calc.eventsPerSec)} events/sec peak
 2KB avg event size, RF=3 Kafka
 
 DERIVED:
-15M × 2KB × RF3 ÷ 200 MB/s    = ~720 Kafka brokers
-15M / 2,000 per partition       = ~7,500 Kafka partitions
-700B events × 2KB × 0.45       = ~1.5 PB/day Bronze
-15M ÷ 5K events/vCPU           = ~3,000 Flink vCPUs
-Flink state                     = ~20 TB RocksDB`;
-
-function ScaleEstimationTab({ role }: { role: Role }) {
-  const [subTab, setSubTab] = useState<"backend" | "data">(role === "Data Engineer" ? "data" : "backend");
-  const [openIdx, setOpenIdx] = useState<number | null>(null);
-  const [copiedFormula, setCopiedFormula] = useState<string | null>(null);
-
-  const metrics = subTab === "backend" ? BACKEND_METRICS : DATA_METRICS;
-  const color = subTab === "backend" ? "#3b82f6" : "#10b981";
-  const copyAll = subTab === "backend" ? BACKEND_COPY : DATA_COPY;
+${fmtN(calc.eventsPerSec)} × 2KB × RF3 ÷ 200 MB/s = ~${calc.kafkaBrokers} Kafka brokers
+${fmtN(calc.heartbeatQps)} ÷ 2K per partition      = ~${calc.kafkaPartitions} Kafka partitions
+${fmtN(calc.dailyEvents)} events × 2KB × 0.45       = ~${calc.bronzePbPerDay.toFixed(2)} PB/day Bronze
+${fmtN(calc.eventsPerSec)} ÷ 5K events/vCPU         = ~${calc.flinkVcpus} Flink vCPUs`;
 
   return (
-    <div className="space-y-6">
-      {/* Header + sub-tabs */}
-      <div className="rounded-2xl p-4" style={{ background: "var(--bg-card)", border: "1px solid var(--border)" }}>
-        <div className="flex items-center gap-3 flex-wrap">
-          <h2 className="text-xl font-bold" style={{ color: "var(--text)" }}>Scale Estimation</h2>
-          <div className="flex gap-1 p-1 rounded-xl ml-auto" style={{ background: "var(--bg)", border: "1px solid var(--border)" }}>
-            {[["backend", "Backend Scale"], ["data", "Data Engineering Scale"]].map(([key, label]) => (
-              <button key={key} onClick={() => setSubTab(key as "backend" | "data")}
-                className="px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors"
-                style={{ background: subTab === key ? (key === "backend" ? "rgba(59,130,246,0.15)" : "rgba(16,185,129,0.15)") : "transparent", color: subTab === key ? (key === "backend" ? "#3b82f6" : "#10b981") : "var(--text-muted)", cursor: "pointer", border: "none" }}
-              >{label}</button>
-            ))}
-          </div>
+    <div className="space-y-5">
+      {/* Header */}
+      <div className="rounded-xl p-4 flex flex-wrap items-center gap-3" style={{ background: "var(--bg-card)", border: "1px solid var(--border)" }}>
+        <h2 className="text-xl font-bold" style={{ color: "var(--text)" }}>Scale Estimation</h2>
+        <p className="text-sm flex-1" style={{ color: "var(--text-muted)" }}>Show the formula, derive the number. Interviewers care about reasoning.</p>
+
+        {/* Sub-tabs */}
+        <div className="flex gap-1 p-1 rounded-xl" style={{ background: "var(--bg)", border: "1px solid var(--border)" }}>
+          {(["calculator", "formulas"] as const).map(t => (
+            <button key={t} onClick={() => setSubTab(t)}
+              className="px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors capitalize"
+              style={{ background: subTab === t ? "var(--blue-soft)" : "transparent", color: subTab === t ? "var(--blue-text)" : "var(--text-muted)", cursor: "pointer", border: "none" }}
+            >{t === "calculator" ? "📐 Calculator" : "📋 Formula Cards"}</button>
+          ))}
         </div>
-        <p className="text-sm mt-2" style={{ color: "var(--text-muted)" }}>Show the formula, then the result. Interviewers care about reasoning, not memorized numbers.</p>
       </div>
 
-      {/* Metrics grid */}
-      <div className="rounded-2xl p-6" style={{ background: "var(--bg-card)", border: "1px solid var(--border)" }}>
-        <div className="flex items-center justify-between mb-5">
-          <h3 className="text-lg font-bold" style={{ color: "var(--text)" }}>
-            {subTab === "backend" ? "Backend Scale Metrics" : "Data Engineering Scale Metrics"}
-          </h3>
-          <CopyButton text={copyAll} />
-        </div>
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-          {metrics.map((item, i) => {
-            const isOpen = openIdx === i;
-            return (
-              <div key={i} className="rounded-xl overflow-hidden" style={{ border: "1px solid var(--border)" }}>
-                <div
-                  className="p-4 cursor-pointer"
-                  style={{ background: "var(--bg)", borderTop: `3px solid ${color}` }}
-                  onClick={() => setOpenIdx(isOpen ? null : i)}
-                  role="button" tabIndex={0} onKeyDown={(e) => e.key === "Enter" && setOpenIdx(isOpen ? null : i)}
+      {subTab === "calculator" && (
+        <div className="space-y-5">
+          {/* Presets */}
+          <div className="rounded-xl p-4" style={{ background: "var(--bg-card)", border: "1px solid var(--border)" }}>
+            <p className="text-xs font-bold mb-3" style={{ color: "var(--text-faint)" }}>PRESETS</p>
+            <div className="flex flex-wrap gap-2">
+              {PRESETS.map(p => (
+                <button
+                  key={p.name}
+                  onClick={() => applyPreset(p)}
+                  className="px-3 py-2 rounded-xl text-xs font-semibold transition-all"
+                  style={{ background: `${p.color}15`, color: p.color, border: `1px solid ${p.color}40`, cursor: "pointer" }}
                 >
-                  <div className="flex items-start justify-between gap-2">
-                    <div className="flex-1">
-                      <div className="text-[11px] font-medium mb-1" style={{ color: "var(--text-muted)" }}>{item.label}</div>
-                      <div className="text-2xl font-black font-mono mb-1" style={{ color }}>{item.value}</div>
-                      <div className="text-[11px] font-mono" style={{ color: "var(--text-faint)" }}>{item.formula}</div>
-                    </div>
-                    <span className="text-xs mt-1 shrink-0 transition-transform duration-200" style={{ color: "var(--text-faint)", display: "inline-block", transform: isOpen ? "rotate(180deg)" : "rotate(0deg)" }}>▼</span>
+                  {p.name}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Sliders */}
+          <div className="rounded-xl p-5" style={{ background: "var(--bg-card)", border: "1px solid var(--border)" }}>
+            <p className="text-xs font-bold mb-4 uppercase tracking-wider" style={{ color: "var(--text-faint)" }}>Drag to adjust assumptions</p>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+              {SLIDER_FIELDS.map(f => (
+                <div key={f.key}>
+                  <div className="flex items-center justify-between mb-1.5">
+                    <label htmlFor={`slider-${f.key}`} className="text-xs font-medium" style={{ color: "var(--text-muted)" }}>{f.label}</label>
+                    <span id={`slider-val-${f.key}`} className="text-xs font-mono font-bold" style={{ color }}>{f.format(inputs[f.key] as number)}</span>
+                  </div>
+                  <input
+                    id={`slider-${f.key}`}
+                    type="range" min={f.min} max={f.max} step={f.step}
+                    value={inputs[f.key] as number}
+                    onChange={e => setInputs(prev => ({ ...prev, [f.key]: Number(e.target.value) }))}
+                    className="w-full"
+                    style={{ accentColor: color, touchAction: "manipulation" }}
+                    aria-label={f.label}
+                    aria-describedby={`slider-val-${f.key}`}
+                  />
+                  <div className="flex justify-between text-[10px] mt-0.5" style={{ color: "var(--text-faint)" }}>
+                    <span>{f.format(f.min)}</span>
+                    <span>{f.format(f.max)}</span>
                   </div>
                 </div>
-                {isOpen && (
-                  <div className="px-4 pb-3 pt-2 text-sm leading-relaxed" style={{ borderTop: "1px solid var(--border)", background: "var(--bg-card)", color: "var(--text-muted)" }}>
-                    <span className="text-xs font-bold block mb-1" style={{ color }}>Why this matters</span>
-                    {item.why}
-                  </div>
-                )}
-              </div>
-            );
-          })}
-        </div>
-      </div>
+              ))}
+            </div>
+          </div>
 
-      {/* Formula cards */}
-      <div className="rounded-2xl p-6" style={{ background: "var(--bg-card)", border: "1px solid var(--border)" }}>
-        <h3 className="text-lg font-bold mb-4" style={{ color: "var(--text)" }}>Formula Cards</h3>
-        <p className="text-sm mb-5" style={{ color: "var(--text-muted)" }}>Copy any formula — derive the number in the interview, never just recite it.</p>
+          {/* View toggle: backend / data */}
+          <div className="flex gap-1 p-1 rounded-xl" style={{ background: "var(--bg-card)", border: "1px solid var(--border)", width: "fit-content" }}>
+            {(["backend", "data"] as const).map(s => (
+              <button key={s} onClick={() => setActiveSection(s)}
+                className="px-3 py-1.5 rounded-lg text-xs font-semibold capitalize"
+                style={{ background: activeSection === s ? (s === "backend" ? "rgba(59,130,246,0.15)" : "rgba(16,185,129,0.15)") : "transparent", color: activeSection === s ? (s === "backend" ? "#3b82f6" : "#10b981") : "var(--text-muted)", cursor: "pointer", border: "none" }}
+              >
+                {s === "backend" ? "⚙️ Backend metrics" : "📊 Data metrics"}
+              </button>
+            ))}
+          </div>
+
+          {/* Warnings */}
+          {calc.warnings.length > 0 && (
+            <div className="rounded-xl p-4 space-y-2" style={{ background: "#fffbeb", border: "1px solid #fcd34d" }}>
+              <p className="text-xs font-bold" style={{ color: "#92400e" }}>⚠ Architectural implications at this scale:</p>
+              {calc.warnings.map((w, i) => (
+                <p key={i} className="text-xs" style={{ color: "#78350f" }}>→ {w}</p>
+              ))}
+            </div>
+          )}
+
+          {/* Derivation chain */}
+          <div className="rounded-xl p-5 space-y-3" style={{ background: "var(--bg-card)", border: "1px solid var(--border)" }}>
+            <div className="flex items-center justify-between">
+              <p className="text-sm font-bold" style={{ color: "var(--text)" }}>Derivation chain</p>
+              <CopyButton text={copyAnswer} label="scale answer" />
+            </div>
+            <div className="space-y-1.5">
+              {[
+                { label: "Subscribers", value: `${inputs.subscribers}M`, formula: "— given assumption" },
+                { label: "DAU", value: fmt(calc.dau), formula: `${inputs.subscribers}M × ${(inputs.dauRatio * 100).toFixed(0)}%` },
+                { label: "Peak concurrent streams", value: fmt(calc.concurrent), formula: `${fmt(calc.dau)} DAU × ${(inputs.concurrencyRatio * 100).toFixed(0)}%`, highlight: true },
+                ...(activeSection === "backend" ? [
+                  { label: "Heartbeat QPS", value: `${fmtN(calc.heartbeatQps)}/sec`, formula: `${fmt(calc.concurrent)} ÷ ${inputs.heartbeatIntervalSec}s`, highlight: true },
+                  { label: "CDN bandwidth", value: `${(calc.cdnBandwidthGbps / 1000).toFixed(0)} Tbps`, formula: `${fmt(calc.concurrent)} × ${inputs.avgBitrateMbps} Mbps`, highlight: true },
+                  { label: "Metadata read QPS", value: `${fmtN(calc.metadataQps)}/sec`, formula: `${fmt(calc.concurrent)} × 0.5 reads/stream/sec` },
+                  { label: "Cassandra nodes needed", value: `~${fmtN(calc.cassandraNodes)}`, formula: `${fmtN(calc.heartbeatQps)}/sec ÷ 200 writes/node`, highlight: true },
+                  { label: "Redis memory (concurrency)", value: `~${calc.redisMemGb.toFixed(0)} GB`, formula: `${fmt(calc.concurrent)} sessions × 1KB/session` },
+                ] : [
+                  { label: "Events per second", value: `${fmtN(calc.eventsPerSec)}/sec`, formula: `${fmt(calc.concurrent)} × (heartbeat + other events)`, highlight: true },
+                  { label: "Daily events", value: fmtN(calc.dailyEvents), formula: `${fmtN(calc.eventsPerSec)}/sec × 86,400s` },
+                  { label: "Bronze data/day", value: `${calc.bronzePbPerDay.toFixed(2)} PB`, formula: `${fmtN(calc.dailyEvents)} × 2KB × 0.45 zstd`, highlight: true },
+                  { label: "Kafka partitions", value: `~${calc.kafkaPartitions}`, formula: `${fmtN(calc.heartbeatQps)} heartbeat/sec ÷ 2K/partition` },
+                  { label: "Kafka brokers", value: `~${calc.kafkaBrokers}`, formula: `${fmtN(calc.eventsPerSec)} × 2KB × RF3 ÷ 200 MB/s`, highlight: true },
+                  { label: "Flink vCPUs", value: `~${calc.flinkVcpus}`, formula: `${fmtN(calc.eventsPerSec)}/sec ÷ 5K events/vCPU` },
+                ]),
+              ].map((row, i) => (
+                <div
+                  key={i}
+                  className="flex items-center gap-3 px-3 py-2 rounded-lg"
+                  style={{ background: row.highlight ? `${color}08` : "var(--bg)", border: `1px solid ${row.highlight ? `${color}30` : "var(--border)"}` }}
+                >
+                  {i < 2 && <span className="text-[10px]" style={{ color: "var(--text-faint)" }}>↓</span>}
+                  {i >= 2 && <span className="text-[10px]" style={{ color }}>{i === 2 ? "→" : "↳"}</span>}
+                  <span className="text-xs flex-1" style={{ color: "var(--text-muted)" }}>{row.label}</span>
+                  <span className="text-sm font-mono font-bold" style={{ color: row.highlight ? color : "var(--text)" }}>{row.value}</span>
+                  <span className="text-[10px] hidden sm:block" style={{ color: "var(--text-faint)" }}>{row.formula}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Interview guidance */}
+          <div className="rounded-xl p-5" style={{ background: "var(--bg-card)", border: "1px solid var(--border)" }}>
+            <h3 className="text-sm font-bold mb-3" style={{ color: "var(--text)" }}>How to present this in an interview</h3>
+            <div className="space-y-2">
+              {[
+                { step: "1", title: "State assumptions first", detail: `"I'll assume ${inputs.subscribers}M subscribers, ${(inputs.dauRatio*100).toFixed(0)}% DAU, ${(inputs.concurrencyRatio*100).toFixed(0)}% peak concurrency. Correct me if different."` },
+                { step: "2", title: "Derive, don't dump", detail: `"${fmt(calc.concurrent)} concurrent streams ÷ ${inputs.heartbeatIntervalSec}s = ${fmtN(calc.heartbeatQps)} heartbeat writes/sec."` },
+                { step: "3", title: "Link to a design decision", detail: `"${fmtN(calc.heartbeatQps)} writes/sec rules out MySQL. That's why watch_progress uses Cassandra."` },
+                { step: "4", title: "5 minutes max, then move on", detail: "Scale is context, not the interview. Derive 3-4 key numbers, link each to a design choice, then proceed." },
+              ].map(item => (
+                <div key={item.step} className="flex gap-3 p-3 rounded-xl" style={{ background: "var(--bg)", border: "1px solid var(--border)" }}>
+                  <span className="w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold shrink-0" style={{ background: `${color}15`, color }}>{item.step}</span>
+                  <div>
+                    <p className="text-xs font-bold mb-0.5" style={{ color: "var(--text)" }}>{item.title}</p>
+                    <p className="text-xs leading-relaxed italic" style={{ color: "var(--text-muted)" }}>{item.detail}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {subTab === "formulas" && (
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-          {FORMULAS.map((f) => (
-            <div key={f.label} className="rounded-xl p-4" style={{ background: "var(--bg)", border: `1px solid ${f.color}30` }}>
+          {FORMULAS.map(f => (
+            <div key={f.label} className="rounded-xl p-4" style={{ background: "var(--bg-card)", border: `1px solid ${f.color}30` }}>
               <div className="flex items-center justify-between mb-2">
                 <span className="text-xs font-bold" style={{ color: f.color }}>{f.label}</span>
                 <button
                   onClick={() => { navigator.clipboard.writeText(`${f.label}: ${f.formula}\nExample: ${f.example}`).then(() => { setCopiedFormula(f.label); setTimeout(() => setCopiedFormula(null), 2000); }); }}
-                  className="text-[10px] px-2 py-0.5 rounded font-medium transition-colors"
-                  style={{ background: copiedFormula === f.label ? "#22c55e" : `${f.color}15`, color: copiedFormula === f.label ? "#fff" : f.color, cursor: "pointer", border: "none" }}
-                >{copiedFormula === f.label ? "Copied!" : "Copy"}</button>
+                  className="text-[10px] px-2 py-0.5 rounded font-medium"
+                  style={{ background: copiedFormula === f.label ? "#22c55e" : `${f.color}15`, color: copiedFormula === f.label ? "#fff" : f.color, border: "none", cursor: "pointer" }}
+                >
+                  {copiedFormula === f.label ? "Copied!" : "Copy"}
+                </button>
               </div>
-              <code className="text-xs block mb-1.5" style={{ color: "var(--text)" }}>{f.formula}</code>
-              <p className="text-[11px]" style={{ color: "var(--text-faint)" }}>Example: {f.example}</p>
+              <code className="text-xs block mb-1.5 font-mono" style={{ color: "var(--text)" }}>{f.formula}</code>
+              <p className="text-[11px]" style={{ color: "var(--text-faint)" }}>e.g. {f.example}</p>
             </div>
           ))}
         </div>
-      </div>
-
-      {/* Interview guidance */}
-      <div className="rounded-2xl p-6" style={{ background: "var(--bg-card)", border: "1px solid var(--border)" }}>
-        <h3 className="text-lg font-bold mb-4" style={{ color: "var(--text)" }}>How to present scale estimation in interviews</h3>
-        <div className="space-y-3">
-          {[
-            { step: "1", title: "State your assumptions first", detail: "\"I'll assume 300M subscribers, 220M DAU, 60M peak concurrent streams, 5 Mbps avg bitrate, and 30s heartbeat interval. Please correct me if your scale is different.\"" },
-            { step: "2", title: "Derive, don't dump", detail: "Show the formula: \"60M concurrent × 5 Mbps = 300 Tbps bandwidth. That's why Netflix built its own CDN — commercial CDN at that scale would cost hundreds of millions per year.\"" },
-            { step: "3", title: "Link each number to a design decision", detail: "\"2M heartbeat writes/sec rules out MySQL. That's why watch_progress uses Cassandra.\" The number must justify a choice." },
-            { step: "4", title: "Don't get lost in the math", detail: "Scale is context, not the interview. 5 minutes max. Then move to the actual design. Interviewer will stop you if they want more depth." },
-          ].map((item) => (
-            <div key={item.step} className="flex gap-3 p-4 rounded-xl" style={{ background: "var(--bg)", border: "1px solid var(--border)" }}>
-              <span className="w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold shrink-0" style={{ background: `${color}15`, color }}>{item.step}</span>
-              <div>
-                <p className="text-sm font-bold mb-1" style={{ color: "var(--text)" }}>{item.title}</p>
-                <p className="text-xs leading-relaxed italic" style={{ color: "var(--text-muted)" }}>{item.detail}</p>
-              </div>
-            </div>
-          ))}
-        </div>
-      </div>
+      )}
     </div>
   );
 }
-
-export { ScaleEstimationTab };

@@ -1,15 +1,15 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useCallback } from "react";
 import type { Role, TabSlug } from "@/components/ui/NetflixPage";
 
 function CopyButton({ text, label = "Copy" }: { text: string; label?: string }) {
   const [copied, setCopied] = useState(false);
   return (
     <button onClick={() => { navigator.clipboard.writeText(text).then(() => { setCopied(true); setTimeout(() => setCopied(false), 2000); }); }}
-      className="text-[11px] px-3 py-1 rounded font-medium transition-colors shrink-0"
+      className="text-[11px] px-3 py-1 rounded-lg font-medium transition-colors shrink-0"
       style={{ background: copied ? "#22c55e" : "var(--bg)", color: copied ? "#fff" : "var(--text-muted)", border: "1px solid var(--border)", cursor: "pointer" }}>
-      {copied ? "Copied!" : label}
+      {copied ? "✓ Copied!" : label}
     </button>
   );
 }
@@ -162,29 +162,131 @@ const DATA_TRADEOFFS = [
   { a: "Streaming", b: "Batch", netflix: "Streaming for real-time dashboards (<5 min). Batch for daily Gold aggregates and backfill." },
 ];
 
+function buildMarkdown(role: Role): string {
+  const isBackend = role === "Backend Engineer";
+  const lines: string[] = [`# Netflix System Design Cheat Sheet — ${role}`, ""];
+
+  if (isBackend) {
+    lines.push("## 30-Second Opening", "```", BACKEND_OPENING_30S, "```", "");
+    lines.push("## 2-Minute Opening", "```", BACKEND_OPENING_2MIN, "```", "");
+    lines.push("## Main Services");
+    BACKEND_SERVICES.forEach(s => lines.push(`- **${s.name}**: ${s.role}`));
+    lines.push("");
+    lines.push("## APIs");
+    BACKEND_APIS.forEach(a => lines.push(`- \`${a.method} ${a.path}\` — ${a.note}`));
+    lines.push("");
+    lines.push("## Database Choices");
+    BACKEND_DBS.forEach(d => lines.push(`- **${d.name}** (${d.use}): ${d.why}`));
+    lines.push("");
+    lines.push("## Top 5 Failures");
+    BACKEND_FAILURES_TOP.forEach(f => lines.push(`- **${f.failure}**: ${f.mitigation}`));
+    lines.push("");
+    lines.push("## Top 4 Tradeoffs");
+    BACKEND_TRADEOFFS.forEach(t => lines.push(`- **${t.a} vs ${t.b}**: ${t.netflix}`));
+    lines.push("");
+    lines.push("## Scale Numbers");
+    lines.push("```", "300M subscribers × 0.73 = 220M DAU", "220M × 0.27 peak = 60M concurrent streams", "60M × 5 Mbps = 300 Tbps CDN", "60M ÷ 30s heartbeat = 2M writes/sec → Cassandra", "30M metadata reads/sec × 99.9% → 30K reach Cassandra", "2M writes/sec ÷ 200/node = ~10,000 Cassandra nodes", "```");
+  } else {
+    lines.push("## 30-Second Opening", "```", DATA_OPENING_30S, "```", "");
+    lines.push("## 2-Minute Opening", "```", DATA_OPENING_2MIN, "```", "");
+    lines.push("## 17 Event Types");
+    lines.push(DATA_EVENTS.map(e => `\`${e}\``).join(", "), "");
+    lines.push("## Kafka Topics (6)");
+    DATA_KAFKA_TOPICS.forEach(t => lines.push(`- **${t.topic}** (key: ${t.key}): ${t.why}`));
+    lines.push("");
+    lines.push("## Lakehouse Layers");
+    DATA_LAKEHOUSE.forEach(l => lines.push(`- **[${l.layer}] ${l.table}**: ${l.desc}`));
+    lines.push("");
+    lines.push("## Correct Sessionization SQL");
+    lines.push("```sql", "SELECT session_id, SUM(gap_seconds) AS watched_seconds", "FROM (", "  SELECT session_id,", "    LEAD(event_ts) OVER (PARTITION BY session_id ORDER BY event_ts) - event_ts AS gap_seconds,", "    playback_state", "  FROM deduped_heartbeats", ")", "WHERE playback_state = 'playing'", "GROUP BY session_id", "```", "");
+    lines.push("## Top 5 Failures");
+    DATA_FAILURES_TOP.forEach(f => lines.push(`- **${f.failure}**: ${f.mitigation}`));
+    lines.push("");
+    lines.push("## Scale Numbers");
+    lines.push("```", "60M streams × mix of events = 15M events/sec peak", "15M/sec × 2KB × RF3 ÷ 200 MB/s = ~720 Kafka brokers", "2M heartbeats/sec ÷ 2K/partition = ~1,000 partitions", "700B events × 2KB × 0.45 zstd = ~1.5 PB/day Bronze", "15M events/sec ÷ 5K/vCPU (Flink) = ~3,000 Flink vCPUs", "```");
+  }
+  return lines.join("\n");
+}
+
 function CheatSheetTab({ role, onNavigateTab }: { role: Role; onNavigateTab?: (tab: TabSlug) => void }) {
   const [activeRole, setActiveRole] = useState<Role>(role);
+  const [copyMdState, setCopyMdState] = useState(false);
   const isBackend = activeRole === "Backend Engineer";
   const color = isBackend ? "#3b82f6" : "#10b981";
   const opening30s = isBackend ? BACKEND_OPENING_30S : DATA_OPENING_30S;
   const opening2min = isBackend ? BACKEND_OPENING_2MIN : DATA_OPENING_2MIN;
 
+  const handleCopyMarkdown = useCallback(() => {
+    const md = buildMarkdown(activeRole);
+    navigator.clipboard.writeText(md).then(() => {
+      setCopyMdState(true);
+      setTimeout(() => setCopyMdState(false), 2000);
+    });
+  }, [activeRole]);
+
+  const handleDownload = useCallback(() => {
+    const md = buildMarkdown(activeRole);
+    const blob = new Blob([md], { type: "text/markdown" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `netflix-cheatsheet-${activeRole.toLowerCase().replace(/ /g, "-")}.md`;
+    a.click();
+    URL.revokeObjectURL(url);
+  }, [activeRole]);
+
+  const handlePrint = useCallback(() => {
+    window.print();
+  }, []);
+
+  // Suppress unused warning for onNavigateTab (kept for API compatibility)
+  void onNavigateTab;
+
   return (
     <div className="space-y-5">
-      {/* Role toggle */}
+      {/* Role toggle + action buttons */}
       <div className="rounded-xl p-4" style={{ background: "var(--bg-card)", border: "1px solid var(--border)" }}>
         <div className="flex items-center gap-3 flex-wrap">
           <h2 className="text-xl font-bold" style={{ color: "var(--text)" }}>Cheat Sheet</h2>
-          <p className="text-xs flex-1" style={{ color: "var(--text-faint)" }}>Print this, review it, then close it — the interview tests recall, not reading.</p>
+          <p className="text-xs flex-1" style={{ color: "var(--text-faint)" }}>Review, then close — the interview tests recall, not reading.</p>
           <div className="flex gap-1 p-1 rounded-xl" style={{ background: "var(--bg)", border: "1px solid var(--border)" }}>
             {(["Backend Engineer", "Data Engineer"] as Role[]).map((r) => (
               <button key={r} onClick={() => setActiveRole(r)}
                 className="px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors"
-                style={{ background: activeRole === r ? (r === "Backend Engineer" ? "rgba(59,130,246,0.15)" : "rgba(16,185,129,0.15)") : "transparent", color: activeRole === r ? (r === "Backend Engineer" ? "#3b82f6" : "#10b981") : "var(--text-muted)", cursor: "pointer", border: "none" }}>
+                style={{ background: activeRole === r ? (r === "Backend Engineer" ? "rgba(59,130,246,0.15)" : "rgba(16,185,129,0.15)") : "transparent", color: activeRole === r ? (r === "Backend Engineer" ? "#3b82f6" : "#10b981") : "var(--text-muted)", cursor: "pointer", border: "none" }}
+                aria-pressed={activeRole === r}
+              >
                 {r}
               </button>
             ))}
           </div>
+        </div>
+        {/* Action toolbar */}
+        <div className="flex flex-wrap gap-2 mt-3 pt-3" style={{ borderTop: "1px solid var(--border)" }}>
+          <button
+            onClick={handleCopyMarkdown}
+            className="text-xs px-3 py-1.5 rounded-lg font-medium flex items-center gap-1.5"
+            style={{ background: copyMdState ? "#22c55e20" : "var(--bg)", color: copyMdState ? "#22c55e" : "var(--text-muted)", border: "1px solid var(--border)", cursor: "pointer" }}
+            aria-label="Copy cheat sheet as Markdown"
+          >
+            {copyMdState ? "✓ Copied!" : "📋 Copy as Markdown"}
+          </button>
+          <button
+            onClick={handleDownload}
+            className="text-xs px-3 py-1.5 rounded-lg font-medium flex items-center gap-1.5"
+            style={{ background: "var(--bg)", color: "var(--text-muted)", border: "1px solid var(--border)", cursor: "pointer" }}
+            aria-label="Download cheat sheet as Markdown file"
+          >
+            ⬇ Download .md
+          </button>
+          <button
+            onClick={handlePrint}
+            className="text-xs px-3 py-1.5 rounded-lg font-medium flex items-center gap-1.5"
+            style={{ background: "var(--bg)", color: "var(--text-muted)", border: "1px solid var(--border)", cursor: "pointer" }}
+            aria-label="Print cheat sheet"
+          >
+            🖨 Print
+          </button>
         </div>
       </div>
 

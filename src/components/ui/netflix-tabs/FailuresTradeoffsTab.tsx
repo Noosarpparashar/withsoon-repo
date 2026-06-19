@@ -334,19 +334,26 @@ const TRADEOFF_CARDS = [
 function FailuresTradeoffsTab({ role }: { role: Role }) {
   const [subTab, setSubTab] = useState<"failures" | "tradeoffs">("failures");
   const [failureRole, setFailureRole] = useState<Role>(role);
-  const [openFailure, setOpenFailure] = useState<string | null>(null);
-  const [openTradeoff, setOpenTradeoff] = useState<string | null>(null);
+  const [expandedFailures, setExpandedFailures] = useState<Set<string>>(new Set());
+  const [expandedTradeoffs, setExpandedTradeoffs] = useState<Set<string>>(new Set());
 
   const failures = failureRole === "Backend Engineer" ? BACKEND_FAILURES : DATA_FAILURES;
 
+  const toggleFailure = (key: string) => {
+    setExpandedFailures(prev => { const n = new Set(prev); if (n.has(key)) n.delete(key); else n.add(key); return n; });
+  };
+  const toggleTradeoff = (key: string) => {
+    setExpandedTradeoffs(prev => { const n = new Set(prev); if (n.has(key)) n.delete(key); else n.add(key); return n; });
+  };
+
   return (
-    <div className="space-y-6">
+    <div className="space-y-5">
       {/* Header + sub-tabs */}
-      <div className="rounded-2xl p-4" style={{ background: "var(--bg-card)", border: "1px solid var(--border)" }}>
+      <div className="rounded-xl p-4" style={{ background: "var(--bg-card)", border: "1px solid var(--border)" }}>
         <div className="flex items-center gap-3 flex-wrap">
           <h2 className="text-xl font-bold" style={{ color: "var(--text)" }}>Failures + Tradeoffs</h2>
           <div className="flex gap-1 p-1 rounded-xl ml-auto" style={{ background: "var(--bg)", border: "1px solid var(--border)" }}>
-            {[["failures", "Failure Scenarios"], ["tradeoffs", "Technology Tradeoffs"]].map(([key, label]) => (
+            {[["failures", "⚡ Failures"], ["tradeoffs", "⚖️ Tradeoffs"]].map(([key, label]) => (
               <button key={key} onClick={() => setSubTab(key as "failures" | "tradeoffs")}
                 className="px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors"
                 style={{ background: subTab === key ? "rgba(59,130,246,0.15)" : "transparent", color: subTab === key ? "#3b82f6" : "var(--text-muted)", cursor: "pointer", border: "none" }}>
@@ -358,36 +365,53 @@ function FailuresTradeoffsTab({ role }: { role: Role }) {
       </div>
 
       {subTab === "failures" && (
-        <div className="rounded-2xl p-6" style={{ background: "var(--bg-card)", border: "1px solid var(--border)" }}>
-          <div className="flex items-center justify-between mb-5 flex-wrap gap-3">
+        <div className="rounded-xl p-5" style={{ background: "var(--bg-card)", border: "1px solid var(--border)" }}>
+          <div className="flex items-center justify-between mb-4 flex-wrap gap-3">
             <div>
-              <h3 className="text-lg font-bold mb-1" style={{ color: "var(--text)" }}>Failure Scenarios</h3>
-              <p className="text-sm" style={{ color: "var(--text-muted)" }}>Click any failure to see impact, detection, mitigation, and what to say in interview.</p>
+              <h3 className="text-base font-bold mb-0.5" style={{ color: "var(--text)" }}>
+                Failure Scenarios <span className="text-xs font-normal" style={{ color: "var(--text-faint)" }}>({failures.length})</span>
+              </h3>
+              <p className="text-xs" style={{ color: "var(--text-muted)" }}>Impact, detection, mitigation, and what to say in the interview.</p>
             </div>
-            <div className="flex gap-1 p-1 rounded-xl" style={{ background: "var(--bg)", border: "1px solid var(--border)" }}>
-              {(["Backend Engineer", "Data Engineer"] as Role[]).map((r) => (
-                <button key={r} onClick={() => setFailureRole(r)}
-                  className="px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors"
-                  style={{ background: failureRole === r ? (r === "Backend Engineer" ? "rgba(59,130,246,0.15)" : "rgba(16,185,129,0.15)") : "transparent", color: failureRole === r ? (r === "Backend Engineer" ? "#3b82f6" : "#10b981") : "var(--text-muted)", cursor: "pointer", border: "none" }}>
-                  {r.split(" ")[0]}
-                </button>
-              ))}
+            <div className="flex items-center gap-2">
+              <div className="flex gap-1 p-1 rounded-xl" style={{ background: "var(--bg)", border: "1px solid var(--border)" }}>
+                {(["Backend Engineer", "Data Engineer"] as Role[]).map((r) => (
+                  <button key={r} onClick={() => { setFailureRole(r); setExpandedFailures(new Set()); }}
+                    className="px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors"
+                    style={{ background: failureRole === r ? (r === "Backend Engineer" ? "rgba(59,130,246,0.15)" : "rgba(16,185,129,0.15)") : "transparent", color: failureRole === r ? (r === "Backend Engineer" ? "#3b82f6" : "#10b981") : "var(--text-muted)", cursor: "pointer", border: "none" }}
+                    aria-pressed={failureRole === r}
+                  >
+                    {r.split(" ")[0]}
+                  </button>
+                ))}
+              </div>
+              <button onClick={() => setExpandedFailures(new Set(failures.map(f => f.component)))}
+                className="text-xs px-3 py-1.5 rounded-lg"
+                style={{ background: "var(--blue-soft)", color: "var(--blue-text)", cursor: "pointer", border: "none" }}>
+                Expand All
+              </button>
+              <button onClick={() => setExpandedFailures(new Set())}
+                className="text-xs px-3 py-1.5 rounded-lg"
+                style={{ background: "var(--bg)", border: "1px solid var(--border)", color: "var(--text-muted)", cursor: "pointer" }}>
+                Collapse
+              </button>
             </div>
           </div>
 
           <div className="space-y-2">
             {failures.map((item) => {
               const key = item.component;
-              const isOpen = openFailure === key;
+              const isOpen = expandedFailures.has(key);
               const modeColor = "mode" in item && item.mode === "fail-closed" ? "#ef4444" : "mode" in item && item.mode === "fail-open" ? "#10b981" : "#f59e0b";
               const modeLabel = "mode" in item ? item.mode.replace("-", " ").toUpperCase() : "DEGRADED";
 
               return (
-                <div key={key} className="rounded-xl overflow-hidden" style={{ border: "1px solid var(--border)" }}>
+                <div key={key} className="rounded-xl overflow-hidden" style={{ border: "1px solid var(--border)", borderTop: `3px solid ${modeColor}` }}>
                   <div className="flex items-center justify-between px-4 py-3.5 cursor-pointer"
                     style={{ background: "var(--bg)" }}
-                    onClick={() => setOpenFailure(isOpen ? null : key)}
-                    role="button" tabIndex={0} onKeyDown={(e) => e.key === "Enter" && setOpenFailure(isOpen ? null : key)}>
+                    onClick={() => toggleFailure(key)}
+                    aria-expanded={isOpen}
+                    role="button" tabIndex={0} onKeyDown={(e) => e.key === "Enter" && toggleFailure(key)}>
                     <div className="flex items-center gap-3 min-w-0">
                       {"mode" in item && (
                         <span className="text-[10px] font-bold px-2 py-1 rounded shrink-0"
@@ -442,20 +466,39 @@ function FailuresTradeoffsTab({ role }: { role: Role }) {
       )}
 
       {subTab === "tradeoffs" && (
-        <div className="rounded-2xl p-6" style={{ background: "var(--bg-card)", border: "1px solid var(--border)" }}>
-          <h3 className="text-lg font-bold mb-1" style={{ color: "var(--text)" }}>Technology Tradeoffs</h3>
-          <p className="text-sm mb-5" style={{ color: "var(--text-muted)" }}>
-            Why Netflix chose each technology — and what it rejected. Senior engineers are expected to justify choices, not just name them.
-          </p>
+        <div className="rounded-xl p-5" style={{ background: "var(--bg-card)", border: "1px solid var(--border)" }}>
+          <div className="flex items-start justify-between mb-4 flex-wrap gap-3">
+            <div>
+              <h3 className="text-base font-bold mb-0.5" style={{ color: "var(--text)" }}>
+                Technology Tradeoffs <span className="text-xs font-normal" style={{ color: "var(--text-faint)" }}>({TRADEOFF_CARDS.length})</span>
+              </h3>
+              <p className="text-xs" style={{ color: "var(--text-muted)" }}>
+                Why Netflix chose each technology. Senior engineers justify choices, not just name them.
+              </p>
+            </div>
+            <div className="flex gap-2">
+              <button onClick={() => setExpandedTradeoffs(new Set(TRADEOFF_CARDS.map(t => t.title)))}
+                className="text-xs px-3 py-1.5 rounded-lg"
+                style={{ background: "var(--blue-soft)", color: "var(--blue-text)", cursor: "pointer", border: "none" }}>
+                Expand All
+              </button>
+              <button onClick={() => setExpandedTradeoffs(new Set())}
+                className="text-xs px-3 py-1.5 rounded-lg"
+                style={{ background: "var(--bg)", border: "1px solid var(--border)", color: "var(--text-muted)", cursor: "pointer" }}>
+                Collapse
+              </button>
+            </div>
+          </div>
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
             {TRADEOFF_CARDS.map((item) => {
-              const isOpen = openTradeoff === item.title;
+              const isOpen = expandedTradeoffs.has(item.title);
               return (
-                <div key={item.title} className="rounded-xl overflow-hidden" style={{ border: `1px solid ${isOpen ? `${item.color}40` : "var(--border)"}` }}>
+                <div key={item.title} className="rounded-xl overflow-hidden" style={{ border: `1px solid ${isOpen ? `${item.color}40` : "var(--border)"}`, borderTop: `3px solid ${item.color}` }}>
                   <div className="px-4 py-4 cursor-pointer"
                     style={{ background: "var(--bg)" }}
-                    onClick={() => setOpenTradeoff(isOpen ? null : item.title)}
-                    role="button" tabIndex={0} onKeyDown={(e) => e.key === "Enter" && setOpenTradeoff(isOpen ? null : item.title)}>
+                    onClick={() => toggleTradeoff(item.title)}
+                    aria-expanded={isOpen}
+                    role="button" tabIndex={0} onKeyDown={(e) => e.key === "Enter" && toggleTradeoff(item.title)}>
                     <div className="flex items-start justify-between gap-3">
                       <div>
                         <h3 className="text-sm font-bold mb-1" style={{ color: "var(--text)" }}>{item.title}</h3>

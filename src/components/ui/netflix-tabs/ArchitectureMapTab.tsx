@@ -258,15 +258,48 @@ function ArchitectureFlow({ nodes, arrows, color }: {
   );
 }
 
+// Which nodes fail if a given node fails (downstream dependencies)
+const BACKEND_BLAST_RADIUS: Record<string, string[]> = {
+  "api-gateway": ["auth", "subscription", "concurrency", "playback", "drm", "manifest", "watch-progress"],
+  "auth": ["subscription", "concurrency", "playback", "drm", "manifest"],
+  "subscription": ["playback"],
+  "concurrency": ["playback"],
+  "playback": ["drm", "manifest"],
+  "drm": [],
+  "manifest": ["cdn"],
+  "cdn": [],
+  "watch-progress": [],
+  "client": [],
+  "metadata": ["playback"],
+};
+
+const DATA_BLAST_RADIUS: Record<string, string[]> = {
+  "event-collector": ["kafka"],
+  "kafka": ["stream-processor", "schema-registry"],
+  "schema-registry": ["kafka"],
+  "stream-processor": ["bronze", "silver"],
+  "bronze": ["silver"],
+  "silver": ["gold"],
+  "gold": ["serving"],
+  "serving": [],
+  "monitoring": [],
+  "client-events": ["event-collector"],
+};
+
 function ArchitectureMapTab({ role, onNavigateTab: _onNavigateTab }: { role: Role; onNavigateTab: (tab: TabSlug) => void }) {
   const [mode, setMode] = useState<"backend" | "data">(role === "Data Engineer" ? "data" : "backend");
   const [selectedNode, setSelectedNode] = useState<NodeInfo | null>(null);
+  const [blastRadiusMode, setBlastRadiusMode] = useState(false);
+  const [blastSource, setBlastSource] = useState<string | null>(null);
 
   const nodes = mode === "backend" ? BACKEND_NODES : DATA_NODES;
   const color = mode === "backend" ? "#3b82f6" : "#10b981";
   const title = mode === "backend" ? "Backend Architecture" : "Data Engineering Architecture";
+  const blastMap = mode === "backend" ? BACKEND_BLAST_RADIUS : DATA_BLAST_RADIUS;
 
-  const backendFlow = [
+  const blastAffected = blastSource ? (blastMap[blastSource] ?? []) : [];
+
+  const flow = mode === "backend" ? [
     { id: "client", label: "Client Apps", icon: "📱" },
     { id: "api-gateway", label: "API Gateway", icon: "🚪" },
     { id: "auth", label: "Auth Service", icon: "🔐" },
@@ -277,9 +310,7 @@ function ArchitectureMapTab({ role, onNavigateTab: _onNavigateTab }: { role: Rol
     { id: "manifest", label: "Manifest Service", icon: "📄" },
     { id: "cdn", label: "CDN / Open Connect", icon: "🌐" },
     { id: "watch-progress", label: "Watch Progress Service", icon: "🕒" },
-  ];
-
-  const dataFlow = [
+  ] : [
     { id: "client-events", label: "Client Events", icon: "📱" },
     { id: "event-collector", label: "Event Collector", icon: "📥" },
     { id: "kafka", label: "Kafka", icon: "📨" },
@@ -292,63 +323,126 @@ function ArchitectureMapTab({ role, onNavigateTab: _onNavigateTab }: { role: Rol
     { id: "monitoring", label: "Monitoring", icon: "📡" },
   ];
 
-  const flow = mode === "backend" ? backendFlow : dataFlow;
+  function handleNodeClick(node: NodeInfo) {
+    if (blastRadiusMode) {
+      setBlastSource(blastSource === node.id ? null : node.id);
+    } else {
+      setSelectedNode(selectedNode?.id === node.id ? null : node);
+    }
+  }
+
+  function getNodeStyle(node: NodeInfo) {
+    if (blastRadiusMode) {
+      const isSource = blastSource === node.id;
+      const isAffected = blastAffected.includes(node.id);
+      if (isSource) return { bg: "#ef444415", border: "#ef4444", color: "#ef4444" };
+      if (isAffected && blastSource) return { bg: "#f9731615", border: "#f97316", color: "#f97316" };
+      if (blastSource) return { bg: "transparent", border: "var(--border)", color: "var(--text-faint)" };
+      return { bg: "var(--bg)", border: "var(--border)", color: node.color };
+    }
+    const isSelected = selectedNode?.id === node.id;
+    return {
+      bg: isSelected ? `${node.color}12` : "var(--bg)",
+      border: isSelected ? node.color : "var(--border)",
+      color: isSelected ? node.color : node.color,
+    };
+  }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-5">
       {/* Header + toggle */}
-      <div className="rounded-2xl p-6" style={{ background: "var(--bg-card)", border: "1px solid var(--border)" }}>
-        <div className="flex items-center justify-between flex-wrap gap-3 mb-2">
+      <div className="rounded-xl p-4" style={{ background: "var(--bg-card)", border: "1px solid var(--border)" }}>
+        <div className="flex items-center justify-between flex-wrap gap-3 mb-3">
           <h2 className="text-xl font-bold" style={{ color: "var(--text)" }}>Architecture Map</h2>
           <div className="flex gap-1 p-1 rounded-xl" style={{ background: "var(--bg)", border: "1px solid var(--border)" }}>
             {(["backend", "data"] as const).map((m) => (
               <button
                 key={m}
-                onClick={() => { setMode(m); setSelectedNode(null); }}
+                onClick={() => { setMode(m); setSelectedNode(null); setBlastSource(null); }}
                 className="px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors"
                 style={{ background: mode === m ? (m === "backend" ? "rgba(59,130,246,0.15)" : "rgba(16,185,129,0.15)") : "transparent", color: mode === m ? (m === "backend" ? "#3b82f6" : "#10b981") : "var(--text-muted)", cursor: "pointer", border: "none" }}
+                aria-pressed={mode === m}
               >
-                {m === "backend" ? "Backend Architecture" : "Data Engineering Architecture"}
+                {m === "backend" ? "⚙️ Backend" : "📊 Data Engineering"}
               </button>
             ))}
           </div>
         </div>
-        <p className="text-sm" style={{ color: "var(--text-muted)" }}>Click any node to see its responsibility, APIs, database, failure mode, and interview answer.</p>
+
+        {/* Mode toggles */}
+        <div className="flex flex-wrap items-center gap-2">
+          <p className="text-xs" style={{ color: "var(--text-faint)" }}>
+            {blastRadiusMode ? "Click a node to see what breaks if it fails (red = failed, orange = affected)." : "Click any node to see responsibility, APIs, DB, failure mode, and interview answer."}
+          </p>
+          <button
+            onClick={() => { setBlastRadiusMode(v => !v); setBlastSource(null); setSelectedNode(null); }}
+            className="ml-auto text-xs px-3 py-1.5 rounded-xl font-semibold transition-all"
+            style={{
+              background: blastRadiusMode ? "#ef444415" : "var(--bg)",
+              color: blastRadiusMode ? "#ef4444" : "var(--text-muted)",
+              border: `1px solid ${blastRadiusMode ? "#ef4444" : "var(--border)"}`,
+              cursor: "pointer",
+            }}
+            aria-pressed={blastRadiusMode}
+          >
+            {blastRadiusMode ? "💥 Blast Radius ON" : "💥 Blast Radius Mode"}
+          </button>
+        </div>
+
+        {blastRadiusMode && blastSource && (
+          <div className="mt-3 rounded-lg p-3" style={{ background: "#fef2f2", border: "1px solid #fca5a5" }}>
+            <p className="text-xs font-bold mb-1" style={{ color: "#991b1b" }}>
+              If <strong>{nodes.find(n => n.id === blastSource)?.label}</strong> fails:
+            </p>
+            {blastAffected.length > 0 ? (
+              <p className="text-xs" style={{ color: "#7f1d1d" }}>
+                These services are directly affected: {blastAffected.map(id => nodes.find(n => n.id === id)?.label).filter(Boolean).join(", ")}
+              </p>
+            ) : (
+              <p className="text-xs" style={{ color: "#7f1d1d" }}>No direct downstream dependents — this is a leaf node.</p>
+            )}
+          </div>
+        )}
       </div>
 
       {/* Main map + panel */}
-      <div className="flex gap-4" style={{ minHeight: 500 }}>
+      <div className="flex gap-4 flex-col sm:flex-row" style={{ minHeight: 400 }}>
         {/* Node grid */}
-        <div className="flex-1 rounded-2xl p-6" style={{ background: "var(--bg-card)", border: "1px solid var(--border)" }}>
-          <p className="text-xs font-bold uppercase tracking-wider mb-4" style={{ color: color }}>{title}</p>
+        <div className="flex-1 rounded-xl p-5" style={{ background: "var(--bg-card)", border: "1px solid var(--border)" }}>
+          <p className="text-xs font-bold uppercase tracking-wider mb-4" style={{ color }}>{title}</p>
 
-          {/* Flow arrows (linear) */}
-          <div className="hidden sm:block mb-6">
+          {/* Flow chain (linear) */}
+          <div className="hidden md:block mb-5">
             <ArchitectureFlow nodes={flow} arrows={[]} color={color} />
           </div>
 
           {/* Clickable node cards */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2 mt-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2 mt-2">
             {nodes.map((node) => {
-              const isSelected = selectedNode?.id === node.id;
+              const s = getNodeStyle(node);
+              const isBlastSource = blastRadiusMode && blastSource === node.id;
+              const isBlastAffected = blastRadiusMode && blastAffected.includes(node.id);
               return (
                 <button
                   key={node.id}
-                  onClick={() => setSelectedNode(isSelected ? null : node)}
-                  className="text-left p-3 rounded-xl transition-all duration-150"
+                  onClick={() => handleNodeClick(node)}
+                  className="text-left p-3 rounded-xl transition-all duration-150 group"
                   style={{
-                    background: isSelected ? `${node.color}12` : "var(--bg)",
-                    border: `1px solid ${isSelected ? node.color : "var(--border)"}`,
+                    background: s.bg,
+                    border: `1px solid ${s.border}`,
+                    borderTop: `3px solid ${s.border}`,
                     cursor: "pointer",
-                    boxShadow: isSelected ? `0 0 12px ${node.color}20` : "none",
+                    opacity: blastRadiusMode && blastSource && !isBlastSource && !isBlastAffected ? 0.4 : 1,
                   }}
+                  aria-label={`${node.label} — click to ${blastRadiusMode ? "see blast radius" : "view details"}`}
                 >
                   <div className="flex items-center gap-2 mb-1">
-                    <span className="text-base">{node.icon}</span>
-                    <span className="text-xs font-bold" style={{ color: isSelected ? node.color : "var(--text)" }}>{node.label}</span>
-                    <span className="ml-auto text-[10px]" style={{ color: "var(--text-faint)" }}>→</span>
+                    <span className="text-sm">{node.icon}</span>
+                    <span className="text-xs font-bold truncate" style={{ color: isBlastSource ? "#ef4444" : isBlastAffected ? "#f97316" : "var(--text)" }}>{node.label}</span>
+                    {isBlastSource && <span className="ml-auto text-[10px] font-bold" style={{ color: "#ef4444" }}>FAILS</span>}
+                    {isBlastAffected && <span className="ml-auto text-[10px] font-bold" style={{ color: "#f97316" }}>AFFECTED</span>}
                   </div>
-                  <p className="text-[10px] leading-relaxed line-clamp-2" style={{ color: "var(--text-faint)" }}>
+                  <p className="text-[10px] leading-relaxed" style={{ color: "var(--text-faint)", display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", overflow: "hidden" }}>
                     {node.responsibility.split(".")[0]}.
                   </p>
                 </button>
@@ -358,8 +452,11 @@ function ArchitectureMapTab({ role, onNavigateTab: _onNavigateTab }: { role: Rol
         </div>
 
         {/* Side panel */}
-        {selectedNode && (
-          <div className="shrink-0 rounded-2xl overflow-hidden" style={{ width: 340, border: "1px solid var(--border)" }}>
+        {selectedNode && !blastRadiusMode && (
+          <div
+            className="shrink-0 rounded-xl overflow-hidden"
+            style={{ width: "100%", maxWidth: 360, border: "1px solid var(--border)" }}
+          >
             <NodePanel node={selectedNode} onClose={() => setSelectedNode(null)} />
           </div>
         )}

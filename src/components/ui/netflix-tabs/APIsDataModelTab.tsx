@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import type { Dispatch, SetStateAction } from "react";
 import type { Role } from "@/components/ui/NetflixPage";
 
 function CopyButton({ text }: { text: string }) {
@@ -136,17 +137,44 @@ const LAKEHOUSE_SCHEMA = [
   },
 ];
 
+function SectionHeader({ title, count, onExpandAll, onCollapseAll }: { title: string; count: number; onExpandAll: () => void; onCollapseAll: () => void }) {
+  return (
+    <div className="flex items-center justify-between mb-3 flex-wrap gap-2">
+      <h3 className="text-base font-bold" style={{ color: "var(--text)" }}>
+        {title} <span className="text-xs font-normal" style={{ color: "var(--text-faint)" }}>({count})</span>
+      </h3>
+      <div className="flex gap-2">
+        <button onClick={onExpandAll} className="text-xs px-3 py-1.5 rounded-lg"
+          style={{ background: "var(--blue-soft)", color: "var(--blue-text)", cursor: "pointer", border: "none" }}>
+          Expand All
+        </button>
+        <button onClick={onCollapseAll} className="text-xs px-3 py-1.5 rounded-lg"
+          style={{ background: "var(--bg)", border: "1px solid var(--border)", color: "var(--text-muted)", cursor: "pointer" }}>
+          Collapse
+        </button>
+      </div>
+    </div>
+  );
+}
+
 function APIsDataModelTab({ role }: { role: Role }) {
   const [subTab, setSubTab] = useState<"backend" | "data">(role === "Data Engineer" ? "data" : "backend");
-  const [openApiIdx, setOpenApiIdx] = useState<number | null>(null);
-  const [openTableIdx, setOpenTableIdx] = useState<number | null>(null);
-  const [openEventIdx, setOpenEventIdx] = useState<number | null>(null);
-  const [openSchemaIdx, setOpenSchemaIdx] = useState<number | null>(null);
+  const [openApis, setOpenApis] = useState<Set<number>>(new Set());
+  const [openTables, setOpenTables] = useState<Set<number>>(new Set());
+  const [openEvents, setOpenEvents] = useState<Set<number>>(new Set());
+  const [openSchemas, setOpenSchemas] = useState<Set<number>>(new Set());
+
+  const toggle = (setter: React.Dispatch<React.SetStateAction<Set<number>>>, idx: number) => {
+    setter(prev => { const n = new Set(prev); if (n.has(idx)) n.delete(idx); else n.add(idx); return n; });
+  };
+  const expandAll = (setter: React.Dispatch<React.SetStateAction<Set<number>>>, count: number) =>
+    setter(new Set(Array.from({ length: count }, (_, i) => i)));
+  const collapseAll = (setter: React.Dispatch<React.SetStateAction<Set<number>>>) => setter(new Set());
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-5">
       {/* Header + sub-tabs */}
-      <div className="rounded-2xl p-4" style={{ background: "var(--bg-card)", border: "1px solid var(--border)" }}>
+      <div className="rounded-xl p-4" style={{ background: "var(--bg-card)", border: "1px solid var(--border)" }}>
         <div className="flex items-center gap-3 flex-wrap">
           <h2 className="text-xl font-bold" style={{ color: "var(--text)" }}>APIs + Data Model</h2>
           <div className="flex gap-1 p-1 rounded-xl ml-auto" style={{ background: "var(--bg)", border: "1px solid var(--border)" }}>
@@ -163,28 +191,33 @@ function APIsDataModelTab({ role }: { role: Role }) {
       {subTab === "backend" && (
         <>
           {/* Backend APIs */}
-          <div className="rounded-2xl p-6" style={{ background: "var(--bg-card)", border: "1px solid var(--border)" }}>
-            <h3 className="text-lg font-bold mb-4" style={{ color: "var(--text)" }}>Backend APIs</h3>
+          <div className="rounded-xl p-5" style={{ background: "var(--bg-card)", border: "1px solid var(--border)" }}>
+            <SectionHeader title="Backend APIs" count={BACKEND_APIS.length}
+              onExpandAll={() => expandAll(setOpenApis, BACKEND_APIS.length)}
+              onCollapseAll={() => collapseAll(setOpenApis)} />
             <div className="space-y-2">
               {BACKEND_APIS.map((api, i) => {
-                const isOpen = openApiIdx === i;
+                const isOpen = openApis.has(i);
                 const mc = api.method === "GET" ? "#10b981" : api.method === "POST" ? "#3b82f6" : "#ef4444";
                 return (
-                  <div key={i} className="rounded-xl overflow-hidden" style={{ border: `1px solid ${isOpen ? `${mc}40` : "var(--border)"}` }}>
-                    <button onClick={() => setOpenApiIdx(isOpen ? null : i)}
-                      className="w-full flex items-center gap-3 px-4 py-3 text-left"
-                      style={{ background: "var(--bg)", cursor: "pointer", border: "none" }}>
+                  <div key={i} className="rounded-xl overflow-hidden" style={{ border: `1px solid ${isOpen ? `${mc}40` : "var(--border)"}`, borderTop: `3px solid ${mc}` }}>
+                    <div className="w-full flex items-center gap-3 px-4 py-3 cursor-pointer"
+                      style={{ background: "var(--bg)" }}
+                      onClick={() => toggle(setOpenApis, i)}
+                      aria-expanded={isOpen} role="button" tabIndex={0}
+                      onKeyDown={(e) => e.key === "Enter" && toggle(setOpenApis, i)}>
                       <span className="text-[10px] font-bold px-2 py-1 rounded shrink-0" style={{ background: `${mc}20`, color: mc }}>{api.method}</span>
                       <code className="text-sm font-mono flex-1" style={{ color: "var(--text)" }}>{api.path}</code>
+                      <CopyButton text={api.path} />
                       <span className="text-xs hidden sm:inline" style={{ color: "var(--text-faint)" }}>{api.purpose}</span>
                       <span className="text-xs shrink-0 ml-2 transition-transform duration-200" style={{ color: "var(--text-muted)", display: "inline-block", transform: isOpen ? "rotate(180deg)" : "rotate(0deg)" }}>▼</span>
-                    </button>
+                    </div>
                     {isOpen && (
                       <div className="px-4 pb-4 pt-3 grid grid-cols-2 sm:grid-cols-3 gap-2" style={{ borderTop: "1px solid var(--border)" }}>
                         {[["Purpose", api.purpose], ["Auth", api.auth], ["Idempotency", api.idempotency], ["Service owner", api.service], ["DB/Cache", api.db]].map(([k, v]) => (
                           <div key={k as string} className="rounded-lg p-2.5" style={{ background: "var(--bg)", border: "1px solid var(--border)" }}>
                             <div className="text-[10px] font-bold uppercase tracking-wider mb-1" style={{ color: "var(--text-faint)" }}>{k}</div>
-                            <div className="text-xs" style={{ color: "var(--text-muted)" }}>{v}</div>
+                            <div className="text-xs font-mono" style={{ color: "var(--text-muted)" }}>{v}</div>
                           </div>
                         ))}
                       </div>
@@ -196,21 +229,26 @@ function APIsDataModelTab({ role }: { role: Role }) {
           </div>
 
           {/* Backend tables */}
-          <div className="rounded-2xl p-6" style={{ background: "var(--bg-card)", border: "1px solid var(--border)" }}>
-            <h3 className="text-lg font-bold mb-4" style={{ color: "var(--text)" }}>Backend Database Tables</h3>
+          <div className="rounded-xl p-5" style={{ background: "var(--bg-card)", border: "1px solid var(--border)" }}>
+            <SectionHeader title="Backend Database Tables" count={BACKEND_TABLES.length}
+              onExpandAll={() => expandAll(setOpenTables, BACKEND_TABLES.length)}
+              onCollapseAll={() => collapseAll(setOpenTables)} />
             <div className="space-y-2">
               {BACKEND_TABLES.map((tbl, i) => {
-                const isOpen = openTableIdx === i;
+                const isOpen = openTables.has(i);
                 return (
-                  <div key={i} className="rounded-xl overflow-hidden" style={{ border: `1px solid ${isOpen ? `${tbl.color}40` : "var(--border)"}` }}>
-                    <button onClick={() => setOpenTableIdx(isOpen ? null : i)}
-                      className="w-full flex items-center gap-3 px-4 py-3 text-left"
-                      style={{ background: "var(--bg)", cursor: "pointer", border: "none" }}>
+                  <div key={i} className="rounded-xl overflow-hidden" style={{ border: `1px solid ${isOpen ? `${tbl.color}40` : "var(--border)"}`, borderTop: `3px solid ${tbl.color}` }}>
+                    <div className="w-full flex items-center gap-3 px-4 py-3 cursor-pointer"
+                      style={{ background: "var(--bg)" }}
+                      onClick={() => toggle(setOpenTables, i)}
+                      aria-expanded={isOpen} role="button" tabIndex={0}
+                      onKeyDown={(e) => e.key === "Enter" && toggle(setOpenTables, i)}>
                       <span className="text-[10px] font-bold px-2 py-0.5 rounded shrink-0" style={{ background: `${tbl.color}20`, color: tbl.color }}>{tbl.db}</span>
-                      <span className="text-sm font-mono font-bold flex-1" style={{ color: "var(--text)" }}>{tbl.name}</span>
+                      <code className="text-sm font-mono font-bold flex-1" style={{ color: "var(--text)" }}>{tbl.name}</code>
+                      <CopyButton text={tbl.name} />
                       <span className="text-[11px] hidden sm:inline" style={{ color: "var(--text-faint)" }}>PK: {tbl.pk}</span>
                       <span className="text-xs shrink-0 ml-2 transition-transform duration-200" style={{ color: "var(--text-muted)", display: "inline-block", transform: isOpen ? "rotate(180deg)" : "rotate(0deg)" }}>▼</span>
-                    </button>
+                    </div>
                     {isOpen && (
                       <div className="px-4 pb-4 pt-3 space-y-3" style={{ borderTop: "1px solid var(--border)" }}>
                         <div className="overflow-x-auto rounded-lg" style={{ border: "1px solid var(--border)" }}>
@@ -243,7 +281,7 @@ function APIsDataModelTab({ role }: { role: Role }) {
                           <span className="text-xs" style={{ color: "var(--text-muted)" }}>{tbl.why}</span>
                         </div>
                         <div className="rounded-lg overflow-hidden" style={{ border: "1px solid #10b981" }}>
-                          <div className="px-3 py-1.5" style={{ background: "rgba(16,185,129,0.1)" }}><span className="text-[11px] font-bold" style={{ color: "#10b981" }}>💬 Interview answer</span></div>
+                          <div className="px-3 py-1.5" style={{ background: "rgba(16,185,129,0.1)" }}><span className="text-[11px] font-bold" style={{ color: "#10b981" }}>Interview answer</span></div>
                           <p className="px-3 py-2 text-xs leading-relaxed" style={{ background: "var(--bg)", color: "var(--text)" }}>{tbl.interview}</p>
                         </div>
                       </div>
@@ -259,26 +297,31 @@ function APIsDataModelTab({ role }: { role: Role }) {
       {subTab === "data" && (
         <>
           {/* Data events */}
-          <div className="rounded-2xl p-6" style={{ background: "var(--bg-card)", border: "1px solid var(--border)" }}>
-            <h3 className="text-lg font-bold mb-4" style={{ color: "var(--text)" }}>Data Events</h3>
+          <div className="rounded-xl p-5" style={{ background: "var(--bg-card)", border: "1px solid var(--border)" }}>
+            <SectionHeader title="Data Events" count={DATA_EVENTS.length}
+              onExpandAll={() => expandAll(setOpenEvents, DATA_EVENTS.length)}
+              onCollapseAll={() => collapseAll(setOpenEvents)} />
             <div className="space-y-2">
               {DATA_EVENTS.map((ev, i) => {
-                const isOpen = openEventIdx === i;
+                const isOpen = openEvents.has(i);
                 return (
-                  <div key={i} className="rounded-xl overflow-hidden" style={{ border: `1px solid ${isOpen ? "#10b98140" : "var(--border)"}` }}>
-                    <button onClick={() => setOpenEventIdx(isOpen ? null : i)}
-                      className="w-full flex items-center gap-3 px-4 py-3 text-left"
-                      style={{ background: "var(--bg)", cursor: "pointer", border: "none" }}>
+                  <div key={i} className="rounded-xl overflow-hidden" style={{ border: `1px solid ${isOpen ? "#10b98140" : "var(--border)"}`, borderTop: "3px solid #10b981" }}>
+                    <div className="w-full flex items-center gap-3 px-4 py-3 cursor-pointer"
+                      style={{ background: "var(--bg)" }}
+                      onClick={() => toggle(setOpenEvents, i)}
+                      aria-expanded={isOpen} role="button" tabIndex={0}
+                      onKeyDown={(e) => e.key === "Enter" && toggle(setOpenEvents, i)}>
                       <code className="text-sm font-mono font-bold flex-1" style={{ color: "#10b981" }}>{ev.name}</code>
-                      <span className="text-xs hidden sm:inline" style={{ color: "var(--text-faint)" }}>→ {ev.kafka}</span>
+                      <CopyButton text={ev.name} />
+                      <span className="text-xs hidden sm:inline font-mono" style={{ color: "var(--text-faint)" }}>→ {ev.kafka}</span>
                       <span className="text-xs shrink-0 ml-2 transition-transform duration-200" style={{ color: "var(--text-muted)", display: "inline-block", transform: isOpen ? "rotate(180deg)" : "rotate(0deg)" }}>▼</span>
-                    </button>
+                    </div>
                     {isOpen && (
                       <div className="px-4 pb-3 pt-2 grid grid-cols-2 sm:grid-cols-4 gap-2" style={{ borderTop: "1px solid var(--border)" }}>
                         {[["Kafka topic", ev.kafka], ["Partition key", ev.key], ["Frequency", ev.frequency], ["Critical fields", ev.criticalFields.join(", ")]].map(([k, v]) => (
                           <div key={k as string} className="rounded-lg p-2.5" style={{ background: "var(--bg)", border: "1px solid var(--border)" }}>
                             <div className="text-[10px] font-bold uppercase mb-1" style={{ color: "var(--text-faint)" }}>{k}</div>
-                            <div className="text-xs" style={{ color: "var(--text-muted)" }}>{Array.isArray(v) ? (v as string[]).join(", ") : v}</div>
+                            <div className="text-xs font-mono" style={{ color: "var(--text-muted)" }}>{Array.isArray(v) ? (v as string[]).join(", ") : v}</div>
                           </div>
                         ))}
                       </div>
@@ -290,21 +333,26 @@ function APIsDataModelTab({ role }: { role: Role }) {
           </div>
 
           {/* Lakehouse tables */}
-          <div className="rounded-2xl p-6" style={{ background: "var(--bg-card)", border: "1px solid var(--border)" }}>
-            <h3 className="text-lg font-bold mb-4" style={{ color: "var(--text)" }}>Lakehouse Tables (Iceberg)</h3>
+          <div className="rounded-xl p-5" style={{ background: "var(--bg-card)", border: "1px solid var(--border)" }}>
+            <SectionHeader title="Lakehouse Tables (Iceberg)" count={LAKEHOUSE_SCHEMA.length}
+              onExpandAll={() => expandAll(setOpenSchemas, LAKEHOUSE_SCHEMA.length)}
+              onCollapseAll={() => collapseAll(setOpenSchemas)} />
             <div className="space-y-2">
               {LAKEHOUSE_SCHEMA.map((tbl, i) => {
-                const isOpen = openSchemaIdx === i;
+                const isOpen = openSchemas.has(i);
                 return (
-                  <div key={i} className="rounded-xl overflow-hidden" style={{ border: `1px solid ${isOpen ? `${tbl.color}40` : "var(--border)"}` }}>
-                    <button onClick={() => setOpenSchemaIdx(isOpen ? null : i)}
-                      className="w-full flex items-center gap-3 px-4 py-3 text-left"
-                      style={{ background: "var(--bg)", cursor: "pointer", border: "none" }}>
+                  <div key={i} className="rounded-xl overflow-hidden" style={{ border: `1px solid ${isOpen ? `${tbl.color}40` : "var(--border)"}`, borderTop: `3px solid ${tbl.color}` }}>
+                    <div className="w-full flex items-center gap-3 px-4 py-3 cursor-pointer"
+                      style={{ background: "var(--bg)" }}
+                      onClick={() => toggle(setOpenSchemas, i)}
+                      aria-expanded={isOpen} role="button" tabIndex={0}
+                      onKeyDown={(e) => e.key === "Enter" && toggle(setOpenSchemas, i)}>
                       <span className="text-[10px] font-bold px-2 py-0.5 rounded shrink-0" style={{ background: `${tbl.color}20`, color: tbl.color }}>{tbl.layer}</span>
                       <code className="text-sm font-mono font-bold flex-1" style={{ color: "var(--text)" }}>{tbl.name}</code>
-                      <span className="text-[11px] hidden sm:inline" style={{ color: "var(--text-faint)" }}>Partition: {tbl.partition}</span>
+                      <CopyButton text={tbl.name} />
+                      <span className="text-[11px] hidden sm:inline font-mono" style={{ color: "var(--text-faint)" }}>Partition: {tbl.partition}</span>
                       <span className="text-xs shrink-0 ml-2 transition-transform duration-200" style={{ color: "var(--text-muted)", display: "inline-block", transform: isOpen ? "rotate(180deg)" : "rotate(0deg)" }}>▼</span>
-                    </button>
+                    </div>
                     {isOpen && (
                       <div className="px-4 pb-4 pt-3 space-y-3" style={{ borderTop: "1px solid var(--border)" }}>
                         <div className="grid grid-cols-2 gap-2">
@@ -341,7 +389,7 @@ function APIsDataModelTab({ role }: { role: Role }) {
                           ))}
                         </div>
                         <div className="rounded-lg overflow-hidden" style={{ border: "1px solid #10b981" }}>
-                          <div className="px-3 py-1.5" style={{ background: "rgba(16,185,129,0.1)" }}><span className="text-[11px] font-bold" style={{ color: "#10b981" }}>💬 Interview answer</span></div>
+                          <div className="px-3 py-1.5" style={{ background: "rgba(16,185,129,0.1)" }}><span className="text-[11px] font-bold" style={{ color: "#10b981" }}>Interview answer</span></div>
                           <p className="px-3 py-2 text-xs leading-relaxed" style={{ background: "var(--bg)", color: "var(--text)" }}>{tbl.interview}</p>
                         </div>
                       </div>
