@@ -1453,25 +1453,25 @@ export default function NetflixArchPage({ initialTab }: { initialTab?: string })
 
           <button onClick={() => setProgressCardOpen(v => !v)}
             className="min-h-[40px] text-xs px-3 py-2 rounded-lg font-medium hidden sm:block cursor-pointer"
-            style={{ background: "transparent", color: T.muted, border: `1px solid ${T.border}` }}
+            style={{ background: "transparent", color: T.muted, border: `1px solid ${T.border}`, cursor: "pointer" }}
             title="View progress card">
             Progress
           </button>
           <button onClick={() => setNotesOpen(v => !v)}
             className="min-h-[40px] text-xs px-3 py-2 rounded-lg font-medium hidden sm:block cursor-pointer"
-            style={{ background: notesOpen ? N_RED + "18" : "transparent", color: notesOpen ? N_RED : T.muted, border: `1px solid ${notesOpen ? N_RED + "40" : T.border}` }}
+            style={{ background: notesOpen ? N_RED + "18" : "transparent", color: notesOpen ? N_RED : T.muted, border: `1px solid ${notesOpen ? N_RED + "40" : T.border}`, cursor: "pointer" }}
             title="Open notes panel">
             Notes
           </button>
           <button onClick={() => { setInterviewMode(v => !v); setFocusMode(v => !v); }}
             className="min-h-[40px] text-xs px-3 py-2 rounded-lg font-medium transition-all cursor-pointer"
-            style={{ background: interviewMode ? N_RED + "18" : "transparent", color: interviewMode ? N_RED : T.muted, border: `1px solid ${interviewMode ? N_RED + "40" : T.border}` }}>
+            style={{ background: interviewMode ? N_RED + "18" : "transparent", color: interviewMode ? N_RED : T.muted, border: `1px solid ${interviewMode ? N_RED + "40" : T.border}`, cursor: "pointer" }}>
             {interviewMode ? "Exit Focus" : "Focus"}
           </button>
 
           <button onClick={handleShare}
             className="min-h-[40px] text-xs px-3 py-2 rounded-lg hidden sm:block cursor-pointer"
-            style={{ background: "transparent", border: `1px solid ${T.border}`, color: shareToast ? N_GREEN : T.muted }}>
+            style={{ background: "transparent", border: `1px solid ${T.border}`, color: shareToast ? N_GREEN : T.muted, cursor: "pointer" }}>
             {shareToast ? "✓ Copied link" : "Share"}
           </button>
 
@@ -1480,7 +1480,7 @@ export default function NetflixArchPage({ initialTab }: { initialTab?: string })
             aria-label="Open keyboard shortcuts"
             title="Keyboard shortcuts"
             className="min-h-[40px] text-xs px-3 py-2 rounded-lg hidden sm:flex items-center gap-1.5 cursor-pointer"
-            style={{ background: "transparent", border: `1px solid ${T.border}`, color: T.muted }}>
+            style={{ background: "transparent", border: `1px solid ${T.border}`, color: T.muted, cursor: "pointer" }}>
             <span>?</span>
             <span className="hidden lg:inline">Shortcuts</span>
           </button>
@@ -1490,7 +1490,7 @@ export default function NetflixArchPage({ initialTab }: { initialTab?: string })
             onClick={() => setMobileMenuOpen(v => !v)}
             aria-label="Open navigation menu"
             className="sm:hidden flex flex-col gap-1 items-center justify-center w-11 h-11 rounded"
-            style={{ border: `1px solid ${T.border}` }}>
+            style={{ border: `1px solid ${T.border}`, cursor: "pointer" }}>
             <span className="block w-4 h-0.5 rounded" style={{ background: T.muted }} />
             <span className="block w-4 h-0.5 rounded" style={{ background: T.muted }} />
             <span className="block w-4 h-0.5 rounded" style={{ background: T.muted }} />
@@ -1527,7 +1527,7 @@ export default function NetflixArchPage({ initialTab }: { initialTab?: string })
                     }}
                     title={`~${tab.mins} min`}
                     className="relative px-3 pb-2 pt-1 font-medium transition-colors shrink-0 flex items-end gap-1 cursor-pointer"
-                    style={{ fontSize: 13, color: activeTab === tab.id ? T.text : T.muted, height: 40 }}>
+                    style={{ fontSize: 13, color: activeTab === tab.id ? T.text : T.muted, height: 40, cursor: "pointer" }}>
                     {completedTabs.has(tab.id) && tab.id !== activeTab && (
                       <span className="w-1 h-1 rounded-full mb-3 shrink-0" style={{ background: N_GREEN }} />
                     )}
@@ -1554,11 +1554,11 @@ export default function NetflixArchPage({ initialTab }: { initialTab?: string })
                 <span className="text-[10px] hidden xl:block" style={{ color: T.faint }}>{idx + 1}/{TABS.length}</span>
                 {prev && (
                   <button onClick={() => switchTab(prev.id)} className="text-[10px] px-2.5 py-1.5 min-h-[32px] rounded-md transition-colors whitespace-nowrap cursor-pointer"
-                    style={{ color: T.muted, border: `1px solid ${T.border}`, background: T.bg }}>← {prev.label}</button>
+                    style={{ color: T.muted, border: `1px solid ${T.border}`, background: T.bg, cursor: "pointer" }}>← {prev.label}</button>
                 )}
                 {next && (
                   <button onClick={() => switchTab(next.id)} className="text-[10px] px-2.5 py-1.5 min-h-[32px] rounded-md transition-colors whitespace-nowrap cursor-pointer"
-                    style={{ color: T.muted, border: `1px solid ${T.border}`, background: T.bg }}>{next.label} →</button>
+                    style={{ color: T.muted, border: `1px solid ${T.border}`, background: T.bg, cursor: "pointer" }}>{next.label} →</button>
                 )}
               </>;
             })()}
