@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { copyTextToClipboard } from "./clipboard";
 import type { TabSlug } from "./types";
 import type { Role } from "./types";
 
@@ -8,7 +9,12 @@ function CopyButton({ text }: { text: string }) {
   const [copied, setCopied] = useState(false);
   return (
     <button
-      onClick={() => { navigator.clipboard.writeText(text).then(() => { setCopied(true); setTimeout(() => setCopied(false), 2000); }); }}
+      onClick={async () => {
+        const copiedOk = await copyTextToClipboard(text);
+        if (!copiedOk) return;
+        setCopied(true);
+        setTimeout(() => setCopied(false), 2000);
+      }}
       className="text-[11px] px-3 py-1 rounded font-medium transition-colors"
       style={{ background: copied ? "#0f766e" : "var(--bg-muted)", color: copied ? "#fff" : "var(--text-muted)", cursor: "pointer", border: `1px solid var(--border)` }}
     >

@@ -13,6 +13,13 @@ const DRM_STEPS = [
   { step: 7, actor: "Client TEE", action: "Unwraps CEK inside Trusted Execution Environment. Decrypts video segments locally. CEK never leaves the TEE." },
 ];
 
+const ACTOR_COLORS: Record<string, string> = {
+  Client: "#3b82f6",
+  "Playback Service": "#8b5cf6",
+  "DRM Service": "#f59e0b",
+  "Client TEE": "#10b981",
+};
+
 const SECURITY_TOPICS = [
   {
     title: "Authentication & Authorization",
@@ -114,20 +121,48 @@ export function SecurityTab({ onNavigateTab }: { onNavigateTab?: (tab: TabSlug) 
       <div>
         <h2 className="text-2xl font-bold mb-1" style={{ color: "var(--text)" }}>DRM License Flow</h2>
         <p className="text-sm mb-4" style={{ color: "var(--text-muted)" }}>How Netflix prevents content piracy while keeping under 500ms playback startup.</p>
-        <div className="space-y-2">
-          {DRM_STEPS.map((s) => (
-            <div key={s.step} className="flex items-start gap-3 p-3.5 rounded-xl" style={{ background: "var(--bg-card)", border: "1px solid var(--border)" }}>
-              <span className="w-7 h-7 rounded-full flex items-center justify-center text-[10px] font-bold shrink-0"
-                style={{ background: "var(--blue-soft)", color: "var(--blue-text)" }}>{s.step}</span>
-              <div>
-                <span className="text-xs font-bold mr-2" style={{ color: "#3b82f6" }}>{s.actor}</span>
-                <span className="text-sm" style={{ color: "var(--text-muted)" }}>{s.action}</span>
+        <div className="rounded-2xl overflow-hidden" style={{ background: "var(--bg-card)", border: "1px solid var(--border)" }}>
+          <div
+            className="hidden lg:grid lg:grid-cols-12 gap-4 px-5 py-3 text-[11px] font-bold uppercase tracking-wider"
+            style={{ background: "var(--bg-muted)", color: "var(--text-faint)", borderBottom: "1px solid var(--border)" }}
+          >
+            <span className="lg:col-span-1">Step</span>
+            <span className="lg:col-span-3">Actor</span>
+            <span className="lg:col-span-8">What happens</span>
+          </div>
+          {DRM_STEPS.map((s, index) => {
+            const actorColor = ACTOR_COLORS[s.actor] ?? "#3b82f6";
+            return (
+              <div
+                key={s.step}
+                className="grid grid-cols-1 lg:grid-cols-12 gap-3 lg:gap-4 px-4 lg:px-5 py-4"
+                style={{ borderBottom: index < DRM_STEPS.length - 1 ? "1px solid var(--border)" : undefined }}
+              >
+                <div className="flex items-center lg:items-start lg:col-span-1">
+                  <span
+                    className="w-9 h-9 rounded-full flex items-center justify-center text-xs font-bold shrink-0"
+                    style={{ background: "var(--blue-soft)", color: "var(--blue-text)" }}
+                  >
+                    {s.step}
+                  </span>
+                </div>
+                <div className="flex items-start lg:col-span-3">
+                  <span
+                    className="inline-flex text-[11px] font-semibold px-2.5 py-1 rounded-full"
+                    style={{ background: `${actorColor}18`, color: actorColor, border: `1px solid ${actorColor}30` }}
+                  >
+                    {s.actor}
+                  </span>
+                </div>
+                <p className="text-sm leading-relaxed lg:col-span-8" style={{ color: "var(--text-muted)" }}>
+                  {s.action}
+                </p>
               </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
-        <div className="mt-3 p-4 rounded-xl" style={{ background: "#fee2e2", border: "1px solid #fca5a5" }}>
-          <p className="text-sm font-semibold" style={{ color: "#991b1b" }}>
+        <div className="mt-4 p-4 rounded-2xl" style={{ background: "#fee2e2", border: "1px solid #fca5a5" }}>
+          <p className="text-sm font-semibold leading-relaxed" style={{ color: "#991b1b" }}>
             DRM FAILS CLOSED: No license = no CEK = no decryption = black screen. Studio contracts prohibit any plaintext fallback. This is the one place where user experience is legally subordinate to content protection.
           </p>
         </div>
@@ -173,9 +208,9 @@ export function SecurityTab({ onNavigateTab }: { onNavigateTab?: (tab: TabSlug) 
       <SayThisBlock text="Netflix content security has two layers. Control plane: JWT auth (15-min TTL), entitlement check, concurrency check via atomic Redis Lua. After authorization, the client gets a signed manifest URL (HMAC-SHA256, 6h TTL) and a DRM license URL. Data plane: video segments are AES-128 encrypted. The Content Encryption Key is device-bound via the DRM license — it lives in the device's TEE and can never be extracted. Even if someone captures the CDN URL, they can't decrypt the segments without the device-bound license." />
 
       {onNavigateTab && (
-        <button onClick={() => onNavigateTab("failures-tradeoffs" as never)} className="w-full py-4 rounded-2xl text-sm font-semibold"
+        <button onClick={() => onNavigateTab("models")} className="w-full py-4 rounded-2xl text-sm font-semibold"
           style={{ background: "var(--blue-soft)", color: "var(--blue-text)", border: "1px solid var(--border)", cursor: "pointer" }}>
-          Next: Observability / Cost →
+          Next: Data Models →
         </button>
       )}
     </div>

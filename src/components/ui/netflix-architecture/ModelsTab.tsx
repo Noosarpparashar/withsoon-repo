@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useRef, useCallback, useEffect } from "react";
+import { copyTextToClipboard } from "../netflix-tabs/clipboard";
 import { MODEL_GROUPS, type ModelGroup, type EntityDef } from "./models-data";
 import { C } from "./constants";
 
@@ -26,7 +27,7 @@ function EntityBox({ entity, highlighted, onNavigateToEntity }: EntityBoxProps) 
 
   return (
     <div
-      className="rounded-lg overflow-hidden mb-3 transition-all duration-300"
+      className="rounded-xl overflow-hidden mb-4 transition-all duration-300"
       style={{
         border: highlighted
           ? `2px solid #f59e0b`
@@ -36,85 +37,124 @@ function EntityBox({ entity, highlighted, onNavigateToEntity }: EntityBoxProps) 
       }}
     >
       <div
-        className="px-3 py-2 flex items-center justify-between"
+        className="px-4 py-3 flex items-center justify-between gap-3"
         style={{ background: "var(--bg-muted)", borderBottom: `1px solid var(--border)` }}
       >
-        <span className="text-xs font-bold font-mono" style={{ color: "var(--text)" }}>
+        <span className="text-sm font-bold font-mono" style={{ color: "var(--text)" }}>
           {entity.name}
         </span>
         <span
-          className="text-[9px] px-1.5 py-0.5 rounded"
+          className="text-[10px] px-2 py-0.5 rounded-md shrink-0"
           style={{ background: "var(--border)", color: "var(--text-muted)" }}
         >
           {entity.store}
         </span>
       </div>
       <div>
+        <div
+          className="grid items-center gap-3 px-4 py-2"
+          style={{
+            gridTemplateColumns: "minmax(0, 1fr) 96px 64px",
+            background: "var(--bg)",
+            borderBottom: `1px solid var(--border)`,
+          }}
+        >
+          <span
+            className="text-[10px] font-bold uppercase tracking-[0.18em]"
+            style={{ color: "var(--text-faint)" }}
+          >
+            Field
+          </span>
+          <span
+            className="text-[10px] font-bold uppercase tracking-[0.18em] text-right"
+            style={{ color: "var(--text-faint)" }}
+          >
+            Type
+          </span>
+          <span
+            className="text-[10px] font-bold uppercase tracking-[0.18em] text-right"
+            style={{ color: "var(--text-faint)" }}
+          >
+            Keys
+          </span>
+        </div>
         {entity.fields.map((f, i) => (
           <div
             key={i}
-            className="flex items-center gap-2 px-3 py-1.5"
+            className="grid items-start gap-3 px-4 py-3"
             style={{
+              gridTemplateColumns: "minmax(0, 1fr) 96px 64px",
               borderBottom:
                 i < entity.fields.length - 1
                   ? `1px solid var(--border)`
                   : undefined,
             }}
           >
-            <span
-              className="w-1.5 h-1.5 rounded-full shrink-0"
-              style={{
-                background: f.pk
-                  ? C.amber
-                  : f.fk
-                  ? "#818cf8"
-                  : f.index
-                  ? C.green
-                  : "var(--text-faint)",
-              }}
-            />
-            <span
-              className="text-[10px] font-mono flex-1"
-              style={{ color: "var(--text)" }}
-            >
-              {f.name}
-            </span>
-            <span className="text-[9px] font-mono" style={{ color: "#6ee7b7" }}>
-              {f.type}
-            </span>
-            {f.pk && (
+            <div className="min-w-0 flex items-start gap-3">
               <span
-                className="text-[8px] px-1 rounded"
-                style={{ background: C.amber + "18", color: C.amber }}
-              >
-                PK
-              </span>
-            )}
-            {f.fk ? (
-              <button
-                onClick={() => {
-                  const tableName = f.fk!.split(".")[0];
-                  onNavigateToEntity(tableName);
-                }}
-                className="text-[8px] px-1 rounded transition-opacity hover:opacity-80 cursor-pointer"
+                className="w-1.5 h-1.5 rounded-full shrink-0 mt-1.5"
                 style={{
-                  background: "#818cf818",
-                  color: "#818cf8",
-                  border: `1px solid #818cf830`,
+                  background: f.pk
+                    ? C.amber
+                    : f.fk
+                    ? "#818cf8"
+                    : f.index
+                    ? C.green
+                    : "var(--text-faint)",
                 }}
-                title={`Navigate to ${f.fk}`}
-              >
-                FK → {f.fk}
-              </button>
-            ) : null}
-            {f.index && !f.pk && (
+              />
+              <div className="min-w-0">
+                <p
+                  className="text-[12px] md:text-xs font-mono font-semibold break-words"
+                  style={{ color: "var(--text)" }}
+                >
+                  {f.name}
+                </p>
+                {f.fk ? (
+                  <button
+                    onClick={() => {
+                      const tableName = f.fk!.split(".")[0];
+                      onNavigateToEntity(tableName);
+                    }}
+                    className="mt-1 inline-flex text-[10px] px-1.5 py-0.5 rounded transition-opacity hover:opacity-80 cursor-pointer"
+                    style={{
+                      background: "#818cf818",
+                      color: "#818cf8",
+                      border: `1px solid #818cf830`,
+                    }}
+                    title={`Navigate to ${f.fk}`}
+                  >
+                    FK → {f.fk}
+                  </button>
+                ) : null}
+              </div>
+            </div>
+            <div className="shrink-0 pt-0.5 text-right">
               <span
-                className="text-[8px] px-1 rounded"
-                style={{ background: C.green + "18", color: C.green }}
+                className="text-[11px] font-mono font-medium"
+                style={{ color: "#60a5fa" }}
               >
-                IDX
+                {f.type}
               </span>
-            )}
+            </div>
+            <div className="min-w-[48px] shrink-0 flex flex-wrap items-center justify-end gap-1 pt-0.5">
+              {f.pk && (
+                <span
+                  className="text-[10px] px-1.5 rounded"
+                  style={{ background: C.amber + "18", color: C.amber }}
+                >
+                  PK
+                </span>
+              )}
+              {f.index && !f.pk && (
+                <span
+                  className="text-[10px] px-1.5 rounded"
+                  style={{ background: C.green + "18", color: C.green }}
+                >
+                  IDX
+                </span>
+              )}
+            </div>
           </div>
         ))}
       </div>
@@ -128,12 +168,12 @@ function EntityBox({ entity, highlighted, onNavigateToEntity }: EntityBoxProps) 
           }}
         >
           <p
-            className="text-[8px] font-bold uppercase tracking-widest mb-1"
+            className="text-[10px] font-bold uppercase tracking-widest mb-1.5"
             style={{ color }}
           >
             Why {entity.store}?
           </p>
-          <p className="text-[9px] leading-relaxed" style={{ color: "var(--text-muted)" }}>
+          <p className="text-[11px] leading-relaxed" style={{ color: "var(--text-muted)" }}>
             {entity.dbRationale}
           </p>
         </div>
@@ -147,13 +187,13 @@ function EntityBox({ entity, highlighted, onNavigateToEntity }: EntityBoxProps) 
           }}
         >
           <p
-            className="text-[8px] font-bold uppercase tracking-widest mb-1"
+            className="text-[10px] font-bold uppercase tracking-widest mb-1.5"
             style={{ color }}
           >
             Access Patterns
           </p>
           {entity.accessPatterns.map((ap, i) => (
-            <p key={i} className="text-[9px]" style={{ color: "var(--text-muted)" }}>
+            <p key={i} className="text-[11px] leading-relaxed" style={{ color: "var(--text-muted)" }}>
               → {ap}
             </p>
           ))}
@@ -185,6 +225,7 @@ function DDLViewer({
               background: active === i ? storeColor + "18" : "transparent",
               color: active === i ? storeColor : "var(--text-muted)",
               border: `1px solid ${active === i ? storeColor + "40" : "var(--border)"}`,
+              cursor: "pointer",
             }}
           >
             {b.label}
@@ -226,6 +267,7 @@ function GroupPanel({
   onScrollProgress,
 }: GroupPanelProps) {
   const [showDDL, setShowDDL] = useState(false);
+  const [ddlCopied, setDdlCopied] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
 
   const handleScroll = useCallback(() => {
@@ -246,20 +288,16 @@ function GroupPanel({
     }
   }, [isActive, onScrollProgress]);
 
-  const handleDownloadSQL = useCallback(() => {
+  const handleCopySQL = useCallback(() => {
     if (!group.ddl || group.ddl.length === 0) return;
     const content = group.ddl
       .map((block) => `-- ${block.label}\n${block.code}`)
       .join("\n\n");
-    const blob = new Blob([content], { type: "text/plain" });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = `${group.id}.sql`;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    URL.revokeObjectURL(url);
+    copyTextToClipboard(content).then((copiedOk) => {
+      if (!copiedOk) return;
+      setDdlCopied(true);
+      setTimeout(() => setDdlCopied(false), 2000);
+    });
   }, [group]);
 
   if (!isActive) return null;
@@ -267,178 +305,175 @@ function GroupPanel({
   return (
     <div
       ref={scrollRef}
-      className="flex-1 overflow-y-auto p-4 space-y-5"
+      className="flex-1 overflow-y-auto"
       onScroll={handleScroll}
     >
-      {/* Header */}
-      <div>
-        <div className="flex items-center gap-2 mb-1">
-          <span
-            className="text-[9px] font-bold uppercase tracking-widest px-1.5 py-0.5 rounded"
-            style={{
-              background: storeColor + "18",
-              color: storeColor,
-              border: `1px solid ${storeColor}30`,
-            }}
+      <div className="mx-auto w-full max-w-6xl space-y-6 px-6 py-6">
+        <div>
+          <div className="flex items-center gap-2 mb-2">
+            <span
+              className="text-[10px] font-bold uppercase tracking-widest px-2 py-0.5 rounded-md"
+              style={{
+                background: storeColor + "18",
+                color: storeColor,
+                border: `1px solid ${storeColor}30`,
+              }}
+            >
+              {group.store}
+            </span>
+          </div>
+          <h2 className="text-2xl font-bold" style={{ color: "var(--text)" }}>
+            {group.label}
+          </h2>
+          <p
+            className="text-sm mt-2 leading-relaxed max-w-4xl"
+            style={{ color: "var(--text-muted)" }}
           >
-            {group.store}
-          </span>
+            {group.rationale}
+          </p>
         </div>
-        <h2 className="text-lg font-bold" style={{ color: "var(--text)" }}>
-          {group.label}
-        </h2>
-        <p
-          className="text-xs mt-1 leading-relaxed"
-          style={{ color: "var(--text-muted)" }}
-        >
-          {group.rationale}
-        </p>
-      </div>
 
-      {/* Entities */}
-      <div>
-        <p
-          className="text-[9px] font-bold uppercase tracking-widest mb-2"
-          style={{ color: "var(--text-faint)" }}
-        >
-          Schema
-        </p>
-        {group.entities.map((e, i) => (
-          <EntityBox
-            key={i}
-            entity={e}
-            highlighted={highlightedEntity === e.name}
-            onNavigateToEntity={onNavigateToEntity}
-          />
-        ))}
-      </div>
-
-      {/* Anti-patterns */}
-      {group.antiPatterns.length > 0 && (
         <div>
           <p
-            className="text-[9px] font-bold uppercase tracking-widest mb-2"
+            className="text-[10px] font-bold uppercase tracking-widest mb-3"
             style={{ color: "var(--text-faint)" }}
           >
-            Anti-Patterns to Avoid
+            Schema
           </p>
-          <ul className="space-y-1.5">
-            {group.antiPatterns.map((ap, i) => (
-              <li key={i} className="flex items-start gap-2">
-                <span
-                  className="shrink-0 mt-0.5"
-                  style={{ color: "#ef4444" }}
-                >
-                  ✗
-                </span>
-                <span
-                  className="text-[10px] leading-relaxed"
-                  style={{ color: "var(--text-muted)" }}
-                >
-                  {ap}
-                </span>
-              </li>
-            ))}
-          </ul>
+          {group.entities.map((e, i) => (
+            <EntityBox
+              key={i}
+              entity={e}
+              highlighted={highlightedEntity === e.name}
+              onNavigateToEntity={onNavigateToEntity}
+            />
+          ))}
         </div>
-      )}
 
-      {/* Interview tip */}
-      <div
-        className="rounded-lg p-3"
-        style={{
-          background: "rgba(245,166,35,0.06)",
-          border: `1px solid ${C.amber}25`,
-        }}
-      >
-        <p
-          className="text-[9px] font-bold uppercase tracking-widest mb-1"
-          style={{ color: C.amber }}
-        >
-          Interview Tip
-        </p>
-        <p
-          className="text-[10px] leading-relaxed"
-          style={{ color: "var(--text-muted)" }}
-        >
-          {group.interviewTip}
-        </p>
-      </div>
+        {group.antiPatterns.length > 0 && (
+          <div>
+            <p
+              className="text-[10px] font-bold uppercase tracking-widest mb-3"
+              style={{ color: "var(--text-faint)" }}
+            >
+              Anti-Patterns to Avoid
+            </p>
+            <ul className="space-y-2">
+              {group.antiPatterns.map((ap, i) => (
+                <li key={i} className="flex items-start gap-2">
+                  <span
+                    className="shrink-0 mt-0.5"
+                    style={{ color: "#ef4444" }}
+                  >
+                    ✗
+                  </span>
+                  <span
+                    className="text-xs leading-relaxed"
+                    style={{ color: "var(--text-muted)" }}
+                  >
+                    {ap}
+                  </span>
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
 
-      {/* Scaling note */}
-      {group.scalingNote && (
         <div
-          className="rounded-lg p-3"
+          className="rounded-xl p-4"
           style={{
-            background: "rgba(56,189,248,0.05)",
-            border: `1px solid #38bdf825`,
+            background: "rgba(245,166,35,0.06)",
+            border: `1px solid ${C.amber}25`,
           }}
         >
           <p
-            className="text-[9px] font-bold uppercase tracking-widest mb-1"
-            style={{ color: "#38bdf8" }}
+            className="text-[10px] font-bold uppercase tracking-widest mb-1.5"
+            style={{ color: C.amber }}
           >
-            Scaling Note
+            Interview Tip
           </p>
           <p
-            className="text-[10px] leading-relaxed"
+            className="text-xs leading-relaxed"
             style={{ color: "var(--text-muted)" }}
           >
-            {group.scalingNote}
+            {group.interviewTip}
           </p>
         </div>
-      )}
 
-      {/* Storage cost */}
-      {group.storageCost && (
-        <div
-          className="rounded-lg px-3 py-2 flex items-center justify-between"
-          style={{ background: "var(--bg-muted)", border: `1px solid var(--border)` }}
-        >
-          <span className="text-[10px]" style={{ color: "var(--text-muted)" }}>
-            Storage estimate
-          </span>
-          <span
-            className="text-[10px] font-mono font-medium"
-            style={{ color: C.green }}
+        {group.scalingNote && (
+          <div
+            className="rounded-xl p-4"
+            style={{
+              background: "rgba(56,189,248,0.05)",
+              border: `1px solid #38bdf825`,
+            }}
           >
-            {group.storageCost}
-          </span>
-        </div>
-      )}
-
-      {/* DDL toggle + Download */}
-      {group.ddl && group.ddl.length > 0 && (
-        <div>
-          <div className="flex items-center gap-2 mb-2">
-            <button
-              onClick={() => setShowDDL((v) => !v)}
-              className="text-[10px] px-3 py-1.5 rounded-lg font-medium transition-colors"
-              style={{
-                background: showDDL ? storeColor + "18" : "var(--border)",
-                color: showDDL ? storeColor : "var(--text-muted)",
-              }}
+            <p
+              className="text-[10px] font-bold uppercase tracking-widest mb-1.5"
+              style={{ color: "#38bdf8" }}
             >
-              {showDDL ? "Hide DDL" : "Show DDL / Schema"}
-            </button>
-            <button
-              onClick={handleDownloadSQL}
-              className="text-[10px] px-3 py-1.5 rounded-lg font-medium transition-colors flex items-center gap-1"
-              style={{
-                background: "var(--bg-muted)",
-                color: "var(--text-muted)",
-                border: `1px solid var(--border)`,
-              }}
-              title={`Download ${group.id}.sql`}
+              Scaling Note
+            </p>
+            <p
+              className="text-xs leading-relaxed"
+              style={{ color: "var(--text-muted)" }}
             >
-              ↓ Download
-            </button>
+              {group.scalingNote}
+            </p>
           </div>
-          {showDDL && (
-            <DDLViewer blocks={group.ddl} storeColor={storeColor} />
-          )}
-        </div>
-      )}
+        )}
+
+        {group.storageCost && (
+          <div
+            className="rounded-xl px-4 py-3 flex items-center justify-between"
+            style={{ background: "var(--bg-muted)", border: `1px solid var(--border)` }}
+          >
+            <span className="text-xs" style={{ color: "var(--text-muted)" }}>
+              Storage estimate
+            </span>
+            <span
+              className="text-xs font-mono font-medium"
+              style={{ color: C.green }}
+            >
+              {group.storageCost}
+            </span>
+          </div>
+        )}
+
+        {group.ddl && group.ddl.length > 0 && (
+          <div>
+            <div className="flex items-center gap-2 mb-3">
+              <button
+                onClick={() => setShowDDL((v) => !v)}
+                className="text-xs px-3 py-2 rounded-lg font-medium transition-colors"
+                style={{
+                  background: showDDL ? storeColor + "18" : "var(--border)",
+                  color: showDDL ? storeColor : "var(--text-muted)",
+                  cursor: "pointer",
+                }}
+              >
+                {showDDL ? "Hide DDL" : "Show DDL / Schema"}
+              </button>
+              <button
+                onClick={handleCopySQL}
+                className="text-xs px-3 py-2 rounded-lg font-medium transition-colors flex items-center gap-1"
+                style={{
+                  background: ddlCopied ? "#166534" : "var(--bg-muted)",
+                  color: ddlCopied ? "#ffffff" : "var(--text-muted)",
+                  border: `1px solid var(--border)`,
+                  cursor: "pointer",
+                }}
+                title={`Copy ${group.id}.sql to clipboard`}
+              >
+                {ddlCopied ? "✓ Copied DDL" : "Copy DDL"}
+              </button>
+            </div>
+            {showDDL && (
+              <DDLViewer blocks={group.ddl} storeColor={storeColor} />
+            )}
+          </div>
+        )}
+      </div>
     </div>
   );
 }
@@ -489,20 +524,20 @@ export default function ModelsTab() {
     <div className="flex h-full overflow-hidden" style={{ background: "var(--bg)" }}>
       {/* Sidebar */}
       <div
-        className="w-52 shrink-0 overflow-y-auto"
+        className="w-64 xl:w-72 shrink-0 overflow-y-auto"
         style={{ background: "var(--bg-card)", borderRight: `1px solid var(--border)` }}
       >
         <div
-          className="px-3 py-3"
+          className="px-4 py-4"
           style={{ borderBottom: `1px solid var(--border)` }}
         >
           <p
-            className="text-[9px] font-bold uppercase tracking-widest"
+            className="text-[10px] font-bold uppercase tracking-widest"
             style={{ color: "var(--text-faint)" }}
           >
             Data Models
           </p>
-          <p className="text-[10px] mt-0.5" style={{ color: "var(--text-muted)" }}>
+          <p className="text-xs mt-1 leading-relaxed" style={{ color: "var(--text-muted)" }}>
             {MODEL_GROUPS.length} entity groups
           </p>
         </div>
@@ -513,21 +548,22 @@ export default function ModelsTab() {
             <button
               key={g.id}
               onClick={() => setActiveGroup(g.id)}
-              className="w-full text-left px-3 py-2.5 transition-colors"
+              className="w-full text-left px-4 py-3 transition-colors"
               style={{
                 background: isActive ? color + "10" : "transparent",
                 borderLeft: `3px solid ${isActive ? color : "transparent"}`,
                 borderBottom: `1px solid var(--border)`,
+                cursor: "pointer",
               }}
             >
               <p
-                className="text-xs font-medium"
+                className="text-sm font-medium"
                 style={{ color: isActive ? "var(--text)" : "var(--text-muted)" }}
               >
                 {g.label}
               </p>
               <p
-                className="text-[9px] mt-0.5"
+                className="text-[10px] mt-1"
                 style={{ color: isActive ? color : "var(--text-muted)" }}
               >
                 {g.store}

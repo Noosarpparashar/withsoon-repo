@@ -1,12 +1,18 @@
 "use client";
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect, useMemo, useRef } from "react";
+import { copyTextToClipboard } from "./clipboard";
 import type { Role, TabSlug } from "./types";
 
 function CopyButton({ text, label = "Copy" }: { text: string; label?: string }) {
   const [copied, setCopied] = useState(false);
   return (
-    <button onClick={() => { navigator.clipboard.writeText(text).then(() => { setCopied(true); setTimeout(() => setCopied(false), 2000); }); }}
+    <button onClick={async () => {
+      const copiedOk = await copyTextToClipboard(text);
+      if (!copiedOk) return;
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    }}
       className="text-[11px] px-3 py-1 rounded-lg font-medium transition-colors shrink-0"
       style={{ background: copied ? "#22c55e" : "var(--bg)", color: copied ? "#fff" : "var(--text-muted)", border: "1px solid var(--border)", cursor: "pointer" }}>
       {copied ? "✓ Copied!" : label}
@@ -162,6 +168,37 @@ const DATA_TRADEOFFS = [
   { a: "Streaming", b: "Batch", netflix: "Streaming for real-time dashboards (<5 min). Batch for daily Gold aggregates and backfill." },
 ];
 
+const BACKEND_TOC = [
+  { label: "Openings", id: "cs-openings" },
+  { label: "Services", id: "cs-services" },
+  { label: "APIs", id: "cs-apis" },
+  { label: "DBs", id: "cs-dbs" },
+  { label: "Failures", id: "cs-failures" },
+  { label: "Scale", id: "cs-scale" },
+];
+
+const DATA_TOC = [
+  { label: "Openings", id: "cs-openings" },
+  { label: "Events", id: "cs-events" },
+  { label: "Kafka", id: "cs-kafka" },
+  { label: "Pipeline", id: "cs-pipeline" },
+  { label: "Lakehouse", id: "cs-lakehouse" },
+  { label: "Scale", id: "cs-scale" },
+];
+
+function findNearestScrollContainer(node: HTMLElement | null): HTMLElement | null {
+  let current = node?.parentElement ?? null;
+  while (current) {
+    const styles = window.getComputedStyle(current);
+    const overflowY = styles.overflowY;
+    if ((overflowY === "auto" || overflowY === "scroll") && current.scrollHeight > current.clientHeight) {
+      return current;
+    }
+    current = current.parentElement;
+  }
+  return null;
+}
+
 function buildMarkdown(role: Role): string {
   const isBackend = role === "Backend Engineer";
   const lines: string[] = [`# Netflix System Design Cheat Sheet — ${role}`, ""];
@@ -211,14 +248,20 @@ function buildMarkdown(role: Role): string {
 function CheatSheetTab({ role, onNavigateTab }: { role: Role; onNavigateTab?: (tab: TabSlug) => void }) {
   const [activeRole, setActiveRole] = useState<Role>(role);
   const [copyMdState, setCopyMdState] = useState(false);
+  const [activeSection, setActiveSection] = useState("cs-openings");
+  const [readPct, setReadPct] = useState(0);
+  const rootRef = useRef<HTMLDivElement>(null);
+  const scrollContainerRef = useRef<HTMLElement | null>(null);
   const isBackend = activeRole === "Backend Engineer";
   const color = isBackend ? "#3b82f6" : "#10b981";
   const opening30s = isBackend ? BACKEND_OPENING_30S : DATA_OPENING_30S;
   const opening2min = isBackend ? BACKEND_OPENING_2MIN : DATA_OPENING_2MIN;
+  const tocItems = useMemo(() => (isBackend ? BACKEND_TOC : DATA_TOC), [isBackend]);
 
   const handleCopyMarkdown = useCallback(() => {
     const md = buildMarkdown(activeRole);
-    navigator.clipboard.writeText(md).then(() => {
+    copyTextToClipboard(md).then((copiedOk) => {
+      if (!copiedOk) return;
       setCopyMdState(true);
       setTimeout(() => setCopyMdState(false), 2000);
     });
@@ -239,11 +282,67 @@ function CheatSheetTab({ role, onNavigateTab }: { role: Role; onNavigateTab?: (t
     window.print();
   }, []);
 
+  const scrollToSection = useCallback((id: string) => {
+    setActiveSection(id);
+    const section = rootRef.current?.querySelector<HTMLElement>(`#${id}`);
+    const container = scrollContainerRef.current;
+    if (!section || !container) {
+      section?.scrollIntoView({ behavior: "smooth", block: "start" });
+      return;
+    }
+
+    const targetTop = section.getBoundingClientRect().top - container.getBoundingClientRect().top + container.scrollTop - 72;
+    container.scrollTo({ top: Math.max(targetTop, 0), behavior: "smooth" });
+  }, []);
+
+  const scrollToTop = useCallback(() => {
+    const container = scrollContainerRef.current;
+    if (container) {
+      container.scrollTo({ top: 0, behavior: "smooth" });
+      return;
+    }
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  }, []);
+
+  useEffect(() => {
+    setActiveSection("cs-openings");
+    setReadPct(0);
+  }, [activeRole]);
+
+  useEffect(() => {
+    const root = rootRef.current;
+    if (!root) return;
+
+    const container = findNearestScrollContainer(root);
+    scrollContainerRef.current = container;
+    if (!container) return;
+
+    const update = () => {
+      const scrollable = container.scrollHeight - container.clientHeight;
+      setReadPct(scrollable > 0 ? (container.scrollTop / scrollable) * 100 : 0);
+
+      let current = tocItems[0]?.id ?? "cs-openings";
+      for (const item of tocItems) {
+        const section = root.querySelector<HTMLElement>(`#${item.id}`);
+        if (!section) continue;
+        const sectionTop = section.getBoundingClientRect().top - container.getBoundingClientRect().top + container.scrollTop;
+        if (sectionTop <= container.scrollTop + 120) {
+          current = item.id;
+        }
+      }
+      setActiveSection(current);
+    };
+
+    update();
+    container.addEventListener("scroll", update, { passive: true });
+    return () => container.removeEventListener("scroll", update);
+  }, [tocItems]);
+
   // Suppress unused warning for onNavigateTab (kept for API compatibility)
   void onNavigateTab;
 
   return (
-    <div className="space-y-5 print:space-y-3">
+    <div ref={rootRef} className="space-y-5 print:space-y-3">
       <style>{`
         @media print {
           body * { visibility: hidden; }
@@ -298,32 +397,27 @@ function CheatSheetTab({ role, onNavigateTab }: { role: Role; onNavigateTab?: (t
         >
           🖨 Print
         </button>
+        <div className="hidden lg:flex items-center gap-2 ml-2 pl-2" style={{ borderLeft: "1px solid var(--border)" }}>
+          <span className="text-[10px] font-semibold" style={{ color: "var(--text-faint)" }}>
+            {Math.round(readPct)}% read
+          </span>
+          <div className="w-16 h-1 rounded-full" style={{ background: "var(--border)" }}>
+            <div className="h-full rounded-full transition-all" style={{ width: `${readPct}%`, background: color }} />
+          </div>
+        </div>
         <div className="hidden lg:flex items-center gap-1 ml-2 pl-2" style={{ borderLeft: "1px solid var(--border)" }}>
-          {(isBackend
-            ? [
-                { label: "Openings", id: "cs-openings" },
-                { label: "Services", id: "cs-services" },
-                { label: "APIs", id: "cs-apis" },
-                { label: "DBs", id: "cs-dbs" },
-                { label: "Failures", id: "cs-failures" },
-                { label: "Scale", id: "cs-scale" },
-              ]
-            : [
-                { label: "Openings", id: "cs-openings" },
-                { label: "Events", id: "cs-events" },
-                { label: "Kafka", id: "cs-kafka" },
-                { label: "Pipeline", id: "cs-pipeline" },
-                { label: "Lakehouse", id: "cs-lakehouse" },
-                { label: "Scale", id: "cs-scale" },
-              ]
-          ).map(({ label, id }) => (
+          {tocItems.map(({ label, id }) => (
             <button
               key={id}
-              onClick={() => document.getElementById(id)?.scrollIntoView({ behavior: "smooth" })}
+              onClick={() => scrollToSection(id)}
+              aria-pressed={activeSection === id}
               className="text-[11px] px-2 py-1 rounded font-medium"
-              style={{ background: "transparent", color: "var(--text-faint)", border: "none", cursor: "pointer" }}
-              onMouseEnter={e => (e.currentTarget.style.color = color)}
-              onMouseLeave={e => (e.currentTarget.style.color = "var(--text-faint)")}
+              style={{
+                background: activeSection === id ? `${color}16` : "transparent",
+                color: activeSection === id ? color : "var(--text-faint)",
+                border: activeSection === id ? `1px solid ${color}35` : "1px solid transparent",
+                cursor: "pointer",
+              }}
             >
               {label}
             </button>
@@ -331,7 +425,7 @@ function CheatSheetTab({ role, onNavigateTab }: { role: Role; onNavigateTab?: (t
         </div>
         <div className="flex-1" />
         <button
-          onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
+          onClick={scrollToTop}
           className="text-xs px-3 py-1.5 rounded-lg font-medium"
           style={{ background: "var(--bg-card)", color: "var(--text-faint)", border: "1px solid var(--border)", cursor: "pointer" }}
           aria-label="Back to top"

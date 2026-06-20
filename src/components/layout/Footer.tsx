@@ -1,4 +1,7 @@
+"use client";
+
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 
 const MAIN_LINKS = [
   { href: "/tech-news",   label: "Tech News" },
@@ -16,6 +19,12 @@ const META_LINKS = [
 ];
 
 export default function Footer() {
+  const pathname = usePathname();
+
+  if (pathname.startsWith("/system-design/netflix")) {
+    return null;
+  }
+
   return (
     <footer className="border-t border-[var(--border)] mt-auto py-10 bg-[var(--bg-muted)]">
       <div className="mx-auto max-w-7xl px-4">

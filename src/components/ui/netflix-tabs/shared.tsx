@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useCallback } from "react";
+import { copyTextToClipboard } from "./clipboard";
 
 /* ═══════════════════════════════════════════════════════════════
    SHARED COMPONENTS (used across multiple tabs)
@@ -13,7 +14,12 @@ function SayThisBlock({ text }: { text: string }) {
       <div className="flex items-center justify-between px-4 py-2.5" style={{ background: "#d1fae5" }}>
         <span className="text-xs font-bold" style={{ color: "#065f46" }}>📋 Say This In Interview</span>
         <button
-          onClick={() => { navigator.clipboard.writeText(text).then(() => { setCopied(true); setTimeout(() => setCopied(false), 2000); }); }}
+          onClick={async () => {
+            const copiedOk = await copyTextToClipboard(text);
+            if (!copiedOk) return;
+            setCopied(true);
+            setTimeout(() => setCopied(false), 2000);
+          }}
           className="text-[11px] px-3 py-1 rounded font-medium transition-colors"
           style={{ background: copied ? "#22c55e" : "#fff", color: copied ? "#fff" : "#065f46", border: "1px solid #10b981", cursor: "pointer" }}
         >
@@ -121,7 +127,8 @@ function ScaleDerivationSection() {
 
   const copyAll = () => {
     const text = SCALE_DERIVATIONS.map(d => `${d.label}: ${d.result} (${d.formula})`).join("\n");
-    navigator.clipboard.writeText(text).then(() => {
+    copyTextToClipboard(text).then((copiedOk) => {
+      if (!copiedOk) return;
       setAllCopied(true);
       setTimeout(() => setAllCopied(false), 2000);
     });
@@ -311,7 +318,8 @@ function CodeBlockWithCopy({ code, language }: { code: string; language?: string
   const [copied, setCopied] = useState(false);
 
   const handleCopy = () => {
-    navigator.clipboard.writeText(code).then(() => {
+    copyTextToClipboard(code).then((copiedOk) => {
+      if (!copiedOk) return;
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
     });

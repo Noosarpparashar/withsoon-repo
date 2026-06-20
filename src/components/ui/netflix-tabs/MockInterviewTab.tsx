@@ -675,48 +675,54 @@ export function MockInterviewTab({ role }: { role: Role }) {
           </div>
 
           {/* Navigation */}
-          {ratingNudge && (
-            <div className="rounded-lg px-4 py-2 text-sm font-medium text-center" role="alert"
-              style={{ background: "rgba(245,158,11,0.12)", border: "1px solid rgba(245,158,11,0.4)", color: "#d97706" }}>
-              Rate this step before continuing →
-            </div>
-          )}
-          <div className="flex gap-2">
-            {currentStep > 0 && (
-              <button onClick={() => goToStep(currentStep - 1)}
-                aria-label={`Go back to question ${currentStep}`}
-                className="px-4 py-2.5 rounded-xl text-sm font-medium"
-                style={{ background: "var(--bg)", border: "1px solid var(--border)", color: "var(--text)", cursor: "pointer" }}>
-                ← Back
-              </button>
+          <div className="sticky bottom-0 z-10 -mx-1 px-1 pt-3"
+            style={{ background: "linear-gradient(180deg, transparent 0%, var(--bg) 18%, var(--bg) 100%)" }}>
+            {ratingNudge && (
+              <div className="rounded-lg px-4 py-2 text-sm font-medium text-center mb-3" role="alert"
+                style={{ background: "rgba(245,158,11,0.12)", border: "1px solid rgba(245,158,11,0.4)", color: "#d97706" }}>
+                Rate this step before continuing →
+              </div>
             )}
-            <button
-              onClick={advanceStep}
-              aria-label={currentStep < totalSteps - 1 ? `Submit answer and go to question ${currentStep + 2} of ${totalSteps}` : "Submit final answer and view your score"}
-              className="px-4 py-2.5 rounded-xl text-sm font-bold flex-1"
-              style={{ background: roleColor, color: "#fff", cursor: "pointer", border: "none" }}
-            >
-              {currentStep < totalSteps - 1 ? "Next Question →" : "Finish & Score →"}
-            </button>
-          </div>
-
-          {/* Step dots */}
-          <div className="flex gap-1.5 flex-wrap justify-center">
-            {flow.map((_, i) => {
-              const rating = selfRatings[i];
-              const dotColor = rating === "nailed" ? "#10b981" : rating === "okay" ? "#f59e0b" : rating === "missed" ? "#ef4444" : i === currentStep ? roleColor : "var(--border)";
-              return (
+            <div className="rounded-xl p-3 space-y-3"
+              style={{ background: "var(--bg-card)", border: "1px solid var(--border)" }}>
+              <div className="flex gap-2">
+                {currentStep > 0 && (
+                  <button onClick={() => goToStep(currentStep - 1)}
+                    aria-label={`Back to question ${currentStep}`}
+                    className="px-4 py-2.5 rounded-xl text-sm font-medium"
+                    style={{ background: "var(--bg)", border: "1px solid var(--border)", color: "var(--text)", cursor: "pointer" }}>
+                    ← Back
+                  </button>
+                )}
                 <button
-                  key={i}
-                  onClick={() => goToStep(i)}
-                  className="w-6 h-6 rounded-full text-[10px] font-bold flex items-center justify-center transition-all"
-                  style={{ background: i === currentStep ? `${roleColor}20` : "transparent", color: dotColor, border: `1.5px solid ${dotColor}`, cursor: "pointer" }}
-                  aria-label={`Go to step ${i + 1}`}
+                  onClick={advanceStep}
+                  aria-label={currentStep < totalSteps - 1 ? `Next Question — go to question ${currentStep + 2} of ${totalSteps}` : "Finish & Score"}
+                  className="px-4 py-2.5 rounded-xl text-sm font-bold flex-1"
+                  style={{ background: roleColor, color: "#fff", cursor: "pointer", border: "none" }}
                 >
-                  {i + 1}
+                  {currentStep < totalSteps - 1 ? "Next Question →" : "Finish & Score →"}
                 </button>
-              );
-            })}
+              </div>
+
+              {/* Step dots */}
+              <div className="flex gap-1.5 flex-wrap justify-center">
+                {flow.map((_, i) => {
+                  const rating = selfRatings[i];
+                  const dotColor = rating === "nailed" ? "#10b981" : rating === "okay" ? "#f59e0b" : rating === "missed" ? "#ef4444" : i === currentStep ? roleColor : "var(--border)";
+                  return (
+                    <button
+                      key={i}
+                      onClick={() => goToStep(i)}
+                      className="w-6 h-6 rounded-full text-[10px] font-bold flex items-center justify-center transition-all"
+                      style={{ background: i === currentStep ? `${roleColor}20` : "transparent", color: dotColor, border: `1.5px solid ${dotColor}`, cursor: "pointer" }}
+                      aria-label={`Go to step ${i + 1}`}
+                    >
+                      {i + 1}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
           </div>
         </div>
       )}

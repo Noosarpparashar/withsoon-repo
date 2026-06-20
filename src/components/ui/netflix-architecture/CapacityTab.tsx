@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useRef, useEffect } from "react";
 import { HERO_NUMBERS, DERIVATIONS, PRESETS, type CapacityPreset } from "./capacity-data";
 import { C } from "./constants";
 
@@ -197,23 +197,66 @@ const CAPACITY_SECTIONS = [
 ];
 
 export default function CapacityTab() {
+  const [activeSection, setActiveSection] = useState(CAPACITY_SECTIONS[0].id);
+  const [readPct, setReadPct] = useState(0);
+  const containerRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const el = containerRef.current;
+    if (!el) return;
+
+    const handler = () => {
+      const scrollable = el.scrollHeight - el.clientHeight;
+      setReadPct(scrollable > 0 ? (el.scrollTop / scrollable) * 100 : 0);
+
+      for (const section of [...CAPACITY_SECTIONS].reverse()) {
+        const anchor = document.getElementById(`cap-${section.id}`);
+        if (!anchor) continue;
+        if (anchor.getBoundingClientRect().top <= 140) {
+          setActiveSection(section.id);
+          break;
+        }
+      }
+    };
+
+    handler();
+    el.addEventListener("scroll", handler, { passive: true });
+    return () => el.removeEventListener("scroll", handler);
+  }, []);
+
   return (
-    <div className="flex h-full overflow-hidden" style={{ background: "var(--bg)" }}>
+    <div className="flex h-full overflow-hidden relative" style={{ background: "var(--bg)" }}>
+      <div className="absolute top-0 left-0 right-0 h-0.5 z-20" style={{ background: "var(--border)" }}>
+        <div className="h-full transition-all duration-100" style={{ width: `${readPct}%`, background: C.red }} />
+      </div>
       {/* Sidebar TOC */}
       <div className="w-40 shrink-0 hidden md:block" style={{ background: "var(--bg-card)", borderRight: `1px solid var(--border)` }}>
         <div className="px-3 py-3" style={{ borderBottom: `1px solid var(--border)` }}>
           <p className="text-[9px] font-bold uppercase tracking-widest" style={{ color: "var(--text-faint)" }}>Sections</p>
+          <p className="text-[10px] mt-0.5" style={{ color: "var(--text-muted)" }}>{Math.round(readPct)}% read</p>
         </div>
         <nav className="p-2 space-y-0.5">
           {CAPACITY_SECTIONS.map(s => (
             <button key={s.id}
-              onClick={() => document.getElementById(`cap-${s.id}`)?.scrollIntoView({ behavior: "smooth" })}
+              onClick={() => {
+                setActiveSection(s.id);
+                document.getElementById(`cap-${s.id}`)?.scrollIntoView({ behavior: "smooth" });
+              }}
               className="w-full text-left px-2 py-2 rounded text-xs transition-colors"
-              style={{ color: "var(--text-muted)" }}>
+              style={{
+                background: activeSection === s.id ? C.red + "10" : "transparent",
+                color: activeSection === s.id ? C.red : "var(--text-muted)",
+                borderLeft: `2px solid ${activeSection === s.id ? C.red : "transparent"}`,
+              }}>
               {s.label}
             </button>
           ))}
         </nav>
+        <div className="px-3">
+          <div className="h-1 rounded-full mt-1" style={{ background: "var(--border)" }}>
+            <div className="h-full rounded-full" style={{ width: `${readPct}%`, background: C.red }} />
+          </div>
+        </div>
         <div className="px-3 py-3" style={{ borderTop: `1px solid var(--border)` }}>
           <p className="text-[9px] font-bold uppercase tracking-widest mb-2" style={{ color: "var(--text-faint)" }}>Interview tip</p>
           <p className="text-[9px] leading-relaxed" style={{ color: "var(--text-muted)" }}>
@@ -222,7 +265,7 @@ export default function CapacityTab() {
         </div>
       </div>
 
-      <div className="flex-1 overflow-y-auto p-5 space-y-6">
+      <div ref={containerRef} className="flex-1 overflow-y-auto p-5 space-y-6">
         {/* Interview callout */}
         <div className="rounded-lg p-4" style={{ background: "rgba(245,166,35,0.06)", border: `1px solid ${C.amber}25` }}>
           <p className="text-xs font-bold mb-2" style={{ color: C.amber }}>How to present this in an interview</p>

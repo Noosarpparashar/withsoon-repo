@@ -2,8 +2,6 @@
 
 import { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
-import { useTheme } from "next-themes";
 import { NODES, CONNECTIONS, FLOWS, type NodeData, type NodeId, type Flow } from "./nodes-data";
 import { C } from "./constants";
 import ModelsTab from "./ModelsTab";
@@ -12,6 +10,7 @@ import CapacityTab from "./CapacityTab";
 import QuizTab from "./QuizTab";
 import { MockInterviewTab } from "../netflix-tabs/MockInterviewTab";
 import { CheatSheetTab } from "../netflix-tabs/CheatSheetTab";
+import { copyTextToClipboard } from "../netflix-tabs/clipboard";
 import { RequirementsTab } from "../netflix-tabs/RequirementsTab";
 import { FailuresTab } from "../netflix-tabs/FailuresTab";
 import { StartHereTab } from "../netflix-tabs/StartHereTab";
@@ -19,7 +18,12 @@ import { PlaybackTab } from "../netflix-tabs/PlaybackTab";
 import { CDNTab } from "../netflix-tabs/CDNTab";
 import { SecurityTab } from "../netflix-tabs/SecurityTab";
 import { EncodingTab } from "../netflix-tabs/EncodingTab";
-import type { Role } from "../netflix-tabs/types";
+import {
+  normalizeNetflixTab,
+  type CurrentTabSlug,
+  type Role,
+  type TabSlug,
+} from "../netflix-tabs/types";
 
 // ── Tab config ─────────────────────────────────────────────────────────────────
 const TABS = [
@@ -38,7 +42,7 @@ const TABS = [
   { id: "mock-interview", label: "Mock Interview", mins: 45 },
   { id: "cheat-sheet",    label: "Cheat Sheet",    mins: 5  },
 ] as const;
-type TabId = typeof TABS[number]["id"];
+type TabId = CurrentTabSlug;
 
 // ── Constants ──────────────────────────────────────────────────────────────────
 const N_RED    = C.red;
@@ -97,7 +101,7 @@ const ICON_PATHS: Record<string, { d: string; filled?: boolean }> = {
   search:          { d: "M2,6a4,4,0,1,0,8,0,4,4,0,1,0-8,0M9,9l4,4" },
   recommendation:  { d: "M7,1l1.5,4.5h4.5l-3.5,2.5,1.5,4.5L7,10,3.5,12.5,5,8,1.5,5.5H6Z", filled: true },
   "watch-history": { d: "M7,0.5a6.5,6.5,0,1,0,0,13,6.5,6.5,0,1,0,0-13M7,4v3.5l2.5,2" },
-  payment:         { d: "M0.5,4h13a0.5,0.5,0,0,1,.5.5v7a0.5.0.5,0,0,1-.5.5H0.5a0.5.0.5,0,0,1-.5-.5V4.5a0.5.0.5,0,0,1,.5-.5zM0.5,6.5h13M2,9.5h3" },
+  payment:         { d: "M0.5,4h13a0.5,0.5,0,0,1,0.5,0.5v7a0.5,0.5,0,0,1-0.5,0.5H0.5A0.5,0.5,0,0,1,0,11.5v-7A0.5,0.5,0,0,1,0.5,4zM0.5,6.5h13M2,9.5h3" },
   notification:    { d: "M7,1.5a4,4,0,0,1,4,4v3l1.5,2H1.5L3,8.5v-3a4,4,0,0,1,4-4M5.5,11a1.5,1.5,0,0,0,3,0" },
   analytics:       { d: "M0.5,13.5h13M2.5,13.5V7.5M7,13.5V3.5M11.5,13.5V9" },
   aurora:          { d: "M3,3a4,1.5,0,0,0,8,0,4,1.5,0,0,0-8,0v8a4,1.5,0,0,0,8,0V3M3,7a4,1.5,0,0,0,8,0" },
@@ -156,7 +160,7 @@ function Callout({ variant, title, body }: { variant: keyof typeof CALLOUT_COLOR
         <span className="text-sm shrink-0 mt-0.5" style={{ color: c.text }}>{c.icon}</span>
         <div>
           <p className="text-xs font-bold mb-1" style={{ color: c.text }}>{title}</p>
-          <p className="text-xs leading-relaxed" style={{ color: "#999" }}>{body}</p>
+          <p className="text-xs leading-relaxed" style={{ color: "var(--text-muted)" }}>{body}</p>
         </div>
       </div>
     </div>
@@ -176,11 +180,21 @@ function NodeCard({
   const pos = NODE_POSITIONS[node.id];
   const typeColor = TYPE_COLORS[node.type] ?? N_MUTED;
   const borderColor = isSelected ? N_RED : isFlowVisited ? N_AMBER : "var(--border)";
+  const cardFill = isSelected
+    ? "var(--netflix-node-selected-fill)"
+    : isFlowVisited
+      ? "var(--netflix-node-visited-fill)"
+      : "var(--bg-card)";
+  const cardShadow = isSelected
+    ? "drop-shadow(0 10px 18px rgba(229,9,20,0.18))"
+    : isFlowVisited
+      ? "drop-shadow(0 8px 14px rgba(245,166,35,0.16))"
+      : undefined;
 
   return (
     <g
       className="cursor-pointer"
-      style={{ animation: `fadeInNode 0.35s ease both`, animationDelay: `${animDelay}ms` }}
+      style={{ animation: `fadeInNode 0.35s ease both`, animationDelay: `${animDelay}ms`, filter: cardShadow }}
       onClick={onClick}
       role="button"
       aria-label={`${node.label} — click to explore`}
@@ -189,8 +203,18 @@ function NodeCard({
       onMouseEnter={e => onHover(node.id, e.clientX, e.clientY)}
       onMouseLeave={() => onHover(null)}
     >
-      <rect x={pos.x} y={pos.y} width={NODE_W} height={NODE_H} rx="8"
-        style={{ fill: isSelected ? "#1a0a0a" : isFlowVisited ? "#140f00" : "var(--bg-card)", stroke: borderColor, strokeWidth: isSelected || isFlowVisited ? 1.5 : 1 }} />
+      <rect
+        x={pos.x}
+        y={pos.y}
+        width={NODE_W}
+        height={NODE_H}
+        rx="8"
+        style={{
+          fill: cardFill,
+          stroke: borderColor,
+          strokeWidth: isSelected || isFlowVisited ? 1.5 : 1,
+        }}
+      />
       {/* Top accent bar */}
       <rect x={pos.x} y={pos.y} width={NODE_W} height={3} rx="8" style={{ fill: typeColor, opacity: 0.7 }} />
       {/* Custom SVG icon */}
@@ -322,7 +346,17 @@ function MiniMap({
     <div
       className="absolute rounded-lg overflow-hidden"
       onClick={handleClick}
-      style={{ bottom: 48, left: 8, width: MM_W, height: MM_H, background: "rgba(10,10,10,0.85)", border: `1px solid var(--border)`, zIndex: 5, cursor: "crosshair" }}>
+      style={{
+        bottom: 48,
+        left: 8,
+        width: MM_W,
+        height: MM_H,
+        background: "var(--bg-card)",
+        border: `1px solid var(--border)`,
+        backdropFilter: "blur(10px)",
+        zIndex: 5,
+        cursor: "crosshair",
+      }}>
       <svg width={MM_W} height={MM_H} style={{ pointerEvents: "none" }}>
         {/* node dots */}
         {NODES.map(n => {
@@ -406,7 +440,7 @@ function DetailPanel({
           <div className="text-[10px]" style={{ color: "var(--text-muted)" }}>Step {activeFlowStep + 1} of {total}</div>
         </div>
         <div className="p-4 flex-1">
-          <div className="rounded-lg p-4 mb-4" style={{ background: "#141400", border: `1px solid ${N_AMBER}30` }}>
+          <div className="rounded-lg p-4 mb-4" style={{ background: "rgba(245,166,35,0.08)", border: `1px solid ${N_AMBER}30` }}>
             <div className="flex items-start gap-2 mb-2">
               <span className="w-6 h-6 rounded-full text-xs font-bold flex items-center justify-center shrink-0"
                 style={{ background: N_AMBER, color: "#000" }}>{activeFlowStep + 1}</span>
@@ -415,7 +449,7 @@ function DetailPanel({
                 <p className="text-[10px]" style={{ color: "var(--text-muted)" }}>{NODES.find(n => n.id === step.nodeId)?.label}</p>
               </div>
             </div>
-            <p className="text-xs leading-relaxed mb-3" style={{ color: "#aaa" }}>{step.description}</p>
+            <p className="text-xs leading-relaxed mb-3" style={{ color: "var(--text-muted)" }}>{step.description}</p>
             {step.payload && (
               <div className="rounded-md p-2.5 mb-3" style={{ background: "var(--bg)", border: `1px solid var(--border)` }}>
                 <pre className="text-[10px] leading-relaxed overflow-x-auto" style={{ color: "#6ee7b7", fontFamily: C.mono }}>{step.payload}</pre>
@@ -564,7 +598,7 @@ function DetailPanel({
       </div>
       <div className="p-4 space-y-4 flex-1">
         {depth === "overview" && <>
-          <p className="text-xs leading-relaxed" style={{ color: "#bbb" }}>{node.overview}</p>
+          <p className="text-sm leading-relaxed" style={{ color: "var(--text-muted)" }}>{node.overview}</p>
           <div>
             <p className="text-[9px] font-bold uppercase tracking-widest mb-2" style={{ color: "var(--text-faint)" }}>Tech Stack</p>
             <div className="flex flex-wrap gap-1.5">{node.techChips.map(c => <Chip key={c} label={c} color={typeColor} />)}</div>
@@ -590,7 +624,7 @@ function DetailPanel({
             </span>
           </div>
           <div className="rounded-lg p-3" style={{ background: "var(--bg)", border: `1px solid var(--border)` }}>
-            <p className="text-[11px] leading-relaxed" style={{ color: "#d4d4d4" }}>{node.interviewAnswer}</p>
+            <p className="text-[12px] leading-relaxed" style={{ color: "var(--text)" }}>{node.interviewAnswer}</p>
           </div>
           <div>
             <p className="text-[9px] font-bold uppercase tracking-widest mb-2" style={{ color: "var(--text-faint)" }}>Don&apos;t forget</p>
@@ -993,7 +1027,7 @@ function ArchitectureTab({
       />
 
       {/* ── Desktop canvas + detail panel (hidden below lg) ── */}
-      <div className="hidden lg:flex flex-1 overflow-hidden" style={{ height: "calc(100vh - 96px - 56px)" }}>
+      <div className="hidden lg:flex flex-1 overflow-hidden" style={{ height: "calc(100dvh - 96px - 56px)" }}>
         {/* Canvas */}
         <div ref={canvasContainerRef} className="flex-1 overflow-hidden relative" style={{ background: "var(--bg)" }}>
           {/* Layer tint bands */}
@@ -1003,7 +1037,9 @@ function ArchitectureTab({
                 style={{
                   top: y * zoom + pan.y,
                   height: NODE_H * zoom + 20,
-                  background: parseInt(layer) % 2 === 0 ? "rgba(255,255,255,0.012)" : "transparent",
+                  background: parseInt(layer) % 2 === 0
+                    ? "var(--netflix-canvas-band)"
+                    : "transparent",
                 }} />
             ))}
           </div>
@@ -1017,11 +1053,11 @@ function ArchitectureTab({
             <defs>
               {/* Dot-grid pattern */}
               <pattern id="dot-grid" x="0" y="0" width="20" height="20" patternUnits="userSpaceOnUse">
-                <circle cx="10" cy="10" r="0.8" fill="#252525" />
+                <circle cx="10" cy="10" r="0.8" fill="var(--netflix-dot)" />
               </pattern>
             </defs>
             {/* Dot grid background (static, does not pan) */}
-            <rect width="100%" height="100%" fill="url(#dot-grid)" opacity={0.6} />
+            <rect width="100%" height="100%" fill="url(#dot-grid)" opacity="var(--netflix-dot-opacity)" />
             <g transform={`translate(${pan.x}, ${pan.y}) scale(${zoom})`}>
               <LayerLabels />
               <ConnectionArrows
@@ -1050,7 +1086,7 @@ function ArchitectureTab({
 
           {/* Vignette overlay */}
           <div className="absolute inset-0 pointer-events-none" style={{
-            background: "radial-gradient(ellipse 80% 80% at 50% 50%, transparent 55%, rgba(10,10,10,0.6) 100%)",
+            background: "var(--netflix-vignette)",
             zIndex: 1,
           }} />
 
@@ -1060,9 +1096,9 @@ function ArchitectureTab({
               style={{
                 left: hoveredNode.x + 12,
                 top: hoveredNode.y - 36,
-                background: "#1a1a1a",
+                background: "var(--netflix-tooltip-bg)",
                 border: `1px solid var(--border)`,
-                boxShadow: "0 4px 16px rgba(0,0,0,0.5)",
+                boxShadow: "var(--netflix-tooltip-shadow)",
               }}>
               <p className="text-xs font-semibold" style={{ color: "var(--text)" }}>{hoveredNodeData.label}</p>
               <p className="text-[10px]" style={{ color: "var(--text-muted)" }}>{hoveredNodeData.sublabel}</p>
@@ -1123,7 +1159,7 @@ function ArchitectureTab({
         </div>
 
         {/* Detail panel */}
-        <div className="w-80 xl:w-96 shrink-0" style={{ borderLeft: `1px solid var(--border)` }}>
+        <div className="w-[26rem] xl:w-[29rem] shrink-0" style={{ borderLeft: `1px solid var(--border)` }}>
           <DetailPanel
             node={selectedNodeData}
             studiedNodes={studiedNodes}
@@ -1198,25 +1234,15 @@ function ArchitectureTab({
 }
 
 // ── Theme-aware color helpers ───────────────────────────────────────────────────
-const LIGHT_COLORS = {
-  bg:     "#F8FAFC",
-  card:   "#FFFFFF",
-  card2:  "#F6F8FC",
-  border: "#D8E0EC",
-  muted:  "#475569",
-  faint:  "#64748B",
-  text:   "#0F172A",
-  text2:  "#334155",
-};
-const DARK_COLORS = {
-  bg:     "#111318",
-  card:   "#181b22",
-  card2:  "#20242d",
-  border: "#343a46",
-  muted:  "#cbd5e1",
-  faint:  "#94a3b8",
-  text:   "#f8fafc",
-  text2:  "#e2e8f0",
+const THEME_COLORS = {
+  bg:     "var(--bg)",
+  card:   "var(--bg-card)",
+  card2:  "var(--bg-muted)",
+  border: "var(--border)",
+  muted:  "var(--text-muted)",
+  faint:  "var(--text-faint)",
+  text:   "var(--text)",
+  text2:  "var(--text)",
 };
 
 // ── Main shell ─────────────────────────────────────────────────────────────────
@@ -1241,7 +1267,7 @@ function ScrollableTabShell({ bg, tabId, feedbackVote, onFeedback, children }: {
 
   return (
     <div ref={ref} className="flex-1 overflow-y-auto relative" style={{ background: bg }}>
-      <div className="px-4 py-6 max-w-4xl mx-auto w-full">
+      <div className="px-5 lg:px-6 py-7 max-w-6xl mx-auto w-full">
         {children}
         {/* Feedback widget */}
         {onFeedback && (
@@ -1295,14 +1321,9 @@ function TabHeader({ title, color, textColor, mins }: { title: string; color: st
 }
 
 export default function NetflixArchPage({ initialTab }: { initialTab?: string }) {
-  const router = useRouter();
-  const { resolvedTheme } = useTheme();
-  const [mounted, setMounted] = useState(false);
-  useEffect(() => setMounted(true), []);
-  const isDark = !mounted || resolvedTheme !== "light";
-  const T = isDark ? DARK_COLORS : LIGHT_COLORS;
+  const T = THEME_COLORS;
 
-  const resolvedInitial = TABS.find(t => t.id === initialTab) ? (initialTab as TabId) : "architecture";
+  const resolvedInitial = normalizeNetflixTab(initialTab) ?? "start-here";
   const [activeTab, setActiveTab] = useState<TabId>(resolvedInitial);
   const [studiedNodes, setStudiedNodes] = useState<Set<NodeId>>(new Set());
   const [interviewMode, setInterviewMode] = useState(false);
@@ -1330,7 +1351,8 @@ export default function NetflixArchPage({ initialTab }: { initialTab?: string })
       const ct = localStorage.getItem("netflix-completed-tabs");
       if (ct) setCompletedTabs(new Set(JSON.parse(ct)));
       const cv = localStorage.getItem("netflix-continue-tab");
-      if (cv && TABS.find(t => t.id === cv)) setContinueTab(cv as TabId);
+      const normalizedContinueTab = normalizeNetflixTab(cv);
+      if (normalizedContinueTab) setContinueTab(normalizedContinueTab);
       const n = localStorage.getItem("netflix-notes");
       if (n) setNotes(JSON.parse(n));
       const fb = localStorage.getItem("netflix-feedback");
@@ -1358,6 +1380,20 @@ export default function NetflixArchPage({ initialTab }: { initialTab?: string })
     try { localStorage.setItem("netflix-feedback", JSON.stringify(feedback)); } catch { /* ignore */ }
   }, [feedback]);
 
+  useEffect(() => {
+    const handlePopState = () => {
+      const pathTab = window.location.pathname.split("/").pop();
+      const normalized = normalizeNetflixTab(pathTab);
+      if (normalized) {
+        setActiveTab(normalized);
+        setContinueTab(normalized);
+      }
+    };
+
+    window.addEventListener("popstate", handlePopState);
+    return () => window.removeEventListener("popstate", handlePopState);
+  }, []);
+
   const handleFeedback = useCallback((tab: string, vote: "up" | "down") => {
     setFeedback(prev => ({ ...prev, [tab]: vote }));
   }, []);
@@ -1380,16 +1416,17 @@ export default function NetflixArchPage({ initialTab }: { initialTab?: string })
     URL.revokeObjectURL(url);
   }, [notes]);
 
-  const switchTab = useCallback((id: TabId) => {
-    if (id === activeTab) return;
+  const switchTab = useCallback((id: TabSlug | string) => {
+    const nextTab = normalizeNetflixTab(id);
+    if (!nextTab || nextTab === activeTab) return;
     // Mark the tab we're leaving as visited
     setCompletedTabs(prev => { const n = new Set(prev); n.add(activeTab); return n; });
-    try { localStorage.setItem("netflix-continue-tab", id); } catch { /* ignore */ }
-    setContinueTab(id);
-    setActiveTab(id);
-    router.push(`/system-design/netflix/${id}`);
-    try { localStorage.setItem("netflix-active-tab", id); } catch { /* ignore */ }
-  }, [activeTab, router]);
+    try { localStorage.setItem("netflix-continue-tab", nextTab); } catch { /* ignore */ }
+    setContinueTab(nextTab);
+    setActiveTab(nextTab);
+    window.history.pushState(null, "", `/system-design/netflix/${nextTab}`);
+    try { localStorage.setItem("netflix-active-tab", nextTab); } catch { /* ignore */ }
+  }, [activeTab]);
 
   const handleMarkStudied = useCallback((id: NodeId) => {
     setStudiedNodes(prev => {
@@ -1404,16 +1441,28 @@ export default function NetflixArchPage({ initialTab }: { initialTab?: string })
 
   const handleShare = () => {
     const url = `${window.location.origin}/system-design/netflix/${activeTab}`;
-    navigator.clipboard.writeText(url).then(() => {
+    copyTextToClipboard(url).then((copiedOk) => {
+      if (!copiedOk) return;
       setShareToast(true);
       setTimeout(() => setShareToast(false), 2000);
-    }).catch(() => {});
+    });
   };
 
   const studiedCount = studiedNodes.size;
+  const visitedTabsCount = useMemo(
+    () => new Set<TabId>([...completedTabs, activeTab]).size,
+    [activeTab, completedTabs]
+  );
+  const activeTabIndex = TABS.findIndex(t => t.id === activeTab);
+
+  useEffect(() => {
+    const activeTabMeta = TABS.find(tab => tab.id === activeTab);
+    if (!activeTabMeta) return;
+    document.title = `Netflix System Design — ${activeTabMeta.label} | withsoon.com`;
+  }, [activeTab]);
 
   return (
-    <div className={`${isDark ? "dark" : ""} flex flex-col`} style={{ height: "100vh", background: T.bg, color: T.text, fontFamily: C.sans, overflow: "hidden" }}>
+    <div className="flex flex-col" style={{ height: "calc(100dvh - 56px)", background: T.bg, color: T.text, fontFamily: C.sans, overflow: "hidden" }}>
       {/* ── Topbar (hidden in focus mode) ── */}
       <div className="shrink-0 z-40" style={{ background: T.bg, borderBottom: `1px solid ${T.border}`, display: focusMode ? "none" : undefined }}>
         {/* Row 1: logo + controls */}
@@ -1448,14 +1497,14 @@ export default function NetflixArchPage({ initialTab }: { initialTab?: string })
             <span className="text-[10px] hidden lg:block" style={{ color: T.faint }}>Last studied {lastStudied}</span>
           )}
           <span className="text-[10px] hidden sm:block" style={{ color: T.muted }}>
-            {studiedCount}/{NODES.length} studied
+            {visitedTabsCount} explored · {studiedCount}/{NODES.length} studied
           </span>
 
           <button onClick={() => setProgressCardOpen(v => !v)}
             className="min-h-[40px] text-xs px-3 py-2 rounded-lg font-medium hidden sm:block cursor-pointer"
             style={{ background: "transparent", color: T.muted, border: `1px solid ${T.border}`, cursor: "pointer" }}
             title="View progress card">
-            Progress
+            Progress {visitedTabsCount}/{TABS.length}
           </button>
           <button onClick={() => setNotesOpen(v => !v)}
             className="min-h-[40px] text-xs px-3 py-2 rounded-lg font-medium hidden sm:block cursor-pointer"
@@ -1527,9 +1576,24 @@ export default function NetflixArchPage({ initialTab }: { initialTab?: string })
                     }}
                     title={`~${tab.mins} min`}
                     className="relative px-3 pb-2 pt-1 font-medium transition-colors shrink-0 flex items-end gap-1 cursor-pointer"
-                    style={{ fontSize: 13, color: activeTab === tab.id ? T.text : T.muted, height: 40, cursor: "pointer" }}>
+                    style={{
+                      fontSize: 13,
+                      color: activeTab === tab.id ? T.text : completedTabs.has(tab.id) ? T.text : T.muted,
+                      height: 40,
+                      cursor: "pointer",
+                      background: activeTab === tab.id ? N_RED + "10" : completedTabs.has(tab.id) ? N_GREEN + "10" : "transparent",
+                      borderTopLeftRadius: 10,
+                      borderTopRightRadius: 10,
+                      paddingLeft: 12,
+                      paddingRight: 12,
+                    }}>
                     {completedTabs.has(tab.id) && tab.id !== activeTab && (
-                      <span className="w-1 h-1 rounded-full mb-3 shrink-0" style={{ background: N_GREEN }} />
+                      <span
+                        className="w-4 h-4 rounded-full mb-2 shrink-0 flex items-center justify-center text-[9px] font-bold"
+                        style={{ background: N_GREEN + "18", color: N_GREEN }}
+                      >
+                        ✓
+                      </span>
                     )}
                     {tab.label}
                     {activeTab === tab.id && (
@@ -1547,11 +1611,12 @@ export default function NetflixArchPage({ initialTab }: { initialTab?: string })
             position: "absolute", right: 0, top: 0, bottom: 0,
           }}>
             {(() => {
-              const idx = TABS.findIndex(t => t.id === activeTab);
-              const prev = TABS[idx - 1];
-              const next = TABS[idx + 1];
+              const prev = TABS[activeTabIndex - 1];
+              const next = TABS[activeTabIndex + 1];
               return <>
-                <span className="text-[10px] hidden xl:block" style={{ color: T.faint }}>{idx + 1}/{TABS.length}</span>
+                <span className="text-[10px] hidden xl:block" style={{ color: T.faint }}>
+                  Step {activeTabIndex + 1}/{TABS.length} · {visitedTabsCount} explored
+                </span>
                 {prev && (
                   <button onClick={() => switchTab(prev.id)} className="text-[10px] px-2.5 py-1.5 min-h-[32px] rounded-md transition-colors whitespace-nowrap cursor-pointer"
                     style={{ color: T.muted, border: `1px solid ${T.border}`, background: T.bg, cursor: "pointer" }}>← {prev.label}</button>
@@ -1626,7 +1691,7 @@ export default function NetflixArchPage({ initialTab }: { initialTab?: string })
         {activeTab === "requirements"   && (
           <ScrollableTabShell bg={T.bg} tabId={activeTab} feedbackVote={feedback[activeTab]} onFeedback={handleFeedback}>
             <TabHeader title="Requirements" color={N_RED} textColor={T.text} mins={TABS.find(t => t.id === "requirements")!.mins} />
-            <RequirementsTab />
+            <RequirementsTab onNavigateTab={(tab) => switchTab(tab)} />
           </ScrollableTabShell>
         )}
         {activeTab === "architecture"   && (
@@ -1688,13 +1753,13 @@ export default function NetflixArchPage({ initialTab }: { initialTab?: string })
         {activeTab === "failures"       && (
           <ScrollableTabShell bg={T.bg} tabId={activeTab} feedbackVote={feedback[activeTab]} onFeedback={handleFeedback}>
             <TabHeader title="Failure Scenarios" color={N_RED} textColor={T.text} mins={TABS.find(t => t.id === "failures")!.mins} />
-            <FailuresTab />
+            <FailuresTab onNavigateTab={(tab) => switchTab(tab)} />
           </ScrollableTabShell>
         )}
         {activeTab === "quiz"           && (
           <>
             <h1 className="sr-only">Netflix System Design: Quiz</h1>
-            <QuizTab />
+            <QuizTab onNavigateTab={(tab) => switchTab(tab)} />
           </>
         )}
         {activeTab === "mock-interview" && (
@@ -1776,7 +1841,7 @@ export default function NetflixArchPage({ initialTab }: { initialTab?: string })
             </div>
             <div className="grid grid-cols-3 gap-3 mb-4">
               {[
-                { label: "Tabs visited", value: completedTabs.size, total: TABS.length, color: N_RED },
+                { label: "Tabs visited", value: visitedTabsCount, total: TABS.length, color: N_RED },
                 { label: "Nodes studied", value: studiedCount, total: NODES.length, color: N_GREEN },
                 { label: "Notes taken", value: TABS.filter(t => notes[t.id]?.trim()).length, total: TABS.length, color: N_AMBER },
               ].map(({ label, value, total, color }) => (
@@ -1802,9 +1867,9 @@ export default function NetflixArchPage({ initialTab }: { initialTab?: string })
             </div>
             <button
               onClick={() => {
-                const pct = Math.round((completedTabs.size / TABS.length) * 100);
-                const txt = `Netflix System Design Progress — withsoon.com\n${completedTabs.size}/${TABS.length} tabs visited • ${studiedCount}/${NODES.length} nodes studied • ${pct}% complete\nhttps://withsoon.com/system-design/netflix`;
-                navigator.clipboard.writeText(txt).catch(() => {});
+                const pct = Math.round((visitedTabsCount / TABS.length) * 100);
+                const txt = `Netflix System Design Progress — withsoon.com\n${visitedTabsCount}/${TABS.length} tabs visited • ${studiedCount}/${NODES.length} nodes studied • ${pct}% complete\nhttps://withsoon.com/system-design/netflix`;
+                copyTextToClipboard(txt).catch(() => {});
                 setProgressCardOpen(false);
               }}
               className="w-full py-2.5 rounded-xl text-sm font-bold"
@@ -1820,6 +1885,13 @@ export default function NetflixArchPage({ initialTab }: { initialTab?: string })
         ::-webkit-scrollbar-track { background: ${T.bg}; }
         ::-webkit-scrollbar-thumb { background: ${T.border}; border-radius: 2px; }
         ::-webkit-scrollbar-thumb:hover { background: ${T.muted}; }
+        svg g[role="button"] { cursor: pointer; }
+        svg g[role="button"] rect:first-child { transition: fill 0.16s ease, stroke 0.16s ease, stroke-width 0.16s ease; }
+        svg g[role="button"]:hover rect:first-child {
+          fill: var(--netflix-node-hover-fill);
+          stroke: var(--netflix-node-hover-stroke);
+          stroke-width: 1.25;
+        }
         svg g[role="button"]:focus { outline: none; }
         svg g[role="button"]:focus-visible rect:first-child { stroke: ${N_RED}; stroke-width: 2; }
         @keyframes fadeInNode {

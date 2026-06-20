@@ -3,23 +3,24 @@
 import { useState, useCallback, useMemo, useEffect } from "react";
 import { FLASHCARDS, type FlashCard } from "./capacity-data";
 import { C } from "./constants";
+import type { TabSlug } from "../netflix-tabs/types";
 
 const ALL_TOPICS = Array.from(new Set(FLASHCARDS.map(f => f.topic)));
 
-const TOPIC_REVIEW: Record<string, string> = {
-  "Auth":            "Playback",
-  "Streaming":       "Playback",
-  "CDN":             "CDN",
-  "DRM":             "Playback",
-  "Recommendations": "Data Models",
-  "Watch History":   "Data Models",
-  "Kafka":           "Architecture",
-  "DynamoDB":        "Data Models",
-  "Cassandra":       "Data Models",
-  "Redis":           "Architecture",
-  "Capacity":        "Capacity",
-  "CAP Theorem":     "Trade-offs",
-  "Failures":        "Failures",
+const TOPIC_REVIEW: Record<string, { label: string; tab: TabSlug }> = {
+  "Auth":            { label: "Playback", tab: "playback" },
+  "Streaming":       { label: "Playback", tab: "playback" },
+  "CDN":             { label: "CDN", tab: "cdn" },
+  "DRM":             { label: "Playback", tab: "playback" },
+  "Recommendations": { label: "Data Models", tab: "models" },
+  "Watch History":   { label: "Data Models", tab: "models" },
+  "Kafka":           { label: "Architecture", tab: "architecture" },
+  "DynamoDB":        { label: "Data Models", tab: "models" },
+  "Cassandra":       { label: "Data Models", tab: "models" },
+  "Redis":           { label: "Architecture", tab: "architecture" },
+  "Capacity":        { label: "Capacity", tab: "capacity" },
+  "CAP Theorem":     { label: "Trade-offs", tab: "tradeoffs" },
+  "Failures":        { label: "Failures", tab: "failures" },
 };
 
 type CardState = "known" | "learning" | "unset";
@@ -45,13 +46,15 @@ function shuffle<T>(arr: T[]): T[] {
   return a;
 }
 
-function FlipCard({ card, state, onKnow, onLearn }: {
+function FlipCard({ card, state, onKnow, onLearn, onNavigateTab }: {
   card: FlashCard;
   state: CardState;
   onKnow: () => void;
   onLearn: () => void;
+  onNavigateTab?: (tab: TabSlug) => void;
 }) {
   const [revealed, setRevealed] = useState(false);
+  const reviewTarget = TOPIC_REVIEW[card.topic];
 
   // Reset when card changes
   useEffect(() => { setRevealed(false); }, [card.id]);
@@ -97,12 +100,28 @@ function FlipCard({ card, state, onKnow, onLearn }: {
               <p className="text-[9px] font-bold uppercase tracking-widest mb-1" style={{ color: "var(--text-faint)" }}>Why this is correct</p>
               <p className="text-[10px] leading-relaxed" style={{ color: "var(--text-muted)" }}>{card.explanation}</p>
             </div>
-            {TOPIC_REVIEW[card.topic] && (
-              <div className="rounded-lg p-2.5 flex items-center gap-2" style={{ background: card.topicColor + "10", border: `1px solid ${card.topicColor}25` }}>
-                <span className="text-[10px] shrink-0" style={{ color: card.topicColor }}>→</span>
-                <p className="text-[10px] leading-relaxed" style={{ color: "var(--text-muted)" }}>
-                  Review <strong style={{ color: "var(--text)" }}>{TOPIC_REVIEW[card.topic]}</strong> tab to go deeper
-                </p>
+            {reviewTarget && (
+              <div className="rounded-lg p-2.5 flex items-center justify-between gap-3 flex-wrap" style={{ background: card.topicColor + "10", border: `1px solid ${card.topicColor}25` }}>
+                <div className="flex items-center gap-2 min-w-0">
+                  <span className="text-[10px] shrink-0" style={{ color: card.topicColor }}>→</span>
+                  <p className="text-[10px] leading-relaxed" style={{ color: "var(--text-muted)" }}>
+                    Review <strong style={{ color: "var(--text)" }}>{reviewTarget.label}</strong> tab to go deeper
+                  </p>
+                </div>
+                {onNavigateTab && (
+                  <button
+                    onClick={() => onNavigateTab(reviewTarget.tab)}
+                    className="text-[10px] px-2.5 py-1 rounded-lg font-semibold shrink-0"
+                    style={{
+                      background: "var(--bg-card)",
+                      color: card.topicColor,
+                      border: `1px solid ${card.topicColor}40`,
+                      cursor: "pointer",
+                    }}
+                  >
+                    Open {reviewTarget.label} →
+                  </button>
+                )}
               </div>
             )}
           </div>
@@ -140,7 +159,7 @@ function FlipCard({ card, state, onKnow, onLearn }: {
   );
 }
 
-export default function QuizTab() {
+export default function QuizTab({ onNavigateTab }: { onNavigateTab?: (tab: TabSlug) => void }) {
   const [activeTopic, setActiveTopic] = useState<string | null>(null);
   const [cardIndex, setCardIndex] = useState(0);
   const [cardStates, setCardStates] = useState<Record<string, CardState>>({});
@@ -331,6 +350,7 @@ export default function QuizTab() {
                 state={currentState}
                 onKnow={handleKnow}
                 onLearn={handleLearn}
+                onNavigateTab={onNavigateTab}
               />
               {/* Navigation — desktop */}
               <div className="hidden sm:flex gap-2 mt-4">

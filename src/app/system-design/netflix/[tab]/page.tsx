@@ -1,6 +1,11 @@
 import { redirect } from "next/navigation";
 import type { Metadata } from "next";
 import NetflixPage from "@/components/ui/NetflixPage";
+import {
+  CURRENT_NETFLIX_TAB_SLUGS,
+  normalizeNetflixTab,
+  type CurrentTabSlug,
+} from "@/components/ui/netflix-tabs/types";
 
 const TAB_META: Record<string, { title: string; description: string }> = {
   "start-here": {
@@ -63,8 +68,9 @@ const TAB_META: Record<string, { title: string; description: string }> = {
 
 export async function generateMetadata({ params }: { params: Promise<{ tab: string }> }): Promise<Metadata> {
   const { tab } = await params;
-  const meta = TAB_META[tab] ?? {
-    title: `Netflix System Design — ${tab} | withsoon.com`,
+  const canonicalTab = normalizeNetflixTab(tab) ?? tab;
+  const meta = TAB_META[canonicalTab] ?? {
+    title: `Netflix System Design — ${canonicalTab} | withsoon.com`,
     description: "Interactive Netflix system design interview prep: architecture, data models, trade-offs, capacity estimation, and flashcards.",
   };
   const ogUrl = new URL("/og", "https://withsoon.com");
@@ -78,7 +84,7 @@ export async function generateMetadata({ params }: { params: Promise<{ tab: stri
     openGraph: {
       title: meta.title,
       description: meta.description,
-      url: `https://withsoon.com/system-design/netflix/${tab}`,
+      url: `https://withsoon.com/system-design/netflix/${canonicalTab}`,
       siteName: "withsoon",
       type: "website",
       images: [{
@@ -95,24 +101,22 @@ export async function generateMetadata({ params }: { params: Promise<{ tab: stri
       images: [ogImageUrl],
     },
     alternates: {
-      canonical: `https://withsoon.com/system-design/netflix/${tab}`,
+      canonical: `https://withsoon.com/system-design/netflix/${canonicalTab}`,
     },
   };
 }
 
 export default async function TabPage({ params }: { params: Promise<{ tab: string }> }) {
   const { tab } = await params;
-  const LEGACY = [
-    "backend-track", "data-engineering", "architecture-map",
-    "apis-data-model", "scale-estimation", "failures-tradeoffs",
-    "interview-qa",
-    "scale", "services", "apis",
-    "data-design", "data-pipeline",
-    "recommendations", "observability-cost",
-  ];
-  const VALID = ["start-here", "requirements", "architecture", "playback", "cdn", "encoding", "security", "models", "tradeoffs", "capacity", "failures", "quiz", "mock-interview", "cheat-sheet"];
-  if (!VALID.includes(tab) && LEGACY.includes(tab)) {
-    redirect("/system-design/netflix/architecture");
+  const normalizedTab = normalizeNetflixTab(tab);
+
+  if (normalizedTab && normalizedTab !== tab) {
+    redirect(`/system-design/netflix/${normalizedTab}`);
   }
-  return <NetflixPage initialTab={tab} />;
+
+  if (!(CURRENT_NETFLIX_TAB_SLUGS as readonly string[]).includes(tab)) {
+    redirect("/system-design/netflix/start-here");
+  }
+
+  return <NetflixPage initialTab={tab as CurrentTabSlug} />;
 }
