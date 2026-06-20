@@ -3,16 +3,22 @@ import { getAllContent } from "@/lib/content";
 
 const BASE = "https://withsoon.com";
 
-const NETFLIX_TABS = ["architecture", "models", "tradeoffs", "capacity", "quiz"];
+const NETFLIX_TABS = [
+  "requirements", "architecture", "models", "tradeoffs",
+  "capacity", "failures", "quiz", "mock-interview", "cheat-sheet",
+];
 
 const STATIC_ROUTES = [
-  { url: BASE, priority: 1.0, changeFrequency: "weekly" as const },
-  { url: `${BASE}/big-data`, priority: 0.9, changeFrequency: "weekly" as const },
-  { url: `${BASE}/ai`, priority: 0.9, changeFrequency: "weekly" as const },
-  { url: `${BASE}/interview`, priority: 0.9, changeFrequency: "weekly" as const },
-  { url: `${BASE}/cheatsheets`, priority: 0.8, changeFrequency: "weekly" as const },
-  { url: `${BASE}/tech-news`, priority: 0.7, changeFrequency: "daily" as const },
-  { url: `${BASE}/about`, priority: 0.5, changeFrequency: "monthly" as const },
+  { url: BASE,                      priority: 1.0, changeFrequency: "weekly" as const },
+  { url: `${BASE}/big-data`,        priority: 0.9, changeFrequency: "weekly" as const },
+  { url: `${BASE}/ai`,              priority: 0.9, changeFrequency: "weekly" as const },
+  { url: `${BASE}/interview`,       priority: 0.9, changeFrequency: "weekly" as const },
+  { url: `${BASE}/system-design`,   priority: 0.9, changeFrequency: "weekly" as const },
+  { url: `${BASE}/cheatsheets`,     priority: 0.8, changeFrequency: "weekly" as const },
+  { url: `${BASE}/roadmap`,         priority: 0.8, changeFrequency: "monthly" as const },
+  { url: `${BASE}/tech-news`,       priority: 0.7, changeFrequency: "daily" as const },
+  { url: `${BASE}/about`,           priority: 0.5, changeFrequency: "monthly" as const },
+  { url: `${BASE}/changelog`,       priority: 0.4, changeFrequency: "weekly" as const },
 ];
 
 export default function sitemap(): MetadataRoute.Sitemap {
