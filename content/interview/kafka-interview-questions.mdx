@@ -1,15 +1,13 @@
 ---
-title: "Kafka Interview Questions — Top 50 with Answers (30/50 published)"
+title: "Kafka Interview Questions — Top 50 with Answers"
 date: "2026-06-04"
 type: "interview-qa"
 subsection: "kafka"
-summary: "The most-asked Kafka interview questions with detailed answers — basics, internals, exactly-once semantics, Kafka Streams, Connect, and production scenarios. 30/50 published."
+summary: "The 50 most-asked Kafka interview questions with detailed answers — basics, internals, exactly-once semantics, Kafka Streams, Connect, production tuning, and system design scenarios."
 tags: ["kafka", "interview", "streaming", "big-data"]
 difficulty: "intermediate"
 featured: true
 ---
-
-> **30/50 published** — questions 31–50 are in progress. Check back soon for the complete set.
 
 
 
@@ -311,6 +309,262 @@ Key decisions:
 - Set `acks=all` + idempotent producer for durability
 - Use exactly-once semantics if projectors cannot handle duplicates
 - Separate command validation from event publication to keep the hot path fast
+
+---
+
+## Security
+
+**Q31: How does Kafka authenticate clients?**
+
+Kafka supports three authentication mechanisms:
+
+| Mechanism | When to use |
+|-----------|-------------|
+| **SASL/PLAIN** | Simple username/password, TLS required to encrypt credentials in transit |
+| **SASL/SCRAM-SHA-256/512** | Challenge-response, avoids sending plain credentials; supports dynamic credential updates |
+| **mTLS (mutual TLS)** | Certificate-based identity; preferred for service-to-service auth in high-security environments |
+| **SASL/OAUTHBEARER** | Token-based; integrates with OAuth2/OIDC providers (e.g., Keycloak) |
+
+Always pair SASL/PLAIN with TLS encryption (`ssl.endpoint.identification.algorithm=https`). mTLS is preferred when clients are internal services with managed certificates.
+
+---
+
+**Q32: What is ACL-based authorization in Kafka?**
+
+Kafka uses an ACL (Access Control List) system. Each ACL entry specifies:
+- **Principal** — who (e.g., `User:order-service`)
+- **Resource** — what (topic, consumer group, cluster, transactional ID)
+- **Operation** — which action (READ, WRITE, CREATE, DELETE, DESCRIBE, ALTER)
+- **Host** — from which IP (or `*` for any)
+
+```bash
+# Grant order-service WRITE on topic orders
+kafka-acls.sh --add --allow-principal User:order-service \
+  --operation WRITE --topic orders --bootstrap-server broker:9092
+```
+
+Use the **deny ACL** pattern sparingly — allow ACLs are preferred. In large orgs, manage ACLs via GitOps with Kafka gitops tools (e.g., kfk, julie).
+
+---
+
+**Q33: How do you encrypt data at rest and in transit in Kafka?**
+
+**In transit:** Enable TLS on brokers (`listeners=SSL://...`) and configure clients with `security.protocol=SSL`. Set `ssl.endpoint.identification.algorithm=https` to prevent MITM attacks.
+
+**At rest:** Kafka does not natively encrypt data at rest — it relies on OS-level or disk-level encryption (e.g., AWS EBS encryption, LUKS). For field-level encryption, encrypt before producing using a client-side library and key management service (KMS).
+
+---
+
+## Transactions and Exactly-Once
+
+**Q34: How do Kafka transactions work?**
+
+Kafka transactions use a two-phase commit protocol coordinated by the **Transaction Coordinator** (a special broker role):
+
+1. Producer calls `initTransactions()` with a `transactional.id`
+2. Producer begins transaction: `beginTransaction()`
+3. Producer sends records to one or more partitions — records written but not yet visible to `read_committed` consumers
+4. Producer calls `commitTransaction()` — coordinator writes a COMMIT marker to all involved partitions atomically
+5. Only after COMMIT markers are written do `read_committed` consumers see the records
+
+If the producer crashes, the coordinator rolls back the transaction using the transaction log (the `__transaction_state` internal topic).
+
+---
+
+**Q35: What is `isolation.level` in a consumer and when does it matter?**
+
+| Value | Behavior |
+|-------|----------|
+| `read_uncommitted` (default) | Consumer reads all records including open/aborted transactions |
+| `read_committed` | Consumer only sees records from committed transactions and non-transactional records |
+
+Use `read_committed` when your pipeline uses exactly-once semantics end-to-end. Note: `read_committed` consumers may experience higher end-to-end latency because they have to wait for the COMMIT marker before advancing past an open transaction.
+
+---
+
+## Replication and Durability
+
+**Q36: What is an ISR (In-Sync Replica) and what happens when a replica falls out of ISR?**
+
+The ISR is the set of replicas that are fully caught up with the leader (within `replica.lag.time.max.ms`, default 30s). When `acks=all`, the leader only acknowledges a write after all ISR members have written it.
+
+If a replica falls behind (e.g., slow network, GC pause), it is removed from ISR. This does NOT cause downtime — the leader continues serving writes with the smaller ISR. However, the effective durability guarantee decreases.
+
+Set `min.insync.replicas=2` (for RF=3) to prevent writes succeeding with only 1 replica — this prevents silent data loss if the leader crashes while a follower is behind.
+
+---
+
+**Q37: What is Unclean Leader Election and why is it dangerous?**
+
+Unclean leader election (`unclean.leader.election.enable=true`) allows a broker that is NOT in the ISR to be elected leader when no ISR members are available. This risks **data loss** — the new leader may be behind the old leader's committed offset.
+
+Default is `false` in Kafka 0.11+. Only enable if availability is more important than consistency (e.g., some logging use cases).
+
+**Interview answer:** "Unclean leader election trades durability for availability. I keep it disabled and instead increase broker capacity or reduce `replica.lag.time.max.ms` to keep replicas in ISR."
+
+---
+
+**Q38: What does `acks=all` actually guarantee?**
+
+`acks=all` means the leader waits for all ISR replicas to acknowledge the write before responding to the producer. Combined with `min.insync.replicas=2`, it guarantees the message is durably written to at least 2 replicas before success.
+
+This does NOT mean the message is written to ALL replicas — only the ISR. If `min.insync.replicas=1`, `acks=all` degrades to `acks=1` when only the leader is in ISR.
+
+---
+
+## Consumer Internals
+
+**Q39: What is a consumer rebalance and what triggers one?**
+
+A rebalance is the process of redistributing partitions among consumers in a group. Triggers:
+- Consumer joins or leaves the group
+- Consumer fails to send heartbeat within `session.timeout.ms` (default 45s)
+- Topic partition count changes
+- `subscribe()` pattern matches a new topic
+
+During a rebalance (classic protocol), all consumers stop processing. This is called **Stop-the-World rebalance**. Kafka 2.4+ introduced **Cooperative Sticky Rebalancing** which avoids revoking all partitions — only moved partitions are revoked.
+
+Set `partition.assignment.strategy=CooperativeStickyAssignor` to enable incremental rebalances.
+
+---
+
+**Q40: What is `max.poll.interval.ms` and why does it cause consumer group kicks?**
+
+If `poll()` is not called within `max.poll.interval.ms` (default 5 minutes), the broker assumes the consumer is dead and removes it from the group, triggering a rebalance.
+
+This happens when your processing logic between polls takes too long. Fix by:
+- Reducing `max.poll.records` so each poll batch is smaller
+- Moving slow processing to an async thread (with careful offset management)
+- Increasing `max.poll.interval.ms` if the processing delay is known and bounded
+
+---
+
+## Partitioning Strategy
+
+**Q41: How does the default partitioner assign records to partitions?**
+
+If a key is provided: `partition = hash(key) % numPartitions` (using MurmurHash2). The same key always goes to the same partition — enabling per-key ordering.
+
+If no key: Kafka 2.4+ uses the **sticky partitioner** by default — batches all keyless records to one partition, then switches to another when the batch is full. This improves batching efficiency over the old round-robin strategy.
+
+**Gotcha:** If you change the partition count after data is flowing, the hash mapping changes — existing consumers depending on per-key ordering will get incorrect routing.
+
+---
+
+**Q42: What is a hot partition and how do you fix it?**
+
+A hot partition occurs when a key (e.g., `user_id=12345` or `content_id=popular_show`) generates disproportionately more records than others, causing one partition/consumer to fall behind.
+
+Fixes:
+1. **Salt the key:** Append a random suffix `key + "_" + random(0, N)` to distribute load. This breaks per-key ordering.
+2. **Custom partitioner:** Detect hot keys and spread them across multiple partitions deterministically.
+3. **Two-phase aggregation:** First aggregate per salted key, then re-aggregate to remove the salt.
+
+---
+
+## Log and Retention
+
+**Q43: What is the difference between time-based and size-based retention?**
+
+| Policy | Config | Behavior |
+|--------|--------|----------|
+| Time-based | `log.retention.hours=168` (7 days default) | Segment deleted when all records in it are older than retention period |
+| Size-based | `log.retention.bytes=-1` (unlimited default) | Oldest segments deleted when total partition log size exceeds limit |
+| Log compaction | `log.cleanup.policy=compact` | Keeps only the latest record per key; no time/size eviction |
+
+You can combine compaction + deletion: `log.cleanup.policy=compact,delete` — compacts first, then deletes segments older than retention.
+
+---
+
+**Q44: What is a log segment and when is a new one created?**
+
+A partition's log is split into **segments**. Each segment is a pair of files: `.log` (records) and `.index` (offset→position index). A new segment is created when:
+- The active segment reaches `log.segment.bytes` (default 1 GB)
+- The active segment has been open for `log.segment.ms` (default 7 days)
+
+Only the active segment is written to. Older segments are immutable and eligible for retention/compaction. Smaller segments mean faster retention cleanup but more files on disk.
+
+---
+
+## Advanced Topics
+
+**Q45: What is rack-aware replica assignment and why does it matter?**
+
+Kafka can distribute replicas across different racks (AZs) using `broker.rack` configuration. When creating a topic, Kafka ensures replicas are spread across racks so that an AZ failure doesn't cause data unavailability.
+
+```properties
+# broker config
+broker.rack=us-east-1a
+```
+
+For a topic with RF=3 in a 3-AZ cluster, rack-aware assignment places one replica per AZ. If one AZ goes down, 2/3 replicas are still available — no data loss, no leader election needed if the AZ-local partition wasn't the leader.
+
+---
+
+**Q46: How does Kafka handle large messages?**
+
+By default, `message.max.bytes=1MB` (broker) and `max.request.size=1MB` (producer). For larger messages:
+
+- **Increase limits:** Set `message.max.bytes`, `replica.fetch.max.bytes`, and `fetch.message.max.bytes` consistently on broker and consumer.
+- **Compress the message:** `compression.type=lz4` or `snappy` can reduce size significantly.
+- **Store large payload externally:** Save the large blob to S3/HDFS and produce only the pointer (Claim Check pattern). This is the preferred approach for payloads >1MB.
+
+---
+
+**Q47: What is Tiered Storage in Kafka and what problem does it solve?**
+
+Tiered Storage (GA in Kafka 3.6+) offloads older log segments to object storage (S3, GCS) while keeping recent segments on local disk. Brokers serve recent reads from disk and older reads from remote storage.
+
+Benefits:
+- Dramatically reduces broker disk requirements — only hot data stays local
+- Enables very long retention (months/years) without scaling broker fleet
+- Faster broker restores — no need to replicate 6 months of logs from peers
+
+**Interview answer:** "Tiered Storage decouples compute from storage in Kafka. We keep 7 days on disk for low-latency reads and retain 90 days in S3 for replay without scaling broker capacity."
+
+---
+
+## Operational Scenarios
+
+**Q48: A Kafka producer is getting `TimeoutException: Expiring 500 record(s)`. What do you check?**
+
+This means records in the producer's buffer are expiring before being sent (exceeded `delivery.timeout.ms`, default 120s).
+
+Checklist:
+1. **Broker connectivity** — can the producer reach the broker? Check network/firewall.
+2. **Broker backpressure** — is the broker's request queue full? Check `request-handler-idle-ratio` metric.
+3. **Producer buffer full** — is `buffer.memory` exhausted? Records queue up waiting for space.
+4. **`max.block.ms` exceeded** — producer blocks when buffer is full; `send()` throws if it waits longer than this.
+5. **Slow `acks`** — if `acks=all` and ISR is degraded, leader waits longer; increase `request.timeout.ms`.
+
+---
+
+**Q49: How would you design a dead letter queue (DLQ) in Kafka?**
+
+```
+Source topic → Consumer → [processing fails] → DLQ topic (e.g., orders.DLQ)
+                        → [poison pill after N retries] → manual-review topic
+```
+
+Implementation:
+- Retry transient failures in-memory with exponential backoff (Resilience4j or custom loop)
+- After N retries, produce the original record + error metadata (exception class, stack trace, attempt count, original partition/offset) to `<topic>.DLQ`
+- Run a separate DLQ consumer to alert, replay, or route to manual review
+- Use a separate consumer group for DLQ replay so it doesn't affect normal processing
+
+**Key decision:** Set `enable.idempotence=true` on the DLQ producer to avoid duplicate DLQ entries during producer retries.
+
+---
+
+**Q50: How do you replay Kafka events from a specific point in time?**
+
+Options:
+1. **Seek by offset:** `consumer.seek(partition, offset)` — useful if you know the exact offset.
+2. **Seek by timestamp:** `consumer.offsetsForTimes(Map<TopicPartition, Long>)` returns the first offset whose timestamp ≥ the given time. Then `seek()` to those offsets.
+3. **Reset consumer group offset:** `kafka-consumer-groups.sh --reset-offsets --to-datetime 2026-06-01T00:00:00.000 --topic orders --group my-group --execute`
+4. **New consumer group:** Create a fresh group with `auto.offset.reset=earliest` and filter records by timestamp in the consumer.
+
+**Interview answer:** "For point-in-time replay I use `offsetsForTimes()` to get the offset at the desired timestamp per partition, then seek all partitions before restarting the consumer. I create a new consumer group to avoid affecting the production group's committed offsets."
 
 ---
 
