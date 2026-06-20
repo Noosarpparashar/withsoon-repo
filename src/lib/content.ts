@@ -133,6 +133,22 @@ export function getAllCheatsheets(): ContentMeta[] {
   );
 }
 
+export function getRelated(current: ContentMeta, limit = 3): ContentMeta[] {
+  const all = getAllContent().filter(
+    (c) => !(c.section === current.section && c.slug === current.slug)
+  );
+  const scored = all.map((c) => {
+    const tagOverlap = c.tags.filter((t) => current.tags.includes(t)).length;
+    const sameSection = c.section === current.section ? 1 : 0;
+    return { item: c, score: tagOverlap * 2 + sameSection };
+  });
+  return scored
+    .filter((s) => s.score > 0)
+    .sort((a, b) => b.score - a.score)
+    .slice(0, limit)
+    .map((s) => s.item);
+}
+
 export function getSearchIndex(): { id: string; title: string; summary: string; section: Section; slug: string; tags: string }[] {
   return getAllContent().map((c) => ({
     id: `${c.section}/${c.slug}`,

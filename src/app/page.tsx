@@ -2,6 +2,8 @@ import Link from "next/link";
 import { getFeatured, getAllContent, getContentBySection, getSetupGuides } from "@/lib/content";
 import ContentCard from "@/components/ui/ContentCard";
 import { LLMBenchmarkButton } from "@/components/ui/LLMCharts";
+import SubscribeForm from "@/components/ui/SubscribeForm";
+import DailyTip from "@/components/ui/DailyTip";
 
 const SECTIONS = [
   {
@@ -315,6 +317,20 @@ export default function Home() {
             </ul>
           </div>
         </div>
+      </section>
+
+      {/* ── Daily Tip ────────────────────────────────────── */}
+      <section className="mb-20">
+        <DailyTip />
+      </section>
+
+      {/* ── Newsletter CTA ────────────────────────────────── */}
+      <section className="mb-20 rounded-2xl border border-[var(--accent)]/20 bg-[var(--accent-soft)] p-10 text-center">
+        <h2 className="text-2xl font-bold mb-2 text-[var(--text)]">Stay ahead of the interview</h2>
+        <p className="text-[var(--text-muted)] max-w-md mx-auto mb-6 text-sm">
+          New system design guides, Q&amp;A banks, and cheatsheets — delivered when they land.
+        </p>
+        <SubscribeForm />
       </section>
 
       {/* ── CTA ───────────────────────────────────────────── */}

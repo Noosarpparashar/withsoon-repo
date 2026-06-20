@@ -13,6 +13,7 @@ const NAV = [
   { href: "/system-design",  label: "System Design",  emoji: "🏗️", desc: "Netflix, Uber, YouTube — deep dives" },
   { href: "/interview",      label: "Interview",      emoji: "🎯", desc: "System Design, Kafka, SQL, Behavioral" },
   { href: "/cheatsheets",    label: "Cheatsheets",    emoji: "📋", desc: "SQL, Kafka, Spark, Cloud — quick ref" },
+  { href: "/roadmap",        label: "Roadmap",        emoji: "🗺️", desc: "6-week structured DE interview path" },
 ];
 
 export default function Navbar() {

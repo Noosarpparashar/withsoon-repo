@@ -1,9 +1,13 @@
 import Link from "next/link";
 import { MDXRemote } from "next-mdx-remote/rsc";
 import type { Content } from "@/lib/content";
+import { getRelated } from "@/lib/content";
 import ReadingProgress from "./ReadingProgress";
 import CopyCodeButton from "./CopyCodeButton";
 import BackToTop from "./BackToTop";
+import SubscribeForm from "./SubscribeForm";
+import TableOfContents from "./TableOfContents";
+import { InterviewTip, CommonMistake, SeniorAnswer, ProductionNote, Warning, Definition } from "./Callouts";
 
 const SECTION_META: Record<string, { label: string; colorClass: string; softClass: string; href: string }> = {
   "tech-news": { label: "Tech News",  colorClass: "text-[var(--yellow-text)]",  softClass: "bg-[var(--yellow-soft)] text-[var(--yellow-text)]",  href: "/tech-news" },
@@ -28,6 +32,7 @@ function readingTime(text: string): number {
 export default function ArticlePage({ post }: { post: Content }) {
   const meta = SECTION_META[post.section] ?? SECTION_META["big-data"];
   const mins = readingTime(post.content);
+  const related = getRelated(post);
   const correctionUrl = `https://github.com/Noosarpparashar/withsoon-repo/issues/new?title=Content+correction&body=Page:%20/${post.section}/${post.slug}%0A%0AIssue:`;
 
   const shareText = encodeURIComponent(`${post.title} — ${post.summary}`);
@@ -95,6 +100,9 @@ export default function ArticlePage({ post }: { post: Content }) {
           </div>
         </div>
 
+        {/* Table of Contents */}
+        <TableOfContents />
+
         {/* MDX Content */}
         <article className="
           prose max-w-none
@@ -112,8 +120,44 @@ export default function ArticlePage({ post }: { post: Content }) {
           prose-hr:border-[var(--border)]
           prose-img:rounded-xl prose-img:border prose-img:border-[var(--border)]
         ">
-          <MDXRemote source={post.content} />
+          <MDXRemote
+            source={post.content}
+            components={{ InterviewTip, CommonMistake, SeniorAnswer, ProductionNote, Warning, Definition }}
+          />
         </article>
+
+        {/* Related articles */}
+        {related.length > 0 && (
+          <div className="mt-12 pt-8 border-t border-[var(--border)]">
+            <h3 className="text-base font-bold text-[var(--text)] mb-4">Related articles</h3>
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+              {related.map((item) => (
+                <Link
+                  key={`${item.section}-${item.slug}`}
+                  href={`/${item.section}/${item.slug}`}
+                  className="group p-4 rounded-xl border border-[var(--border)] bg-[var(--bg-card)] hover:border-[var(--accent)]/40 transition-colors"
+                >
+                  <p className="text-xs font-semibold text-[var(--text)] group-hover:text-[var(--accent-text)] leading-snug mb-1 transition-colors line-clamp-2">
+                    {item.title}
+                  </p>
+                  <p className="text-xs text-[var(--text-faint)] line-clamp-2 leading-relaxed">{item.summary}</p>
+                  {item.difficulty && (
+                    <span className="inline-block mt-2 text-[10px] px-2 py-0.5 rounded-full bg-[var(--bg-muted)] text-[var(--text-faint)] border border-[var(--border)]">
+                      {item.difficulty}
+                    </span>
+                  )}
+                </Link>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Newsletter */}
+        <div className="mt-12 rounded-xl border border-[var(--accent)]/20 bg-[var(--accent-soft)] p-6 text-center">
+          <h3 className="text-base font-bold mb-1 text-[var(--text)]">Get new guides when they land</h3>
+          <p className="text-xs text-[var(--text-muted)] mb-4">System design, interview Q&amp;A, and cheatsheets — no spam.</p>
+          <SubscribeForm compact />
+        </div>
 
         {/* Footer: share + suggest correction + back link */}
         <div className="mt-12 pt-8 border-t border-[var(--border)]">

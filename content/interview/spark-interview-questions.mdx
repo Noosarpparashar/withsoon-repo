@@ -1,0 +1,229 @@
+---
+title: "Spark Interview Questions — Internals, Optimization, and Production Patterns"
+date: "2026-06-16"
+type: "interview-qa"
+subsection: "spark"
+summary: "The most-asked Apache Spark interview questions: RDDs vs DataFrames, DAG execution, shuffle, AQE, skew handling, memory tuning, and Structured Streaming."
+tags: ["spark", "interview", "big-data", "pyspark", "streaming"]
+difficulty: "advanced"
+featured: false
+---
+
+## Core Architecture
+
+**Q1: What is the difference between an RDD, a DataFrame, and a Dataset?**
+
+- **RDD** (Resilient Distributed Dataset) — low-level, type-safe, no optimizer. Fine-grained control. Avoid in modern Spark unless you need custom transformations.
+- **DataFrame** — distributed table with named columns, no compile-time type safety. Runs through Catalyst optimizer. Use this by default.
+- **Dataset** — typed DataFrame. Compile-time type safety. JVM only (Java/Scala).
+
+**Interview tip:** In an interview, say "I use DataFrames/Spark SQL because Catalyst and Tungsten optimize them automatically. RDDs are useful when you need to control the exact partitioning or serialize custom objects."
+
+---
+
+**Q2: Explain the Spark DAG execution model.**
+
+When you call an action (`.count()`, `.write()`), Spark builds a **DAG** (Directed Acyclic Graph) of transformations. The DAG is submitted to the DAG Scheduler, which splits it into **stages** at shuffle boundaries.
+
+- **Transformations** are lazy — no execution until an action is called
+- **Wide transformations** (groupBy, join, repartition) cause shuffles → new stage
+- **Narrow transformations** (filter, map, select) stay in the same stage
+
+Each stage is split into **tasks** — one task per partition. Tasks are sent to **executors** by the Task Scheduler.
+
+---
+
+**Q3: What is the difference between a transformation and an action?**
+
+- **Transformations** — lazy operations that return a new RDD/DataFrame. They are not executed until an action is called. Examples: `filter`, `map`, `join`, `groupBy`, `select`.
+- **Actions** — trigger computation and return a result to the driver or write to storage. Examples: `count`, `collect`, `show`, `write`, `take`, `reduce`.
+
+**Common mistake:** Calling `.collect()` on a large DataFrame — this brings all data to the driver. Use `.write()` or aggregations instead.
+
+---
+
+## Shuffles and Partitioning
+
+**Q4: What is a shuffle? When does it happen?**
+
+A shuffle is Spark redistributing data across partitions — data is written to disk on executors, sorted, and re-read by other executors. It's the most expensive operation in Spark.
+
+Shuffles happen on:
+- `groupBy` / `reduceByKey`
+- `join` (unless broadcast join)
+- `repartition` / `coalesce`
+- `distinct`
+- `sortBy` on a distributed column
+
+To reduce shuffles:
+- Use `broadcast()` for small tables in joins (avoids shuffle)
+- Partition your data on the join key before joining
+- Use `reduceByKey` instead of `groupByKey` (partial aggregation before shuffle)
+
+---
+
+**Q5: How many partitions should a Spark job have?**
+
+Rule of thumb: **2-4 partitions per CPU core** in the cluster.
+
+For a cluster with 20 executors × 5 cores = 100 cores → 200-400 partitions is reasonable.
+
+Default `spark.sql.shuffle.partitions` = 200 (set this based on your data size):
+- Too few → each partition is large → memory pressure, OOM
+- Too many → too many small files → metadata overhead, slow writes
+
+Practical formula: aim for **100-200 MB per partition** after shuffle.
+
+```python
+# Check partition count
+df.rdd.getNumPartitions()
+
+# Repartition
+df = df.repartition(400, "user_id")  # hash partition on user_id
+```
+
+---
+
+## Adaptive Query Execution (AQE)
+
+**Q6: What is AQE and what problems does it solve?**
+
+AQE (Adaptive Query Execution, Spark 3.0+) dynamically changes the query plan at runtime based on actual data statistics rather than estimates.
+
+It solves three problems:
+1. **Skewed joins** — automatically splits skewed partitions into smaller ones
+2. **Dynamic partition coalescing** — merges tiny shuffle partitions after a shuffle (reduces the 200 empty partitions problem)
+3. **Join strategy switching** — can switch from sort-merge join to broadcast join if a table turns out to be small
+
+Enable it: `spark.sql.adaptive.enabled = true` (default in Spark 3.2+)
+
+---
+
+## Skew Handling
+
+**Q7: What is data skew and how do you handle it?**
+
+Skew occurs when some partitions have far more data than others — typically caused by null keys, popular categories, or uneven distributions. One task takes 10x longer than others, blocking the stage.
+
+**Detection:** Check the Spark UI → Stage Details → Task Time column. If one task is >>mean, you have skew.
+
+**Solutions:**
+
+1. **Broadcast join** — if the small table fits in memory, broadcast it to avoid the shuffle entirely
+2. **Salting** — add a random salt to the skewed key, join, then aggregate:
+   ```python
+   from pyspark.sql.functions import concat, lit, floor, rand
+   SALT = 10
+   large = df1.withColumn("salt", (rand() * SALT).cast("int"))
+   large = large.withColumn("key_salted", concat("key", lit("_"), "salt"))
+   
+   small = df2
+   small = small.withColumn("salt", explode(array([lit(i) for i in range(SALT)])))
+   small = small.withColumn("key_salted", concat("key", lit("_"), "salt"))
+   
+   result = large.join(small, "key_salted").drop("key_salted", "salt")
+   ```
+3. **AQE skew join** — enable `spark.sql.adaptive.skewJoin.enabled = true` for automatic handling
+4. **Repartition before join** on a more evenly distributed column
+
+---
+
+## Memory Tuning
+
+**Q8: Explain Spark's memory model.**
+
+Spark uses the JVM heap divided into regions:
+
+- **Execution memory** — shuffles, sorts, aggregations (uses off-heap by default in Tungsten)
+- **Storage memory** — cached DataFrames/RDDs
+- **User memory** — your custom data structures
+
+`spark.memory.fraction` (default 0.6) — the fraction of JVM heap for execution + storage. The remaining 40% is user + overhead.
+
+`spark.memory.storageFraction` (default 0.5) — within the managed region, this fraction is for storage. Storage can borrow from execution and vice versa.
+
+**Tuning tips:**
+- OOM on executor → increase `spark.executor.memory` or reduce `spark.executor.cores`
+- GC overhead too high → increase off-heap memory: `spark.memory.offHeap.enabled = true`
+- Caching too much → use `MEMORY_AND_DISK` instead of `MEMORY_ONLY`
+
+---
+
+## Joins
+
+**Q9: What are the join strategies in Spark and when does each apply?**
+
+| Strategy | When Used | Pros | Cons |
+|---|---|---|---|
+| Broadcast Hash Join | Small table fits in memory (< `spark.sql.autoBroadcastJoinThreshold`, default 10MB) | No shuffle | OOM if threshold too high |
+| Sort-Merge Join | Both tables are large, sorted on join key | Works at any scale | Expensive shuffle |
+| Shuffle Hash Join | One side is significantly smaller | Faster than SMJ | OOM risk if bucket too large |
+
+Force a broadcast join with a hint:
+```python
+from pyspark.sql.functions import broadcast
+result = large_df.join(broadcast(small_df), "user_id")
+```
+
+---
+
+## Structured Streaming
+
+**Q10: What are the output modes in Spark Structured Streaming?**
+
+- **Append** — only new rows are written. No updates to existing rows. Requires watermark for stateful ops.
+- **Update** — only rows that were updated since last trigger are written. Works with aggregations.
+- **Complete** — the entire result table is re-written every trigger. Only valid for aggregations.
+
+**Q11: What is a watermark in Structured Streaming?**
+
+A watermark tells Spark how late data can arrive before it's dropped. Without a watermark, Spark must keep all state forever.
+
+```python
+df.withWatermark("event_time", "10 minutes") \
+  .groupBy(window("event_time", "5 minutes"), "user_id") \
+  .count()
+```
+
+This tells Spark: drop any event that arrives more than 10 minutes after the event_time. State for a window is cleaned up 10 minutes after the window closes.
+
+---
+
+## Delta Lake
+
+**Q12: What is Delta Lake and what problems does it solve?**
+
+Delta Lake adds ACID transactions on top of Parquet files stored in object storage (S3/GCS/ADLS). It solves:
+
+1. **Concurrent writes** — multiple jobs can write without corrupting data
+2. **Time travel** — `SELECT * FROM delta.events VERSION AS OF 5` or `TIMESTAMP AS OF`
+3. **Schema evolution** — add/rename columns without rewriting all data
+4. **Upserts (MERGE)** — efficient CDC ingestion without full rewrites
+5. **Compaction** — `OPTIMIZE` merges small files; `ZORDER` clusters related data
+
+```python
+# Upsert (MERGE)
+from delta.tables import DeltaTable
+dt = DeltaTable.forPath(spark, "/delta/users")
+dt.alias("target").merge(
+    updates.alias("source"),
+    "target.user_id = source.user_id"
+).whenMatchedUpdateAll().whenNotMatchedInsertAll().execute()
+```
+
+---
+
+## Common Interview Questions
+
+**Q13: Why would you choose Spark over MapReduce?**
+
+- Spark is 100x faster for iterative workloads because it caches intermediate data in memory vs writing to HDFS after every step
+- Spark supports streaming, ML, and graph processing in one API
+- DAG optimization with Catalyst is more efficient than chained MapReduce jobs
+
+**Q14: What is the difference between `coalesce` and `repartition`?**
+
+- `repartition(n)` — full shuffle, can increase or decrease partitions, evenly distributed
+- `coalesce(n)` — no shuffle, can only *reduce* partitions, may be uneven, faster
+
+Use `coalesce` before writing to reduce output files. Use `repartition` when you need evenly-sized partitions (before a join or aggregation).
