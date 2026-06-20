@@ -91,6 +91,90 @@ const OPTIMIZATIONS = [
   { title: "ABR startup quality", detail: "Player starts at a lower bitrate (fast segment) and ramps up. Perceived startup is instant even on slow connections." },
 ];
 
+const PLAYBACK_PHASES = [
+  {
+    title: "Request Enters",
+    summary: "Client request reaches the playback backend and the orchestration fan-out begins.",
+    accent: "#3b82f6",
+    steps: [1, 2, 3, 4],
+  },
+  {
+    title: "Parallel Checks",
+    summary: "Entitlement, stream slot, OCA ranking, and DRM license happen in parallel.",
+    accent: "#8b5cf6",
+    steps: [5, 6, 7, 8, 9],
+  },
+  {
+    title: "Response Out",
+    summary: "Manifest URL is built, async writes are kicked off, and the client gets everything needed to start.",
+    accent: "#10b981",
+    steps: [10, 11, 12, 13],
+  },
+  {
+    title: "Streaming Loop",
+    summary: "Video bytes come from OCA, and heartbeats keep the session alive without blocking playback.",
+    accent: "#f59e0b",
+    steps: [14, 15, 16],
+  },
+];
+
+function StepCard({
+  step,
+  accent,
+}: {
+  step: typeof PLAYBACK_STEPS[number];
+  accent: string;
+}) {
+  const isAsync = step.latency === "async";
+  const isParallel = step.step >= 5 && step.step <= 9;
+  const isCritical = step.step === 13 || step.step === 14;
+
+  return (
+    <div
+      className="rounded-xl p-4"
+      style={{
+        background: isCritical ? `${accent}12` : "var(--bg)",
+        border: `1px solid ${isCritical ? `${accent}40` : "var(--border)"}`,
+      }}
+    >
+      <div className="flex items-start gap-3">
+        <span
+          className="w-7 h-7 rounded-full flex items-center justify-center text-[11px] font-bold shrink-0"
+          style={{ background: `${accent}18`, color: accent }}
+        >
+          {step.step}
+        </span>
+        <div className="min-w-0 flex-1">
+          <div className="flex flex-wrap items-center gap-2 mb-1.5">
+            <span className="text-sm font-semibold" style={{ color: accent }}>
+              {step.actor}
+            </span>
+            {isParallel && (
+              <span className="text-[10px] px-1.5 py-0.5 rounded" style={{ background: "#8b5cf620", color: "#8b5cf6" }}>
+                parallel
+              </span>
+            )}
+            {isAsync && (
+              <span className="text-[10px] px-1.5 py-0.5 rounded" style={{ background: "#94a3b820", color: "var(--text-faint)" }}>
+                async
+              </span>
+            )}
+          </div>
+          <p className="text-[13px] leading-relaxed" style={{ color: "var(--text)" }}>
+            {step.action}
+          </p>
+        </div>
+        <span
+          className="text-[11px] font-mono font-semibold shrink-0"
+          style={{ color: isAsync ? "var(--text-faint)" : step.latency ? "#f59e0b" : "transparent" }}
+        >
+          {step.latency || "—"}
+        </span>
+      </div>
+    </div>
+  );
+}
+
 export function PlaybackTab({ onNavigateTab }: { onNavigateTab?: (tab: TabSlug) => void }) {
   return (
     <div className="space-y-8 pb-10">
@@ -104,38 +188,53 @@ export function PlaybackTab({ onNavigateTab }: { onNavigateTab?: (tab: TabSlug) 
       {/* 16-step sequence */}
       <div>
         <h2 className="text-2xl font-bold mb-1" style={{ color: "var(--text)" }}>Press Play — 16-Step Sequence</h2>
-        <p className="text-sm mb-4" style={{ color: "var(--text-muted)" }}>Steps 5–9 execute in parallel. Steps 11–12 are async after the response is returned.</p>
-        <div className="rounded-2xl overflow-hidden" style={{ border: "1px solid var(--border)" }}>
-          <div className="grid text-[10px] font-bold uppercase tracking-wider px-4 py-2.5"
-            style={{ gridTemplateColumns: "2rem 1fr 6rem", background: "var(--bg-card)", borderBottom: "1px solid var(--border)", color: "var(--text-muted)" }}>
-            <span>#</span>
-            <span>Actor → Action</span>
-            <span className="text-right">Latency</span>
-          </div>
-          <div className="divide-y" style={{ borderColor: "var(--border)" }}>
-            {PLAYBACK_STEPS.map((row) => {
-              const isHighlight = row.step === 13 || row.step === 14;
-              const isAsync = row.latency === "async";
-              const isParallel = row.step >= 5 && row.step <= 9;
-              return (
-                <div key={row.step} className="grid items-start px-4 py-3 gap-3"
-                  style={{ gridTemplateColumns: "2rem 1fr 6rem", background: isHighlight ? "var(--blue-soft)" : row.step % 2 === 0 ? "var(--bg-card)" : "var(--bg)" }}>
-                  <span className="w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-bold shrink-0"
-                    style={{ background: isParallel ? "#8b5cf620" : "var(--blue-soft)", color: isParallel ? "#8b5cf6" : "var(--blue-text)" }}>
-                    {row.step}
-                  </span>
-                  <div>
-                    <span className="text-xs font-bold mr-1.5" style={{ color: isParallel ? "#8b5cf6" : "#3b82f6" }}>{row.actor}</span>
-                    <span className="text-xs leading-relaxed" style={{ color: "var(--text)" }}>{row.action}</span>
-                    {isParallel && <span className="ml-2 text-[10px] px-1.5 py-0.5 rounded" style={{ background: "#8b5cf620", color: "#8b5cf6" }}>parallel</span>}
-                  </div>
-                  <span className="text-[10px] font-mono text-right whitespace-nowrap pt-0.5"
-                    style={{ color: row.step === 13 ? "#10b981" : isAsync ? "var(--text-faint)" : row.latency ? "#f59e0b" : "transparent" }}>
-                    {row.latency || "—"}
-                  </span>
-                </div>
-              );
-            })}
+        <p className="text-[15px] mb-5 leading-relaxed" style={{ color: "var(--text-muted)" }}>
+          Instead of reading this as one long line, think in four interview-friendly phases: request enters, checks run in parallel, response comes back, then the streaming loop continues off the API critical path.
+        </p>
+        <div className="grid grid-cols-1 xl:grid-cols-2 gap-4">
+          {PLAYBACK_PHASES.map((phase) => (
+            <div
+              key={phase.title}
+              className="rounded-2xl p-5"
+              style={{ background: "var(--bg-card)", border: "1px solid var(--border)" }}
+            >
+              <div className="flex items-center justify-between gap-3 mb-2">
+                <h3 className="text-lg font-bold" style={{ color: phase.accent }}>
+                  {phase.title}
+                </h3>
+                <span className="text-[11px] px-2 py-1 rounded-full" style={{ background: `${phase.accent}16`, color: phase.accent }}>
+                  Steps {phase.steps[0]}–{phase.steps[phase.steps.length - 1]}
+                </span>
+              </div>
+              <p className="text-[14px] leading-relaxed mb-4" style={{ color: "var(--text-muted)" }}>
+                {phase.summary}
+              </p>
+              <div className="space-y-3">
+                {phase.steps.map((stepNo) => {
+                  const step = PLAYBACK_STEPS.find((item) => item.step === stepNo)!;
+                  return <StepCard key={step.step} step={step} accent={phase.accent} />;
+                })}
+              </div>
+            </div>
+          ))}
+        </div>
+        <div className="rounded-2xl p-4 mt-4" style={{ background: "var(--bg-card)", border: "1px solid var(--border)" }}>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+            <div className="rounded-xl p-3" style={{ background: "var(--bg)", border: "1px solid var(--border)" }}>
+              <p className="text-[10px] font-bold uppercase tracking-widest mb-1" style={{ color: "var(--text-faint)" }}>Critical path</p>
+              <p className="text-sm font-semibold" style={{ color: "var(--text)" }}>Steps 1 → 13</p>
+              <p className="text-[13px]" style={{ color: "var(--text-muted)" }}>The API latency budget ends when the signed manifest URL comes back.</p>
+            </div>
+            <div className="rounded-xl p-3" style={{ background: "var(--bg)", border: "1px solid var(--border)" }}>
+              <p className="text-[10px] font-bold uppercase tracking-widest mb-1" style={{ color: "var(--text-faint)" }}>Parallel fan-out</p>
+              <p className="text-sm font-semibold" style={{ color: "var(--text)" }}>Steps 5 → 9</p>
+              <p className="text-[13px]" style={{ color: "var(--text-muted)" }}>These checks happen together, so interviewers expect you to talk about the max latency, not the sum.</p>
+            </div>
+            <div className="rounded-xl p-3" style={{ background: "var(--bg)", border: "1px solid var(--border)" }}>
+              <p className="text-[10px] font-bold uppercase tracking-widest mb-1" style={{ color: "var(--text-faint)" }}>Streaming tier</p>
+              <p className="text-sm font-semibold" style={{ color: "var(--text)" }}>Steps 14 → 16</p>
+              <p className="text-[13px]" style={{ color: "var(--text-muted)" }}>After playback starts, video bytes come from OCA and backend mostly handles heartbeats plus session TTL refreshes.</p>
+            </div>
           </div>
         </div>
       </div>

@@ -735,7 +735,7 @@ export interface Flow {
 export const FLOWS: Flow[] = [
   {
     id: "play",
-    label: "User clicks Play",
+    label: "Playback Walkthrough",
     steps: [
       { nodeId: "client",      name: "Play button pressed", description: "Client sends POST /playback/start with content_id, profile_id, episode_id, and device_type.", payload: '{ "content_id": "tt1234567", "profile_id": "p-abc", "device_type": "smart_tv" }', whyItMatters: "Everything starts here — if this request takes > 2s total, the viewer gets a loading spinner." },
       { nodeId: "api-gateway", name: "JWT validated at gateway", description: "API Gateway validates the RS256 JWT signature. Expired or malformed tokens are rejected here — no downstream service is touched.", whyItMatters: "JWT validation at the edge is a key scalability decision. Downstream services never waste cycles on invalid tokens." },

@@ -62,7 +62,7 @@ function StartHereTab({ onNavigateTab, role, onRoleChange }: {
         "SRE and incident management",
       ],
       prepTime: "30–45 minutes",
-      cta: "Run User clicks Play →",
+      cta: "Start Backend Track",
       ctaTab: "architecture" as TabSlug,
     },
     {
@@ -84,9 +84,31 @@ function StartHereTab({ onNavigateTab, role, onRoleChange }: {
         "Frontend and UI personalization",
       ],
       prepTime: "30–45 minutes",
-      cta: "See Data Models",
+      cta: "Start Data Track",
       ctaTab: "models" as TabSlug,
     },
+  ];
+
+  const backendPath = [
+    { step: "Architecture",    tab: "architecture"    as TabSlug, desc: "see the big-picture system map" },
+    { step: "Playback",        tab: "playback"        as TabSlug, desc: "walk through the request path" },
+    { step: "CDN",             tab: "cdn"             as TabSlug, desc: "explain how video bypasses backend" },
+    { step: "Data Models",     tab: "models"          as TabSlug, desc: "justify storage choices" },
+    { step: "Failures",        tab: "failures"        as TabSlug, desc: "handle interviewer probing" },
+    { step: "Trade-offs",      tab: "tradeoffs"       as TabSlug, desc: "show senior decision-making" },
+    { step: "Quiz",            tab: "quiz"            as TabSlug, desc: "test recall" },
+    { step: "Mock Interview",  tab: "mock-interview"  as TabSlug, desc: "practice speaking aloud" },
+    { step: "Cheat Sheet",     tab: "cheat-sheet"     as TabSlug, desc: "revise before the real round" },
+  ];
+
+  const dataPath = [
+    { step: "Data Models",     tab: "models"          as TabSlug, desc: "understand storage patterns" },
+    { step: "Capacity",        tab: "capacity"        as TabSlug, desc: "size the event pipeline" },
+    { step: "Failures",        tab: "failures"        as TabSlug, desc: "cover late data and backfills" },
+    { step: "Trade-offs",      tab: "tradeoffs"       as TabSlug, desc: "explain engine and consistency choices" },
+    { step: "Quiz",            tab: "quiz"            as TabSlug, desc: "test recall" },
+    { step: "Mock Interview",  tab: "mock-interview"  as TabSlug, desc: "practice speaking aloud" },
+    { step: "Cheat Sheet",     tab: "cheat-sheet"     as TabSlug, desc: "revise before the real round" },
   ];
 
   const interviewerExpectations = [
@@ -188,7 +210,7 @@ function StartHereTab({ onNavigateTab, role, onRoleChange }: {
                   {card.covers.map((c, i) => (
                     <div key={i} className="flex items-start gap-1.5 mb-1">
                       <span className="text-xs shrink-0 mt-0.5" style={{ color: card.color }}>✓</span>
-                      <span className="text-xs" style={{ color: "var(--text-muted)" }}>{c}</span>
+                      <span className="text-[13px]" style={{ color: "var(--text-muted)" }}>{c}</span>
                     </div>
                   ))}
                 </div>
@@ -198,7 +220,7 @@ function StartHereTab({ onNavigateTab, role, onRoleChange }: {
                   {card.doesNotCover.map((c, i) => (
                     <div key={i} className="flex items-start gap-1.5 mb-1">
                       <span className="text-xs shrink-0 mt-0.5" style={{ color: "var(--text-faint)" }}>–</span>
-                      <span className="text-xs" style={{ color: "var(--text-faint)" }}>{c}</span>
+                      <span className="text-[13px]" style={{ color: "var(--text-faint)" }}>{c}</span>
                     </div>
                   ))}
                 </div>
@@ -207,7 +229,7 @@ function StartHereTab({ onNavigateTab, role, onRoleChange }: {
                   <span className="text-[11px]" style={{ color: "var(--text-faint)" }}>⏱ Prep time: {card.prepTime}</span>
                   <button
                     onClick={(e) => { e.stopPropagation(); onRoleChange(card.role); onNavigateTab(card.ctaTab); }}
-                    className="text-xs px-3 py-1.5 rounded-lg font-bold transition-colors"
+                    className="text-[13px] px-3.5 py-2 rounded-lg font-bold transition-colors"
                     style={{ background: card.color, color: "#fff", border: "none", cursor: "pointer" }}
                   >
                     {card.cta} →
@@ -228,38 +250,23 @@ function StartHereTab({ onNavigateTab, role, onRoleChange }: {
           {role === "Backend Engineer" ? "Backend Engineer track" : "Data Engineer track"}
         </p>
         <div className="space-y-2">
-          {(role === "Backend Engineer" ? [
-            { step: "Run User clicks Play",  tab: "architecture"    as TabSlug, desc: "understand the core flow"          },
-            { step: "Playback",              tab: "playback"        as TabSlug, desc: "explain the backend sequence"       },
-            { step: "CDN",                   tab: "cdn"             as TabSlug, desc: "explain how video avoids backend"   },
-            { step: "Data Models",           tab: "models"          as TabSlug, desc: "explain storage choices"            },
-            { step: "Failures",              tab: "failures"        as TabSlug, desc: "handle interviewer grilling"        },
-            { step: "Trade-offs",            tab: "tradeoffs"       as TabSlug, desc: "show senior thinking"               },
-            { step: "Quiz",                  tab: "quiz"            as TabSlug, desc: "test recall"                        },
-            { step: "Mock Interview",        tab: "mock-interview"  as TabSlug, desc: "practice speaking"                  },
-            { step: "Cheat Sheet",           tab: "cheat-sheet"     as TabSlug, desc: "revise before interview"            },
-          ] : [
-            { step: "Data Models",    tab: "models"         as TabSlug, desc: "understand storage decisions"              },
-            { step: "Capacity",       tab: "capacity"       as TabSlug, desc: "size the pipeline"                         },
-            { step: "Failures",       tab: "failures"       as TabSlug, desc: "handle interviewer grilling"               },
-            { step: "Trade-offs",     tab: "tradeoffs"      as TabSlug, desc: "show senior thinking"                      },
-            { step: "Quiz",           tab: "quiz"           as TabSlug, desc: "test recall"                               },
-            { step: "Mock Interview", tab: "mock-interview" as TabSlug, desc: "practice speaking"                         },
-            { step: "Cheat Sheet",    tab: "cheat-sheet"    as TabSlug, desc: "revise before interview"                   },
-          ]).map(({ step, tab, desc }, i) => (
+          {(role === "Backend Engineer" ? backendPath : dataPath).map(({ step, tab, desc }, i) => (
             <button
               key={step}
               onClick={() => onNavigateTab(tab)}
               className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-left transition-all hover:opacity-80"
-              style={{ background: i === 0 ? "#e5091410" : "var(--bg-muted)", border: `1px solid ${i === 0 ? "#e5091425" : "var(--border)"}` }}
+              style={{
+                background: i === 0 ? `${activeCard.color}12` : "var(--bg-muted)",
+                border: `1px solid ${i === 0 ? `${activeCard.color}30` : "var(--border)"}`,
+              }}
             >
               <span className="w-5 h-5 rounded-full text-[10px] font-bold flex items-center justify-center shrink-0"
-                style={{ background: i === 0 ? "#e50914" : "var(--border)", color: i === 0 ? "#fff" : "var(--text-faint)" }}>
+                style={{ background: i === 0 ? activeCard.color : "var(--border)", color: i === 0 ? "#fff" : "var(--text-faint)" }}>
                 {i + 1}
               </span>
               <div className="flex-1 min-w-0">
-                <span className="text-xs font-semibold" style={{ color: i === 0 ? "#e50914" : "var(--text)" }}>{step}</span>
-                <span className="text-[10px] ml-2" style={{ color: "var(--text-faint)" }}>— {desc}</span>
+                <span className="text-sm font-semibold" style={{ color: i === 0 ? activeCard.color : "var(--text)" }}>{step}</span>
+                <span className="text-[11px] ml-2" style={{ color: "var(--text-faint)" }}>— {desc}</span>
               </div>
               <span className="text-[10px]" style={{ color: "var(--text-faint)" }}>→</span>
             </button>
@@ -354,7 +361,7 @@ function StartHereTab({ onNavigateTab, role, onRoleChange }: {
           className="py-4 rounded-xl text-sm font-bold transition-all"
           style={{ background: activeCard.color, color: "#fff", border: "none", cursor: "pointer" }}
         >
-          {activeCard.cta}
+          {activeCard.cta} →
         </button>
         <button
           onClick={() => onNavigateTab("cheat-sheet")}

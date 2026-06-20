@@ -401,12 +401,19 @@ function DetailPanel({
   onNavigatePlayback: () => void;
 }) {
   const [depth, setDepth] = useState<DepthLevel>("overview");
+  const [showTranscript, setShowTranscript] = useState(false);
   const panelRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     if (node) setDepth("overview");
     panelRef.current?.scrollTo({ top: 0, behavior: "smooth" });
   }, [node?.id]);
+
+  useEffect(() => {
+    if (activeFlow) {
+      setShowTranscript(false);
+    }
+  }, [activeFlow?.id]);
 
   useEffect(() => {
     const h = (e: KeyboardEvent) => {
@@ -428,8 +435,17 @@ function DetailPanel({
         style={{ background: "var(--bg-card)", borderLeft: `1px solid var(--border)` }}>
         <div className="sticky top-0 z-10 px-4 py-3" style={{ background: "var(--bg-card)", borderBottom: `1px solid var(--border)` }}>
           <div className="flex items-center justify-between mb-2">
-            <span className="text-xs font-bold" style={{ color: N_AMBER }}>{activeFlow.label}</span>
-            <button onClick={onExitFlow} className="text-xs px-2 py-1 rounded" style={{ background: "var(--border)", color: "var(--text-muted)" }}>✕</button>
+            <span className="text-sm font-bold" style={{ color: N_AMBER }}>{activeFlow.label}</span>
+            <div className="flex items-center gap-2">
+              <button
+                onClick={() => setShowTranscript(v => !v)}
+                className="text-[11px] px-2.5 py-1.5 rounded"
+                style={{ background: "var(--bg)", color: "var(--text-muted)", border: `1px solid var(--border)`, cursor: "pointer" }}
+              >
+                {showTranscript ? "Hide steps" : "Show steps"}
+              </button>
+              <button onClick={onExitFlow} className="text-xs px-2 py-1 rounded" style={{ background: "var(--border)", color: "var(--text-muted)", cursor: "pointer" }}>✕</button>
+            </div>
           </div>
           <div className="flex items-center gap-1.5 mb-2">
             {activeFlow.steps.map((_, i) => (
@@ -437,7 +453,7 @@ function DetailPanel({
                 style={{ width: i === activeFlowStep ? 20 : 8, background: i <= activeFlowStep ? N_AMBER : "var(--text-faint)" }} />
             ))}
           </div>
-          <div className="text-[10px]" style={{ color: "var(--text-muted)" }}>Step {activeFlowStep + 1} of {total}</div>
+          <div className="text-[11px]" style={{ color: "var(--text-muted)" }}>Step {activeFlowStep + 1} of {total}</div>
         </div>
         <div className="p-4 flex-1">
           <div className="rounded-lg p-4 mb-4" style={{ background: "rgba(245,166,35,0.08)", border: `1px solid ${N_AMBER}30` }}>
@@ -445,54 +461,56 @@ function DetailPanel({
               <span className="w-6 h-6 rounded-full text-xs font-bold flex items-center justify-center shrink-0"
                 style={{ background: N_AMBER, color: "#000" }}>{activeFlowStep + 1}</span>
               <div>
-                <p className="text-sm font-bold" style={{ color: N_AMBER }}>{step.name}</p>
-                <p className="text-[10px]" style={{ color: "var(--text-muted)" }}>{NODES.find(n => n.id === step.nodeId)?.label}</p>
+                <p className="text-base font-bold" style={{ color: N_AMBER }}>{step.name}</p>
+                <p className="text-[11px]" style={{ color: "var(--text-muted)" }}>{NODES.find(n => n.id === step.nodeId)?.label}</p>
               </div>
             </div>
-            <p className="text-xs leading-relaxed mb-3" style={{ color: "var(--text-muted)" }}>{step.description}</p>
+            <p className="text-sm leading-relaxed mb-3" style={{ color: "var(--text-muted)" }}>{step.description}</p>
             {step.payload && (
               <div className="rounded-md p-2.5 mb-3" style={{ background: "var(--bg)", border: `1px solid var(--border)` }}>
-                <pre className="text-[10px] leading-relaxed overflow-x-auto" style={{ color: "#6ee7b7", fontFamily: C.mono }}>{step.payload}</pre>
+                <pre className="text-[11px] leading-relaxed overflow-x-auto" style={{ color: "#6ee7b7", fontFamily: C.mono }}>{step.payload}</pre>
               </div>
             )}
             {step.whyItMatters && (
               <div className="rounded p-2" style={{ background: "rgba(245,166,35,0.06)", border: `1px solid ${N_AMBER}25` }}>
-                <p className="text-[10px] font-bold mb-0.5" style={{ color: N_AMBER }}>Why this matters</p>
-                <p className="text-[10px] leading-relaxed" style={{ color: "var(--text-muted)" }}>{step.whyItMatters}</p>
+                <p className="text-[11px] font-bold mb-0.5" style={{ color: N_AMBER }}>Why this matters</p>
+                <p className="text-[12px] leading-relaxed" style={{ color: "var(--text-muted)" }}>{step.whyItMatters}</p>
               </div>
             )}
           </div>
           <div className="flex gap-2 mb-6">
             <button onClick={onFlowPrev} disabled={activeFlowStep === 0}
-              className="flex-1 py-2 rounded-lg text-xs font-medium disabled:opacity-30"
+              className="flex-1 py-2.5 rounded-lg text-sm font-medium disabled:opacity-30"
               style={{ background: "var(--border)", color: "var(--text)" }}>← Prev</button>
             <button onClick={onFlowNext} disabled={activeFlowStep === total - 1}
-              className="flex-1 py-2 rounded-lg text-xs font-medium disabled:opacity-30"
+              className="flex-1 py-2.5 rounded-lg text-sm font-medium disabled:opacity-30"
               style={{ background: N_AMBER, color: "#000" }}>Next →</button>
           </div>
 
           {/* Flow transcript — all steps in sequence */}
-          <div style={{ borderTop: `1px solid var(--border)` }}>
-            <p className="text-[9px] font-bold uppercase tracking-widest py-2" style={{ color: "var(--text-faint)" }}>Full transcript</p>
-            <div className="space-y-1 pb-4">
-              {activeFlow.steps.map((s, i) => (
-                <div
-                  key={i}
-                  className="flex items-start gap-2 rounded-lg px-2 py-1.5"
-                  style={{ background: i === activeFlowStep ? N_AMBER + "12" : "transparent", border: `1px solid ${i === activeFlowStep ? N_AMBER + "30" : "transparent"}` }}
-                  aria-current={i === activeFlowStep ? "step" : undefined}
-                >
-                  <span className="w-4 h-4 rounded-full text-[9px] font-bold flex items-center justify-center shrink-0 mt-0.5"
-                    style={{ background: i <= activeFlowStep ? N_AMBER : "var(--border)", color: i <= activeFlowStep ? "#000" : "var(--text-faint)" }}>
-                    {i + 1}
-                  </span>
-                  <span className="text-[11px] leading-snug" style={{ color: i === activeFlowStep ? N_AMBER : i < activeFlowStep ? "var(--text-muted)" : "var(--text-faint)" }}>
-                    {s.name}
-                  </span>
-                </div>
-              ))}
+          {showTranscript && (
+            <div style={{ borderTop: `1px solid var(--border)` }}>
+              <p className="text-[10px] font-bold uppercase tracking-widest py-2" style={{ color: "var(--text-faint)" }}>All steps</p>
+              <div className="space-y-1 pb-4">
+                {activeFlow.steps.map((s, i) => (
+                  <div
+                    key={i}
+                    className="flex items-start gap-2 rounded-lg px-2 py-2"
+                    style={{ background: i === activeFlowStep ? N_AMBER + "12" : "transparent", border: `1px solid ${i === activeFlowStep ? N_AMBER + "30" : "transparent"}` }}
+                    aria-current={i === activeFlowStep ? "step" : undefined}
+                  >
+                    <span className="w-5 h-5 rounded-full text-[10px] font-bold flex items-center justify-center shrink-0 mt-0.5"
+                      style={{ background: i <= activeFlowStep ? N_AMBER : "var(--border)", color: i <= activeFlowStep ? "#000" : "var(--text-faint)" }}>
+                      {i + 1}
+                    </span>
+                    <span className="text-[12px] leading-snug" style={{ color: i === activeFlowStep ? N_AMBER : i < activeFlowStep ? "var(--text-muted)" : "var(--text-faint)" }}>
+                      {s.name}
+                    </span>
+                  </div>
+                ))}
+              </div>
             </div>
-          </div>
+          )}
         </div>
       </div>
     );
@@ -506,12 +524,12 @@ function DetailPanel({
         <div className="p-5 flex-1 flex flex-col justify-center">
           <div className="rounded-xl overflow-hidden mb-4" style={{ background: "var(--bg)", border: `1px solid ${N_AMBER}30` }}>
             <div className="px-4 py-3" style={{ background: N_AMBER + "12", borderBottom: `1px solid ${N_AMBER}25` }}>
-              <p className="text-[10px] font-bold uppercase tracking-widest" style={{ color: N_AMBER }}>Best first step</p>
+              <p className="text-[10px] font-bold uppercase tracking-widest" style={{ color: N_AMBER }}>Desktop walkthrough</p>
             </div>
             <div className="p-4">
-              <p className="text-base font-bold mb-2" style={{ color: "var(--text)" }}>Start with &ldquo;User clicks Play&rdquo;</p>
-              <p className="text-xs leading-relaxed mb-4" style={{ color: "var(--text-muted)" }}>
-                See the end-to-end backend path in 45 seconds:
+              <p className="text-lg font-bold mb-2" style={{ color: "var(--text)" }}>Use the diagram first</p>
+              <p className="text-sm leading-relaxed mb-4" style={{ color: "var(--text-muted)" }}>
+                Click services to inspect them one by one, or optionally run the playback walkthrough if you want a narrated request path.
               </p>
               <div className="flex flex-wrap gap-1 mb-4 text-[10px]">
                 {["Client", "Playback Svc", "Entitlement", "DRM", "Manifest", "CDN", "Watch Progress", "Kafka"].map((s, i, arr) => (
@@ -524,8 +542,8 @@ function DetailPanel({
               <button
                 onClick={onActivatePlayFlow}
                 className="w-full py-2.5 rounded-lg text-sm font-bold mb-2 transition-all hover:opacity-90"
-                style={{ background: N_RED, color: "#fff" }}>
-                ▶ Run User clicks Play
+                style={{ background: N_AMBER, color: "#111827" }}>
+                Open Playback Walkthrough
               </button>
               <button
                 onClick={onNavigatePlayback}
@@ -541,7 +559,7 @@ function DetailPanel({
             <div className="space-y-2">
               {[
                 { n: "1", text: "Click a service node to see its design & interview answer" },
-                { n: "2", text: "Run \"User clicks Play\" to trace the full request path" },
+                { n: "2", text: "Open the playback walkthrough if you want a narrated request path" },
                 { n: "3", text: "Switch to Playback or Failures for deep-dive answers" },
               ].map(({ n, text }) => (
                 <div key={n} className="flex items-start gap-2.5">
@@ -910,6 +928,7 @@ function ArchitectureTab({
   const [activeFlowStep, setActiveFlowStep] = useState(0);
   const [cmdOpen, setCmdOpen] = useState(false);
   const [stepByStep, setStepByStep] = useState(false);
+  const [panelCollapsed, setPanelCollapsed] = useState(false);
   const [zoom, setZoom] = useState(1);
   const [pan, setPan] = useState({ x: 0, y: 0 });
   const [containerSize, setContainerSize] = useState({ w: 800, h: 600 });
@@ -1030,6 +1049,13 @@ function ArchitectureTab({
       <div className="hidden lg:flex flex-1 overflow-hidden" style={{ height: "calc(100dvh - 96px - 56px)" }}>
         {/* Canvas */}
         <div ref={canvasContainerRef} className="flex-1 overflow-hidden relative" style={{ background: "var(--bg)" }}>
+          <button
+            onClick={() => setPanelCollapsed(v => !v)}
+            className="absolute top-3 right-3 z-20 px-3 py-2 rounded-lg text-xs font-medium"
+            style={{ background: "var(--bg-card)", color: "var(--text-muted)", border: `1px solid var(--border)`, cursor: "pointer" }}
+          >
+            {panelCollapsed ? "Show panel" : "Hide panel"}
+          </button>
           {/* Layer tint bands */}
           <div className="absolute inset-0 pointer-events-none overflow-hidden">
             {Object.entries(LAYER_Y).map(([layer, y]) => (
@@ -1159,24 +1185,26 @@ function ArchitectureTab({
         </div>
 
         {/* Detail panel */}
-        <div className="w-[26rem] xl:w-[29rem] shrink-0" style={{ borderLeft: `1px solid var(--border)` }}>
-          <DetailPanel
-            node={selectedNodeData}
-            studiedNodes={studiedNodes}
-            onMarkStudied={onMarkStudied}
-            onNavigateTo={id => { setSelectedNode(id); handleExitFlow(); }}
-            activeFlow={activeFlow}
-            activeFlowStep={activeFlowStep}
-            onFlowNext={handleFlowNext}
-            onFlowPrev={handleFlowPrev}
-            onExitFlow={handleExitFlow}
-            onActivatePlayFlow={() => {
-              const playFlow = FLOWS.find(f => f.label === "User clicks Play");
-              if (playFlow) handleActivateFlow(playFlow);
-            }}
-            onNavigatePlayback={onNavigatePlayback}
-          />
-        </div>
+        {!panelCollapsed && (
+          <div className="w-[24rem] xl:w-[27rem] shrink-0" style={{ borderLeft: `1px solid var(--border)` }}>
+            <DetailPanel
+              node={selectedNodeData}
+              studiedNodes={studiedNodes}
+              onMarkStudied={onMarkStudied}
+              onNavigateTo={id => { setSelectedNode(id); handleExitFlow(); }}
+              activeFlow={activeFlow}
+              activeFlowStep={activeFlowStep}
+              onFlowNext={handleFlowNext}
+              onFlowPrev={handleFlowPrev}
+              onExitFlow={handleExitFlow}
+              onActivatePlayFlow={() => {
+                const playFlow = FLOWS.find(f => f.id === "play");
+                if (playFlow) handleActivateFlow(playFlow);
+              }}
+              onNavigatePlayback={onNavigatePlayback}
+            />
+          </div>
+        )}
       </div>
 
       {/* Flows bar — desktop only */}
@@ -1557,8 +1585,7 @@ export default function NetflixArchPage({ initialTab }: { initialTab?: string })
                   {/* "Practice" group divider before quiz */}
                   {isPractice && (
                     <div className="flex items-center px-2 pb-2">
-                      <div className="w-px h-4 mx-1" style={{ background: T.border }} />
-                      <span className="text-[9px] font-bold uppercase tracking-widest px-1" style={{ color: T.faint }}>Practice</span>
+                      <div className="w-px h-4 mx-1.5" style={{ background: T.border }} />
                     </div>
                   )}
                   <button
@@ -1577,9 +1604,9 @@ export default function NetflixArchPage({ initialTab }: { initialTab?: string })
                     title={`~${tab.mins} min`}
                     className="relative px-3 pb-2 pt-1 font-medium transition-colors shrink-0 flex items-end gap-1 cursor-pointer"
                     style={{
-                      fontSize: 13,
+                      fontSize: 14,
                       color: activeTab === tab.id ? T.text : completedTabs.has(tab.id) ? T.text : T.muted,
-                      height: 40,
+                      height: 44,
                       cursor: "pointer",
                       background: activeTab === tab.id ? N_RED + "10" : completedTabs.has(tab.id) ? N_GREEN + "10" : "transparent",
                       borderTopLeftRadius: 10,
@@ -1614,9 +1641,6 @@ export default function NetflixArchPage({ initialTab }: { initialTab?: string })
               const prev = TABS[activeTabIndex - 1];
               const next = TABS[activeTabIndex + 1];
               return <>
-                <span className="text-[10px] hidden xl:block" style={{ color: T.faint }}>
-                  Step {activeTabIndex + 1}/{TABS.length} · {visitedTabsCount} explored
-                </span>
                 {prev && (
                   <button onClick={() => switchTab(prev.id)} className="text-[10px] px-2.5 py-1.5 min-h-[32px] rounded-md transition-colors whitespace-nowrap cursor-pointer"
                     style={{ color: T.muted, border: `1px solid ${T.border}`, background: T.bg, cursor: "pointer" }}>← {prev.label}</button>

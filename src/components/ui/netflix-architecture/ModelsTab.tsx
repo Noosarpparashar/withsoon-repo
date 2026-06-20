@@ -54,25 +54,25 @@ function EntityBox({ entity, highlighted, onNavigateToEntity }: EntityBoxProps) 
         <div
           className="grid items-center gap-3 px-4 py-2"
           style={{
-            gridTemplateColumns: "minmax(0, 1fr) 96px 64px",
+            gridTemplateColumns: "minmax(0, 1fr) 156px 72px",
             background: "var(--bg)",
             borderBottom: `1px solid var(--border)`,
           }}
         >
           <span
-            className="text-[10px] font-bold uppercase tracking-[0.18em]"
+            className="text-[11px] font-bold uppercase tracking-[0.18em]"
             style={{ color: "var(--text-faint)" }}
           >
             Field
           </span>
           <span
-            className="text-[10px] font-bold uppercase tracking-[0.18em] text-right"
+            className="text-[11px] font-bold uppercase tracking-[0.18em] text-left"
             style={{ color: "var(--text-faint)" }}
           >
             Type
           </span>
           <span
-            className="text-[10px] font-bold uppercase tracking-[0.18em] text-right"
+            className="text-[11px] font-bold uppercase tracking-[0.18em] text-left"
             style={{ color: "var(--text-faint)" }}
           >
             Keys
@@ -83,7 +83,7 @@ function EntityBox({ entity, highlighted, onNavigateToEntity }: EntityBoxProps) 
             key={i}
             className="grid items-start gap-3 px-4 py-3"
             style={{
-              gridTemplateColumns: "minmax(0, 1fr) 96px 64px",
+              gridTemplateColumns: "minmax(0, 1fr) 156px 72px",
               borderBottom:
                 i < entity.fields.length - 1
                   ? `1px solid var(--border)`
@@ -105,7 +105,7 @@ function EntityBox({ entity, highlighted, onNavigateToEntity }: EntityBoxProps) 
               />
               <div className="min-w-0">
                 <p
-                  className="text-[12px] md:text-xs font-mono font-semibold break-words"
+                  className="text-[14px] md:text-[13px] font-mono font-semibold break-words"
                   style={{ color: "var(--text)" }}
                 >
                   {f.name}
@@ -116,7 +116,7 @@ function EntityBox({ entity, highlighted, onNavigateToEntity }: EntityBoxProps) 
                       const tableName = f.fk!.split(".")[0];
                       onNavigateToEntity(tableName);
                     }}
-                    className="mt-1 inline-flex text-[10px] px-1.5 py-0.5 rounded transition-opacity hover:opacity-80 cursor-pointer"
+                    className="mt-1 inline-flex text-[11px] px-1.5 py-0.5 rounded transition-opacity hover:opacity-80 cursor-pointer"
                     style={{
                       background: "#818cf818",
                       color: "#818cf8",
@@ -129,18 +129,18 @@ function EntityBox({ entity, highlighted, onNavigateToEntity }: EntityBoxProps) 
                 ) : null}
               </div>
             </div>
-            <div className="shrink-0 pt-0.5 text-right">
+            <div className="shrink-0 pt-0.5 text-left">
               <span
-                className="text-[11px] font-mono font-medium"
+                className="text-[13px] font-mono font-medium"
                 style={{ color: "#60a5fa" }}
               >
                 {f.type}
               </span>
             </div>
-            <div className="min-w-[48px] shrink-0 flex flex-wrap items-center justify-end gap-1 pt-0.5">
+            <div className="min-w-[56px] shrink-0 flex flex-wrap items-center justify-start gap-1 pt-0.5">
               {f.pk && (
                 <span
-                  className="text-[10px] px-1.5 rounded"
+                  className="text-[11px] px-1.5 rounded"
                   style={{ background: C.amber + "18", color: C.amber }}
                 >
                   PK
@@ -148,7 +148,7 @@ function EntityBox({ entity, highlighted, onNavigateToEntity }: EntityBoxProps) 
               )}
               {f.index && !f.pk && (
                 <span
-                  className="text-[10px] px-1.5 rounded"
+                  className="text-[11px] px-1.5 rounded"
                   style={{ background: C.green + "18", color: C.green }}
                 >
                   IDX
@@ -308,7 +308,7 @@ function GroupPanel({
       className="flex-1 overflow-y-auto"
       onScroll={handleScroll}
     >
-      <div className="mx-auto w-full max-w-6xl space-y-6 px-6 py-6">
+      <div className="mx-auto w-full max-w-5xl space-y-6 px-8 py-7">
         <div>
           <div className="flex items-center gap-2 mb-2">
             <span
@@ -326,7 +326,7 @@ function GroupPanel({
             {group.label}
           </h2>
           <p
-            className="text-sm mt-2 leading-relaxed max-w-4xl"
+            className="text-[15px] mt-2 leading-relaxed max-w-3xl"
             style={{ color: "var(--text-muted)" }}
           >
             {group.rationale}
@@ -335,7 +335,7 @@ function GroupPanel({
 
         <div>
           <p
-            className="text-[10px] font-bold uppercase tracking-widest mb-3"
+            className="text-[11px] font-bold uppercase tracking-widest mb-3"
             style={{ color: "var(--text-faint)" }}
           >
             Schema
@@ -368,7 +368,7 @@ function GroupPanel({
                     ✗
                   </span>
                   <span
-                    className="text-xs leading-relaxed"
+                    className="text-[13px] leading-relaxed"
                     style={{ color: "var(--text-muted)" }}
                   >
                     {ap}
@@ -393,7 +393,7 @@ function GroupPanel({
             Interview Tip
           </p>
           <p
-            className="text-xs leading-relaxed"
+            className="text-[13px] leading-relaxed"
             style={{ color: "var(--text-muted)" }}
           >
             {group.interviewTip}
@@ -408,34 +408,34 @@ function GroupPanel({
               border: `1px solid #38bdf825`,
             }}
           >
-            <p
-              className="text-[10px] font-bold uppercase tracking-widest mb-1.5"
-              style={{ color: "#38bdf8" }}
+          <p
+            className="text-[10px] font-bold uppercase tracking-widest mb-1.5"
+            style={{ color: "#38bdf8" }}
             >
               Scaling Note
             </p>
-            <p
-              className="text-xs leading-relaxed"
-              style={{ color: "var(--text-muted)" }}
-            >
-              {group.scalingNote}
+          <p
+            className="text-[13px] leading-relaxed"
+            style={{ color: "var(--text-muted)" }}
+          >
+            {group.scalingNote}
             </p>
           </div>
         )}
 
         {group.storageCost && (
-          <div
-            className="rounded-xl px-4 py-3 flex items-center justify-between"
-            style={{ background: "var(--bg-muted)", border: `1px solid var(--border)` }}
+        <div
+          className="rounded-xl px-4 py-3 flex items-center justify-between"
+          style={{ background: "var(--bg-muted)", border: `1px solid var(--border)` }}
+        >
+          <span className="text-[13px]" style={{ color: "var(--text-muted)" }}>
+            Storage estimate
+          </span>
+          <span
+            className="text-[13px] font-mono font-medium"
+            style={{ color: C.green }}
           >
-            <span className="text-xs" style={{ color: "var(--text-muted)" }}>
-              Storage estimate
-            </span>
-            <span
-              className="text-xs font-mono font-medium"
-              style={{ color: C.green }}
-            >
-              {group.storageCost}
+            {group.storageCost}
             </span>
           </div>
         )}
@@ -557,13 +557,13 @@ export default function ModelsTab() {
               }}
             >
               <p
-                className="text-sm font-medium"
+                className="text-[15px] font-medium"
                 style={{ color: isActive ? "var(--text)" : "var(--text-muted)" }}
               >
                 {g.label}
               </p>
               <p
-                className="text-[10px] mt-1"
+                className="text-[11px] mt-1"
                 style={{ color: isActive ? color : "var(--text-muted)" }}
               >
                 {g.store}
