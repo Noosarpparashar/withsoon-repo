@@ -132,7 +132,7 @@ function Calculator() {
               <input type="range" min={1_000_000} max={2_000_000_000} step={1_000_000}
                 value={subscribers}
                 onChange={e => { setPreset("custom"); setSubscribers(parseInt(e.target.value)); }}
-                className="flex-1" style={{ accentColor: C.red }} />
+                className="flex-1" style={{ accentColor: C.red, cursor: "ew-resize" }} />
               <span className="text-xs font-mono w-14 text-right" style={{ color: C.amber }}>
                 {subscribers >= 1_000_000_000 ? (subscribers / 1_000_000_000).toFixed(1) + "B"
                   : (subscribers / 1_000_000).toFixed(0) + "M"}
@@ -149,7 +149,7 @@ function Calculator() {
               <input type="range" min={10} max={90} step={5}
                 value={dauRatio}
                 onChange={e => { setPreset("custom"); setDauRatio(parseInt(e.target.value)); }}
-                className="flex-1" style={{ accentColor: C.red }} />
+                className="flex-1" style={{ accentColor: C.red, cursor: "ew-resize" }} />
               <span className="text-xs font-mono w-14 text-right" style={{ color: C.amber }}>{dauRatio}%</span>
             </div>
           </div>
@@ -163,7 +163,7 @@ function Calculator() {
               <input type="range" min={0.5} max={15} step={0.5}
                 value={bitrateMbps}
                 onChange={e => { setPreset("custom"); setBitrateMbps(parseFloat(e.target.value)); }}
-                className="flex-1" style={{ accentColor: C.red }} />
+                className="flex-1" style={{ accentColor: C.red, cursor: "ew-resize" }} />
               <span className="text-xs font-mono w-14 text-right" style={{ color: C.amber }}>{bitrateMbps} Mbps</span>
             </div>
           </div>

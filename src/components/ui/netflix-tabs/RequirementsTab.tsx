@@ -279,10 +279,19 @@ export function RequirementsTab({ onNavigateTab }: { onNavigateTab?: (tab: TabSl
             );
           })}
         </div>
+        <div className="flex justify-end mt-2">
+          <button
+            onClick={() => document.getElementById("req-nfr")?.scrollIntoView({ behavior: "smooth" })}
+            className="text-xs px-3 py-1.5 rounded-lg font-medium"
+            style={{ background: "var(--bg-card)", color: "var(--text-muted)", border: "1px solid var(--border)", cursor: "pointer" }}
+          >
+            Jump to NFRs ↓
+          </button>
+        </div>
       </div>
 
       {/* Non-Functional Requirements */}
-      <div>
+      <div id="req-nfr">
         <h2 className="text-2xl font-bold mb-1" style={{ color: "var(--text)" }}>Non-Functional Requirements</h2>
         <p className="text-sm mb-5" style={{ color: "var(--text-muted)" }}>These are what interviewers test you on in follow-up questions.</p>
         <div className="overflow-x-auto rounded-2xl" style={{ border: "1px solid var(--border)" }}>

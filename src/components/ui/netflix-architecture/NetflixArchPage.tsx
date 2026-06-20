@@ -23,20 +23,20 @@ import type { Role } from "../netflix-tabs/types";
 
 // ── Tab config ─────────────────────────────────────────────────────────────────
 const TABS = [
-  { id: "start-here",     label: "Start Here"     },
-  { id: "requirements",   label: "Requirements"   },
-  { id: "architecture",   label: "Architecture"   },
-  { id: "playback",       label: "Playback"       },
-  { id: "cdn",            label: "CDN"            },
-  { id: "encoding",       label: "Encoding"       },
-  { id: "security",       label: "Security"       },
-  { id: "models",         label: "Data Models"    },
-  { id: "tradeoffs",      label: "Trade-offs"     },
-  { id: "capacity",       label: "Capacity"       },
-  { id: "failures",       label: "Failures"       },
-  { id: "quiz",           label: "Quiz"           },
-  { id: "mock-interview", label: "Mock Interview" },
-  { id: "cheat-sheet",    label: "Cheat Sheet"    },
+  { id: "start-here",     label: "Start Here",     mins: 2  },
+  { id: "requirements",   label: "Requirements",   mins: 5  },
+  { id: "architecture",   label: "Architecture",   mins: 10 },
+  { id: "playback",       label: "Playback",       mins: 8  },
+  { id: "cdn",            label: "CDN",            mins: 6  },
+  { id: "encoding",       label: "Encoding",       mins: 6  },
+  { id: "security",       label: "Security",       mins: 5  },
+  { id: "models",         label: "Data Models",    mins: 7  },
+  { id: "tradeoffs",      label: "Trade-offs",     mins: 7  },
+  { id: "capacity",       label: "Capacity",       mins: 5  },
+  { id: "failures",       label: "Failures",       mins: 8  },
+  { id: "quiz",           label: "Quiz",           mins: 15 },
+  { id: "mock-interview", label: "Mock Interview", mins: 45 },
+  { id: "cheat-sheet",    label: "Cheat Sheet",    mins: 5  },
 ] as const;
 type TabId = typeof TABS[number]["id"];
 
@@ -259,7 +259,7 @@ function ConnectionArrows({ activeNodeId, activeFlowNodeIds }: { activeNodeId?: 
         const cy2 = ty - Math.min(30, Math.abs(fy - ty) * 0.4);
         const midX = (fx + tx) / 2, midY = (fy + ty) / 2;
         return (
-          <g key={i} opacity={isActive || isFlow ? 1 : 0.35}>
+          <g key={i} opacity={(!activeNodeId && !activeFlowNodeIds) ? 1 : (isActive || isFlow ? 1 : 0.35)}>
             <path d={`M ${fx} ${fy} C ${fx + dx * 0.1} ${cy1}, ${tx - dx * 0.1} ${cy2}, ${tx} ${ty - 6}`}
               style={{ fill: "none", stroke: color, strokeWidth: isActive || isFlow ? 1.5 : 0.8 }}
               markerEnd={`url(#${markerId})`} />
@@ -297,18 +297,33 @@ const MM_W = 160, MM_H = 96;
 const MM_SCALE = MM_W / CANVAS_W;
 
 function MiniMap({
-  zoom, pan, containerW, containerH,
-}: { zoom: number; pan: { x: number; y: number }; containerW: number; containerH: number }) {
+  zoom, pan, containerW, containerH, onPan,
+}: { zoom: number; pan: { x: number; y: number }; containerW: number; containerH: number; onPan: (p: { x: number; y: number }) => void }) {
   // Viewport rect in canvas-space
   const vpX = -pan.x / zoom;
   const vpY = -pan.y / zoom;
   const vpW = containerW / zoom;
   const vpH = containerH / zoom;
+
+  const handleClick = (e: React.MouseEvent<HTMLDivElement>) => {
+    const rect = e.currentTarget.getBoundingClientRect();
+    const mmX = e.clientX - rect.left;
+    const mmY = e.clientY - rect.top;
+    // Convert mm click coords to canvas coords, then to pan offset
+    const canvasX = mmX / MM_SCALE;
+    const canvasY = mmY / MM_SCALE;
+    onPan({
+      x: -(canvasX * zoom) + containerW / 2,
+      y: -(canvasY * zoom) + containerH / 2,
+    });
+  };
+
   return (
     <div
-      className="absolute pointer-events-none rounded-lg overflow-hidden"
-      style={{ bottom: 48, left: 8, width: MM_W, height: MM_H, background: "rgba(10,10,10,0.85)", border: `1px solid var(--border)`, zIndex: 5 }}>
-      <svg width={MM_W} height={MM_H}>
+      className="absolute rounded-lg overflow-hidden"
+      onClick={handleClick}
+      style={{ bottom: 48, left: 8, width: MM_W, height: MM_H, background: "rgba(10,10,10,0.85)", border: `1px solid var(--border)`, zIndex: 5, cursor: "crosshair" }}>
+      <svg width={MM_W} height={MM_H} style={{ pointerEvents: "none" }}>
         {/* node dots */}
         {NODES.map(n => {
           const pos = NODE_POSITIONS[n.id];
@@ -326,7 +341,7 @@ function MiniMap({
           width={Math.min(MM_W, vpW * MM_SCALE)} height={Math.min(MM_H, vpH * MM_SCALE)}
           fill="none" stroke={N_RED} strokeWidth={1.5} opacity={0.8} rx={1} />
       </svg>
-      <div className="absolute bottom-0.5 left-1 text-[7px]" style={{ color: "var(--text-faint)" }}>MAP</div>
+      <div className="absolute bottom-0.5 left-1 text-[7px]" style={{ color: "var(--text-faint)", pointerEvents: "none" }}>MAP</div>
     </div>
   );
 }
@@ -413,13 +428,36 @@ function DetailPanel({
               </div>
             )}
           </div>
-          <div className="flex gap-2">
+          <div className="flex gap-2 mb-6">
             <button onClick={onFlowPrev} disabled={activeFlowStep === 0}
               className="flex-1 py-2 rounded-lg text-xs font-medium disabled:opacity-30"
               style={{ background: "var(--border)", color: "var(--text)" }}>← Prev</button>
             <button onClick={onFlowNext} disabled={activeFlowStep === total - 1}
               className="flex-1 py-2 rounded-lg text-xs font-medium disabled:opacity-30"
               style={{ background: N_AMBER, color: "#000" }}>Next →</button>
+          </div>
+
+          {/* Flow transcript — all steps in sequence */}
+          <div style={{ borderTop: `1px solid var(--border)` }}>
+            <p className="text-[9px] font-bold uppercase tracking-widest py-2" style={{ color: "var(--text-faint)" }}>Full transcript</p>
+            <div className="space-y-1 pb-4">
+              {activeFlow.steps.map((s, i) => (
+                <div
+                  key={i}
+                  className="flex items-start gap-2 rounded-lg px-2 py-1.5"
+                  style={{ background: i === activeFlowStep ? N_AMBER + "12" : "transparent", border: `1px solid ${i === activeFlowStep ? N_AMBER + "30" : "transparent"}` }}
+                  aria-current={i === activeFlowStep ? "step" : undefined}
+                >
+                  <span className="w-4 h-4 rounded-full text-[9px] font-bold flex items-center justify-center shrink-0 mt-0.5"
+                    style={{ background: i <= activeFlowStep ? N_AMBER : "var(--border)", color: i <= activeFlowStep ? "#000" : "var(--text-faint)" }}>
+                    {i + 1}
+                  </span>
+                  <span className="text-[11px] leading-snug" style={{ color: i === activeFlowStep ? N_AMBER : i < activeFlowStep ? "var(--text-muted)" : "var(--text-faint)" }}>
+                    {s.name}
+                  </span>
+                </div>
+              ))}
+            </div>
           </div>
         </div>
       </div>
@@ -837,6 +875,7 @@ function ArchitectureTab({
   const [activeFlow, setActiveFlow] = useState<Flow | null>(null);
   const [activeFlowStep, setActiveFlowStep] = useState(0);
   const [cmdOpen, setCmdOpen] = useState(false);
+  const [stepByStep, setStepByStep] = useState(false);
   const [zoom, setZoom] = useState(1);
   const [pan, setPan] = useState({ x: 0, y: 0 });
   const [containerSize, setContainerSize] = useState({ w: 800, h: 600 });
@@ -1046,10 +1085,23 @@ function ArchitectureTab({
             <span className="text-xs w-10 text-center font-medium" style={{ color: "var(--text-muted)" }}>{Math.round(zoom * 100)}%</span>
             <button onClick={() => setZoom(z => Math.min(1.5, z + 0.1))} className="w-9 h-9 rounded-md text-sm font-bold flex items-center justify-center" style={{ background: "var(--border)", color: "var(--text)" }}>+</button>
             <button onClick={() => { setZoom(1); setPan({ x: 0, y: 0 }); }} className="text-xs px-2.5 py-1.5 rounded-md ml-1 font-medium" style={{ background: "var(--border)", color: "var(--text)" }}>Fit</button>
+            <button
+              onClick={() => {
+                const el = canvasContainerRef.current;
+                if (!el) return;
+                if (!document.fullscreenElement) {
+                  el.requestFullscreen?.().catch(() => {});
+                } else {
+                  document.exitFullscreen?.().catch(() => {});
+                }
+              }}
+              title="Toggle fullscreen canvas"
+              className="text-xs px-2.5 py-1.5 rounded-md ml-1 font-medium"
+              style={{ background: "var(--border)", color: "var(--text)" }}>⛶</button>
           </div>
 
           {/* Mini-map */}
-          <MiniMap zoom={zoom} pan={pan} containerW={containerSize.w} containerH={containerSize.h} />
+          <MiniMap zoom={zoom} pan={pan} containerW={containerSize.w} containerH={containerSize.h} onPan={setPan} />
 
           {/* Mobile hint overlay */}
           {!mobileOverlayDismissed && (
@@ -1107,8 +1159,38 @@ function ArchitectureTab({
             </button>
           );
         })}
-        <span className="text-[9px] ml-auto whitespace-nowrap hidden lg:block" style={{ color: "var(--text-faint)" }}>← → navigate steps</span>
+        <div className="flex items-center gap-2 ml-auto shrink-0">
+          <span className="text-[9px] whitespace-nowrap hidden lg:block" style={{ color: "var(--text-faint)" }}>← → navigate steps</span>
+          <button
+            onClick={() => setStepByStep(v => !v)}
+            aria-pressed={stepByStep}
+            title={stepByStep ? "Switch back to animated flow" : "Step-by-step mode (no animation)"}
+            className="text-[9px] px-2 py-1 rounded whitespace-nowrap"
+            style={{ background: stepByStep ? N_AMBER + "18" : "transparent", color: stepByStep ? N_AMBER : "var(--text-faint)", border: `1px solid ${stepByStep ? N_AMBER + "40" : "var(--border)"}` }}>
+            {stepByStep ? "Step mode on" : "Step mode"}
+          </button>
+        </div>
       </div>
+
+      {/* Step-by-step transcript panel (reduced-motion mode) */}
+      {stepByStep && activeFlow && (
+        <div className="hidden lg:flex shrink-0 items-center gap-0 px-4 py-2 overflow-x-auto no-scrollbar" style={{ background: "var(--bg-card)", borderTop: `1px solid ${N_AMBER}25` }}>
+          {activeFlow.steps.map((s, i) => (
+            <div key={i} className="flex items-center gap-0 shrink-0">
+              <div className="flex flex-col items-center gap-0.5 px-2" style={{ minWidth: 72 }}>
+                <div className="w-5 h-5 rounded-full text-[9px] font-bold flex items-center justify-center"
+                  style={{ background: i <= activeFlowStep ? N_AMBER : "var(--border)", color: i <= activeFlowStep ? "#000" : "var(--text-faint)" }}>
+                  {i + 1}
+                </div>
+                <p className="text-[9px] text-center leading-tight" style={{ color: i === activeFlowStep ? N_AMBER : "var(--text-faint)", maxWidth: 64 }}>{s.name}</p>
+              </div>
+              {i < activeFlow.steps.length - 1 && (
+                <div className="h-px w-4 shrink-0" style={{ background: i < activeFlowStep ? N_AMBER : "var(--border)" }} />
+              )}
+            </div>
+          ))}
+        </div>
+      )}
 
       {cmdOpen && <CommandPalette onSelect={id => setSelectedNode(id)} onClose={() => setCmdOpen(false)} />}
     </div>
@@ -1138,6 +1220,80 @@ const DARK_COLORS = {
 };
 
 // ── Main shell ─────────────────────────────────────────────────────────────────
+// ── Scrollable tab shell with back-to-top ────────────────────────────────────
+function ScrollableTabShell({ bg, tabId, feedbackVote, onFeedback, children }: {
+  bg: string;
+  tabId: string;
+  feedbackVote?: "up" | "down";
+  onFeedback?: (tab: string, vote: "up" | "down") => void;
+  children: React.ReactNode;
+}) {
+  const ref = useRef<HTMLDivElement>(null);
+  const [showTop, setShowTop] = useState(false);
+
+  useEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    const handler = () => setShowTop(el.scrollTop > 300);
+    el.addEventListener("scroll", handler, { passive: true });
+    return () => el.removeEventListener("scroll", handler);
+  }, []);
+
+  return (
+    <div ref={ref} className="flex-1 overflow-y-auto relative" style={{ background: bg }}>
+      <div className="px-4 py-6 max-w-4xl mx-auto w-full">
+        {children}
+        {/* Feedback widget */}
+        {onFeedback && (
+          <div className="mt-10 pt-5 flex items-center gap-3" style={{ borderTop: "1px solid var(--border)" }}>
+            <span className="text-[11px]" style={{ color: "var(--text-faint)" }}>Was this tab useful for interview prep?</span>
+            <button
+              onClick={() => onFeedback(tabId, "up")}
+              aria-pressed={feedbackVote === "up"}
+              className="text-sm px-3 py-1.5 rounded-lg transition-all"
+              style={{ background: feedbackVote === "up" ? "#22c55e18" : "var(--bg-card)", border: `1px solid ${feedbackVote === "up" ? "#22c55e" : "var(--border)"}`, cursor: "pointer" }}
+              aria-label="This tab was useful">
+              👍
+            </button>
+            <button
+              onClick={() => onFeedback(tabId, "down")}
+              aria-pressed={feedbackVote === "down"}
+              className="text-sm px-3 py-1.5 rounded-lg transition-all"
+              style={{ background: feedbackVote === "down" ? "#ef444418" : "var(--bg-card)", border: `1px solid ${feedbackVote === "down" ? "#ef4444" : "var(--border)"}`, cursor: "pointer" }}
+              aria-label="This tab needs work">
+              👎
+            </button>
+            {feedbackVote && <span className="text-[10px]" style={{ color: "var(--text-faint)" }}>Thanks for the feedback.</span>}
+          </div>
+        )}
+      </div>
+      {showTop && (
+        <button
+          onClick={() => ref.current?.scrollTo({ top: 0, behavior: "smooth" })}
+          aria-label="Back to top"
+          className="fixed bottom-6 right-6 w-10 h-10 rounded-full flex items-center justify-center shadow-lg z-30 transition-all"
+          style={{ background: "var(--bg-card)", border: "1px solid var(--border)", color: "var(--text-muted)" }}
+        >
+          ↑
+        </button>
+      )}
+    </div>
+  );
+}
+
+function TabHeader({ title, color, textColor, mins }: { title: string; color: string; textColor: string; mins: number }) {
+  return (
+    <div className="flex items-baseline gap-3 mb-6 flex-wrap">
+      <h1 className="text-2xl md:text-3xl font-bold tracking-tight" style={{ color: textColor }}>
+        Netflix System Design: <span style={{ color }}>{title}</span>
+      </h1>
+      <span className="text-[11px] px-2 py-0.5 rounded-full shrink-0" style={{ background: "var(--bg-muted)", color: "var(--text-faint)", border: "1px solid var(--border)" }}>
+        ~{mins} min
+      </span>
+    </div>
+  );
+}
+
 export default function NetflixArchPage({ initialTab }: { initialTab?: string }) {
   const router = useRouter();
   const { resolvedTheme } = useTheme();
@@ -1148,7 +1304,6 @@ export default function NetflixArchPage({ initialTab }: { initialTab?: string })
 
   const resolvedInitial = TABS.find(t => t.id === initialTab) ? (initialTab as TabId) : "architecture";
   const [activeTab, setActiveTab] = useState<TabId>(resolvedInitial);
-  const [tabVisible, setTabVisible] = useState(true);
   const [studiedNodes, setStudiedNodes] = useState<Set<NodeId>>(new Set());
   const [interviewMode, setInterviewMode] = useState(false);
   const [role, setRole] = useState<Role>("Backend Engineer");
@@ -1156,6 +1311,13 @@ export default function NetflixArchPage({ initialTab }: { initialTab?: string })
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [lastStudied, setLastStudied] = useState<string | null>(null);
   const [shareToast, setShareToast] = useState(false);
+  const [completedTabs, setCompletedTabs] = useState<Set<TabId>>(new Set());
+  const [continueTab, setContinueTab] = useState<TabId | null>(null);
+  const [focusMode, setFocusMode] = useState(false);
+  const [notesOpen, setNotesOpen] = useState(false);
+  const [notes, setNotes] = useState<Record<string, string>>({});
+  const [feedback, setFeedback] = useState<Record<string, "up" | "down">>({});
+  const [progressCardOpen, setProgressCardOpen] = useState(false);
   const tabRefs = useRef<(HTMLButtonElement | null)[]>([]);
 
   // Load from localStorage on mount (initialTab from URL already handled by prop)
@@ -1165,6 +1327,14 @@ export default function NetflixArchPage({ initialTab }: { initialTab?: string })
       if (s) setStudiedNodes(new Set(JSON.parse(s)));
       const ls = localStorage.getItem("netflix-last-studied");
       if (ls) setLastStudied(ls);
+      const ct = localStorage.getItem("netflix-completed-tabs");
+      if (ct) setCompletedTabs(new Set(JSON.parse(ct)));
+      const cv = localStorage.getItem("netflix-continue-tab");
+      if (cv && TABS.find(t => t.id === cv)) setContinueTab(cv as TabId);
+      const n = localStorage.getItem("netflix-notes");
+      if (n) setNotes(JSON.parse(n));
+      const fb = localStorage.getItem("netflix-feedback");
+      if (fb) setFeedback(JSON.parse(fb));
     } catch { /* ignore */ }
   }, []);
 
@@ -1173,15 +1343,52 @@ export default function NetflixArchPage({ initialTab }: { initialTab?: string })
     try { localStorage.setItem("netflix-studied", JSON.stringify([...studiedNodes])); } catch { /* ignore */ }
   }, [studiedNodes]);
 
+  // Persist completed tabs
+  useEffect(() => {
+    try { localStorage.setItem("netflix-completed-tabs", JSON.stringify([...completedTabs])); } catch { /* ignore */ }
+  }, [completedTabs]);
+
+  // Persist notes
+  useEffect(() => {
+    try { localStorage.setItem("netflix-notes", JSON.stringify(notes)); } catch { /* ignore */ }
+  }, [notes]);
+
+  // Persist feedback
+  useEffect(() => {
+    try { localStorage.setItem("netflix-feedback", JSON.stringify(feedback)); } catch { /* ignore */ }
+  }, [feedback]);
+
+  const handleFeedback = useCallback((tab: string, vote: "up" | "down") => {
+    setFeedback(prev => ({ ...prev, [tab]: vote }));
+  }, []);
+
+  const handleExportNotes = useCallback(() => {
+    const lines: string[] = [`# Netflix System Design — My Notes\n`];
+    TABS.forEach(tab => {
+      const n = notes[tab.id];
+      if (n?.trim()) {
+        lines.push(`## ${tab.label}\n`);
+        lines.push(n.trim());
+        lines.push("");
+      }
+    });
+    if (lines.length <= 1) return;
+    const blob = new Blob([lines.join("\n")], { type: "text/markdown" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url; a.download = "netflix-design-notes.md"; a.click();
+    URL.revokeObjectURL(url);
+  }, [notes]);
+
   const switchTab = useCallback((id: TabId) => {
     if (id === activeTab) return;
-    setTabVisible(false);
-    setTimeout(() => {
-      setActiveTab(id);
-      setTabVisible(true);
-      router.push(`/system-design/netflix/${id}`);
-      try { localStorage.setItem("netflix-active-tab", id); } catch { /* ignore */ }
-    }, 80);
+    // Mark the tab we're leaving as visited
+    setCompletedTabs(prev => { const n = new Set(prev); n.add(activeTab); return n; });
+    try { localStorage.setItem("netflix-continue-tab", id); } catch { /* ignore */ }
+    setContinueTab(id);
+    setActiveTab(id);
+    router.push(`/system-design/netflix/${id}`);
+    try { localStorage.setItem("netflix-active-tab", id); } catch { /* ignore */ }
   }, [activeTab, router]);
 
   const handleMarkStudied = useCallback((id: NodeId) => {
@@ -1207,8 +1414,8 @@ export default function NetflixArchPage({ initialTab }: { initialTab?: string })
 
   return (
     <div className={`${isDark ? "dark" : ""} flex flex-col`} style={{ height: "100vh", background: T.bg, color: T.text, fontFamily: C.sans, overflow: "hidden" }}>
-      {/* ── Topbar ── */}
-      <div className="shrink-0 z-40" style={{ background: T.bg, borderBottom: `1px solid ${T.border}` }}>
+      {/* ── Topbar (hidden in focus mode) ── */}
+      <div className="shrink-0 z-40" style={{ background: T.bg, borderBottom: `1px solid ${T.border}`, display: focusMode ? "none" : undefined }}>
         {/* Row 1: logo + controls */}
         <div className="flex items-center gap-3 px-4 h-11">
           <Link href="/" className="flex items-center gap-1.5 shrink-0" style={{ textDecoration: "none" }}>
@@ -1227,21 +1434,43 @@ export default function NetflixArchPage({ initialTab }: { initialTab?: string })
 
           <div className="flex-1" />
 
-          {lastStudied && (
+          {continueTab && continueTab !== activeTab && (
+            <button
+              onClick={() => switchTab(continueTab)}
+              className="text-[10px] hidden lg:flex items-center gap-1 px-2 py-1 rounded-md transition-colors"
+              style={{ color: T.faint, border: `1px solid ${T.border}`, background: "transparent", cursor: "pointer" }}
+              aria-label={`Continue where you left off: ${TABS.find(t => t.id === continueTab)?.label}`}
+            >
+              ↩ Continue: {TABS.find(t => t.id === continueTab)?.label}
+            </button>
+          )}
+          {lastStudied && !continueTab && (
             <span className="text-[10px] hidden lg:block" style={{ color: T.faint }}>Last studied {lastStudied}</span>
           )}
           <span className="text-[10px] hidden sm:block" style={{ color: T.muted }}>
             {studiedCount}/{NODES.length} studied
           </span>
 
-          <button onClick={() => setInterviewMode(v => !v)}
-            className="min-h-[40px] text-xs px-3 py-2 rounded-lg font-medium transition-all"
+          <button onClick={() => setProgressCardOpen(v => !v)}
+            className="min-h-[40px] text-xs px-3 py-2 rounded-lg font-medium hidden sm:block cursor-pointer"
+            style={{ background: "transparent", color: T.muted, border: `1px solid ${T.border}` }}
+            title="View progress card">
+            Progress
+          </button>
+          <button onClick={() => setNotesOpen(v => !v)}
+            className="min-h-[40px] text-xs px-3 py-2 rounded-lg font-medium hidden sm:block cursor-pointer"
+            style={{ background: notesOpen ? N_RED + "18" : "transparent", color: notesOpen ? N_RED : T.muted, border: `1px solid ${notesOpen ? N_RED + "40" : T.border}` }}
+            title="Open notes panel">
+            Notes
+          </button>
+          <button onClick={() => { setInterviewMode(v => !v); setFocusMode(v => !v); }}
+            className="min-h-[40px] text-xs px-3 py-2 rounded-lg font-medium transition-all cursor-pointer"
             style={{ background: interviewMode ? N_RED + "18" : "transparent", color: interviewMode ? N_RED : T.muted, border: `1px solid ${interviewMode ? N_RED + "40" : T.border}` }}>
-            Interview
+            {interviewMode ? "Exit Focus" : "Focus"}
           </button>
 
           <button onClick={handleShare}
-            className="min-h-[40px] text-xs px-3 py-2 rounded-lg hidden sm:block"
+            className="min-h-[40px] text-xs px-3 py-2 rounded-lg hidden sm:block cursor-pointer"
             style={{ background: "transparent", border: `1px solid ${T.border}`, color: shareToast ? N_GREEN : T.muted }}>
             {shareToast ? "✓ Copied link" : "Share"}
           </button>
@@ -1250,7 +1479,7 @@ export default function NetflixArchPage({ initialTab }: { initialTab?: string })
             onClick={() => setShortcutsOpen(true)}
             aria-label="Open keyboard shortcuts"
             title="Keyboard shortcuts"
-            className="min-h-[40px] text-xs px-3 py-2 rounded-lg hidden sm:flex items-center gap-1.5"
+            className="min-h-[40px] text-xs px-3 py-2 rounded-lg hidden sm:flex items-center gap-1.5 cursor-pointer"
             style={{ background: "transparent", border: `1px solid ${T.border}`, color: T.muted }}>
             <span>?</span>
             <span className="hidden lg:inline">Shortcuts</span>
@@ -1296,8 +1525,12 @@ export default function NetflixArchPage({ initialTab }: { initialTab?: string })
                         tabRefs.current[idx - 1]?.focus();
                       }
                     }}
-                    className="relative px-3 pb-2 pt-1 font-medium transition-colors shrink-0 flex items-end"
+                    title={`~${tab.mins} min`}
+                    className="relative px-3 pb-2 pt-1 font-medium transition-colors shrink-0 flex items-end gap-1 cursor-pointer"
                     style={{ fontSize: 13, color: activeTab === tab.id ? T.text : T.muted, height: 40 }}>
+                    {completedTabs.has(tab.id) && tab.id !== activeTab && (
+                      <span className="w-1 h-1 rounded-full mb-3 shrink-0" style={{ background: N_GREEN }} />
+                    )}
                     {tab.label}
                     {activeTab === tab.id && (
                       <span className="absolute bottom-0 left-0 right-0 h-0.5 rounded-full"
@@ -1320,11 +1553,11 @@ export default function NetflixArchPage({ initialTab }: { initialTab?: string })
               return <>
                 <span className="text-[10px] hidden xl:block" style={{ color: T.faint }}>{idx + 1}/{TABS.length}</span>
                 {prev && (
-                  <button onClick={() => switchTab(prev.id)} className="text-[10px] px-2.5 py-1.5 min-h-[32px] rounded-md transition-colors whitespace-nowrap"
+                  <button onClick={() => switchTab(prev.id)} className="text-[10px] px-2.5 py-1.5 min-h-[32px] rounded-md transition-colors whitespace-nowrap cursor-pointer"
                     style={{ color: T.muted, border: `1px solid ${T.border}`, background: T.bg }}>← {prev.label}</button>
                 )}
                 {next && (
-                  <button onClick={() => switchTab(next.id)} className="text-[10px] px-2.5 py-1.5 min-h-[32px] rounded-md transition-colors whitespace-nowrap"
+                  <button onClick={() => switchTab(next.id)} className="text-[10px] px-2.5 py-1.5 min-h-[32px] rounded-md transition-colors whitespace-nowrap cursor-pointer"
                     style={{ color: T.muted, border: `1px solid ${T.border}`, background: T.bg }}>{next.label} →</button>
                 )}
               </>;
@@ -1378,66 +1611,61 @@ export default function NetflixArchPage({ initialTab }: { initialTab?: string })
         </div>
       )}
 
-      {/* ── Tab content with crossfade ── */}
-      <div className="flex-1 overflow-hidden flex flex-col"
-        style={{ opacity: tabVisible ? 1 : 0, transition: "opacity 0.1s ease" }}>
+      {/* ── Tab content ── */}
+      <div className="flex-1 overflow-hidden flex flex-col">
         {activeTab === "start-here"     && (
-          <div className="flex-1 overflow-y-auto px-4 py-6 max-w-4xl mx-auto w-full" style={{ background: T.bg }}>
-            <h1 className="text-2xl md:text-3xl font-bold tracking-tight mb-6" style={{ color: T.text }}>
-              Netflix System Design: <span style={{ color: N_RED }}>Start Here</span>
-            </h1>
+          <ScrollableTabShell bg={T.bg} tabId={activeTab} feedbackVote={feedback[activeTab]} onFeedback={handleFeedback}>
+            <TabHeader title="Start Here" color={N_RED} textColor={T.text} mins={TABS.find(t => t.id === "start-here")!.mins} />
             <StartHereTab
               role={role}
               onRoleChange={setRole}
               onNavigateTab={(tab) => switchTab(tab as TabId)}
             />
-          </div>
+          </ScrollableTabShell>
         )}
         {activeTab === "requirements"   && (
-          <div className="flex-1 overflow-y-auto px-4 py-6 max-w-4xl mx-auto w-full" style={{ background: T.bg }}>
-            <h1 className="text-2xl md:text-3xl font-bold tracking-tight mb-6" style={{ color: T.text }}>
-              Netflix System Design: <span style={{ color: N_RED }}>Requirements</span>
-            </h1>
+          <ScrollableTabShell bg={T.bg} tabId={activeTab} feedbackVote={feedback[activeTab]} onFeedback={handleFeedback}>
+            <TabHeader title="Requirements" color={N_RED} textColor={T.text} mins={TABS.find(t => t.id === "requirements")!.mins} />
             <RequirementsTab />
-          </div>
+          </ScrollableTabShell>
         )}
         {activeTab === "architecture"   && (
           <>
             <h1 className="sr-only">Netflix System Design: Architecture</h1>
+            {completedTabs.size === 0 && (
+              <div className="hidden lg:flex absolute top-0 left-0 right-0 items-center gap-3 px-4 py-2 z-10" style={{ background: N_RED + "ee", backdropFilter: "blur(4px)" }}>
+                <span className="text-[11px] font-bold text-white">First time here?</span>
+                <span className="text-[11px] text-white opacity-90">Start with the &ldquo;Start Here&rdquo; tab — it picks your track and tells you which tabs matter for your role.</span>
+                <button onClick={() => switchTab("start-here")} className="text-[11px] px-3 py-1 rounded-lg font-bold shrink-0 cursor-pointer" style={{ background: "rgba(255,255,255,0.2)", color: "#fff", border: "1px solid rgba(255,255,255,0.4)" }}>Go to Start Here →</button>
+                <button onClick={() => setCompletedTabs(prev => { const n = new Set(prev); n.add("architecture"); return n; })} className="text-[10px] px-2 py-1 rounded ml-auto cursor-pointer" style={{ color: "rgba(255,255,255,0.7)", background: "transparent", border: "none" }}>Dismiss</button>
+              </div>
+            )}
             <ArchitectureTab studiedNodes={studiedNodes} onMarkStudied={handleMarkStudied} interviewMode={interviewMode} onNavigatePlayback={() => switchTab("playback")} />
           </>
         )}
         {activeTab === "playback"       && (
-          <div className="flex-1 overflow-y-auto px-4 py-6 max-w-4xl mx-auto w-full" style={{ background: T.bg }}>
-            <h1 className="text-2xl md:text-3xl font-bold tracking-tight mb-6" style={{ color: T.text }}>
-              Netflix System Design: <span style={{ color: N_RED }}>Playback</span>
-            </h1>
+          <ScrollableTabShell bg={T.bg} tabId={activeTab} feedbackVote={feedback[activeTab]} onFeedback={handleFeedback}>
+            <TabHeader title="Playback" color={N_RED} textColor={T.text} mins={TABS.find(t => t.id === "playback")!.mins} />
             <PlaybackTab onNavigateTab={(tab) => switchTab(tab as TabId)} />
-          </div>
+          </ScrollableTabShell>
         )}
         {activeTab === "cdn"            && (
-          <div className="flex-1 overflow-y-auto px-4 py-6 max-w-4xl mx-auto w-full" style={{ background: T.bg }}>
-            <h1 className="text-2xl md:text-3xl font-bold tracking-tight mb-6" style={{ color: T.text }}>
-              Netflix System Design: <span style={{ color: N_RED }}>CDN &amp; Open Connect</span>
-            </h1>
+          <ScrollableTabShell bg={T.bg} tabId={activeTab} feedbackVote={feedback[activeTab]} onFeedback={handleFeedback}>
+            <TabHeader title="CDN & Open Connect" color={N_RED} textColor={T.text} mins={TABS.find(t => t.id === "cdn")!.mins} />
             <CDNTab onNavigateTab={(tab) => switchTab(tab as TabId)} />
-          </div>
+          </ScrollableTabShell>
         )}
         {activeTab === "encoding"       && (
-          <div className="flex-1 overflow-y-auto px-4 py-6 max-w-4xl mx-auto w-full" style={{ background: T.bg }}>
-            <h1 className="text-2xl md:text-3xl font-bold tracking-tight mb-6" style={{ color: T.text }}>
-              Netflix System Design: <span style={{ color: N_RED }}>Encoding Pipeline</span>
-            </h1>
+          <ScrollableTabShell bg={T.bg} tabId={activeTab} feedbackVote={feedback[activeTab]} onFeedback={handleFeedback}>
+            <TabHeader title="Encoding Pipeline" color={N_RED} textColor={T.text} mins={TABS.find(t => t.id === "encoding")!.mins} />
             <EncodingTab onNavigateTab={(tab) => switchTab(tab as TabId)} />
-          </div>
+          </ScrollableTabShell>
         )}
         {activeTab === "security"       && (
-          <div className="flex-1 overflow-y-auto px-4 py-6 max-w-4xl mx-auto w-full" style={{ background: T.bg }}>
-            <h1 className="text-2xl md:text-3xl font-bold tracking-tight mb-6" style={{ color: T.text }}>
-              Netflix System Design: <span style={{ color: N_RED }}>Security &amp; DRM</span>
-            </h1>
+          <ScrollableTabShell bg={T.bg} tabId={activeTab} feedbackVote={feedback[activeTab]} onFeedback={handleFeedback}>
+            <TabHeader title="Security & DRM" color={N_RED} textColor={T.text} mins={TABS.find(t => t.id === "security")!.mins} />
             <SecurityTab onNavigateTab={(tab) => switchTab(tab as TabId)} />
-          </div>
+          </ScrollableTabShell>
         )}
         {activeTab === "models"         && (
           <>
@@ -1458,12 +1686,10 @@ export default function NetflixArchPage({ initialTab }: { initialTab?: string })
           </>
         )}
         {activeTab === "failures"       && (
-          <div className="flex-1 overflow-y-auto px-4 py-6 max-w-4xl mx-auto w-full" style={{ background: T.bg }}>
-            <h1 className="text-2xl md:text-3xl font-bold tracking-tight mb-6" style={{ color: T.text }}>
-              Netflix System Design: <span style={{ color: N_RED }}>Failure Scenarios</span>
-            </h1>
+          <ScrollableTabShell bg={T.bg} tabId={activeTab} feedbackVote={feedback[activeTab]} onFeedback={handleFeedback}>
+            <TabHeader title="Failure Scenarios" color={N_RED} textColor={T.text} mins={TABS.find(t => t.id === "failures")!.mins} />
             <FailuresTab />
-          </div>
+          </ScrollableTabShell>
         )}
         {activeTab === "quiz"           && (
           <>
@@ -1472,24 +1698,122 @@ export default function NetflixArchPage({ initialTab }: { initialTab?: string })
           </>
         )}
         {activeTab === "mock-interview" && (
-          <div className="flex-1 overflow-y-auto px-4 py-6 max-w-4xl mx-auto w-full" style={{ background: T.bg }}>
-            <h1 className="text-2xl md:text-3xl font-bold tracking-tight mb-6" style={{ color: T.text }}>
-              Netflix System Design: <span style={{ color: N_RED }}>Mock Interview</span>
-            </h1>
-            <MockInterviewTab role="Backend Engineer" />
-          </div>
+          <ScrollableTabShell bg={T.bg} tabId={activeTab} feedbackVote={feedback[activeTab]} onFeedback={handleFeedback}>
+            <TabHeader title="Mock Interview" color={N_RED} textColor={T.text} mins={TABS.find(t => t.id === "mock-interview")!.mins} />
+            <MockInterviewTab role={role} />
+          </ScrollableTabShell>
         )}
         {activeTab === "cheat-sheet"    && (
-          <div className="flex-1 overflow-y-auto px-4 py-6 max-w-4xl mx-auto w-full" style={{ background: T.bg }}>
-            <h1 className="text-2xl md:text-3xl font-bold tracking-tight mb-6" style={{ color: T.text }}>
-              Netflix System Design: <span style={{ color: N_RED }}>Cheat Sheet</span>
-            </h1>
-            <CheatSheetTab role="Backend Engineer" />
-          </div>
+          <ScrollableTabShell bg={T.bg} tabId={activeTab} feedbackVote={feedback[activeTab]} onFeedback={handleFeedback}>
+            <TabHeader title="Cheat Sheet" color={N_RED} textColor={T.text} mins={TABS.find(t => t.id === "cheat-sheet")!.mins} />
+            <CheatSheetTab role={role} />
+          </ScrollableTabShell>
         )}
       </div>
 
       {shortcutsOpen && <ShortcutsModal onClose={() => setShortcutsOpen(false)} />}
+
+      {/* Focus mode exit strip */}
+      {focusMode && (
+        <div className="fixed top-0 left-0 right-0 z-50 flex items-center justify-between px-4 py-1.5"
+          style={{ background: N_RED + "cc", backdropFilter: "blur(4px)" }}>
+          <span className="text-[11px] font-bold text-white">Focus Mode — {TABS.find(t => t.id === activeTab)?.label}</span>
+          <button
+            onClick={() => { setFocusMode(false); setInterviewMode(false); }}
+            className="text-[11px] px-3 py-1 rounded font-bold text-white"
+            style={{ background: "rgba(255,255,255,0.2)", border: "1px solid rgba(255,255,255,0.3)" }}>
+            Exit Focus
+          </button>
+        </div>
+      )}
+
+      {/* Notes panel */}
+      {notesOpen && (
+        <div className="fixed inset-y-0 right-0 z-[60] flex flex-col shadow-2xl" style={{ width: 320, background: T.bg, borderLeft: `1px solid ${T.border}` }}>
+          <div className="flex items-center justify-between px-4 py-3 shrink-0" style={{ borderBottom: `1px solid ${T.border}` }}>
+            <span className="text-sm font-bold" style={{ color: T.text }}>Notes — {TABS.find(t => t.id === activeTab)?.label}</span>
+            <div className="flex gap-2">
+              <button onClick={handleExportNotes} className="text-[10px] px-2 py-1 rounded font-medium" style={{ background: T.border, color: T.muted }}>Export .md</button>
+              <button onClick={() => setNotesOpen(false)} style={{ color: T.muted, fontSize: 16 }}>✕</button>
+            </div>
+          </div>
+          <div className="flex-1 p-3 flex flex-col gap-2">
+            <textarea
+              value={notes[activeTab] ?? ""}
+              onChange={e => setNotes(prev => ({ ...prev, [activeTab]: e.target.value }))}
+              placeholder={`Notes for ${TABS.find(t => t.id === activeTab)?.label}…\n\nTip: jot down concepts you want to re-read, interview phrases that work, or things to look up.`}
+              className="flex-1 w-full resize-none rounded-lg p-3 text-xs leading-relaxed"
+              style={{ background: T.card, border: `1px solid ${T.border}`, color: T.text, fontFamily: C.mono, outline: "none" }}
+            />
+            <div className="flex items-center justify-between">
+              <span className="text-[10px]" style={{ color: T.faint }}>{(notes[activeTab] ?? "").length} chars</span>
+              <button onClick={() => setNotes(prev => ({ ...prev, [activeTab]: "" }))} className="text-[10px]" style={{ color: T.faint }}>Clear</button>
+            </div>
+          </div>
+          <div className="shrink-0 px-3 pb-3 space-y-1" style={{ borderTop: `1px solid ${T.border}`, paddingTop: 8 }}>
+            <p className="text-[9px] font-bold uppercase tracking-widest mb-2" style={{ color: T.faint }}>Other tabs with notes</p>
+            {TABS.filter(t => notes[t.id]?.trim() && t.id !== activeTab).map(t => (
+              <button key={t.id} onClick={() => switchTab(t.id as TabId)} className="w-full text-left text-[10px] px-2 py-1 rounded" style={{ background: T.card, color: T.muted, border: `1px solid ${T.border}` }}>
+                {t.label} ({(notes[t.id] ?? "").length} chars)
+              </button>
+            ))}
+            {TABS.filter(t => notes[t.id]?.trim()).length === 0 && (
+              <p className="text-[10px]" style={{ color: T.faint }}>No notes yet on any tab.</p>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* Progress card */}
+      {progressCardOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center" style={{ background: "rgba(0,0,0,0.6)" }}
+          onClick={() => setProgressCardOpen(false)}>
+          <div className="rounded-2xl p-6 w-full max-w-sm mx-4" style={{ background: T.card, border: `1px solid ${T.border}` }}
+            onClick={e => e.stopPropagation()}>
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-base font-bold" style={{ color: T.text }}>Your Progress</h2>
+              <button onClick={() => setProgressCardOpen(false)} style={{ color: T.muted, fontSize: 16 }}>✕</button>
+            </div>
+            <div className="grid grid-cols-3 gap-3 mb-4">
+              {[
+                { label: "Tabs visited", value: completedTabs.size, total: TABS.length, color: N_RED },
+                { label: "Nodes studied", value: studiedCount, total: NODES.length, color: N_GREEN },
+                { label: "Notes taken", value: TABS.filter(t => notes[t.id]?.trim()).length, total: TABS.length, color: N_AMBER },
+              ].map(({ label, value, total, color }) => (
+                <div key={label} className="rounded-xl p-3 text-center" style={{ background: T.bg, border: `1px solid ${T.border}` }}>
+                  <div className="text-2xl font-black font-mono mb-0.5" style={{ color }}>{value}<span className="text-sm font-normal" style={{ color: T.faint }}>/{total}</span></div>
+                  <div className="text-[9px]" style={{ color: T.faint }}>{label}</div>
+                </div>
+              ))}
+            </div>
+            <div className="space-y-1 mb-4">
+              {TABS.map(tab => {
+                const visited = completedTabs.has(tab.id) || tab.id === activeTab;
+                const hasFb = feedback[tab.id];
+                return (
+                  <div key={tab.id} className="flex items-center gap-2 rounded-lg px-3 py-1.5" style={{ background: visited ? N_RED + "08" : "transparent", border: `1px solid ${visited ? N_RED + "20" : T.border}` }}>
+                    <span className="w-3 h-3 rounded-full shrink-0" style={{ background: visited ? N_RED : T.border }} />
+                    <span className="text-xs flex-1" style={{ color: visited ? T.text : T.faint }}>{tab.label}</span>
+                    {hasFb && <span className="text-[10px]">{hasFb === "up" ? "👍" : "👎"}</span>}
+                    {notes[tab.id]?.trim() && <span className="text-[9px] px-1.5 py-0.5 rounded" style={{ background: N_AMBER + "18", color: N_AMBER }}>notes</span>}
+                  </div>
+                );
+              })}
+            </div>
+            <button
+              onClick={() => {
+                const pct = Math.round((completedTabs.size / TABS.length) * 100);
+                const txt = `Netflix System Design Progress — withsoon.com\n${completedTabs.size}/${TABS.length} tabs visited • ${studiedCount}/${NODES.length} nodes studied • ${pct}% complete\nhttps://withsoon.com/system-design/netflix`;
+                navigator.clipboard.writeText(txt).catch(() => {});
+                setProgressCardOpen(false);
+              }}
+              className="w-full py-2.5 rounded-xl text-sm font-bold"
+              style={{ background: N_RED, color: "#fff", border: "none", cursor: "pointer" }}>
+              Copy progress to share
+            </button>
+          </div>
+        </div>
+      )}
 
       <style>{`
         ::-webkit-scrollbar { width: 4px; height: 4px; }

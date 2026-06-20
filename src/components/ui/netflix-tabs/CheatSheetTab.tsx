@@ -14,9 +14,9 @@ function CopyButton({ text, label = "Copy" }: { text: string; label?: string }) 
   );
 }
 
-function Section({ title, color, children }: { title: string; color: string; children: React.ReactNode }) {
+function Section({ id, title, color, children }: { id?: string; title: string; color: string; children: React.ReactNode }) {
   return (
-    <div className="rounded-xl overflow-hidden" style={{ border: "1px solid var(--border)" }}>
+    <div id={id} className="rounded-xl overflow-hidden" style={{ border: "1px solid var(--border)", scrollMarginTop: 56 }}>
       <div className="px-4 py-2.5" style={{ background: `${color}15`, borderBottom: `2px solid ${color}` }}>
         <h3 className="text-xs font-black uppercase tracking-wider" style={{ color }}>{title}</h3>
       </div>
@@ -243,9 +243,18 @@ function CheatSheetTab({ role, onNavigateTab }: { role: Role; onNavigateTab?: (t
   void onNavigateTab;
 
   return (
-    <div className="space-y-5">
-      {/* Role toggle + action buttons */}
-      <div className="rounded-xl p-4" style={{ background: "var(--bg-card)", border: "1px solid var(--border)" }}>
+    <div className="space-y-5 print:space-y-3">
+      <style>{`
+        @media print {
+          body * { visibility: hidden; }
+          .cheatsheet-printable, .cheatsheet-printable * { visibility: visible; }
+          .cheatsheet-printable { position: absolute; top: 0; left: 0; right: 0; padding: 16px; font-size: 10px; }
+          .no-print { display: none !important; }
+          @page { margin: 12mm; size: A4; }
+        }
+      `}</style>
+      {/* Role toggle */}
+      <div className="rounded-xl p-4 no-print" style={{ background: "var(--bg-card)", border: "1px solid var(--border)" }}>
         <div className="flex items-center gap-3 flex-wrap">
           <h2 className="text-xl font-bold" style={{ color: "var(--text)" }}>Cheat Sheet</h2>
           <p className="text-xs flex-1" style={{ color: "var(--text-faint)" }}>Review, then close — the interview tests recall, not reading.</p>
@@ -261,37 +270,80 @@ function CheatSheetTab({ role, onNavigateTab }: { role: Role; onNavigateTab?: (t
             ))}
           </div>
         </div>
-        {/* Action toolbar */}
-        <div className="flex flex-wrap gap-2 mt-3 pt-3" style={{ borderTop: "1px solid var(--border)" }}>
-          <button
-            onClick={handleCopyMarkdown}
-            className="text-xs px-3 py-1.5 rounded-lg font-medium flex items-center gap-1.5"
-            style={{ background: copyMdState ? "#22c55e20" : "var(--bg)", color: copyMdState ? "#22c55e" : "var(--text-muted)", border: "1px solid var(--border)", cursor: "pointer" }}
-            aria-label="Copy cheat sheet as Markdown"
-          >
-            {copyMdState ? "✓ Copied!" : "📋 Copy as Markdown"}
-          </button>
-          <button
-            onClick={handleDownload}
-            className="text-xs px-3 py-1.5 rounded-lg font-medium flex items-center gap-1.5"
-            style={{ background: "var(--bg)", color: "var(--text-muted)", border: "1px solid var(--border)", cursor: "pointer" }}
-            aria-label="Download cheat sheet as Markdown file"
-          >
-            ⬇ Download .md
-          </button>
-          <button
-            onClick={handlePrint}
-            className="text-xs px-3 py-1.5 rounded-lg font-medium flex items-center gap-1.5"
-            style={{ background: "var(--bg)", color: "var(--text-muted)", border: "1px solid var(--border)", cursor: "pointer" }}
-            aria-label="Print cheat sheet"
-          >
-            🖨 Print
-          </button>
-        </div>
       </div>
 
+      {/* Sticky action toolbar */}
+      <div className="no-print sticky top-0 z-20 flex flex-wrap gap-2 px-1 py-2 -mx-1" style={{ background: "var(--bg)", borderBottom: "1px solid var(--border)" }}>
+        <button
+          onClick={handleCopyMarkdown}
+          className="text-xs px-3 py-1.5 rounded-lg font-medium flex items-center gap-1.5"
+          style={{ background: copyMdState ? "#22c55e20" : "var(--bg-card)", color: copyMdState ? "#22c55e" : "var(--text-muted)", border: "1px solid var(--border)", cursor: "pointer" }}
+          aria-label="Copy cheat sheet as Markdown"
+        >
+          {copyMdState ? "✓ Copied!" : "📋 Copy Markdown"}
+        </button>
+        <button
+          onClick={handleDownload}
+          className="text-xs px-3 py-1.5 rounded-lg font-medium flex items-center gap-1.5"
+          style={{ background: "var(--bg-card)", color: "var(--text-muted)", border: "1px solid var(--border)", cursor: "pointer" }}
+          aria-label="Download cheat sheet as Markdown file"
+        >
+          ⬇ Download .md
+        </button>
+        <button
+          onClick={handlePrint}
+          className="text-xs px-3 py-1.5 rounded-lg font-medium flex items-center gap-1.5"
+          style={{ background: "var(--bg-card)", color: "var(--text-muted)", border: "1px solid var(--border)", cursor: "pointer" }}
+          aria-label="Print cheat sheet"
+        >
+          🖨 Print
+        </button>
+        <div className="hidden lg:flex items-center gap-1 ml-2 pl-2" style={{ borderLeft: "1px solid var(--border)" }}>
+          {(isBackend
+            ? [
+                { label: "Openings", id: "cs-openings" },
+                { label: "Services", id: "cs-services" },
+                { label: "APIs", id: "cs-apis" },
+                { label: "DBs", id: "cs-dbs" },
+                { label: "Failures", id: "cs-failures" },
+                { label: "Scale", id: "cs-scale" },
+              ]
+            : [
+                { label: "Openings", id: "cs-openings" },
+                { label: "Events", id: "cs-events" },
+                { label: "Kafka", id: "cs-kafka" },
+                { label: "Pipeline", id: "cs-pipeline" },
+                { label: "Lakehouse", id: "cs-lakehouse" },
+                { label: "Scale", id: "cs-scale" },
+              ]
+          ).map(({ label, id }) => (
+            <button
+              key={id}
+              onClick={() => document.getElementById(id)?.scrollIntoView({ behavior: "smooth" })}
+              className="text-[11px] px-2 py-1 rounded font-medium"
+              style={{ background: "transparent", color: "var(--text-faint)", border: "none", cursor: "pointer" }}
+              onMouseEnter={e => (e.currentTarget.style.color = color)}
+              onMouseLeave={e => (e.currentTarget.style.color = "var(--text-faint)")}
+            >
+              {label}
+            </button>
+          ))}
+        </div>
+        <div className="flex-1" />
+        <button
+          onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
+          className="text-xs px-3 py-1.5 rounded-lg font-medium"
+          style={{ background: "var(--bg-card)", color: "var(--text-faint)", border: "1px solid var(--border)", cursor: "pointer" }}
+          aria-label="Back to top"
+        >
+          ↑ Top
+        </button>
+      </div>
+
+      {/* Printable content */}
+      <div className="cheatsheet-printable space-y-5">
       {/* Opening scripts */}
-      <Section title="Opening Scripts" color={color}>
+      <Section id="cs-openings" title="Opening Scripts" color={color}>
         <div className="space-y-3">
           {[
             { label: "30-second opening", text: opening30s },
@@ -311,13 +363,13 @@ function CheatSheetTab({ role, onNavigateTab }: { role: Role; onNavigateTab?: (t
       {/* Role-specific content */}
       {isBackend ? (
         <>
-          <Section title="Main Services (10)" color={color}>
+          <Section id="cs-services" title="Main Services (10)" color={color}>
             <div className="space-y-0">
               {BACKEND_SERVICES.map((s) => <Row key={s.name} label={s.name} value={s.role} />)}
             </div>
           </Section>
 
-          <Section title="API List (5 core)" color={color}>
+          <Section id="cs-apis" title="API List (5 core)" color={color}>
             <div className="space-y-1">
               {BACKEND_APIS.map((a) => (
                 <div key={a.path} className="flex items-start gap-2 py-1" style={{ borderBottom: "1px solid var(--border)" }}>
@@ -329,7 +381,7 @@ function CheatSheetTab({ role, onNavigateTab }: { role: Role; onNavigateTab?: (t
             </div>
           </Section>
 
-          <Section title="Database Choices" color={color}>
+          <Section id="cs-dbs" title="Database Choices" color={color}>
             <div className="space-y-0">
               {BACKEND_DBS.map((d) => (
                 <div key={d.name} className="py-2" style={{ borderBottom: "1px solid var(--border)" }}>
@@ -364,7 +416,7 @@ function CheatSheetTab({ role, onNavigateTab }: { role: Role; onNavigateTab?: (t
             </div>
           </Section>
 
-          <Section title="Top 5 Failures" color={color}>
+          <Section id="cs-failures" title="Top 5 Failures" color={color}>
             <div className="space-y-2">
               {BACKEND_FAILURES_TOP.map((f) => (
                 <div key={f.failure} className="py-1" style={{ borderBottom: "1px solid var(--border)" }}>
@@ -390,7 +442,7 @@ function CheatSheetTab({ role, onNavigateTab }: { role: Role; onNavigateTab?: (t
             </div>
           </Section>
 
-          <Section title="Scale Numbers (memorize the derivation, not the number)" color={color}>
+          <Section id="cs-scale" title="Scale Numbers (memorize the derivation, not the number)" color={color}>
             <div className="font-mono space-y-0">
               {[
                 ["300M subscribers × 0.73", "= 220M DAU"],
@@ -411,7 +463,7 @@ function CheatSheetTab({ role, onNavigateTab }: { role: Role; onNavigateTab?: (t
         </>
       ) : (
         <>
-          <Section title="17 Event Types" color={color}>
+          <Section id="cs-events" title="17 Event Types" color={color}>
             <div className="flex flex-wrap gap-1.5">
               {DATA_EVENTS.map((e) => (
                 <span key={e} className="text-[11px] px-2 py-0.5 rounded-full font-mono"
@@ -438,7 +490,7 @@ function CheatSheetTab({ role, onNavigateTab }: { role: Role; onNavigateTab?: (t
             </div>
           </Section>
 
-          <Section title="Kafka Topics (6)" color={color}>
+          <Section id="cs-kafka" title="Kafka Topics (6)" color={color}>
             <div className="space-y-1">
               {DATA_KAFKA_TOPICS.map((t) => (
                 <div key={t.topic} className="py-1.5" style={{ borderBottom: "1px solid var(--border)" }}>
@@ -452,7 +504,7 @@ function CheatSheetTab({ role, onNavigateTab }: { role: Role; onNavigateTab?: (t
             </div>
           </Section>
 
-          <Section title="Streaming Pipeline Flow" color={color}>
+          <Section id="cs-pipeline" title="Streaming Pipeline Flow" color={color}>
             <div className="space-y-0.5">
               {["Client batches events (1s window)", "POST /v1/events/batch to Event Collector", "Collector: validate event_id + event_type, stamp ingest_ts", "Publish to correct Kafka topic", "Schema Registry validates Avro schema (BACKWARD_TRANSITIVE)", "Flink consumer group: subscribe to heartbeat-events", "Dedup: check event_id in keyed state (24h TTL)", "Key by session_id, order by event_ts", "Compute interval between consecutive heartbeats where state='playing'", "Session close: 30-min inactivity timeout or explicit playback_stopped", "Write watch_sessions to Silver (Iceberg, MERGE INTO)", "Gold aggregation: SUM(watched_seconds)/3600 per content+country+date"].map((step, i) => (
                 <div key={i} className="flex items-start gap-2 py-0.5">
@@ -463,7 +515,7 @@ function CheatSheetTab({ role, onNavigateTab }: { role: Role; onNavigateTab?: (t
             </div>
           </Section>
 
-          <Section title="Bronze / Silver / Gold" color={color}>
+          <Section id="cs-lakehouse" title="Bronze / Silver / Gold" color={color}>
             <div className="space-y-2">
               {DATA_LAKEHOUSE.map((l) => (
                 <div key={l.table} className="py-1" style={{ borderBottom: "1px solid var(--border)" }}>
@@ -526,7 +578,7 @@ function CheatSheetTab({ role, onNavigateTab }: { role: Role; onNavigateTab?: (t
             </div>
           </Section>
 
-          <Section title="Scale Numbers" color={color}>
+          <Section id="cs-scale" title="Scale Numbers" color={color}>
             <div className="font-mono space-y-0">
               {[
                 ["60M streams × mix of events", "= 15M events/sec peak"],
@@ -545,6 +597,7 @@ function CheatSheetTab({ role, onNavigateTab }: { role: Role; onNavigateTab?: (t
           </Section>
         </>
       )}
+      </div>{/* end cheatsheet-printable */}
     </div>
   );
 }
