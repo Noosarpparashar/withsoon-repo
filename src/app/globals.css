@@ -3,13 +3,13 @@
 
 /* ── Light mode (default) ─────────────────────────────── */
 :root {
-  --bg:          #f8f9fa;
+  --bg:          #f8fafc;
   --bg-card:     #ffffff;
-  --bg-muted:    #f1f3f5;
-  --border:      #e2e8f0;
+  --bg-muted:    #f1f5f9;
+  --border:      #d7dee8;
   --text:        #0f172a;
-  --text-muted:  #64748b;
-  --text-faint:  #94a3b8;
+  --text-muted:  #475569;
+  --text-faint:  #64748b;
   --accent:      #6d28d9;
   --accent-fg:   #ffffff;
   --accent-soft: #ede9fe;
@@ -36,13 +36,13 @@
 
 /* ── Dark mode ────────────────────────────────────────── */
 .dark {
-  --bg:          #0d0d0d;
-  --bg-card:     #161616;
-  --bg-muted:    #1c1c1c;
-  --border:      #2a2a2a;
-  --text:        #f1f5f9;
-  --text-muted:  #94a3b8;
-  --text-faint:  #475569;
+  --bg:          #111318;
+  --bg-card:     #181b22;
+  --bg-muted:    #20242d;
+  --border:      #343a46;
+  --text:        #f8fafc;
+  --text-muted:  #cbd5e1;
+  --text-faint:  #94a3b8;
   --accent:      #7c3aed;
   --accent-fg:   #ffffff;
   --accent-soft: rgba(124,58,237,0.15);

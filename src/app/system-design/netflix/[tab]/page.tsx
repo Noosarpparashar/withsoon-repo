@@ -67,6 +67,11 @@ export async function generateMetadata({ params }: { params: Promise<{ tab: stri
     title: `Netflix System Design — ${tab} | withsoon.com`,
     description: "Interactive Netflix system design interview prep: architecture, data models, trade-offs, capacity estimation, and flashcards.",
   };
+  const ogUrl = new URL("/og", "https://withsoon.com");
+  ogUrl.searchParams.set("title", meta.title.replace(" | withsoon.com", ""));
+  ogUrl.searchParams.set("section", "System Design");
+  const ogImageUrl = ogUrl.toString();
+
   return {
     title: meta.title,
     description: meta.description,
@@ -77,7 +82,7 @@ export async function generateMetadata({ params }: { params: Promise<{ tab: stri
       siteName: "withsoon",
       type: "website",
       images: [{
-        url: `/og?title=${encodeURIComponent(meta.title.replace(" | withsoon.com", ""))}&section=System+Design`,
+        url: ogImageUrl,
         width: 1200,
         height: 630,
         alt: meta.title,
@@ -87,7 +92,7 @@ export async function generateMetadata({ params }: { params: Promise<{ tab: stri
       card: "summary_large_image",
       title: meta.title,
       description: meta.description,
-      images: [`/og?title=${encodeURIComponent(meta.title.replace(" | withsoon.com", ""))}&section=System+Design`],
+      images: [ogImageUrl],
     },
     alternates: {
       canonical: `https://withsoon.com/system-design/netflix/${tab}`,

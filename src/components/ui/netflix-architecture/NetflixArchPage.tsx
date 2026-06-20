@@ -65,8 +65,11 @@ const LAYER_LABELS: Record<number, string> = {
   1: "CLIENT", 2: "GATEWAY", 3: "SERVICES", 4: "SERVICES", 5: "DATA STORES", 6: "CDN / VIDEO",
 };
 const TYPE_COLORS: Record<string, string> = {
-  client: "#38bdf8", gateway: "#818cf8", service: "#f59e0b",
-  datastore: "#6ee7b7", pipeline: "#e879f9",
+  client:    "#2563eb",
+  gateway:   "#7c3aed",
+  service:   "#d97706",
+  datastore: "#0f766e",
+  pipeline:  "#be185d",
 };
 
 // ── Node positions ─────────────────────────────────────────────────────────────
@@ -143,7 +146,7 @@ const CALLOUT_COLORS = {
   info:    { bg: "rgba(56,189,248,0.08)",  border: "#38bdf840", text: "#38bdf8", icon: "ℹ" },
   warn:    { bg: "rgba(245,158,11,0.08)",  border: "#f59e0b40", text: "#f59e0b", icon: "⚠" },
   danger:  { bg: "rgba(239,68,68,0.08)",   border: "#ef444440", text: "#ef4444", icon: "⚡" },
-  success: { bg: "rgba(34,197,94,0.08)",   border: "#22c55e40", text: "#22c55e", icon: "✓" },
+  success: { bg: "rgba(15,118,110,0.08)",   border: "#0f766e40", text: "#0f766e", icon: "✓" },
 };
 function Callout({ variant, title, body }: { variant: keyof typeof CALLOUT_COLORS; title: string; body: string }) {
   const c = CALLOUT_COLORS[variant];
@@ -211,8 +214,8 @@ function NodeCard({
       </text>
       {/* Studied checkmark */}
       {isStudied && <>
-        <circle cx={pos.x + 10} cy={pos.y + 10} r={7} style={{ fill: N_GREEN + "30", stroke: N_GREEN, strokeWidth: 1 }} />
-        <text x={pos.x + 10} y={pos.y + 14} style={{ fill: N_GREEN, fontSize: 8, textAnchor: "middle" }}>✓</text>
+        <circle cx={pos.x + 10} cy={pos.y + 10} r={7} style={{ fill: N_RED + "30", stroke: N_RED, strokeWidth: 1 }} />
+        <text x={pos.x + 10} y={pos.y + 14} style={{ fill: N_RED, fontSize: 8, textAnchor: "middle" }}>✓</text>
       </>}
       {/* Flow step badge */}
       {flowStep !== undefined && <>
@@ -452,8 +455,8 @@ function DetailPanel({
           </div>
           <label className="flex items-center gap-1.5 cursor-pointer shrink-0 mt-1">
             <input type="checkbox" checked={isStudied} onChange={() => onMarkStudied(node.id)}
-              className="w-3.5 h-3.5 cursor-pointer" style={{ accentColor: N_GREEN }} />
-            <span className="text-[10px]" style={{ color: isStudied ? N_GREEN : "var(--text-faint)" }}>
+              className="w-3.5 h-3.5 cursor-pointer" style={{ accentColor: N_RED }} />
+            <span className="text-[10px]" style={{ color: isStudied ? N_RED : "var(--text-faint)" }}>
               {isStudied ? "✓ Studied" : "Mark studied"}
             </span>
           </label>
@@ -491,7 +494,7 @@ function DetailPanel({
         {depth === "interview" && <>
           <div className="flex items-center justify-between mb-1">
             <p className="text-[9px] font-bold uppercase tracking-widest" style={{ color: "var(--text-faint)" }}>Say out loud</p>
-            <span className="text-[9px] px-1.5 py-0.5 rounded" style={{ background: N_GREEN + "18", color: N_GREEN, border: `1px solid ${N_GREEN}30` }}>
+            <span className="text-[9px] px-1.5 py-0.5 rounded" style={{ background: "var(--bg-muted)", color: "var(--text-muted)", border: `1px solid var(--border)` }}>
               {node.interviewTime}
             </span>
           </div>
@@ -565,7 +568,7 @@ function CommandPalette({ onSelect, onClose }: { onSelect: (id: NodeId) => void;
         <div className="max-h-72 overflow-y-auto">
           {results.map(n => (
             <button key={n.id} onClick={() => { onSelect(n.id); onClose(); }}
-              className="w-full flex items-center gap-3 px-4 py-2.5 text-left hover:bg-white/5 transition-colors">
+              className="w-full flex items-center gap-3 px-4 py-2.5 text-left hover:bg-[var(--bg-muted)] transition-colors">
               <svg width={14} height={14} viewBox="0 0 14 14" style={{ flexShrink: 0 }}>
                 <NodeIconSVG nodeId={n.id} x={0} y={0} color={TYPE_COLORS[n.type] ?? N_MUTED} />
               </svg>
@@ -879,10 +882,10 @@ function ArchitectureTab({
 
           {/* Zoom controls */}
           <div className="absolute bottom-2 right-2 flex items-center gap-1" style={{ zIndex: 6 }}>
-            <button onClick={() => setZoom(z => Math.max(0.5, z - 0.1))} className="w-6 h-6 rounded text-xs" style={{ background: "var(--border)", color: "var(--text-muted)" }}>−</button>
-            <span className="text-[10px] w-8 text-center" style={{ color: "var(--text-muted)" }}>{Math.round(zoom * 100)}%</span>
-            <button onClick={() => setZoom(z => Math.min(1.5, z + 0.1))} className="w-6 h-6 rounded text-xs" style={{ background: "var(--border)", color: "var(--text-muted)" }}>+</button>
-            <button onClick={() => { setZoom(1); setPan({ x: 0, y: 0 }); }} className="text-[10px] px-1.5 py-0.5 rounded ml-1" style={{ background: "var(--border)", color: "var(--text-muted)" }}>Fit</button>
+            <button onClick={() => setZoom(z => Math.max(0.5, z - 0.1))} className="w-9 h-9 rounded-md text-sm font-bold flex items-center justify-center" style={{ background: "var(--border)", color: "var(--text)" }}>−</button>
+            <span className="text-xs w-10 text-center font-medium" style={{ color: "var(--text-muted)" }}>{Math.round(zoom * 100)}%</span>
+            <button onClick={() => setZoom(z => Math.min(1.5, z + 0.1))} className="w-9 h-9 rounded-md text-sm font-bold flex items-center justify-center" style={{ background: "var(--border)", color: "var(--text)" }}>+</button>
+            <button onClick={() => { setZoom(1); setPan({ x: 0, y: 0 }); }} className="text-xs px-2.5 py-1.5 rounded-md ml-1 font-medium" style={{ background: "var(--border)", color: "var(--text)" }}>Fit</button>
           </div>
 
           {/* Mini-map */}
@@ -895,7 +898,7 @@ function ArchitectureTab({
               <div className="text-5xl mb-4" aria-hidden="true">🗺</div>
               <p className="text-base font-bold mb-2" style={{ color: "var(--text)" }}>Full diagram available on desktop</p>
               <p className="text-sm leading-relaxed mb-6" style={{ color: "var(--text-muted)" }}>
-                Use the tabs above to explore Requirements, Data Models, Trade-offs, Capacity, and Failures on mobile
+                Use the tabs above: Start Here → Playback → CDN → Failures → Mock Interview → Cheat Sheet. Full drag/zoom diagram is best on desktop.
               </p>
               <button
                 onClick={() => setMobileOverlayDismissed(true)}
@@ -949,24 +952,24 @@ function ArchitectureTab({
 
 // ── Theme-aware color helpers ───────────────────────────────────────────────────
 const LIGHT_COLORS = {
-  bg:     "#f8f9fa",
+  bg:     "#f8fafc",
   card:   "#ffffff",
-  card2:  "#f1f3f5",
-  border: "#e2e8f0",
-  muted:  "#64748b",
-  faint:  "#94a3b8",
+  card2:  "#f1f5f9",
+  border: "#d7dee8",
+  muted:  "#475569",
+  faint:  "#64748b",
   text:   "#0f172a",
-  text2:  "#64748b",
+  text2:  "#334155",
 };
 const DARK_COLORS = {
-  bg:     "#0d0d0d",
-  card:   "#161616",
-  card2:  "#1c1c1c",
-  border: "#2a2a2a",
-  muted:  "#94a3b8",
-  faint:  "#475569",
-  text:   "#f1f5f9",
-  text2:  "#94a3b8",
+  bg:     "#111318",
+  card:   "#181b22",
+  card2:  "#20242d",
+  border: "#343a46",
+  muted:  "#cbd5e1",
+  faint:  "#94a3b8",
+  text:   "#f8fafc",
+  text2:  "#e2e8f0",
 };
 
 // ── Main shell ─────────────────────────────────────────────────────────────────
@@ -1053,7 +1056,7 @@ export default function NetflixArchPage({ initialTab }: { initialTab?: string })
           <span className="hidden sm:block text-xs" style={{ color: T.faint }}>/</span>
           <span className="text-xs font-semibold hidden sm:block" style={{ color: T.text }}>Netflix</span>
           <span className="text-[10px] px-1.5 py-0.5 rounded font-medium hidden md:block"
-            style={{ background: N_GREEN + "18", color: N_GREEN, border: `1px solid ${N_GREEN}30` }}>
+            style={{ background: T.card2, color: T.faint, border: `1px solid ${T.border}` }}>
             Senior Backend
           </span>
 
