@@ -9,7 +9,9 @@ const MAIN_LINKS = [
 ];
 
 const META_LINKS = [
-  { href: "/about",   label: "About" },
+  { href: "/about",     label: "About" },
+  { href: "/roadmap",   label: "Roadmap" },
+  { href: "/changelog", label: "Changelog" },
   { href: "/system-design/netflix/architecture", label: "Netflix System Design" },
 ];
 

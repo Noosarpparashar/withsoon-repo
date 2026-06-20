@@ -1,15 +1,15 @@
 ---
-title: "Kafka Interview Questions — Top 50 with Answers (16/50 published)"
+title: "Kafka Interview Questions — Top 50 with Answers (30/50 published)"
 date: "2026-06-04"
 type: "interview-qa"
 subsection: "kafka"
-summary: "The most-asked Kafka interview questions with detailed answers — basics, internals, exactly-once semantics, and production scenarios. 16/50 published, full guide in progress."
+summary: "The most-asked Kafka interview questions with detailed answers — basics, internals, exactly-once semantics, Kafka Streams, Connect, and production scenarios. 30/50 published."
 tags: ["kafka", "interview", "streaming", "big-data"]
 difficulty: "intermediate"
 featured: true
 ---
 
-> **16/50 published** — questions 17–50 are in progress. Check back soon for the complete set.
+> **30/50 published** — questions 31–50 are in progress. Check back soon for the complete set.
 
 
 
@@ -143,4 +143,175 @@ Choose Kafka for streaming/event sourcing. Choose RabbitMQ for task queues with 
 
 ---
 
-*(More questions covering Kafka Streams, Connect, schema registry, and MirrorMaker coming soon)*
+---
+
+## Kafka Streams
+
+**Q17: What is Kafka Streams and how is it different from a consumer?**
+
+Kafka Streams is a client library for stream processing built on top of the Kafka consumer API. Unlike a plain consumer which just reads and forwards data, Streams provides:
+- Stateful operations: joins, aggregations with built-in state stores (RocksDB)
+- Windowed operations: tumbling, hopping, session windows
+- Exactly-once processing semantics without external infrastructure (just Kafka + your app)
+- DSL + Processor API for defining transformation topologies
+
+**Q18: What is a KStream vs a KTable?**
+
+- **KStream** — an unbounded stream of events. Each record is independent. Think: a log of page views.
+- **KTable** — a changelog stream where each record upserts a key. Think: current state of a user's subscription. The latest value per key is the "current" state.
+- **GlobalKTable** — like KTable but replicated across all instances (not partitioned). Use for small lookup tables that every instance needs.
+
+**Q19: What is a state store in Kafka Streams?**
+
+A state store is a local, embedded database (backed by RocksDB by default) used to hold intermediate state for aggregations and joins. It is:
+- Partitioned: each instance only holds state for its assigned partitions
+- Fault-tolerant: backed by a changelog Kafka topic that allows recovery after restart
+- Queryable: with Interactive Queries you can expose state store content via a REST API
+
+**Q20: How does Kafka Streams handle failures and restarts?**
+
+When a Streams instance restarts:
+1. It reads its changelog topic to restore the state store
+2. Continues processing from the last committed offset
+
+This is why changelog topics exist — they are the persistent backing store for Kafka Streams state. For fast recovery, use `standby.replicas` to keep warm copies on other instances.
+
+---
+
+## Kafka Connect
+
+**Q21: What is Kafka Connect?**
+
+Kafka Connect is a framework for scalable, fault-tolerant data integration between Kafka and external systems without writing custom producers/consumers.
+
+- **Source connector** — reads from an external system (database, S3, REST API) and writes to Kafka
+- **Sink connector** — reads from Kafka and writes to an external system (Elasticsearch, Redshift, S3)
+- Connectors are configured via JSON — no code needed for common integrations
+
+**Q22: What is a Single Message Transform (SMT)?**
+
+SMTs are lightweight transformations applied to each message in a Connect pipeline — before writing to Kafka (source) or after reading from Kafka (sink). Common SMTs:
+- `ReplaceField` — rename or remove fields
+- `InsertField` — add a static field (e.g. add `_source: orders_db`)
+- `TimestampConverter` — convert date formats
+- `Flatten` — flatten nested records
+
+SMTs are not for heavy transformations — use Kafka Streams or Flink for complex logic.
+
+**Q23: What is Debezium and how does it relate to Kafka Connect?**
+
+Debezium is a CDC (Change Data Capture) source connector for Kafka Connect. It reads the database transaction log (WAL in Postgres, binlog in MySQL) and emits events for every INSERT, UPDATE, and DELETE.
+
+```json
+{
+  "before": { "id": 1, "name": "Alice", "email": "old@example.com" },
+  "after":  { "id": 1, "name": "Alice", "email": "new@example.com" },
+  "op": "u",
+  "ts_ms": 1718900000000
+}
+```
+
+Used for: database replication, event sourcing, cache invalidation, real-time analytics.
+
+---
+
+## Schema Registry
+
+**Q24: What is the Schema Registry and why do you need it?**
+
+The Schema Registry (Confluent) stores and manages Avro/Protobuf/JSON schemas for Kafka topics. It prevents:
+- Producers writing data that consumers can't deserialize
+- Schema changes breaking downstream consumers
+
+Every message sent with the Avro serializer includes a schema ID (4 bytes) that consumers use to fetch and deserialize the message.
+
+**Q25: What is schema evolution and what rules does it follow?**
+
+Schema evolution allows changing a schema over time without breaking existing producers or consumers.
+
+**Backward-compatible** (new schema can read old data):
+- Add optional field with default value ✅
+- Remove field ✅ (old consumers ignore it)
+
+**Forward-compatible** (old schema can read new data):
+- Add field with default ✅
+- Remove optional field ✅
+
+**Breaking** (avoid without coordination):
+- Change field type (int → string) ❌
+- Remove required field ❌
+- Rename field without alias ❌
+
+---
+
+## Multi-Cluster and MirrorMaker
+
+**Q26: What is MirrorMaker 2 and when would you use it?**
+
+MirrorMaker 2 (MM2) is Kafka's built-in cross-cluster replication tool, built on Kafka Connect. Use cases:
+- **Active-passive DR**: replicate prod cluster to a standby cluster in another region
+- **Active-active**: bidirectional replication (complex — requires offset translation)
+- **Data migration**: move topics from one cluster to another
+
+MM2 also syncs consumer group offsets (with translation), topic configurations, and ACLs.
+
+**Q27: What is the difference between Kafka and Pulsar?**
+
+| Feature | Kafka | Pulsar |
+|---|---|---|
+| Storage | Log-based, local disk | Tiered (BookKeeper + offload to S3) |
+| Multi-tenancy | Requires separate clusters | Native namespaces and tenants |
+| Geo-replication | MirrorMaker 2 | Built-in |
+| Message ordering | Per-partition | Per-topic or per-key |
+| Replay | Retention-based | Cursor-based, per-subscriber |
+
+Kafka is the default choice for most data pipelines. Pulsar has advantages in multi-tenant cloud environments.
+
+---
+
+## Production and Monitoring
+
+**Q28: What metrics should you monitor in a Kafka cluster?**
+
+**Broker metrics:**
+- `UnderReplicatedPartitions` — partitions where followers are behind (alert if > 0)
+- `ActiveControllerCount` — should be exactly 1 across the cluster
+- `OfflinePartitionsCount` — alert immediately if > 0
+- `BytesInPerSec` / `BytesOutPerSec` — throughput per broker
+- `RequestQueueSize` — if growing, brokers are overwhelmed
+
+**Producer metrics:**
+- `record-error-rate` — failed sends
+- `record-queue-time-avg` — how long records wait before sending
+
+**Consumer metrics:**
+- `records-lag-max` — max lag across all partitions in the group (most important)
+- `fetch-latency-avg` — time to fetch a batch
+
+**Q29: What is the KRaft mode in Kafka 3.x+?**
+
+KRaft (Kafka Raft) replaces ZooKeeper for cluster metadata management. Benefits:
+- Simpler operations — no separate ZooKeeper cluster to manage
+- Faster controller failover (milliseconds vs seconds)
+- Scales to millions of partitions (ZooKeeper was a bottleneck at 200K+)
+- Kafka 3.3+ is production-ready without ZooKeeper; 4.0 removes ZooKeeper support entirely
+
+**Q30: How would you design a Kafka-based event sourcing system?**
+
+```
+Commands → Command Handler → Domain Events → Kafka topic (events, compacted)
+                                           → Read Model Projectors (multiple)
+                                              → MySQL (orders view)
+                                              → Elasticsearch (search view)
+                                              → Redis (realtime dashboard)
+```
+
+Key decisions:
+- Use **log compaction** on the events topic to retain full event history per aggregate
+- Set `acks=all` + idempotent producer for durability
+- Use exactly-once semantics if projectors cannot handle duplicates
+- Separate command validation from event publication to keep the hot path fast
+
+---
+
+*(More questions covering advanced Kafka tuning, security, and Kafka Streams patterns — questions 31–50 in progress)*

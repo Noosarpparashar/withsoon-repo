@@ -7,7 +7,7 @@ import CopyCodeButton from "./CopyCodeButton";
 import BackToTop from "./BackToTop";
 import SubscribeForm from "./SubscribeForm";
 import TableOfContents from "./TableOfContents";
-import { InterviewTip, CommonMistake, SeniorAnswer, ProductionNote, Warning, Definition } from "./Callouts";
+import { InterviewTip, CommonMistake, SeniorAnswer, ProductionNote, Warning, Definition, ApiCard, Tradeoff, FailureCard } from "./Callouts";
 
 const SECTION_META: Record<string, { label: string; colorClass: string; softClass: string; href: string }> = {
   "tech-news": { label: "Tech News",  colorClass: "text-[var(--yellow-text)]",  softClass: "bg-[var(--yellow-soft)] text-[var(--yellow-text)]",  href: "/tech-news" },
@@ -27,6 +27,33 @@ const DIFFICULTY_CLASSES = {
 
 function readingTime(text: string): number {
   return Math.max(1, Math.round(text.split(/\s+/).length / 200));
+}
+
+function buildFaqSchema(content: string) {
+  // Extract bold Q: pattern (**Q1: ...** or **Q: ...**)
+  const qRegex = /\*\*Q\d*:\s*([^*]+)\*\*\n+([\s\S]+?)(?=\n---|\n\*\*Q\d*:|\n##|$)/g;
+  const pairs: { q: string; a: string }[] = [];
+  let match: RegExpExecArray | null;
+  while ((match = qRegex.exec(content)) !== null && pairs.length < 10) {
+    const q = match[1].trim();
+    const a = match[2]
+      .replace(/```[\s\S]*?```/g, "") // strip code blocks
+      .replace(/\*\*/g, "")
+      .replace(/\n+/g, " ")
+      .trim()
+      .slice(0, 500);
+    if (q && a) pairs.push({ q, a });
+  }
+  if (pairs.length === 0) return null;
+  return {
+    "@context": "https://schema.org",
+    "@type": "FAQPage",
+    "mainEntity": pairs.map(({ q, a }) => ({
+      "@type": "Question",
+      "name": q,
+      "acceptedAnswer": { "@type": "Answer", "text": a },
+    })),
+  };
 }
 
 export default function ArticlePage({ post }: { post: Content }) {
@@ -51,9 +78,15 @@ export default function ArticlePage({ post }: { post: Content }) {
     "url": `https://withsoon.com/${post.section}/${post.slug}`,
   };
 
+  // FAQ schema for Q&A articles — extract Q/A pairs from content
+  const faqSchema = post.type === "interview-qa" ? buildFaqSchema(post.content) : null;
+
   return (
     <>
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
+      {faqSchema && (
+        <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(faqSchema) }} />
+      )}
       <ReadingProgress />
       <CopyCodeButton />
       <BackToTop />
@@ -122,7 +155,7 @@ export default function ArticlePage({ post }: { post: Content }) {
         ">
           <MDXRemote
             source={post.content}
-            components={{ InterviewTip, CommonMistake, SeniorAnswer, ProductionNote, Warning, Definition }}
+            components={{ InterviewTip, CommonMistake, SeniorAnswer, ProductionNote, Warning, Definition, ApiCard, Tradeoff, FailureCard }}
           />
         </article>
 
