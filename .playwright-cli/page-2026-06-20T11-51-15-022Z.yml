@@ -1,0 +1,359 @@
+- generic [active] [ref=e1]:
+  - banner [ref=e2]:
+    - generic [ref=e3]:
+      - link "withsoon" [ref=e4] [cursor=pointer]:
+        - /url: /
+        - img [ref=e6]
+        - generic [ref=e8]: withsoon
+      - navigation [ref=e9]:
+        - link "📰 Tech News" [ref=e10] [cursor=pointer]:
+          - /url: /tech-news
+          - generic [ref=e11]: 📰
+          - text: Tech News
+        - link "🗄️ Big Data" [ref=e12] [cursor=pointer]:
+          - /url: /big-data
+          - generic [ref=e13]: 🗄️
+          - text: Big Data
+        - link "🤖 AI & LLMs" [ref=e14] [cursor=pointer]:
+          - /url: /ai
+          - generic [ref=e15]: 🤖
+          - text: AI & LLMs
+        - link "🏗️ System Design" [ref=e16] [cursor=pointer]:
+          - /url: /system-design
+          - generic [ref=e17]: 🏗️
+          - text: System Design
+        - link "🎯 Interview" [ref=e18] [cursor=pointer]:
+          - /url: /interview
+          - generic [ref=e19]: 🎯
+          - text: Interview
+        - link "📋 Cheatsheets" [ref=e20] [cursor=pointer]:
+          - /url: /cheatsheets
+          - generic [ref=e21]: 📋
+          - text: Cheatsheets
+        - link "🗺️ Roadmap" [ref=e22] [cursor=pointer]:
+          - /url: /roadmap
+          - generic [ref=e23]: 🗺️
+          - text: Roadmap
+      - generic [ref=e24]:
+        - button "Search ⌘K" [ref=e25]:
+          - img [ref=e26]
+          - generic [ref=e28]: Search
+          - generic [ref=e29]: ⌘K
+        - button "Toggle theme" [ref=e30]
+  - main [ref=e32]:
+    - generic [ref=e33]:
+      - generic [ref=e34]:
+        - generic [ref=e35]:
+          - link "N withsoon" [ref=e36] [cursor=pointer]:
+            - /url: /
+            - generic [ref=e37]: "N"
+            - generic [ref=e39]: withsoon
+          - generic [ref=e40]: /
+          - link "System Design" [ref=e41] [cursor=pointer]:
+            - /url: /system-design
+          - generic [ref=e42]: /
+          - generic [ref=e43]: Netflix
+          - generic [ref=e44]: Senior Backend
+          - generic [ref=e45]: 0/23 studied
+          - button "Progress" [ref=e46] [cursor=pointer]
+          - button "Notes" [ref=e47] [cursor=pointer]
+          - button "Focus" [ref=e48] [cursor=pointer]
+          - button "Share" [ref=e49] [cursor=pointer]
+          - button "Open keyboard shortcuts" [ref=e50] [cursor=pointer]:
+            - generic [ref=e51]: "?"
+            - generic [ref=e52]: Shortcuts
+        - generic [ref=e53]:
+          - generic [ref=e54]:
+            - button "Start Here" [ref=e56] [cursor=pointer]: Start Here
+            - button "Requirements" [ref=e59] [cursor=pointer]
+            - button "Architecture" [ref=e61] [cursor=pointer]
+            - button "Playback" [ref=e63] [cursor=pointer]
+            - button "CDN" [ref=e65] [cursor=pointer]
+            - button "Encoding" [ref=e67] [cursor=pointer]
+            - button "Security" [ref=e69] [cursor=pointer]
+            - button "Data Models" [ref=e71] [cursor=pointer]
+            - button "Trade-offs" [ref=e73] [cursor=pointer]
+            - button "Capacity" [ref=e75] [cursor=pointer]
+            - button "Failures" [ref=e77] [cursor=pointer]
+            - generic [ref=e78]:
+              - generic [ref=e81]: Practice
+              - button "Quiz" [ref=e82] [cursor=pointer]
+            - button "Mock Interview" [ref=e84] [cursor=pointer]
+            - button "Cheat Sheet" [ref=e86] [cursor=pointer]
+          - button "Requirements →" [ref=e88] [cursor=pointer]
+      - generic [ref=e91]:
+        - generic [ref=e92]:
+          - 'heading "Netflix System Design: Start Here" [level=1] [ref=e93]'
+          - generic [ref=e94]: ~2 min
+        - generic [ref=e95]:
+          - generic [ref=e96]:
+            - heading "What are you preparing for?" [level=2] [ref=e98]
+            - paragraph [ref=e99]: This is a guided interview preparation product — not a general encyclopedia.
+            - paragraph [ref=e100]: In a Netflix-style interview, do not try to design every Netflix system. First clarify the scope, then go deep into the area relevant to your role.
+            - generic [ref=e101]:
+              - generic [ref=e102] [cursor=pointer]:
+                - generic [ref=e103]:
+                  - generic [ref=e104]: ⚙️
+                  - generic [ref=e105]: Backend Engineer
+                  - generic [ref=e106]: Selected
+                - generic [ref=e107]:
+                  - paragraph [ref=e108]: Covers
+                  - generic [ref=e109]:
+                    - generic [ref=e110]: ✓
+                    - generic [ref=e111]: Playback APIs and service design
+                  - generic [ref=e112]:
+                    - generic [ref=e113]: ✓
+                    - generic [ref=e114]: Watch history and resume watching
+                  - generic [ref=e115]:
+                    - generic [ref=e116]: ✓
+                    - generic [ref=e117]: Concurrency limit design
+                  - generic [ref=e118]:
+                    - generic [ref=e119]: ✓
+                    - generic [ref=e120]: Metadata service and cache design
+                  - generic [ref=e121]:
+                    - generic [ref=e122]: ✓
+                    - generic [ref=e123]: Database choices and CDN handoff
+                  - generic [ref=e124]:
+                    - generic [ref=e125]: ✓
+                    - generic [ref=e126]: Failures, retries, and tradeoffs
+                - generic [ref=e127]:
+                  - paragraph [ref=e128]: Does not cover
+                  - generic [ref=e129]:
+                    - generic [ref=e130]: –
+                    - generic [ref=e131]: ML recommendation internals
+                  - generic [ref=e132]:
+                    - generic [ref=e133]: –
+                    - generic [ref=e134]: Data pipeline and lakehouse
+                  - generic [ref=e135]:
+                    - generic [ref=e136]: –
+                    - generic [ref=e137]: Encoding pipeline details
+                  - generic [ref=e138]:
+                    - generic [ref=e139]: –
+                    - generic [ref=e140]: SRE and incident management
+                - generic [ref=e141]:
+                  - generic [ref=e142]: "⏱ Prep time: 30–45 minutes"
+                  - button "Run User clicks Play → →" [ref=e143]
+              - generic [ref=e144] [cursor=pointer]:
+                - generic [ref=e145]:
+                  - generic [ref=e146]: 📊
+                  - generic [ref=e147]: Data Engineer
+                - generic [ref=e148]:
+                  - paragraph [ref=e149]: Covers
+                  - generic [ref=e150]:
+                    - generic [ref=e151]: ✓
+                    - generic [ref=e152]: Event ingestion and Kafka topic design
+                  - generic [ref=e153]:
+                    - generic [ref=e154]: ✓
+                    - generic [ref=e155]: Streaming processing (Spark/Flink)
+                  - generic [ref=e156]:
+                    - generic [ref=e157]: ✓
+                    - generic [ref=e158]: Sessionization and late events
+                  - generic [ref=e159]:
+                    - generic [ref=e160]: ✓
+                    - generic [ref=e161]: Bronze/Silver/Gold lakehouse tables
+                  - generic [ref=e162]:
+                    - generic [ref=e163]: ✓
+                    - generic [ref=e164]: Data quality checks and backfills
+                  - generic [ref=e165]:
+                    - generic [ref=e166]: ✓
+                    - generic [ref=e167]: Analytics serving layer
+                - generic [ref=e168]:
+                  - paragraph [ref=e169]: Does not cover
+                  - generic [ref=e170]:
+                    - generic [ref=e171]: –
+                    - generic [ref=e172]: Backend API and service design
+                  - generic [ref=e173]:
+                    - generic [ref=e174]: –
+                    - generic [ref=e175]: ML model training internals
+                  - generic [ref=e176]:
+                    - generic [ref=e177]: –
+                    - generic [ref=e178]: SRE and incident management
+                  - generic [ref=e179]:
+                    - generic [ref=e180]: –
+                    - generic [ref=e181]: Frontend and UI personalization
+                - generic [ref=e182]:
+                  - generic [ref=e183]: "⏱ Prep time: 30–45 minutes"
+                  - button "See Data Models →" [ref=e184]
+          - generic [ref=e185]:
+            - paragraph [ref=e186]: Best path for interview prep
+            - paragraph [ref=e187]: Backend Engineer track
+            - generic [ref=e188]:
+              - button "1 Run User clicks Play— understand the core flow →" [ref=e189]:
+                - generic [ref=e190]: "1"
+                - generic [ref=e191]:
+                  - text: Run User clicks Play
+                  - generic [ref=e192]: — understand the core flow
+                - generic [ref=e193]: →
+              - button "2 Playback— explain the backend sequence →" [ref=e194]:
+                - generic [ref=e195]: "2"
+                - generic [ref=e196]:
+                  - text: Playback
+                  - generic [ref=e197]: — explain the backend sequence
+                - generic [ref=e198]: →
+              - button "3 CDN— explain how video avoids backend →" [ref=e199]:
+                - generic [ref=e200]: "3"
+                - generic [ref=e201]:
+                  - text: CDN
+                  - generic [ref=e202]: — explain how video avoids backend
+                - generic [ref=e203]: →
+              - button "4 Data Models— explain storage choices →" [ref=e204]:
+                - generic [ref=e205]: "4"
+                - generic [ref=e206]:
+                  - text: Data Models
+                  - generic [ref=e207]: — explain storage choices
+                - generic [ref=e208]: →
+              - button "5 Failures— handle interviewer grilling →" [ref=e209]:
+                - generic [ref=e210]: "5"
+                - generic [ref=e211]:
+                  - text: Failures
+                  - generic [ref=e212]: — handle interviewer grilling
+                - generic [ref=e213]: →
+              - button "6 Trade-offs— show senior thinking →" [ref=e214]:
+                - generic [ref=e215]: "6"
+                - generic [ref=e216]:
+                  - text: Trade-offs
+                  - generic [ref=e217]: — show senior thinking
+                - generic [ref=e218]: →
+              - button "7 Quiz— test recall →" [ref=e219]:
+                - generic [ref=e220]: "7"
+                - generic [ref=e221]:
+                  - text: Quiz
+                  - generic [ref=e222]: — test recall
+                - generic [ref=e223]: →
+              - button "8 Mock Interview— practice speaking →" [ref=e224]:
+                - generic [ref=e225]: "8"
+                - generic [ref=e226]:
+                  - text: Mock Interview
+                  - generic [ref=e227]: — practice speaking
+                - generic [ref=e228]: →
+              - button "9 Cheat Sheet— revise before interview →" [ref=e229]:
+                - generic [ref=e230]: "9"
+                - generic [ref=e231]:
+                  - text: Cheat Sheet
+                  - generic [ref=e232]: — revise before interview
+                - generic [ref=e233]: →
+          - generic [ref=e234]:
+            - heading "What interviewers expect" [level=2] [ref=e235]
+            - paragraph [ref=e236]: In a Netflix-style interview, do not try to design every Netflix system. First clarify the scope, then go deep into the area relevant to your role.
+            - generic [ref=e237]:
+              - generic [ref=e238]:
+                - generic [ref=e239]: 🎯
+                - generic [ref=e240]: Clarify role and scope
+                - generic [ref=e241]: "Don't try to design every Netflix system. Start by clarifying: which role are you in, and which area should you go deep on?"
+              - generic [ref=e242]:
+                - generic [ref=e243]: 🔍
+                - generic [ref=e244]: Pick one deep-dive path
+                - generic [ref=e245]: Backend engineers go deep on playback, concurrency, and cache. Data engineers go deep on event ingestion, streaming, and lakehouse.
+              - generic [ref=e246]:
+                - generic [ref=e247]: ⚖️
+                - generic [ref=e248]: Explain tradeoffs clearly
+                - generic [ref=e249]: For every design decision, state what you chose and what you rejected. Interviewers probe tradeoffs harder than architecture diagrams.
+          - generic [ref=e250]:
+            - heading "Clarifying questions to ask first— Backend Engineer" [level=2] [ref=e251]:
+              - text: Clarifying questions to ask first
+              - generic [ref=e252]: — Backend Engineer
+            - paragraph [ref=e253]: Ask these before drawing anything. Each answer changes your design.
+            - generic [ref=e254]:
+              - button "Q Are we designing the complete playback flow or a specific subsystem? ▼" [ref=e256] [cursor=pointer]:
+                - generic [ref=e257]: Q
+                - generic [ref=e259]: Are we designing the complete playback flow or a specific subsystem?
+                - generic [ref=e260]: ▼
+              - button "Q Is multi-device and multi-region in scope? ▼" [ref=e262] [cursor=pointer]:
+                - generic [ref=e263]: Q
+                - generic [ref=e265]: Is multi-device and multi-region in scope?
+                - generic [ref=e266]: ▼
+              - button "Q What does the interviewer care most about — latency, concurrency, or failures? ▼" [ref=e268] [cursor=pointer]:
+                - generic [ref=e269]: Q
+                - generic [ref=e271]: What does the interviewer care most about — latency, concurrency, or failures?
+                - generic [ref=e272]: ▼
+              - button "Q Is offline download in scope? ▼" [ref=e274] [cursor=pointer]:
+                - generic [ref=e275]: Q
+                - generic [ref=e277]: Is offline download in scope?
+                - generic [ref=e278]: ▼
+          - generic [ref=e279]:
+            - heading "Say this to open the interview— Backend Engineer" [level=2] [ref=e280]:
+              - text: Say this to open the interview
+              - generic [ref=e281]: — Backend Engineer
+            - paragraph [ref=e282]: Copy and practice verbatim. It signals scope awareness before you draw a single box.
+            - generic [ref=e283]:
+              - button "Copy" [ref=e285] [cursor=pointer]
+              - code [ref=e287]: "I'll scope this to Netflix playback backend. I will design the flow where a user clicks play, the system validates access, creates a playback session, returns a manifest, streams video through CDN/Open Connect, and continuously updates watch progress using heartbeat events. Key services: API Gateway, Auth Service, Subscription Service, Concurrency Service, Playback Service, DRM Service, Manifest Service, CDN/Open Connect, Watch Progress Service. Let me start by clarifying: are we designing the complete playback flow, or a specific subsystem like concurrency limits or watch history?"
+          - generic [ref=e288]:
+            - heading "Common mistakes to avoid— Backend Engineer" [level=2] [ref=e289]:
+              - text: Common mistakes to avoid
+              - generic [ref=e290]: — Backend Engineer
+            - paragraph [ref=e291]: These are the answers that get candidates screened out — don't make them.
+            - generic [ref=e292]:
+              - generic [ref=e293]:
+                - generic [ref=e294]: ✗
+                - generic [ref=e295]: Designing frontend too much — stay on the server side
+              - generic [ref=e296]:
+                - generic [ref=e297]: ✗
+                - generic [ref=e298]: Ignoring CDN and treating all traffic as direct API calls
+              - generic [ref=e299]:
+                - generic [ref=e300]: ✗
+                - generic [ref=e301]: Ignoring concurrency limits — a core Netflix-specific problem
+              - generic [ref=e302]:
+                - generic [ref=e303]: ✗
+                - generic [ref=e304]: Making every data store strongly consistent
+              - generic [ref=e305]:
+                - generic [ref=e306]: ✗
+                - generic [ref=e307]: Not discussing cache invalidation strategy
+              - generic [ref=e308]:
+                - generic [ref=e309]: ✗
+                - generic [ref=e310]: Not handling retries and idempotency
+          - generic [ref=e311]:
+            - button "Run User clicks Play →" [ref=e312] [cursor=pointer]
+            - button "Jump to Cheat Sheet →" [ref=e313] [cursor=pointer]
+        - generic [ref=e314]:
+          - generic [ref=e315]: Was this tab useful for interview prep?
+          - button "This tab was useful" [ref=e316] [cursor=pointer]: 👍
+          - button "This tab needs work" [ref=e317] [cursor=pointer]: 👎
+  - contentinfo [ref=e318]:
+    - generic [ref=e319]:
+      - generic [ref=e320]:
+        - generic [ref=e321]:
+          - generic [ref=e322]:
+            - img [ref=e324]
+            - generic [ref=e326]: withsoon
+          - paragraph [ref=e327]: One-stop platform for Big Data and AI engineers — system design, setup guides, interview prep, and cheatsheets.
+          - paragraph [ref=e328]:
+            - text: Built by
+            - link "Prasoon Parashar" [ref=e329] [cursor=pointer]:
+              - /url: https://github.com/Noosarpparashar
+        - generic [ref=e330]:
+          - generic [ref=e331]:
+            - paragraph [ref=e332]: Content
+            - navigation [ref=e333]:
+              - link "Tech News" [ref=e334] [cursor=pointer]:
+                - /url: /tech-news
+              - link "Big Data" [ref=e335] [cursor=pointer]:
+                - /url: /big-data
+              - link "AI & LLMs" [ref=e336] [cursor=pointer]:
+                - /url: /ai
+              - link "Interview" [ref=e337] [cursor=pointer]:
+                - /url: /interview
+              - link "Cheatsheets" [ref=e338] [cursor=pointer]:
+                - /url: /cheatsheets
+          - generic [ref=e339]:
+            - paragraph [ref=e340]: Site
+            - navigation [ref=e341]:
+              - link "About" [ref=e342] [cursor=pointer]:
+                - /url: /about
+              - link "Roadmap" [ref=e343] [cursor=pointer]:
+                - /url: /roadmap
+              - link "Changelog" [ref=e344] [cursor=pointer]:
+                - /url: /changelog
+              - link "Netflix System Design" [ref=e345] [cursor=pointer]:
+                - /url: /system-design/netflix/architecture
+              - link "GitHub" [ref=e346] [cursor=pointer]:
+                - /url: https://github.com/Noosarpparashar/withsoon-repo
+                - img [ref=e347]
+                - text: GitHub
+              - link "Suggest a correction" [ref=e349] [cursor=pointer]:
+                - /url: "https://github.com/Noosarpparashar/withsoon-repo/issues/new?title=Content+correction&body=Page:%0A%0AIssue:"
+      - generic [ref=e350]:
+        - generic [ref=e351]: © 2026 withsoon.com — Built in public
+        - generic [ref=e352]: Interactive system design & data engineering interview prep
+  - button "Open Next.js Dev Tools" [ref=e358] [cursor=pointer]:
+    - img [ref=e359]

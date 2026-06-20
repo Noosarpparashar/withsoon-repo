@@ -1,0 +1,292 @@
+- generic [active] [ref=e1]:
+  - banner [ref=e2]:
+    - generic [ref=e3]:
+      - link "withsoon" [ref=e4] [cursor=pointer]:
+        - /url: /
+        - img [ref=e6]
+        - generic [ref=e8]: withsoon
+      - navigation [ref=e9]:
+        - link "📰 Tech News" [ref=e10] [cursor=pointer]:
+          - /url: /tech-news
+          - generic [ref=e11]: 📰
+          - text: Tech News
+        - link "🗄️ Big Data" [ref=e12] [cursor=pointer]:
+          - /url: /big-data
+          - generic [ref=e13]: 🗄️
+          - text: Big Data
+        - link "🤖 AI & LLMs" [ref=e14] [cursor=pointer]:
+          - /url: /ai
+          - generic [ref=e15]: 🤖
+          - text: AI & LLMs
+        - link "🏗️ System Design" [ref=e16] [cursor=pointer]:
+          - /url: /system-design
+          - generic [ref=e17]: 🏗️
+          - text: System Design
+        - link "🎯 Interview" [ref=e18] [cursor=pointer]:
+          - /url: /interview
+          - generic [ref=e19]: 🎯
+          - text: Interview
+        - link "📋 Cheatsheets" [ref=e20] [cursor=pointer]:
+          - /url: /cheatsheets
+          - generic [ref=e21]: 📋
+          - text: Cheatsheets
+        - link "🗺️ Roadmap" [ref=e22] [cursor=pointer]:
+          - /url: /roadmap
+          - generic [ref=e23]: 🗺️
+          - text: Roadmap
+      - generic [ref=e24]:
+        - button "Search ⌘K" [ref=e25]:
+          - img [ref=e26]
+          - generic [ref=e28]: Search
+          - generic [ref=e29]: ⌘K
+        - button "Toggle theme" [ref=e30]:
+          - img [ref=e31]
+  - main [ref=e33]:
+    - generic [ref=e34]:
+      - generic [ref=e35]:
+        - generic [ref=e36]:
+          - link "N withsoon" [ref=e37] [cursor=pointer]:
+            - /url: /
+            - generic [ref=e38]: "N"
+            - generic [ref=e40]: withsoon
+          - generic [ref=e41]: /
+          - link "System Design" [ref=e42] [cursor=pointer]:
+            - /url: /system-design
+          - generic [ref=e43]: /
+          - generic [ref=e44]: Netflix
+          - generic [ref=e45]: Senior Backend
+          - generic [ref=e46]: 0/23 studied
+          - button "Progress" [ref=e47] [cursor=pointer]
+          - button "Notes" [ref=e48] [cursor=pointer]
+          - button "Focus" [ref=e49] [cursor=pointer]
+          - button "Share" [ref=e50] [cursor=pointer]
+          - button "Open keyboard shortcuts" [ref=e51] [cursor=pointer]:
+            - generic [ref=e52]: "?"
+            - generic [ref=e53]: Shortcuts
+        - generic [ref=e54]:
+          - generic [ref=e55]:
+            - button "Start Here" [ref=e57] [cursor=pointer]
+            - button "Requirements" [ref=e59] [cursor=pointer]
+            - button "Architecture" [ref=e61] [cursor=pointer]
+            - button "Playback" [ref=e63] [cursor=pointer]
+            - button "CDN" [ref=e65] [cursor=pointer]
+            - button "Encoding" [ref=e67] [cursor=pointer]
+            - button "Security" [ref=e69] [cursor=pointer]: Security
+            - button "Data Models" [ref=e72] [cursor=pointer]
+            - button "Trade-offs" [ref=e74] [cursor=pointer]
+            - button "Capacity" [ref=e76] [cursor=pointer]
+            - button "Failures" [ref=e78] [cursor=pointer]
+            - generic [ref=e79]:
+              - generic [ref=e82]: Practice
+              - button "Quiz" [ref=e83] [cursor=pointer]
+            - button "Mock Interview" [ref=e85] [cursor=pointer]
+            - button "Cheat Sheet" [ref=e87] [cursor=pointer]
+          - generic [ref=e88]:
+            - generic [ref=e89]: 7/14
+            - button "← Encoding" [ref=e90] [cursor=pointer]
+            - button "Data Models →" [ref=e91] [cursor=pointer]
+      - generic [ref=e94]:
+        - generic [ref=e95]:
+          - 'heading "Netflix System Design: Security & DRM" [level=1] [ref=e96]'
+          - generic [ref=e97]: ~5 min
+        - generic [ref=e98]:
+          - paragraph [ref=e100]:
+            - strong [ref=e101]: "Interview angle:"
+            - text: Security comes up in two contexts — DRM (content protection, studio contracts) and data privacy (PII, GDPR). Know the DRM flow end-to-end and be able to explain why signed URLs + device-bound licenses prevent URL sharing.
+          - generic [ref=e102]:
+            - heading "DRM License Flow" [level=2] [ref=e103]
+            - paragraph [ref=e104]: How Netflix prevents content piracy while keeping under 500ms playback startup.
+            - generic [ref=e105]:
+              - generic [ref=e106]:
+                - generic [ref=e107]: Step
+                - generic [ref=e108]: Actor
+                - generic [ref=e109]: What happens
+              - generic [ref=e110]:
+                - generic [ref=e112]: "1"
+                - generic [ref=e114]: Client
+                - paragraph [ref=e115]: User clicks Play. Client sends POST /playback/session with deviceId and drmScheme (WIDEVINE/FAIRPLAY/PLAYREADY).
+              - generic [ref=e116]:
+                - generic [ref=e118]: "2"
+                - generic [ref=e120]: Playback Service
+                - paragraph [ref=e121]: Validates JWT, checks entitlement, acquires concurrency slot. Passes device fingerprint to DRM Service.
+              - generic [ref=e122]:
+                - generic [ref=e124]: "3"
+                - generic [ref=e126]: DRM Service
+                - paragraph [ref=e127]: Verifies device registration. Generates Content Encryption Key (CEK) lookup from HSM. Creates license token signed with private key.
+              - generic [ref=e128]:
+                - generic [ref=e130]: "4"
+                - generic [ref=e132]: Playback Service
+                - paragraph [ref=e133]: Returns signed manifest URL + DRM license URL to client. DRM license URL is also signed and short-lived.
+              - generic [ref=e134]:
+                - generic [ref=e136]: "5"
+                - generic [ref=e138]: Client
+                - paragraph [ref=e139]: Fetches manifest from CDN. Discovers encrypted segments. Sends license challenge to DRM license URL.
+              - generic [ref=e140]:
+                - generic [ref=e142]: "6"
+                - generic [ref=e144]: DRM Service
+                - paragraph [ref=e145]: Validates license challenge token + device fingerprint. Wraps CEK in device TEE public key. Returns license blob.
+              - generic [ref=e146]:
+                - generic [ref=e148]: "7"
+                - generic [ref=e150]: Client TEE
+                - paragraph [ref=e151]: Unwraps CEK inside Trusted Execution Environment. Decrypts video segments locally. CEK never leaves the TEE.
+            - paragraph [ref=e153]: "DRM FAILS CLOSED: No license = no CEK = no decryption = black screen. Studio contracts prohibit any plaintext fallback. This is the one place where user experience is legally subordinate to content protection."
+          - generic [ref=e154]:
+            - heading "Security Controls" [level=2] [ref=e155]
+            - generic [ref=e156]:
+              - generic [ref=e157]:
+                - heading "Authentication & Authorization" [level=3] [ref=e158]
+                - generic [ref=e159]:
+                  - generic [ref=e160]:
+                    - generic [ref=e161]: ▸
+                    - generic [ref=e162]: JWT (RS256) with 15-minute access token TTL
+                  - generic [ref=e163]:
+                    - generic [ref=e164]: ▸
+                    - generic [ref=e165]: Refresh token stored in HttpOnly cookie, 30-day TTL, device-bound
+                  - generic [ref=e166]:
+                    - generic [ref=e167]: ▸
+                    - generic [ref=e168]: Redis revocation list for instant invalidation (device theft, account compromise)
+                  - generic [ref=e169]:
+                    - generic [ref=e170]: ▸
+                    - generic [ref=e171]: OAuth2-compatible flow for social login (Google, Apple, Facebook)
+                  - generic [ref=e172]:
+                    - generic [ref=e173]: ▸
+                    - generic [ref=e174]: "Authorization: profile-level permissions enforced at API layer, not client"
+              - generic [ref=e175]:
+                - heading "Signed CDN URLs" [level=3] [ref=e176]
+                - generic [ref=e177]:
+                  - generic [ref=e178]:
+                    - generic [ref=e179]: ▸
+                    - generic [ref=e180]: Manifest URL = HMAC-SHA256(canonical_url + expiry + client_ip_hash, secret_key)
+                  - generic [ref=e181]:
+                    - generic [ref=e182]: ▸
+                    - generic [ref=e183]: TTL = 6 hours — long enough for a feature film; short enough to limit URL sharing
+                  - generic [ref=e184]:
+                    - generic [ref=e185]: ▸
+                    - generic [ref=e186]: "URL binding: optional IP-range binding for extra theft protection"
+                  - generic [ref=e187]:
+                    - generic [ref=e188]: ▸
+                    - generic [ref=e189]: CDN validates signature before serving any response — no bypass possible
+                  - generic [ref=e190]:
+                    - generic [ref=e191]: ▸
+                    - generic [ref=e192]: Segment URLs are also signed — sharing the manifest doesn't expose raw video
+              - generic [ref=e193]:
+                - heading "Device Registration & Limits" [level=3] [ref=e194]
+                - generic [ref=e195]:
+                  - generic [ref=e196]:
+                    - generic [ref=e197]: ▸
+                    - generic [ref=e198]: Each device generates a unique device fingerprint on first registration
+                  - generic [ref=e199]:
+                    - generic [ref=e200]: ▸
+                    - generic [ref=e201]: Device is registered to account; max 5 registered devices per plan (varies)
+                  - generic [ref=e202]:
+                    - generic [ref=e203]: ▸
+                    - generic [ref=e204]: Concurrency limit (simultaneous streams) enforced at Redis layer — atomic Lua script
+                  - generic [ref=e205]:
+                    - generic [ref=e206]: ▸
+                    - generic [ref=e207]: Device management UI lets users deregister unused devices
+                  - generic [ref=e208]:
+                    - generic [ref=e209]: ▸
+                    - generic [ref=e210]: Suspicious device activity (rapid country hops) triggers step-up authentication
+              - generic [ref=e211]:
+                - heading "Session Hijack Protection" [level=3] [ref=e212]
+                - generic [ref=e213]:
+                  - generic [ref=e214]:
+                    - generic [ref=e215]: ▸
+                    - generic [ref=e216]: "Access tokens are device-bound: contain deviceId claim. Cross-device reuse rejected."
+                  - generic [ref=e217]:
+                    - generic [ref=e218]: ▸
+                    - generic [ref=e219]: "IP anomaly detection: token used from unusual geography triggers re-auth prompt"
+                  - generic [ref=e220]:
+                    - generic [ref=e221]: ▸
+                    - generic [ref=e222]: Short token TTL (15 min) limits the damage window of a stolen token
+                  - generic [ref=e223]:
+                    - generic [ref=e224]: ▸
+                    - generic [ref=e225]: "Concurrent session detection: >plan limit triggers notification + forced sign-out"
+                  - generic [ref=e226]:
+                    - generic [ref=e227]: ▸
+                    - generic [ref=e228]: Redis revocation list allows immediate invalidation of compromised sessions
+              - generic [ref=e229]:
+                - heading "PII & Data Privacy" [level=3] [ref=e230]
+                - generic [ref=e231]:
+                  - generic [ref=e232]:
+                    - generic [ref=e233]: ▸
+                    - generic [ref=e234]: PII fields (email, IP, device IDs) are pseudonymized before entering the data lake
+                  - generic [ref=e235]:
+                    - generic [ref=e236]: ▸
+                    - generic [ref=e237]: Hashed profile IDs used in analytics; mapping table access-controlled
+                  - generic [ref=e238]:
+                    - generic [ref=e239]: ▸
+                    - generic [ref=e240]: "Event data minimization: only fields necessary for the use case are included"
+                  - generic [ref=e241]:
+                    - generic [ref=e242]: ▸
+                    - generic [ref=e243]: "GDPR right-to-erasure: deletion request propagates to Cassandra, S3, and search index"
+                  - generic [ref=e244]:
+                    - generic [ref=e245]: ▸
+                    - generic [ref=e246]: "Data retention policies: raw event data 90 days, curated data 2 years, billing records 7 years"
+              - generic [ref=e247]:
+                - heading "Credential Stuffing & Abuse Prevention" [level=3] [ref=e248]
+                - generic [ref=e249]:
+                  - generic [ref=e250]:
+                    - generic [ref=e251]: ▸
+                    - generic [ref=e252]: "Rate limiting: 5 login attempts per IP per minute; 20 per hour"
+                  - generic [ref=e253]:
+                    - generic [ref=e254]: ▸
+                    - generic [ref=e255]: CAPTCHA triggered after 3 consecutive failures
+                  - generic [ref=e256]:
+                    - generic [ref=e257]: ▸
+                    - generic [ref=e258]: "Credential stuffing detection: bot fingerprinting, request rate analysis"
+                  - generic [ref=e259]:
+                    - generic [ref=e260]: ▸
+                    - generic [ref=e261]: "Compromised password detection: check against Have I Been Pwned database on login"
+                  - generic [ref=e262]:
+                    - generic [ref=e263]: ▸
+                    - generic [ref=e264]: "Household enforcement: location-based signals detect account sharing across households"
+              - generic [ref=e265]:
+                - heading "Audit Logging & Compliance" [level=3] [ref=e266]
+                - generic [ref=e267]:
+                  - generic [ref=e268]:
+                    - generic [ref=e269]: ▸
+                    - generic [ref=e270]: All admin/content-ops actions are audit-logged with user, action, timestamp, and IP
+                  - generic [ref=e271]:
+                    - generic [ref=e272]: ▸
+                    - generic [ref=e273]: Immutable audit log stored in S3 with write-once retention policy
+                  - generic [ref=e274]:
+                    - generic [ref=e275]: ▸
+                    - generic [ref=e276]: "Billing changes trigger audit event: old state, new state, initiator"
+                  - generic [ref=e277]:
+                    - generic [ref=e278]: ▸
+                    - generic [ref=e279]: "DRM license issuances logged: device, title, timestamp, region"
+                  - generic [ref=e280]:
+                    - generic [ref=e281]: ▸
+                    - generic [ref=e282]: Compliance with GDPR (EU), CCPA (California), COPPA (children's content)
+          - generic [ref=e283]:
+            - heading "Common Interviewer Questions" [level=3] [ref=e284]
+            - generic [ref=e285]:
+              - generic [ref=e286]:
+                - generic [ref=e288]: "Q: How do you prevent URL sharing to bypass DRM?"
+                - generic [ref=e289]: Signed manifest URLs with short TTL (6h) + HMAC-SHA256. Segments are also encrypted — even with the URL, segments can't be decrypted without the DRM license, which is device-bound.
+              - generic [ref=e290]:
+                - generic [ref=e292]: "Q: What happens if a user's access token is stolen?"
+                - generic [ref=e293]: 15-minute TTL limits the damage. Immediate revocation via Redis revocation list. If device theft, user can deregister device from UI — invalidates all tokens for that device.
+              - generic [ref=e294]:
+                - generic [ref=e296]: "Q: How do you handle GDPR deletion requests?"
+                - generic [ref=e297]: Propagate deletion to Cassandra (profile + watch history), S3 (pseudonymized event data), search index, and CDN cache invalidation. PII hashing in the lake means most events become unanonymizable anyway.
+              - generic [ref=e298]:
+                - generic [ref=e300]: "Q: Why does DRM fail closed instead of open?"
+                - generic [ref=e301]: Studio licensing contracts require it. Content cannot be accessed without a valid device-bound license. This is a legal obligation, not a technical preference.
+              - generic [ref=e302]:
+                - generic [ref=e304]: "Q: How do you enforce concurrent stream limits?"
+                - generic [ref=e305]: "Redis Lua script atomically: check current_count < plan_limit, INCR, SADD(sessionId), set TTL=36s. Heartbeat renews TTL. Atomic execution prevents race conditions."
+          - generic [ref=e306]:
+            - generic [ref=e307]:
+              - generic [ref=e308]: 📋 Say This In Interview
+              - button "Copy" [ref=e309] [cursor=pointer]
+            - generic [ref=e310]: "Netflix content security has two layers. Control plane: JWT auth (15-min TTL), entitlement check, concurrency check via atomic Redis Lua. After authorization, the client gets a signed manifest URL (HMAC-SHA256, 6h TTL) and a DRM license URL. Data plane: video segments are AES-128 encrypted. The Content Encryption Key is device-bound via the DRM license — it lives in the device's TEE and can never be extracted. Even if someone captures the CDN URL, they can't decrypt the segments without the device-bound license."
+          - 'button "Next: Observability / Cost →" [ref=e311] [cursor=pointer]'
+        - generic [ref=e312]:
+          - generic [ref=e313]: Was this tab useful for interview prep?
+          - button "This tab was useful" [ref=e314] [cursor=pointer]: 👍
+          - button "This tab needs work" [ref=e315] [cursor=pointer]: 👎
+  - button "Open Next.js Dev Tools" [ref=e321] [cursor=pointer]:
+    - img [ref=e322]
+  - alert [ref=e325]

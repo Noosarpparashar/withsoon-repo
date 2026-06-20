@@ -169,9 +169,10 @@ function Callout({ variant, title, body }: { variant: keyof typeof CALLOUT_COLOR
 
 // ── Node card ──────────────────────────────────────────────────────────────────
 function NodeCard({
-  node, isSelected, flowStep, isFlowVisited, isStudied, animDelay, onClick, onHover,
+  node, isSelected, isFlowCurrent, flowStep, isFlowVisited, isStudied, animDelay, onClick, onHover,
 }: {
   node: NodeData; isSelected: boolean;
+  isFlowCurrent?: boolean;
   flowStep?: number; isFlowVisited?: boolean;
   isStudied?: boolean; animDelay: number;
   onClick: () => void;
@@ -179,13 +180,17 @@ function NodeCard({
 }) {
   const pos = NODE_POSITIONS[node.id];
   const typeColor = TYPE_COLORS[node.type] ?? N_MUTED;
-  const borderColor = isSelected ? N_RED : isFlowVisited ? N_AMBER : "var(--border)";
-  const cardFill = isSelected
+  const borderColor = isFlowCurrent ? N_AMBER : isSelected ? N_RED : isFlowVisited ? `${N_AMBER}A0` : "var(--border)";
+  const cardFill = isFlowCurrent
+    ? "rgba(245,166,35,0.08)"
+    : isSelected
     ? "var(--netflix-node-selected-fill)"
     : isFlowVisited
       ? "var(--netflix-node-visited-fill)"
       : "var(--bg-card)";
-  const cardShadow = isSelected
+  const cardShadow = isFlowCurrent
+    ? "drop-shadow(0 10px 18px rgba(245,166,35,0.14))"
+    : isSelected
     ? "drop-shadow(0 10px 18px rgba(229,9,20,0.18))"
     : isFlowVisited
       ? "drop-shadow(0 8px 14px rgba(245,166,35,0.16))"
@@ -212,7 +217,7 @@ function NodeCard({
         style={{
           fill: cardFill,
           stroke: borderColor,
-          strokeWidth: isSelected || isFlowVisited ? 1.5 : 1,
+          strokeWidth: isFlowCurrent ? 2 : isSelected || isFlowVisited ? 1.5 : 1,
         }}
       />
       {/* Top accent bar */}
@@ -243,7 +248,7 @@ function NodeCard({
       </>}
       {/* Flow step badge */}
       {flowStep !== undefined && <>
-        <circle cx={pos.x + NODE_W - 10} cy={pos.y + 10} r={9} style={{ fill: N_AMBER }} />
+        <circle cx={pos.x + NODE_W - 10} cy={pos.y + 10} r={isFlowCurrent ? 10 : 9} style={{ fill: N_AMBER }} />
         <text x={pos.x + NODE_W - 10} y={pos.y + 14}
           style={{ fill: "#000", fontSize: 9, fontWeight: "bold", textAnchor: "middle", fontFamily: "Inter, sans-serif" }}>
           {flowStep}
@@ -254,7 +259,15 @@ function NodeCard({
 }
 
 // ── Connections ────────────────────────────────────────────────────────────────
-function ConnectionArrows({ activeNodeId, activeFlowNodeIds }: { activeNodeId?: NodeId; activeFlowNodeIds?: NodeId[] }) {
+function ConnectionArrows({
+  activeNodeId,
+  activeFlowNodeIds,
+  activeFlowCurrentNodeId,
+}: {
+  activeNodeId?: NodeId;
+  activeFlowNodeIds?: NodeId[];
+  activeFlowCurrentNodeId?: NodeId;
+}) {
   return (
     <g>
       <defs>
@@ -276,18 +289,19 @@ function ConnectionArrows({ activeNodeId, activeFlowNodeIds }: { activeNodeId?: 
         const tx = toPos.x + NODE_W / 2, ty = toPos.y;
         const isActive = activeNodeId && (conn.from === activeNodeId || conn.to === activeNodeId);
         const isFlow = activeFlowNodeIds && activeFlowNodeIds.includes(conn.from) && activeFlowNodeIds.includes(conn.to);
-        const color = isActive ? N_RED : isFlow ? N_AMBER : "var(--text-faint)";
-        const markerId = isActive ? "arr-a" : isFlow ? "arr-f" : "arr-d";
+        const isCurrentFlowEdge = isFlow && activeFlowCurrentNodeId && (conn.from === activeFlowCurrentNodeId || conn.to === activeFlowCurrentNodeId);
+        const color = isCurrentFlowEdge ? N_AMBER : isActive ? N_RED : isFlow ? `${N_AMBER}B0` : "var(--text-faint)";
+        const markerId = isCurrentFlowEdge || isFlow ? "arr-f" : isActive ? "arr-a" : "arr-d";
         const dx = tx - fx;
         const cy1 = fy + Math.min(30, Math.abs(fy - ty) * 0.4);
         const cy2 = ty - Math.min(30, Math.abs(fy - ty) * 0.4);
         const midX = (fx + tx) / 2, midY = (fy + ty) / 2;
         return (
-          <g key={i} opacity={(!activeNodeId && !activeFlowNodeIds) ? 1 : (isActive || isFlow ? 1 : 0.35)}>
+          <g key={i} opacity={(!activeNodeId && !activeFlowNodeIds) ? 1 : (isActive || isFlow ? 1 : 0.32)}>
             <path d={`M ${fx} ${fy} C ${fx + dx * 0.1} ${cy1}, ${tx - dx * 0.1} ${cy2}, ${tx} ${ty - 6}`}
-              style={{ fill: "none", stroke: color, strokeWidth: isActive || isFlow ? 1.5 : 0.8 }}
+              style={{ fill: "none", stroke: color, strokeWidth: isCurrentFlowEdge ? 2.2 : isActive || isFlow ? 1.45 : 0.8 }}
               markerEnd={`url(#${markerId})`} />
-            {(isActive || isFlow) && <>
+            {(isCurrentFlowEdge || isActive || isFlow) && <>
               <rect x={midX - 18} y={midY - 8} width={36} height={14} rx={3}
                 style={{ fill: "var(--bg-card)", stroke: color + "60", strokeWidth: 0.5 }} />
               <text x={midX} y={midY + 4}
@@ -308,7 +322,7 @@ function LayerLabels() {
     <g>
       {Object.entries(LAYER_Y).map(([layer, y]) => (
         <text key={layer} x={8} y={y + NODE_H / 2}
-          style={{ fill: "var(--text-faint)", fontSize: 8, fontWeight: "bold", letterSpacing: 1, fontFamily: "Inter, sans-serif" }}>
+          style={{ fill: "var(--text-muted)", fontSize: 12.5, fontWeight: "bold", letterSpacing: 1.3, fontFamily: "Inter, sans-serif" }}>
           {LAYER_LABELS[parseInt(layer)]}
         </text>
       ))}
@@ -385,35 +399,21 @@ type DepthLevel = "overview" | "interview" | "deepdive";
 
 function DetailPanel({
   node, studiedNodes, onMarkStudied, onNavigateTo,
-  activeFlow, activeFlowStep, onFlowNext, onFlowPrev, onExitFlow,
-  onActivatePlayFlow, onNavigatePlayback,
+  onGuideToPlaybackWalkthrough,
 }: {
   node: NodeData | null;
   studiedNodes: Set<NodeId>;
   onMarkStudied: (id: NodeId) => void;
   onNavigateTo: (id: NodeId) => void;
-  activeFlow: Flow | null;
-  activeFlowStep: number;
-  onFlowNext: () => void;
-  onFlowPrev: () => void;
-  onExitFlow: () => void;
-  onActivatePlayFlow: () => void;
-  onNavigatePlayback: () => void;
+  onGuideToPlaybackWalkthrough: () => void;
 }) {
   const [depth, setDepth] = useState<DepthLevel>("overview");
-  const [showTranscript, setShowTranscript] = useState(false);
   const panelRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     if (node) setDepth("overview");
     panelRef.current?.scrollTo({ top: 0, behavior: "smooth" });
   }, [node?.id]);
-
-  useEffect(() => {
-    if (activeFlow) {
-      setShowTranscript(false);
-    }
-  }, [activeFlow?.id]);
 
   useEffect(() => {
     const h = (e: KeyboardEvent) => {
@@ -427,155 +427,78 @@ function DetailPanel({
 
   const isStudied = node ? studiedNodes.has(node.id) : false;
 
-  if (activeFlow) {
-    const step = activeFlow.steps[activeFlowStep];
-    const total = activeFlow.steps.length;
-    return (
-      <div ref={panelRef} className="flex flex-col h-full overflow-y-auto"
-        style={{ background: "var(--bg-card)", borderLeft: `1px solid var(--border)` }}>
-        <div className="sticky top-0 z-10 px-4 py-3" style={{ background: "var(--bg-card)", borderBottom: `1px solid var(--border)` }}>
-          <div className="flex items-center justify-between mb-2">
-            <span className="text-sm font-bold" style={{ color: N_AMBER }}>{activeFlow.label}</span>
-            <div className="flex items-center gap-2">
-              <button
-                onClick={() => setShowTranscript(v => !v)}
-                className="text-[11px] px-2.5 py-1.5 rounded"
-                style={{ background: "var(--bg)", color: "var(--text-muted)", border: `1px solid var(--border)`, cursor: "pointer" }}
-              >
-                {showTranscript ? "Hide steps" : "Show steps"}
-              </button>
-              <button onClick={onExitFlow} className="text-xs px-2 py-1 rounded" style={{ background: "var(--border)", color: "var(--text-muted)", cursor: "pointer" }}>✕</button>
-            </div>
-          </div>
-          <div className="flex items-center gap-1.5 mb-2">
-            {activeFlow.steps.map((_, i) => (
-              <div key={i} className="h-1.5 rounded-full transition-all duration-200"
-                style={{ width: i === activeFlowStep ? 20 : 8, background: i <= activeFlowStep ? N_AMBER : "var(--text-faint)" }} />
-            ))}
-          </div>
-          <div className="text-[11px]" style={{ color: "var(--text-muted)" }}>Step {activeFlowStep + 1} of {total}</div>
-        </div>
-        <div className="p-4 flex-1">
-          <div className="rounded-lg p-4 mb-4" style={{ background: "rgba(245,166,35,0.08)", border: `1px solid ${N_AMBER}30` }}>
-            <div className="flex items-start gap-2 mb-2">
-              <span className="w-6 h-6 rounded-full text-xs font-bold flex items-center justify-center shrink-0"
-                style={{ background: N_AMBER, color: "#000" }}>{activeFlowStep + 1}</span>
-              <div>
-                <p className="text-base font-bold" style={{ color: N_AMBER }}>{step.name}</p>
-                <p className="text-[11px]" style={{ color: "var(--text-muted)" }}>{NODES.find(n => n.id === step.nodeId)?.label}</p>
-              </div>
-            </div>
-            <p className="text-sm leading-relaxed mb-3" style={{ color: "var(--text-muted)" }}>{step.description}</p>
-            {step.payload && (
-              <div className="rounded-md p-2.5 mb-3" style={{ background: "var(--bg)", border: `1px solid var(--border)` }}>
-                <pre className="text-[11px] leading-relaxed overflow-x-auto" style={{ color: "#6ee7b7", fontFamily: C.mono }}>{step.payload}</pre>
-              </div>
-            )}
-            {step.whyItMatters && (
-              <div className="rounded p-2" style={{ background: "rgba(245,166,35,0.06)", border: `1px solid ${N_AMBER}25` }}>
-                <p className="text-[11px] font-bold mb-0.5" style={{ color: N_AMBER }}>Why this matters</p>
-                <p className="text-[12px] leading-relaxed" style={{ color: "var(--text-muted)" }}>{step.whyItMatters}</p>
-              </div>
-            )}
-          </div>
-          <div className="flex gap-2 mb-6">
-            <button onClick={onFlowPrev} disabled={activeFlowStep === 0}
-              className="flex-1 py-2.5 rounded-lg text-sm font-medium disabled:opacity-30"
-              style={{ background: "var(--border)", color: "var(--text)" }}>← Prev</button>
-            <button onClick={onFlowNext} disabled={activeFlowStep === total - 1}
-              className="flex-1 py-2.5 rounded-lg text-sm font-medium disabled:opacity-30"
-              style={{ background: N_AMBER, color: "#000" }}>Next →</button>
-          </div>
-
-          {/* Flow transcript — all steps in sequence */}
-          {showTranscript && (
-            <div style={{ borderTop: `1px solid var(--border)` }}>
-              <p className="text-[10px] font-bold uppercase tracking-widest py-2" style={{ color: "var(--text-faint)" }}>All steps</p>
-              <div className="space-y-1 pb-4">
-                {activeFlow.steps.map((s, i) => (
-                  <div
-                    key={i}
-                    className="flex items-start gap-2 rounded-lg px-2 py-2"
-                    style={{ background: i === activeFlowStep ? N_AMBER + "12" : "transparent", border: `1px solid ${i === activeFlowStep ? N_AMBER + "30" : "transparent"}` }}
-                    aria-current={i === activeFlowStep ? "step" : undefined}
-                  >
-                    <span className="w-5 h-5 rounded-full text-[10px] font-bold flex items-center justify-center shrink-0 mt-0.5"
-                      style={{ background: i <= activeFlowStep ? N_AMBER : "var(--border)", color: i <= activeFlowStep ? "#000" : "var(--text-faint)" }}>
-                      {i + 1}
-                    </span>
-                    <span className="text-[12px] leading-snug" style={{ color: i === activeFlowStep ? N_AMBER : i < activeFlowStep ? "var(--text-muted)" : "var(--text-faint)" }}>
-                      {s.name}
-                    </span>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
-        </div>
-      </div>
-    );
-  }
-
   if (!node) {
+    const starterNodes = ["client", "api-gateway", "streaming", "drm", "s3"]
+      .map((id) => NODES.find((entry) => entry.id === id))
+      .filter((entry): entry is NodeData => Boolean(entry));
+
     return (
       <div className="flex flex-col h-full overflow-y-auto"
         style={{ background: "var(--bg-card)", borderLeft: `1px solid var(--border)` }}>
-        {/* Hero CTA */}
-        <div className="p-5 flex-1 flex flex-col justify-center">
-          <div className="rounded-xl overflow-hidden mb-4" style={{ background: "var(--bg)", border: `1px solid ${N_AMBER}30` }}>
+        <div className="p-5 flex-1 flex flex-col gap-4">
+          <div className="rounded-xl overflow-hidden" style={{ background: "var(--bg)", border: `1px solid ${N_AMBER}30` }}>
             <div className="px-4 py-3" style={{ background: N_AMBER + "12", borderBottom: `1px solid ${N_AMBER}25` }}>
-              <p className="text-[10px] font-bold uppercase tracking-widest" style={{ color: N_AMBER }}>Desktop walkthrough</p>
+              <p className="text-[10px] font-bold uppercase tracking-widest" style={{ color: N_AMBER }}>Architecture panel</p>
             </div>
             <div className="p-4">
-              <p className="text-lg font-bold mb-2" style={{ color: "var(--text)" }}>Use the diagram first</p>
+              <p className="text-lg font-bold mb-2" style={{ color: "var(--text)" }}>Click the diagram</p>
               <p className="text-sm leading-relaxed mb-4" style={{ color: "var(--text-muted)" }}>
-                Click services to inspect them one by one, or optionally run the playback walkthrough if you want a narrated request path.
+                Click nodes in the architecture diagram to inspect services and interview answers.
               </p>
-              <div className="flex flex-wrap gap-1 mb-4 text-[10px]">
-                {["Client", "Playback Svc", "Entitlement", "DRM", "Manifest", "CDN", "Watch Progress", "Kafka"].map((s, i, arr) => (
-                  <span key={s} className="flex items-center gap-1">
-                    <span className="px-1.5 py-0.5 rounded" style={{ background: N_AMBER + "18", color: N_AMBER, border: `1px solid ${N_AMBER}30` }}>{s}</span>
-                    {i < arr.length - 1 && <span style={{ color: "var(--text-faint)" }}>→</span>}
-                  </span>
-                ))}
+              <div className="rounded-lg p-3" style={{ background: "var(--bg-muted)", border: `1px solid var(--border)` }}>
+                <p className="text-[10px] font-bold uppercase tracking-widest mb-1.5" style={{ color: "var(--text-faint)" }}>
+                  Fastest way to start
+                </p>
+                <p className="text-[12px] leading-relaxed mb-3" style={{ color: "var(--text-muted)" }}>
+                  Start with the playback walkthrough once, then click back into individual nodes for details.
+                </p>
+                <button
+                  onClick={onGuideToPlaybackWalkthrough}
+                  className="w-full py-2 rounded-lg text-xs font-medium transition-colors hover:opacity-85"
+                  style={{ background: N_AMBER, color: "#111827" }}
+                >
+                  Start guided playback ↓
+                </button>
               </div>
-              <button
-                onClick={onActivatePlayFlow}
-                className="w-full py-2.5 rounded-lg text-sm font-bold mb-2 transition-all hover:opacity-90"
-                style={{ background: N_AMBER, color: "#111827" }}>
-                Open Playback Walkthrough
-              </button>
-              <button
-                onClick={onNavigatePlayback}
-                className="w-full py-2 rounded-lg text-xs font-medium transition-colors hover:opacity-80"
-                style={{ background: "var(--bg-muted)", color: "var(--text-muted)", border: `1px solid var(--border)` }}>
-                Open Playback Deep Dive →
-              </button>
             </div>
           </div>
-          {/* How to use */}
           <div className="rounded-xl p-4" style={{ background: "var(--bg)", border: `1px solid var(--border)` }}>
-            <p className="text-[10px] font-bold uppercase tracking-widest mb-3" style={{ color: "var(--text-faint)" }}>How to use this map</p>
-            <div className="space-y-2">
-              {[
-                { n: "1", text: "Click a service node to see its design & interview answer" },
-                { n: "2", text: "Open the playback walkthrough if you want a narrated request path" },
-                { n: "3", text: "Switch to Playback or Failures for deep-dive answers" },
-              ].map(({ n, text }) => (
-                <div key={n} className="flex items-start gap-2.5">
-                  <span className="w-5 h-5 rounded-full text-[10px] font-bold flex items-center justify-center shrink-0"
-                    style={{ background: N_RED + "18", color: N_RED }}>
-                    {n}
-                  </span>
-                  <p className="text-[11px] leading-relaxed" style={{ color: "var(--text-muted)" }}>{text}</p>
-                </div>
-              ))}
+            <div className="flex items-center justify-between gap-2 mb-3">
+              <p className="text-[10px] font-bold uppercase tracking-widest" style={{ color: "var(--text-faint)" }}>
+                Quick node jumps
+              </p>
+              <span className="text-[11px]" style={{ color: "var(--text-faint)" }}>
+                or click directly in the canvas
+              </span>
+            </div>
+            <div className="grid grid-cols-2 gap-2">
+              {starterNodes.map((starterNode) => {
+                const typeColor = TYPE_COLORS[starterNode.type] ?? N_MUTED;
+                return (
+                  <button
+                    key={starterNode.id}
+                    onClick={() => onNavigateTo(starterNode.id)}
+                    className="text-left rounded-lg px-3 py-2 transition-all hover:-translate-y-0.5"
+                    style={{ background: "var(--bg-muted)", border: `1px solid ${typeColor}30`, cursor: "pointer" }}
+                  >
+                    <p className="text-[12px] font-semibold leading-tight" style={{ color: "var(--text)" }}>
+                      {starterNode.label}
+                    </p>
+                    <p className="text-[10px] mt-1" style={{ color: typeColor }}>
+                      {starterNode.type}
+                    </p>
+                  </button>
+                );
+              })}
             </div>
           </div>
-          <div className="mt-4 text-[10px] space-y-1" style={{ color: "var(--text-faint)" }}>
-            <p>1 / 2 / 3 — switch depth</p>
-            <p>N / P — next / prev node</p>
-            <p>⌘K — command palette</p>
+          <div className="mt-auto rounded-xl p-4" style={{ background: "var(--bg)", border: `1px solid var(--border)` }}>
+            <p className="text-[10px] font-bold uppercase tracking-widest mb-2" style={{ color: "var(--text-faint)" }}>
+              Desktop tip
+            </p>
+            <p className="text-[12px] leading-relaxed" style={{ color: "var(--text-muted)" }}>
+              Use the walkthrough pills below the canvas when you want to animate a full request path without covering the right-side node details.
+            </p>
           </div>
         </div>
       </div>
@@ -674,6 +597,119 @@ function DetailPanel({
                 </button>
               );
             })}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function FlowOverlay({
+  activeFlow,
+  activeFlowStep,
+  onFlowNext,
+  onFlowPrev,
+  onExitFlow,
+}: {
+  activeFlow: Flow | null;
+  activeFlowStep: number;
+  onFlowNext: () => void;
+  onFlowPrev: () => void;
+  onExitFlow: () => void;
+}) {
+  if (!activeFlow) return null;
+
+  const step = activeFlow.steps[activeFlowStep];
+  const total = activeFlow.steps.length;
+  const stepNode = NODES.find((n) => n.id === step.nodeId);
+
+  return (
+    <div
+      className="absolute left-1/2 -translate-x-1/2 bottom-4 z-10 hidden lg:block"
+      style={{ width: "min(44rem, calc(100% - 18rem))", pointerEvents: "none" }}
+    >
+      <div
+        className="rounded-2xl px-4 py-3"
+        style={{
+          pointerEvents: "auto",
+          background: "color-mix(in srgb, var(--bg-card) 92%, transparent)",
+          border: `1px solid ${N_AMBER}35`,
+          boxShadow: "0 16px 40px rgba(0,0,0,0.24)",
+          backdropFilter: "blur(14px)",
+        }}
+      >
+        <div className="flex items-start justify-between gap-4">
+          <div className="min-w-0">
+            <div className="flex items-center gap-2 flex-wrap mb-1.5">
+              <span
+                className="text-[10px] font-bold uppercase tracking-widest px-2 py-1 rounded-md"
+                style={{ background: N_AMBER + "18", color: N_AMBER, border: `1px solid ${N_AMBER}35` }}
+              >
+                {activeFlow.label}
+              </span>
+              {stepNode && (
+                <span
+                  className="text-[10px] px-2 py-1 rounded-md"
+                  style={{ background: "var(--bg)", color: "var(--text-muted)", border: `1px solid var(--border)` }}
+                >
+                  {stepNode.label}
+                </span>
+              )}
+            </div>
+            <p className="text-base font-bold mb-1" style={{ color: "var(--text)" }}>
+              {step.name}
+            </p>
+            <p className="text-[12px] leading-relaxed" style={{ color: "var(--text-muted)" }}>
+              {step.description}
+            </p>
+          </div>
+
+          <div className="shrink-0 min-w-[230px]">
+            <div className="flex items-center justify-between mb-2">
+              <p className="text-[10px] font-bold uppercase tracking-widest" style={{ color: "var(--text-faint)" }}>
+                Flow Progress
+              </p>
+              <span className="text-lg font-bold" style={{ color: N_AMBER }}>
+                Step {activeFlowStep + 1} of {total}
+              </span>
+            </div>
+            <div className="flex items-center gap-1.5 mb-3">
+              {activeFlow.steps.map((_, i) => (
+                <div
+                  key={i}
+                  className="h-2 rounded-full transition-all duration-200"
+                  style={{
+                    width: i === activeFlowStep ? 28 : 14,
+                    background: i <= activeFlowStep ? N_AMBER : "var(--border)",
+                  }}
+                />
+              ))}
+            </div>
+            <div className="flex gap-2">
+              <button
+                onClick={onFlowPrev}
+                disabled={activeFlowStep === 0}
+                className="flex-1 py-2 rounded-lg text-xs font-medium disabled:opacity-30"
+                style={{ background: "var(--bg)", color: "var(--text)", border: `1px solid var(--border)` }}
+              >
+                ← Prev
+              </button>
+              <button
+                onClick={onFlowNext}
+                disabled={activeFlowStep === total - 1}
+                className="flex-1 py-2 rounded-lg text-xs font-medium disabled:opacity-30"
+                style={{ background: N_AMBER, color: "#111827" }}
+              >
+                Next →
+              </button>
+              <button
+                onClick={onExitFlow}
+                className="px-3 py-2 rounded-lg text-xs font-medium"
+                style={{ background: "var(--bg)", color: "var(--text-muted)", border: `1px solid var(--border)` }}
+              >
+                Close
+              </button>
+            </div>
           </div>
         </div>
       </div>
@@ -927,15 +963,17 @@ function ArchitectureTab({
   const [activeFlow, setActiveFlow] = useState<Flow | null>(null);
   const [activeFlowStep, setActiveFlowStep] = useState(0);
   const [cmdOpen, setCmdOpen] = useState(false);
-  const [stepByStep, setStepByStep] = useState(false);
   const [panelCollapsed, setPanelCollapsed] = useState(false);
   const [zoom, setZoom] = useState(1);
   const [pan, setPan] = useState({ x: 0, y: 0 });
   const [containerSize, setContainerSize] = useState({ w: 800, h: 600 });
   const [mobileOverlayDismissed, setMobileOverlayDismissed] = useState(false);
+  const [guidePlaybackPill, setGuidePlaybackPill] = useState(false);
   const isPanning = useRef(false);
   const lastPan = useRef({ x: 0, y: 0 });
   const canvasContainerRef = useRef<HTMLDivElement>(null);
+  const playbackWalkthroughRef = useRef<HTMLButtonElement>(null);
+  const guidePlaybackTimeoutRef = useRef<number | null>(null);
 
   useEffect(() => {
     try {
@@ -1003,6 +1041,27 @@ function ArchitectureTab({
 
   const handleExitFlow = useCallback(() => { setActiveFlow(null); setActiveFlowStep(0); }, []);
 
+  const handleGuideToPlaybackWalkthrough = useCallback(() => {
+    const playbackFlow = FLOWS.find((flow) => flow.id === "play");
+    if (playbackFlow) {
+      setPanelCollapsed(false);
+      setActiveFlow(playbackFlow);
+      setActiveFlowStep(0);
+      setSelectedNode(playbackFlow.steps[0]?.nodeId ?? null);
+    }
+    playbackWalkthroughRef.current?.scrollIntoView({ behavior: "smooth", block: "nearest", inline: "center" });
+    playbackWalkthroughRef.current?.focus();
+    setGuidePlaybackPill(true);
+    if (guidePlaybackTimeoutRef.current) window.clearTimeout(guidePlaybackTimeoutRef.current);
+    guidePlaybackTimeoutRef.current = window.setTimeout(() => setGuidePlaybackPill(false), 2200);
+  }, []);
+
+  useEffect(() => {
+    return () => {
+      if (guidePlaybackTimeoutRef.current) window.clearTimeout(guidePlaybackTimeoutRef.current);
+    };
+  }, []);
+
   const handleMouseDown = useCallback((e: React.MouseEvent<SVGSVGElement>) => {
     if ((e.target as SVGElement).closest("g[role='button']")) return;
     isPanning.current = true;
@@ -1026,6 +1085,7 @@ function ArchitectureTab({
   }, []);
 
   const flowNodeIds = activeFlow ? activeFlow.steps.slice(0, activeFlowStep + 1).map(s => s.nodeId) : [];
+  const currentFlowNodeId = activeFlow ? activeFlow.steps[activeFlowStep]?.nodeId : undefined;
   const selectedNodeData = selectedNode ? NODES.find(n => n.id === selectedNode) ?? null : null;
   const hoveredNodeData = hoveredNode && !selectedNode ? NODES.find(n => n.id === hoveredNode.id) : null;
 
@@ -1087,13 +1147,15 @@ function ArchitectureTab({
             <g transform={`translate(${pan.x}, ${pan.y}) scale(${zoom})`}>
               <LayerLabels />
               <ConnectionArrows
-                activeNodeId={selectedNode ?? undefined}
+                activeNodeId={activeFlow ? undefined : selectedNode ?? undefined}
                 activeFlowNodeIds={flowNodeIds.length > 0 ? flowNodeIds : undefined}
+                activeFlowCurrentNodeId={currentFlowNodeId}
               />
               {NODES.map(node => (
                 <NodeCard key={node.id} node={node}
-                  isSelected={selectedNode === node.id}
-                  flowStep={activeFlow && flowNodeIds.includes(node.id) ? flowNodeIds.indexOf(node.id) + 1 : undefined}
+                  isSelected={!activeFlow && selectedNode === node.id}
+                  isFlowCurrent={currentFlowNodeId === node.id}
+                  flowStep={activeFlow && flowNodeIds.includes(node.id) ? flowNodeIds.lastIndexOf(node.id) + 1 : undefined}
                   isFlowVisited={flowNodeIds.includes(node.id)}
                   isStudied={studiedNodes.has(node.id)}
                   animDelay={animDelays[node.id] ?? 0}
@@ -1131,12 +1193,20 @@ function ArchitectureTab({
             </div>
           )}
 
+          <FlowOverlay
+            activeFlow={activeFlow}
+            activeFlowStep={activeFlowStep}
+            onFlowNext={handleFlowNext}
+            onFlowPrev={handleFlowPrev}
+            onExitFlow={handleExitFlow}
+          />
+
           {/* Legend */}
           <div className="absolute bottom-2 left-44 flex flex-wrap gap-2 pointer-events-none" style={{ zIndex: 6 }}>
             {Object.entries(TYPE_COLORS).map(([type, color]) => (
               <div key={type} className="flex items-center gap-1">
-                <div className="w-2 h-2 rounded-full" style={{ background: color }} />
-                <span className="text-[9px] capitalize" style={{ color: "var(--text-faint)" }}>{type}</span>
+                <div className="w-2.5 h-2.5 rounded-full" style={{ background: color }} />
+                <span className="text-[10px] capitalize font-medium" style={{ color: "var(--text-faint)" }}>{type}</span>
               </div>
             ))}
           </div>
@@ -1192,69 +1262,65 @@ function ArchitectureTab({
               studiedNodes={studiedNodes}
               onMarkStudied={onMarkStudied}
               onNavigateTo={id => { setSelectedNode(id); handleExitFlow(); }}
-              activeFlow={activeFlow}
-              activeFlowStep={activeFlowStep}
-              onFlowNext={handleFlowNext}
-              onFlowPrev={handleFlowPrev}
-              onExitFlow={handleExitFlow}
-              onActivatePlayFlow={() => {
-                const playFlow = FLOWS.find(f => f.id === "play");
-                if (playFlow) handleActivateFlow(playFlow);
-              }}
-              onNavigatePlayback={onNavigatePlayback}
+              onGuideToPlaybackWalkthrough={handleGuideToPlaybackWalkthrough}
             />
           </div>
         )}
       </div>
 
       {/* Flows bar — desktop only */}
-      <div className="hidden lg:flex shrink-0 items-center gap-1.5 px-4 overflow-x-auto"
-        style={{ height: 56, background: "var(--bg)", borderTop: `1px solid var(--border)`, minWidth: 0 }}>
-        <span className="text-[9px] font-bold uppercase tracking-widest whitespace-nowrap mr-1" style={{ color: "var(--text-faint)" }}>Flows</span>
-        {FLOWS.map(flow => {
-          const isActive = activeFlow?.id === flow.id;
-          return (
-            <button key={flow.id} onClick={() => handleActivateFlow(flow)}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium whitespace-nowrap transition-all shrink-0"
-              style={{ background: isActive ? N_AMBER + "18" : "transparent", color: isActive ? N_AMBER : "var(--text-muted)", border: `1px solid ${isActive ? N_AMBER + "50" : "var(--border)"}` }}>
-              <span className="w-1.5 h-1.5 rounded-full" style={{ background: isActive ? N_AMBER : "var(--text-faint)" }} />
-              {flow.label}
-              {isActive && <span className="text-[9px] opacity-60">{activeFlowStep + 1}/{flow.steps.length}</span>}
-            </button>
-          );
-        })}
-        <div className="flex items-center gap-2 ml-auto shrink-0">
-          <span className="text-[9px] whitespace-nowrap hidden lg:block" style={{ color: "var(--text-faint)" }}>← → navigate steps</span>
+      <div className="hidden lg:block shrink-0" style={{ background: "var(--bg)", borderTop: `1px solid var(--border)` }}>
+        <div className="flex items-center gap-1.5 px-4 pt-3 overflow-x-auto" style={{ minWidth: 0 }}>
+          {FLOWS.map(flow => {
+            const isActive = activeFlow?.id === flow.id;
+            const isPlaybackPill = flow.id === "play";
+            return (
+              <button
+                key={flow.id}
+                ref={isPlaybackPill ? playbackWalkthroughRef : undefined}
+                onClick={() => handleActivateFlow(flow)}
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[13px] font-medium whitespace-nowrap transition-all shrink-0 hover:-translate-y-0.5"
+                style={{
+                  background: isActive ? N_AMBER + "18" : N_AMBER + "08",
+                  color: isActive ? N_AMBER : "var(--text)",
+                  border: `1px solid ${isActive ? N_AMBER + "50" : N_AMBER + "28"}`,
+                  cursor: "pointer",
+                  boxShadow: guidePlaybackPill && isPlaybackPill
+                    ? `0 0 0 2px ${N_AMBER}55, 0 0 22px ${N_AMBER}25`
+                    : !activeFlow
+                      ? `0 0 0 1px ${N_AMBER}12 inset`
+                      : undefined,
+                  animation: guidePlaybackPill && isPlaybackPill ? "pulseAmber 1.4s ease-in-out infinite" : undefined,
+                }}>
+                <span className="w-1.5 h-1.5 rounded-full" style={{ background: isActive ? N_AMBER : N_AMBER + "CC" }} />
+                <span>{flow.label}</span>
+                <span className="text-[10px] opacity-70">{isActive ? `${activeFlowStep + 1}/${flow.steps.length}` : `${flow.steps.length}`}</span>
+              </button>
+            );
+          })}
+        </div>
+        <div className="px-4 pt-2 pb-4">
+          <div className="min-w-0 mb-3">
+            {activeFlow ? (
+              <span className="text-[10px] px-2 py-1 rounded-full whitespace-nowrap" style={{ background: N_AMBER + "16", color: N_AMBER, border: `1px solid ${N_AMBER}35` }}>
+                Step {activeFlowStep + 1} of {activeFlow.steps.length}
+              </span>
+            ) : (
+              <span className="text-[10px]" style={{ color: "var(--text-faint)" }}>
+                Click a walkthrough pill to trace the request path
+              </span>
+            )}
+          </div>
           <button
-            onClick={() => setStepByStep(v => !v)}
-            aria-pressed={stepByStep}
-            title={stepByStep ? "Switch back to animated flow" : "Step-by-step mode (no animation)"}
-            className="text-[9px] px-2 py-1 rounded whitespace-nowrap"
-            style={{ background: stepByStep ? N_AMBER + "18" : "transparent", color: stepByStep ? N_AMBER : "var(--text-faint)", border: `1px solid ${stepByStep ? N_AMBER + "40" : "var(--border)"}` }}>
-            {stepByStep ? "Step mode on" : "Step mode"}
+            onClick={onNavigatePlayback}
+            className="w-full py-4 rounded-2xl text-sm font-semibold transition-opacity hover:opacity-90"
+            style={{ background: "var(--blue-soft)", color: "var(--blue-text)", border: `1px solid var(--border)`, cursor: "pointer" }}>
+            Next: Playback →
           </button>
         </div>
       </div>
 
-      {/* Step-by-step transcript panel (reduced-motion mode) */}
-      {stepByStep && activeFlow && (
-        <div className="hidden lg:flex shrink-0 items-center gap-0 px-4 py-2 overflow-x-auto no-scrollbar" style={{ background: "var(--bg-card)", borderTop: `1px solid ${N_AMBER}25` }}>
-          {activeFlow.steps.map((s, i) => (
-            <div key={i} className="flex items-center gap-0 shrink-0">
-              <div className="flex flex-col items-center gap-0.5 px-2" style={{ minWidth: 72 }}>
-                <div className="w-5 h-5 rounded-full text-[9px] font-bold flex items-center justify-center"
-                  style={{ background: i <= activeFlowStep ? N_AMBER : "var(--border)", color: i <= activeFlowStep ? "#000" : "var(--text-faint)" }}>
-                  {i + 1}
-                </div>
-                <p className="text-[9px] text-center leading-tight" style={{ color: i === activeFlowStep ? N_AMBER : "var(--text-faint)", maxWidth: 64 }}>{s.name}</p>
-              </div>
-              {i < activeFlow.steps.length - 1 && (
-                <div className="h-px w-4 shrink-0" style={{ background: i < activeFlowStep ? N_AMBER : "var(--border)" }} />
-              )}
-            </div>
-          ))}
-        </div>
-      )}
+      <div className="hidden lg:block shrink-0" style={{ height: 26, background: "var(--bg)" }} />
 
       {cmdOpen && <CommandPalette onSelect={id => setSelectedNode(id)} onClose={() => setCmdOpen(false)} />}
     </div>
@@ -1925,6 +1991,11 @@ export default function NetflixArchPage({ initialTab }: { initialTab?: string })
         @keyframes pulseAmber {
           0%,100% { box-shadow: 0 0 0 3px rgba(245,166,35,0.25); }
           50%      { box-shadow: 0 0 0 6px rgba(245,166,35,0.08); }
+        }
+        @keyframes handNudge {
+          0%,100% { transform: translateY(0) scale(1); }
+          35% { transform: translateY(-3px) scale(1.04); }
+          65% { transform: translateY(1px) scale(0.98); }
         }
       `}</style>
     </div>

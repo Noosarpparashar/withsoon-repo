@@ -1,0 +1,328 @@
+- generic [ref=e1]:
+  - banner [ref=e2]:
+    - generic [ref=e3]:
+      - link "withsoon" [ref=e4] [cursor=pointer]:
+        - /url: /
+        - img [ref=e6]
+        - generic [ref=e8]: withsoon
+      - navigation [ref=e9]:
+        - link "📰 Tech News" [ref=e10] [cursor=pointer]:
+          - /url: /tech-news
+          - generic [ref=e11]: 📰
+          - text: Tech News
+        - link "🗄️ Big Data" [ref=e12] [cursor=pointer]:
+          - /url: /big-data
+          - generic [ref=e13]: 🗄️
+          - text: Big Data
+        - link "🤖 AI & LLMs" [ref=e14] [cursor=pointer]:
+          - /url: /ai
+          - generic [ref=e15]: 🤖
+          - text: AI & LLMs
+        - link "🏗️ System Design" [ref=e16] [cursor=pointer]:
+          - /url: /system-design
+          - generic [ref=e17]: 🏗️
+          - text: System Design
+        - link "🎯 Interview" [ref=e18] [cursor=pointer]:
+          - /url: /interview
+          - generic [ref=e19]: 🎯
+          - text: Interview
+        - link "📋 Cheatsheets" [ref=e20] [cursor=pointer]:
+          - /url: /cheatsheets
+          - generic [ref=e21]: 📋
+          - text: Cheatsheets
+        - link "🗺️ Roadmap" [ref=e22] [cursor=pointer]:
+          - /url: /roadmap
+          - generic [ref=e23]: 🗺️
+          - text: Roadmap
+      - generic [ref=e24]:
+        - button "Search ⌘K" [ref=e25]:
+          - img [ref=e26]
+          - generic [ref=e28]: Search
+          - generic [ref=e29]: ⌘K
+        - button "Toggle theme" [ref=e30]:
+          - img [ref=e504]
+  - main [ref=e32]:
+    - generic [ref=e33]:
+      - generic [ref=e34]:
+        - generic [ref=e35]:
+          - link "N withsoon" [ref=e36] [cursor=pointer]:
+            - /url: /
+            - generic [ref=e37]: "N"
+            - generic [ref=e39]: withsoon
+          - generic [ref=e40]: /
+          - link "System Design" [ref=e41] [cursor=pointer]:
+            - /url: /system-design
+          - generic [ref=e42]: /
+          - generic [ref=e43]: Netflix
+          - generic [ref=e44]: Senior Backend
+          - generic [ref=e45]: 0/23 studied
+          - button "Progress" [ref=e46] [cursor=pointer]
+          - button "Notes" [ref=e47] [cursor=pointer]
+          - button "Focus" [ref=e48] [cursor=pointer]
+          - button "Share" [ref=e49] [cursor=pointer]
+          - button "Open keyboard shortcuts" [ref=e50] [cursor=pointer]:
+            - generic [ref=e51]: "?"
+            - generic [ref=e52]: Shortcuts
+        - generic [ref=e53]:
+          - generic [ref=e54]:
+            - button "Start Here" [ref=e56] [cursor=pointer]
+            - button "Requirements" [ref=e58] [cursor=pointer]
+            - button "Architecture" [ref=e60] [cursor=pointer]: Architecture
+            - button "Playback" [ref=e63] [cursor=pointer]
+            - button "CDN" [ref=e65] [cursor=pointer]
+            - button "Encoding" [ref=e67] [cursor=pointer]
+            - button "Security" [ref=e69] [cursor=pointer]
+            - button "Data Models" [ref=e71] [cursor=pointer]
+            - button "Trade-offs" [ref=e73] [cursor=pointer]
+            - button "Capacity" [ref=e75] [cursor=pointer]
+            - button "Failures" [ref=e77] [cursor=pointer]
+            - generic [ref=e78]:
+              - generic [ref=e81]: Practice
+              - button "Quiz" [ref=e82] [cursor=pointer]
+            - button "Mock Interview" [ref=e84] [cursor=pointer]
+            - button "Cheat Sheet" [ref=e86] [cursor=pointer]
+          - generic [ref=e87]:
+            - generic [ref=e88]: 3/14
+            - button "← Requirements" [ref=e89] [cursor=pointer]
+            - button "Playback →" [ref=e90] [cursor=pointer]
+      - generic [ref=e91]:
+        - 'heading "Netflix System Design: Architecture" [level=1] [ref=e92]'
+        - generic [ref=e93]:
+          - generic [ref=e94]: First time here?
+          - generic [ref=e95]: Start with the “Start Here” tab — it picks your track and tells you which tabs matter for your role.
+          - button "Go to Start Here →" [ref=e96] [cursor=pointer]
+          - button "Dismiss" [ref=e97] [cursor=pointer]
+        - generic [ref=e98]:
+          - generic [ref=e99]:
+            - generic [ref=e100]:
+              - img [ref=e101]:
+                - generic [ref=e103]:
+                  - generic [ref=e104]:
+                    - generic [ref=e105]: CLIENT
+                    - generic [ref=e106]: GATEWAY
+                    - generic [ref=e107]: SERVICES
+                    - generic [ref=e108]: SERVICES
+                    - generic [ref=e109]: DATA STORES
+                    - generic [ref=e110]: CDN / VIDEO
+                  - generic [ref=e111]:
+                    - generic [ref=e508]: gRPC
+                    - generic [ref=e510]: DynamoDB
+                    - generic [ref=e512]: Redis
+                  - button "Client Apps — click to explore" [ref=e176] [cursor=pointer]:
+                    - generic [ref=e181]: Client Apps
+                    - generic [ref=e182]: iOS / Android / Web …
+                    - generic [ref=e184]: CLIENT
+                  - button "API Gateway — click to explore" [ref=e185] [cursor=pointer]:
+                    - generic [ref=e190]: API Gateway
+                    - generic [ref=e191]: Zuul2 / Kong · JWT ·…
+                    - generic [ref=e193]: GATEWAY
+                  - button "Auth Service — click to explore" [ref=e194] [cursor=pointer]:
+                    - generic [ref=e199]: Auth Service
+                    - generic [ref=e200]: JWT · Refresh Tokens…
+                    - generic [ref=e202]: SERVICE
+                  - button "User Service — click to explore" [ref=e203] [cursor=pointer]:
+                    - generic [ref=e208]: User Service
+                    - generic [ref=e209]: Profiles · GDPR · Au…
+                    - generic [ref=e211]: SERVICE
+                  - button "Catalog Service — click to explore" [active] [ref=e212] [cursor=pointer]:
+                    - generic [ref=e217]: Catalog Servic…
+                    - generic [ref=e218]: Content Metadata · D…
+                    - generic [ref=e220]: SERVICE
+                  - button "Streaming Service — click to explore" [ref=e221] [cursor=pointer]:
+                    - generic [ref=e226]: Streaming Serv…
+                    - generic [ref=e227]: Playback · Concurren…
+                    - generic [ref=e229]: SERVICE
+                  - button "DRM Service — click to explore" [ref=e230] [cursor=pointer]:
+                    - generic [ref=e235]: DRM Service
+                    - generic [ref=e236]: Widevine · FairPlay …
+                    - generic [ref=e238]: SERVICE
+                  - button "Search Service — click to explore" [ref=e239] [cursor=pointer]:
+                    - generic [ref=e244]: Search Service
+                    - generic [ref=e245]: OpenSearch · BM25 · …
+                    - generic [ref=e247]: SERVICE
+                  - button "Recommendation Service — click to explore" [ref=e248] [cursor=pointer]:
+                    - generic [ref=e253]: Recommendation…
+                    - generic [ref=e254]: SageMaker · Collabor…
+                    - generic [ref=e256]: SERVICE
+                  - button "Watch History Service — click to explore" [ref=e257] [cursor=pointer]:
+                    - generic [ref=e262]: Watch History …
+                    - generic [ref=e263]: Cassandra · 500K wri…
+                    - generic [ref=e265]: SERVICE
+                  - button "Payment Service — click to explore" [ref=e266] [cursor=pointer]:
+                    - generic [ref=e271]: Payment Servic…
+                    - generic [ref=e272]: Stripe · Saga · Auro…
+                    - generic [ref=e274]: SERVICE
+                  - button "Notification Service — click to explore" [ref=e275] [cursor=pointer]:
+                    - generic [ref=e280]: Notification S…
+                    - generic [ref=e281]: SES · FCM/APNs · Kaf…
+                    - generic [ref=e283]: SERVICE
+                  - button "Analytics Service — click to explore" [ref=e284] [cursor=pointer]:
+                    - generic [ref=e289]: Analytics Serv…
+                    - generic [ref=e290]: Kinesis · S3 Parquet…
+                    - generic [ref=e292]: SERVICE
+                  - button "Aurora PostgreSQL — click to explore" [ref=e293] [cursor=pointer]:
+                    - generic [ref=e298]: Aurora Postgre…
+                    - generic [ref=e299]: Users · Billing · AC…
+                    - generic [ref=e301]: DATASTORE
+                  - button "DynamoDB — click to explore" [ref=e302] [cursor=pointer]:
+                    - generic [ref=e307]: DynamoDB
+                    - generic [ref=e308]: Catalog · Sessions ·…
+                    - generic [ref=e310]: DATASTORE
+                  - button "Redis (ElastiCache) — click to explore" [ref=e311] [cursor=pointer]:
+                    - generic [ref=e316]: Redis (ElastiC…
+                    - generic [ref=e317]: Sessions · Reco Cach…
+                    - generic [ref=e319]: DATASTORE
+                  - button "Apache Kafka (MSK) — click to explore" [ref=e320] [cursor=pointer]:
+                    - generic [ref=e325]: Apache Kafka (…
+                    - generic [ref=e326]: Domain Events · 500K…
+                    - generic [ref=e328]: DATASTORE
+                  - button "Apache Cassandra — click to explore" [ref=e329] [cursor=pointer]:
+                    - generic [ref=e334]: Apache Cassand…
+                    - generic [ref=e335]: Watch History · 500K…
+                    - generic [ref=e337]: DATASTORE
+                  - button "OpenSearch — click to explore" [ref=e338] [cursor=pointer]:
+                    - generic [ref=e343]: OpenSearch
+                    - generic [ref=e344]: BM25 · Content Index…
+                    - generic [ref=e346]: DATASTORE
+                  - button "Amazon Kinesis — click to explore" [ref=e347] [cursor=pointer]:
+                    - generic [ref=e352]: Amazon Kinesis
+                    - generic [ref=e353]: Client Events · 500K…
+                    - generic [ref=e355]: DATASTORE
+                  - button "Transcoder — click to explore" [ref=e356] [cursor=pointer]:
+                    - generic [ref=e361]: Transcoder
+                    - generic [ref=e362]: MediaConvert · Step …
+                    - generic [ref=e364]: PIPELINE
+                  - button "Amazon S3 — click to explore" [ref=e365] [cursor=pointer]:
+                    - generic [ref=e370]: Amazon S3
+                    - generic [ref=e371]: Video Storage · 11-n…
+                    - generic [ref=e373]: DATASTORE
+                  - button "CloudFront CDN — click to explore" [ref=e374] [cursor=pointer]:
+                    - generic [ref=e379]: CloudFront CDN
+                    - generic [ref=e380]: 300 Tbps · Signed UR…
+                    - generic [ref=e382]: PIPELINE
+              - generic:
+                - generic:
+                  - generic: client
+                - generic:
+                  - generic: gateway
+                - generic:
+                  - generic: service
+                - generic:
+                  - generic: datastore
+                - generic:
+                  - generic: pipeline
+              - generic [ref=e383]:
+                - button "−" [ref=e384]
+                - generic [ref=e385]: 100%
+                - button "+" [ref=e386]
+                - button "Fit" [ref=e387]
+                - button "⛶" [ref=e388]
+              - generic [ref=e389]:
+                - img
+                - generic: MAP
+            - generic [ref=e391]:
+              - generic [ref=e392]:
+                - generic [ref=e393]:
+                  - generic [ref=e394]:
+                    - text: service
+                    - heading "Catalog Service" [level=2] [ref=e513]
+                    - paragraph [ref=e514]: Content Metadata · DynamoDB · Redis
+                  - generic [ref=e515] [cursor=pointer]:
+                    - checkbox "Mark studied" [ref=e516]
+                    - generic [ref=e517]: Mark studied
+                - generic [ref=e425]:
+                  - button "Overview" [ref=e518]
+                  - button "Interview" [ref=e519]
+                  - button "Deep Dive" [ref=e520]
+              - generic [ref=e521]:
+                - paragraph [ref=e522]: "Serves content metadata (titles, genres, cast, availability by region). Read-heavy: 50,000 RPS at peak. DynamoDB handles the throughput; Redis cache-aside with 1-hour TTL keeps p99 latency under 2ms."
+                - generic [ref=e523]:
+                  - paragraph [ref=e524]: Tech Stack
+                  - generic [ref=e525]:
+                    - generic [ref=e526]: DynamoDB Global Tables
+                    - generic [ref=e527]: ElastiCache Redis
+                    - generic [ref=e528]: Cache-aside
+                    - generic [ref=e529]: GSI
+                - generic [ref=e530]:
+                  - paragraph [ref=e531]: Key Numbers
+                  - generic [ref=e532]:
+                    - generic [ref=e533]:
+                      - generic [ref=e534]: Items
+                      - generic [ref=e535]: ~1.7M (titles + episodes)
+                    - generic [ref=e536]:
+                      - generic [ref=e537]: Cache TTL
+                      - generic [ref=e538]: 1 hour
+                    - generic [ref=e539]:
+                      - generic [ref=e540]: Read throughput
+                      - generic [ref=e541]: 50,000 RPS peak
+                    - generic [ref=e542]:
+                      - generic [ref=e543]: Cache hit rate
+                      - generic [ref=e544]: "> 95%"
+                - generic [ref=e545]:
+                  - paragraph [ref=e546]: Related
+                  - generic [ref=e547]:
+                    - button "DynamoDBDynamoDB" [ref=e548]
+                    - button "Redis (ElastiCache)Redis" [ref=e549]
+                    - button "API GatewaygRPC" [ref=e550]
+                    - button "Search Service" [ref=e551]
+          - generic [ref=e441]:
+            - generic [ref=e442]: Flows
+            - button "User clicks Play" [ref=e443]: User clicks Play
+            - button "Content Upload" [ref=e445]: Content Upload
+            - button "Payment Fails" [ref=e447]: Payment Fails
+            - button "Search Request" [ref=e449]: Search Request
+            - button "User Registers" [ref=e451]: User Registers
+            - button "Multi-Region Failover" [ref=e453]: Multi-Region Failover
+            - button "GDPR Deletion" [ref=e455]: GDPR Deletion
+            - generic [ref=e457]:
+              - generic [ref=e458]: ← → navigate steps
+              - button "Step mode" [ref=e459]
+  - contentinfo [ref=e460]:
+    - generic [ref=e461]:
+      - generic [ref=e462]:
+        - generic [ref=e463]:
+          - generic [ref=e464]:
+            - img [ref=e466]
+            - generic [ref=e468]: withsoon
+          - paragraph [ref=e469]: One-stop platform for Big Data and AI engineers — system design, setup guides, interview prep, and cheatsheets.
+          - paragraph [ref=e470]:
+            - text: Built by
+            - link "Prasoon Parashar" [ref=e471] [cursor=pointer]:
+              - /url: https://github.com/Noosarpparashar
+        - generic [ref=e472]:
+          - generic [ref=e473]:
+            - paragraph [ref=e474]: Content
+            - navigation [ref=e475]:
+              - link "Tech News" [ref=e476] [cursor=pointer]:
+                - /url: /tech-news
+              - link "Big Data" [ref=e477] [cursor=pointer]:
+                - /url: /big-data
+              - link "AI & LLMs" [ref=e478] [cursor=pointer]:
+                - /url: /ai
+              - link "Interview" [ref=e479] [cursor=pointer]:
+                - /url: /interview
+              - link "Cheatsheets" [ref=e480] [cursor=pointer]:
+                - /url: /cheatsheets
+          - generic [ref=e481]:
+            - paragraph [ref=e482]: Site
+            - navigation [ref=e483]:
+              - link "About" [ref=e484] [cursor=pointer]:
+                - /url: /about
+              - link "Roadmap" [ref=e485] [cursor=pointer]:
+                - /url: /roadmap
+              - link "Changelog" [ref=e486] [cursor=pointer]:
+                - /url: /changelog
+              - link "Netflix System Design" [ref=e487] [cursor=pointer]:
+                - /url: /system-design/netflix/architecture
+              - link "GitHub" [ref=e488] [cursor=pointer]:
+                - /url: https://github.com/Noosarpparashar/withsoon-repo
+                - img [ref=e489]
+                - text: GitHub
+              - link "Suggest a correction" [ref=e491] [cursor=pointer]:
+                - /url: "https://github.com/Noosarpparashar/withsoon-repo/issues/new?title=Content+correction&body=Page:%0A%0AIssue:"
+      - generic [ref=e492]:
+        - generic [ref=e493]: © 2026 withsoon.com — Built in public
+        - generic [ref=e494]: Interactive system design & data engineering interview prep
+  - button "Open Next.js Dev Tools" [ref=e500] [cursor=pointer]:
+    - img [ref=e501]
+  - alert [ref=e506]
