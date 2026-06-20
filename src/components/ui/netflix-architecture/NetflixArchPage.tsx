@@ -771,11 +771,11 @@ function ArchitectureTab({
                     </button>
                     {isSelected && (
                       <div className="px-4 py-4 space-y-3" style={{ background: "var(--bg-card)", borderBottom: `1px solid var(--border)` }}>
-                        <p className="text-xs leading-relaxed" style={{ color: "#bbb" }}>{node.overview}</p>
+                        <p className="text-xs leading-relaxed" style={{ color: "var(--text-muted)" }}>{node.overview}</p>
                         <div>
                           <p className="text-[9px] font-bold uppercase tracking-wider mb-1.5" style={{ color: "var(--text-faint)" }}>Interview answer</p>
                           <div className="rounded-lg p-3" style={{ background: "var(--bg)", border: `1px solid var(--border)` }}>
-                            <p className="text-[11px] leading-relaxed" style={{ color: "#d4d4d4" }}>{node.interviewAnswer}</p>
+                            <p className="text-xs leading-relaxed" style={{ color: "var(--text)" }}>{node.interviewAnswer}</p>
                           </div>
                         </div>
                         <div className="flex flex-wrap gap-1.5">

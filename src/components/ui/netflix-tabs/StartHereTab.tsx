@@ -10,7 +10,7 @@ function CopyButton({ text }: { text: string }) {
     <button
       onClick={() => { navigator.clipboard.writeText(text).then(() => { setCopied(true); setTimeout(() => setCopied(false), 2000); }); }}
       className="text-[11px] px-3 py-1 rounded font-medium transition-colors"
-      style={{ background: copied ? "#22c55e" : "#2a2b3d", color: copied ? "#fff" : "#a9b1d6", cursor: "pointer", border: "none" }}
+      style={{ background: copied ? "#0f766e" : "var(--bg-muted)", color: copied ? "#fff" : "var(--text-muted)", cursor: "pointer", border: `1px solid var(--border)` }}
     >
       {copied ? "Copied!" : "Copy"}
     </button>
@@ -56,8 +56,8 @@ function StartHereTab({ onNavigateTab, role, onRoleChange }: {
         "SRE and incident management",
       ],
       prepTime: "30–45 minutes",
-      cta: "Explore Architecture",
-      ctaTab: "architecture" as TabSlug,
+      cta: "Start with Playback →",
+      ctaTab: "playback" as TabSlug,
     },
     {
       role: "Data Engineer" as Role,
@@ -210,6 +210,42 @@ function StartHereTab({ onNavigateTab, role, onRoleChange }: {
               </div>
             );
           })}
+        </div>
+      </div>
+
+      {/* Recommended learning path */}
+      <div className="rounded-2xl p-5" style={{ background: "var(--bg-card)", border: "1px solid var(--border)" }}>
+        <p className="text-xs font-bold uppercase tracking-wider mb-3" style={{ color: "var(--text-faint)" }}>
+          {role === "Backend Engineer" ? "Recommended path — Backend Engineer" : "Recommended path — Data Engineer"}
+        </p>
+        <div className="flex flex-wrap items-center gap-2">
+          {(role === "Backend Engineer"
+            ? ["Start Here", "Playback", "CDN", "Failures", "Mock Interview", "Cheat Sheet"]
+            : ["Start Here", "Data Models", "Capacity", "Failures", "Mock Interview", "Cheat Sheet"]
+          ).map((step, i, arr) => (
+            <div key={step} className="flex items-center gap-2">
+              <button
+                onClick={() => {
+                  const slugMap: Record<string, TabSlug> = {
+                    "Start Here": "start-here", "Playback": "playback", "CDN": "cdn",
+                    "Failures": "failures", "Mock Interview": "mock-interview", "Cheat Sheet": "cheat-sheet",
+                    "Data Models": "models", "Capacity": "capacity",
+                  };
+                  if (slugMap[step] && slugMap[step] !== "start-here") onNavigateTab(slugMap[step]);
+                }}
+                className="text-xs px-3 py-1.5 rounded-lg font-medium transition-all"
+                style={{
+                  background: step === "Start Here" ? "#e5091418" : "var(--bg-muted)",
+                  color: step === "Start Here" ? "#e50914" : "var(--text-muted)",
+                  border: `1px solid ${step === "Start Here" ? "#e5091430" : "var(--border)"}`,
+                  cursor: step === "Start Here" ? "default" : "pointer",
+                }}
+              >
+                {step}
+              </button>
+              {i < arr.length - 1 && <span style={{ color: "var(--text-faint)", fontSize: 12 }}>→</span>}
+            </div>
+          ))}
         </div>
       </div>
 
