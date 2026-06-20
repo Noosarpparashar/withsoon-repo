@@ -35,91 +35,83 @@ function FlipCard({ card, state, onKnow, onLearn }: {
   onKnow: () => void;
   onLearn: () => void;
 }) {
-  const [flipped, setFlipped] = useState(false);
+  const [revealed, setRevealed] = useState(false);
 
-  // Reset flip when card changes
-  useEffect(() => { setFlipped(false); }, [card.id]);
+  // Reset when card changes
+  useEffect(() => { setRevealed(false); }, [card.id]);
 
   return (
     <div className="flex flex-col items-center w-full max-w-xl mx-auto">
-      {/* Card */}
-      <div
-        role="button"
-        tabIndex={0}
-        aria-label={flipped ? "Flip flashcard to see question" : "Flip flashcard to see answer"}
-        aria-pressed={flipped}
-        className="w-full cursor-pointer select-none"
-        style={{ perspective: 1000 }}
-        onClick={() => setFlipped(v => !v)}
-        onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); setFlipped(v => !v); } }}>
-        <div style={{
-          position: "relative",
-          width: "100%",
-          height: 240,
-          transformStyle: "preserve-3d",
-          transition: "transform 0.45s cubic-bezier(0.4,0,0.2,1)",
-          transform: flipped ? "rotateY(180deg)" : "rotateY(0deg)",
+      {/* Question card — always shown */}
+      <div className="w-full rounded-2xl p-7 mb-3 flex flex-col items-center text-center"
+        style={{
+          background: "var(--bg-card)",
+          border: `2px solid ${revealed ? card.topicColor + "60" : card.topicColor + "30"}`,
         }}>
-          {/* Front */}
-          <div style={{
-            position: "absolute", inset: 0, backfaceVisibility: "hidden",
-            borderRadius: 16, border: `2px solid ${card.topicColor}40`,
-            background: "var(--bg-card)",
-            display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: 32,
-          }}>
-            <span className="text-[9px] font-bold uppercase tracking-widest px-2 py-0.5 rounded mb-4"
-              style={{ background: card.topicColor + "18", color: card.topicColor, border: `1px solid ${card.topicColor}30` }}>
-              {card.topic}
-            </span>
-            <p className="text-center text-sm font-semibold leading-relaxed" style={{ color: "var(--text)" }}>{card.question}</p>
-            <p className="text-[9px] mt-6" style={{ color: "var(--text-faint)" }}>Click to reveal answer</p>
-          </div>
+        <span className="text-[9px] font-bold uppercase tracking-widest px-2 py-0.5 rounded mb-4"
+          style={{ background: card.topicColor + "18", color: card.topicColor, border: `1px solid ${card.topicColor}30` }}>
+          {card.topic}
+        </span>
+        <p className="text-sm font-semibold leading-relaxed" style={{ color: "var(--text)" }}>{card.question}</p>
+      </div>
 
-          {/* Back */}
-          <div style={{
-            position: "absolute", inset: 0, backfaceVisibility: "hidden",
-            transform: "rotateY(180deg)",
-            borderRadius: 16, border: `2px solid ${card.topicColor}60`,
-            background: `linear-gradient(135deg, var(--bg-card) 0%, ${card.topicColor}08 100%)`,
-            display: "flex", flexDirection: "column", padding: 24, overflowY: "auto",
-          }}>
-            <p className="text-xs font-bold mb-3" style={{ color: card.topicColor }}>Answer</p>
-            <p className="text-sm font-semibold leading-relaxed mb-3" style={{ color: "var(--text)" }}>{card.answer}</p>
-            <div className="rounded-lg p-3 mt-auto" style={{ background: "var(--bg)", border: `1px solid var(--border)` }}>
-              <p className="text-[9px] font-bold uppercase tracking-widest mb-1" style={{ color: "var(--text-faint)" }}>Why it matters</p>
+      {/* Reveal CTA — shown before reveal */}
+      {!revealed && (
+        <button
+          onClick={() => setRevealed(true)}
+          onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); setRevealed(true); } }}
+          className="w-full py-3 rounded-xl text-sm font-bold mb-3 transition-all hover:opacity-90"
+          style={{ background: card.topicColor, color: "#fff" }}
+          aria-label="Reveal answer">
+          Reveal answer
+        </button>
+      )}
+
+      {/* Answer — shown after reveal */}
+      {revealed && (
+        <>
+          <div className="w-full rounded-2xl p-5 mb-3"
+            style={{
+              background: `linear-gradient(135deg, var(--bg-card) 0%, ${card.topicColor}08 100%)`,
+              border: `2px solid ${card.topicColor}50`,
+            }}>
+            <p className="text-xs font-bold mb-2" style={{ color: card.topicColor }}>Correct answer</p>
+            <p className="text-sm font-semibold leading-relaxed mb-4" style={{ color: "var(--text)" }}>{card.answer}</p>
+            <div className="rounded-lg p-3" style={{ background: "var(--bg)", border: `1px solid var(--border)` }}>
+              <p className="text-[9px] font-bold uppercase tracking-widest mb-1" style={{ color: "var(--text-faint)" }}>Why this is correct</p>
               <p className="text-[10px] leading-relaxed" style={{ color: "var(--text-muted)" }}>{card.explanation}</p>
             </div>
           </div>
-        </div>
-      </div>
 
-      {/* Action buttons — only visible when flipped */}
-      <div className="flex gap-3 mt-5 w-full">
-        <button
-          onClick={onLearn}
-          aria-pressed={state === "learning"}
-          aria-label="Mark as still learning"
-          className="flex-1 py-2.5 rounded-xl text-sm font-bold transition-all"
-          style={{
-            background: state === "learning" ? "#ef444418" : "transparent",
-            color: state === "learning" ? "#ef4444" : "var(--text-muted)",
-            border: `2px solid ${state === "learning" ? "#ef4444" : "var(--border)"}`,
-          }}>
-          Still learning
-        </button>
-        <button
-          onClick={onKnow}
-          aria-pressed={state === "known"}
-          aria-label="Mark as known"
-          className="flex-1 py-2.5 rounded-xl text-sm font-bold transition-all"
-          style={{
-            background: state === "known" ? C.green + "18" : "transparent",
-            color: state === "known" ? C.green : "var(--text-muted)",
-            border: `2px solid ${state === "known" ? C.green : "var(--border)"}`,
-          }}>
-          Know it ✓
-        </button>
-      </div>
+          {/* Still learning / Know it — only after reveal */}
+          <div className="flex gap-3 w-full">
+            <button
+              onClick={onLearn}
+              aria-pressed={state === "learning"}
+              aria-label="Mark as still learning"
+              className="flex-1 py-3 rounded-xl text-sm font-bold transition-all"
+              style={{
+                background: state === "learning" ? "#ef444418" : "transparent",
+                color: state === "learning" ? "#ef4444" : "var(--text-muted)",
+                border: `2px solid ${state === "learning" ? "#ef4444" : "var(--border)"}`,
+              }}>
+              Still learning
+            </button>
+            <button
+              onClick={onKnow}
+              aria-pressed={state === "known"}
+              aria-label="Mark as known"
+              className="flex-1 py-3 rounded-xl text-sm font-bold transition-all"
+              style={{
+                background: state === "known" ? "#22c55e18" : "transparent",
+                color: state === "known" ? "#22c55e" : "var(--text-muted)",
+                border: `2px solid ${state === "known" ? "#22c55e" : "var(--border)"}`,
+              }}>
+              Know it ✓
+            </button>
+          </div>
+        </>
+      )}
     </div>
   );
 }
@@ -333,7 +325,7 @@ export default function QuizTab() {
               </div>
               {/* Keyboard navigation hint */}
               <p className="text-[10px] text-center mt-2" style={{ color: "var(--text-faint)" }}>
-                Tip: use ← → arrow keys to navigate cards, Space or Enter to flip
+                Tip: use ← → arrow keys to navigate cards
               </p>
             </>
           ) : null}

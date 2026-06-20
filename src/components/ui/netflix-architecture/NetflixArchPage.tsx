@@ -337,6 +337,7 @@ type DepthLevel = "overview" | "interview" | "deepdive";
 function DetailPanel({
   node, studiedNodes, onMarkStudied, onNavigateTo,
   activeFlow, activeFlowStep, onFlowNext, onFlowPrev, onExitFlow,
+  onActivatePlayFlow, onNavigatePlayback,
 }: {
   node: NodeData | null;
   studiedNodes: Set<NodeId>;
@@ -347,6 +348,8 @@ function DetailPanel({
   onFlowNext: () => void;
   onFlowPrev: () => void;
   onExitFlow: () => void;
+  onActivatePlayFlow: () => void;
+  onNavigatePlayback: () => void;
 }) {
   const [depth, setDepth] = useState<DepthLevel>("overview");
   const panelRef = useRef<HTMLDivElement>(null);
@@ -425,15 +428,65 @@ function DetailPanel({
 
   if (!node) {
     return (
-      <div className="flex flex-col items-center justify-center h-full text-center px-6"
+      <div className="flex flex-col h-full overflow-y-auto"
         style={{ background: "var(--bg-card)", borderLeft: `1px solid var(--border)` }}>
-        <div className="text-4xl mb-4" style={{ opacity: 0.3 }}>←</div>
-        <p className="text-sm font-semibold mb-1" style={{ color: "var(--text-muted)" }}>Click any component</p>
-        <p className="text-xs" style={{ color: "var(--text-faint)" }}>to explore its design, interview answers, and deep dives</p>
-        <div className="mt-6 text-[10px] space-y-1" style={{ color: "var(--text-faint)" }}>
-          <p>1 / 2 / 3 — switch depth</p>
-          <p>N / P — next / prev node</p>
-          <p>⌘K — command palette</p>
+        {/* Hero CTA */}
+        <div className="p-5 flex-1 flex flex-col justify-center">
+          <div className="rounded-xl overflow-hidden mb-4" style={{ background: "var(--bg)", border: `1px solid ${N_AMBER}30` }}>
+            <div className="px-4 py-3" style={{ background: N_AMBER + "12", borderBottom: `1px solid ${N_AMBER}25` }}>
+              <p className="text-[10px] font-bold uppercase tracking-widest" style={{ color: N_AMBER }}>Best first step</p>
+            </div>
+            <div className="p-4">
+              <p className="text-base font-bold mb-2" style={{ color: "var(--text)" }}>Start with &ldquo;User clicks Play&rdquo;</p>
+              <p className="text-xs leading-relaxed mb-4" style={{ color: "var(--text-muted)" }}>
+                See the end-to-end backend path in 45 seconds:
+              </p>
+              <div className="flex flex-wrap gap-1 mb-4 text-[10px]">
+                {["Client", "Playback Svc", "Entitlement", "DRM", "Manifest", "CDN", "Watch Progress", "Kafka"].map((s, i, arr) => (
+                  <span key={s} className="flex items-center gap-1">
+                    <span className="px-1.5 py-0.5 rounded" style={{ background: N_AMBER + "18", color: N_AMBER, border: `1px solid ${N_AMBER}30` }}>{s}</span>
+                    {i < arr.length - 1 && <span style={{ color: "var(--text-faint)" }}>→</span>}
+                  </span>
+                ))}
+              </div>
+              <button
+                onClick={onActivatePlayFlow}
+                className="w-full py-2.5 rounded-lg text-sm font-bold mb-2 transition-all hover:opacity-90"
+                style={{ background: N_RED, color: "#fff" }}>
+                ▶ Run User clicks Play
+              </button>
+              <button
+                onClick={onNavigatePlayback}
+                className="w-full py-2 rounded-lg text-xs font-medium transition-colors hover:opacity-80"
+                style={{ background: "var(--bg-muted)", color: "var(--text-muted)", border: `1px solid var(--border)` }}>
+                Open Playback Deep Dive →
+              </button>
+            </div>
+          </div>
+          {/* How to use */}
+          <div className="rounded-xl p-4" style={{ background: "var(--bg)", border: `1px solid var(--border)` }}>
+            <p className="text-[10px] font-bold uppercase tracking-widest mb-3" style={{ color: "var(--text-faint)" }}>How to use this map</p>
+            <div className="space-y-2">
+              {[
+                { n: "1", text: "Click a service node to see its design & interview answer" },
+                { n: "2", text: "Run \"User clicks Play\" to trace the full request path" },
+                { n: "3", text: "Switch to Playback or Failures for deep-dive answers" },
+              ].map(({ n, text }) => (
+                <div key={n} className="flex items-start gap-2.5">
+                  <span className="w-5 h-5 rounded-full text-[10px] font-bold flex items-center justify-center shrink-0"
+                    style={{ background: N_RED + "18", color: N_RED }}>
+                    {n}
+                  </span>
+                  <p className="text-[11px] leading-relaxed" style={{ color: "var(--text-muted)" }}>{text}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+          <div className="mt-4 text-[10px] space-y-1" style={{ color: "var(--text-faint)" }}>
+            <p>1 / 2 / 3 — switch depth</p>
+            <p>N / P — next / prev node</p>
+            <p>⌘K — command palette</p>
+          </div>
         </div>
       </div>
     );
@@ -624,8 +677,8 @@ function ShortcutsModal({ onClose }: { onClose: () => void }) {
 
 // ── Architecture tab ───────────────────────────────────────────────────────────
 function ArchitectureTab({
-  studiedNodes, onMarkStudied,
-}: { studiedNodes: Set<NodeId>; onMarkStudied: (id: NodeId) => void; interviewMode: boolean }) {
+  studiedNodes, onMarkStudied, onNavigatePlayback,
+}: { studiedNodes: Set<NodeId>; onMarkStudied: (id: NodeId) => void; interviewMode: boolean; onNavigatePlayback: () => void }) {
   const [selectedNode, setSelectedNode] = useState<NodeId | null>(null);
   const [hoveredNode, setHoveredNode] = useState<{ id: NodeId; x: number; y: number } | null>(null);
   const [activeFlow, setActiveFlow] = useState<Flow | null>(null);
@@ -738,8 +791,8 @@ function ArchitectureTab({
 
   return (
     <div className="flex flex-col flex-1 overflow-hidden">
-      {/* ── Mobile accordion fallback (hidden on sm+) ── */}
-      <div className="sm:hidden flex-1 overflow-y-auto" style={{ background: "var(--bg)" }}>
+      {/* ── Mobile/tablet accordion fallback (hidden on lg+) ── */}
+      <div className="lg:hidden flex-1 overflow-y-auto" style={{ background: "var(--bg)" }}>
         <div className="px-4 py-3 text-center" style={{ borderBottom: `1px solid var(--border)` }}>
           <p className="text-xs font-semibold" style={{ color: "var(--text-muted)" }}>Full interactive diagram on desktop</p>
           <p className="text-[10px] mt-0.5" style={{ color: "var(--text-faint)" }}>All {NODES.length} components listed below</p>
@@ -793,8 +846,8 @@ function ArchitectureTab({
         })}
       </div>
 
-      {/* ── Desktop canvas + detail panel (hidden on mobile) ── */}
-      <div className="hidden sm:flex flex-1 overflow-hidden" style={{ height: "calc(100vh - 96px - 56px)" }}>
+      {/* ── Desktop canvas + detail panel (hidden below lg) ── */}
+      <div className="hidden lg:flex flex-1 overflow-hidden" style={{ height: "calc(100vh - 96px - 56px)" }}>
         {/* Canvas */}
         <div ref={canvasContainerRef} className="flex-1 overflow-hidden relative" style={{ background: "var(--bg)" }}>
           {/* Layer tint bands */}
@@ -893,7 +946,7 @@ function ArchitectureTab({
 
           {/* Mobile hint overlay */}
           {!mobileOverlayDismissed && (
-            <div className="sm:hidden absolute inset-0 flex flex-col items-center justify-center z-10 text-center px-6"
+            <div className="lg:hidden absolute inset-0 flex flex-col items-center justify-center z-10 text-center px-6"
               style={{ background: "rgba(10,10,10,0.95)" }}>
               <div className="text-5xl mb-4" aria-hidden="true">🗺</div>
               <p className="text-base font-bold mb-2" style={{ color: "var(--text)" }}>Full diagram available on desktop</p>
@@ -922,12 +975,17 @@ function ArchitectureTab({
             onFlowNext={handleFlowNext}
             onFlowPrev={handleFlowPrev}
             onExitFlow={handleExitFlow}
+            onActivatePlayFlow={() => {
+              const playFlow = FLOWS.find(f => f.label === "User clicks Play");
+              if (playFlow) handleActivateFlow(playFlow);
+            }}
+            onNavigatePlayback={onNavigatePlayback}
           />
         </div>
       </div>
 
       {/* Flows bar — desktop only */}
-      <div className="hidden sm:flex shrink-0 items-center gap-1.5 px-4 overflow-x-auto"
+      <div className="hidden lg:flex shrink-0 items-center gap-1.5 px-4 overflow-x-auto"
         style={{ height: 56, background: "var(--bg)", borderTop: `1px solid var(--border)`, minWidth: 0 }}>
         <span className="text-[9px] font-bold uppercase tracking-widest whitespace-nowrap mr-1" style={{ color: "var(--text-faint)" }}>Flows</span>
         {FLOWS.map(flow => {
@@ -942,7 +1000,7 @@ function ArchitectureTab({
             </button>
           );
         })}
-        <span className="text-[9px] ml-auto whitespace-nowrap hidden sm:block" style={{ color: "var(--text-faint)" }}>← → navigate steps</span>
+        <span className="text-[9px] ml-auto whitespace-nowrap hidden lg:block" style={{ color: "var(--text-faint)" }}>← → navigate steps</span>
       </div>
 
       {cmdOpen && <CommandPalette onSelect={id => setSelectedNode(id)} onClose={() => setCmdOpen(false)} />}
@@ -1070,24 +1128,32 @@ export default function NetflixArchPage({ initialTab }: { initialTab?: string })
           </span>
 
           <button onClick={() => setInterviewMode(v => !v)}
-            className="text-xs px-2.5 py-1.5 rounded-lg font-medium transition-all"
+            className="min-h-[40px] text-xs px-3 py-2 rounded-lg font-medium transition-all"
             style={{ background: interviewMode ? N_RED + "18" : "transparent", color: interviewMode ? N_RED : T.muted, border: `1px solid ${interviewMode ? N_RED + "40" : T.border}` }}>
             Interview
           </button>
 
           <button onClick={handleShare}
-            className="text-xs px-2.5 py-1.5 rounded-lg hidden sm:block"
+            className="min-h-[40px] text-xs px-3 py-2 rounded-lg hidden sm:block"
             style={{ background: "transparent", border: `1px solid ${T.border}`, color: shareToast ? N_GREEN : T.muted }}>
-            {shareToast ? "Copied!" : "Share"}
+            {shareToast ? "✓ Copied link" : "Share"}
           </button>
 
-          <button onClick={() => setShortcutsOpen(true)}
-            className="text-xs px-2 py-1.5 rounded-lg hidden sm:block"
-            style={{ background: "transparent", border: `1px solid ${T.border}`, color: T.muted }}>?</button>
+          <button
+            onClick={() => setShortcutsOpen(true)}
+            aria-label="Open keyboard shortcuts"
+            title="Keyboard shortcuts"
+            className="min-h-[40px] text-xs px-3 py-2 rounded-lg hidden sm:flex items-center gap-1.5"
+            style={{ background: "transparent", border: `1px solid ${T.border}`, color: T.muted }}>
+            <span>?</span>
+            <span className="hidden lg:inline">Shortcuts</span>
+          </button>
 
           {/* Mobile hamburger */}
-          <button onClick={() => setMobileMenuOpen(v => !v)}
-            className="sm:hidden flex flex-col gap-1 p-1.5 rounded"
+          <button
+            onClick={() => setMobileMenuOpen(v => !v)}
+            aria-label="Open navigation menu"
+            className="sm:hidden flex flex-col gap-1 items-center justify-center w-11 h-11 rounded"
             style={{ border: `1px solid ${T.border}` }}>
             <span className="block w-4 h-0.5 rounded" style={{ background: T.muted }} />
             <span className="block w-4 h-0.5 rounded" style={{ background: T.muted }} />
@@ -1129,11 +1195,11 @@ export default function NetflixArchPage({ initialTab }: { initialTab?: string })
               return <>
                 <span className="text-[10px]" style={{ color: T.faint }}>{idx + 1}/{TABS.length}</span>
                 {prev && (
-                  <button onClick={() => switchTab(prev.id)} className="text-[10px] px-2 py-0.5 rounded transition-colors"
+                  <button onClick={() => switchTab(prev.id)} className="text-[10px] px-2.5 py-1.5 min-h-[32px] rounded-md transition-colors"
                     style={{ color: T.muted, border: `1px solid ${T.border}` }}>← {prev.label}</button>
                 )}
                 {next && (
-                  <button onClick={() => switchTab(next.id)} className="text-[10px] px-2 py-0.5 rounded transition-colors"
+                  <button onClick={() => switchTab(next.id)} className="text-[10px] px-2.5 py-1.5 min-h-[32px] rounded-md transition-colors"
                     style={{ color: T.muted, border: `1px solid ${T.border}` }}>{next.label} →</button>
                 )}
               </>;
@@ -1192,6 +1258,9 @@ export default function NetflixArchPage({ initialTab }: { initialTab?: string })
         style={{ opacity: tabVisible ? 1 : 0, transition: "opacity 0.1s ease" }}>
         {activeTab === "start-here"     && (
           <div className="flex-1 overflow-y-auto px-4 py-6 max-w-4xl mx-auto w-full" style={{ background: T.bg }}>
+            <h1 className="text-2xl md:text-3xl font-bold tracking-tight mb-6" style={{ color: T.text }}>
+              Netflix System Design: <span style={{ color: N_RED }}>Start Here</span>
+            </h1>
             <StartHereTab
               role={role}
               onRoleChange={setRole}
@@ -1200,47 +1269,96 @@ export default function NetflixArchPage({ initialTab }: { initialTab?: string })
           </div>
         )}
         {activeTab === "requirements"   && (
-          <div className="flex-1 overflow-y-auto" style={{ background: T.bg }}>
+          <div className="flex-1 overflow-y-auto px-4 py-6 max-w-4xl mx-auto w-full" style={{ background: T.bg }}>
+            <h1 className="text-2xl md:text-3xl font-bold tracking-tight mb-6" style={{ color: T.text }}>
+              Netflix System Design: <span style={{ color: N_RED }}>Requirements</span>
+            </h1>
             <RequirementsTab />
           </div>
         )}
-        {activeTab === "architecture"   && <ArchitectureTab studiedNodes={studiedNodes} onMarkStudied={handleMarkStudied} interviewMode={interviewMode} />}
+        {activeTab === "architecture"   && (
+          <>
+            <h1 className="sr-only">Netflix System Design: Architecture</h1>
+            <ArchitectureTab studiedNodes={studiedNodes} onMarkStudied={handleMarkStudied} interviewMode={interviewMode} onNavigatePlayback={() => switchTab("playback")} />
+          </>
+        )}
         {activeTab === "playback"       && (
-          <div className="flex-1 overflow-y-auto" style={{ background: T.bg }}>
+          <div className="flex-1 overflow-y-auto px-4 py-6 max-w-4xl mx-auto w-full" style={{ background: T.bg }}>
+            <h1 className="text-2xl md:text-3xl font-bold tracking-tight mb-6" style={{ color: T.text }}>
+              Netflix System Design: <span style={{ color: N_RED }}>Playback</span>
+            </h1>
             <PlaybackTab onNavigateTab={(tab) => switchTab(tab as TabId)} />
           </div>
         )}
         {activeTab === "cdn"            && (
-          <div className="flex-1 overflow-y-auto" style={{ background: T.bg }}>
+          <div className="flex-1 overflow-y-auto px-4 py-6 max-w-4xl mx-auto w-full" style={{ background: T.bg }}>
+            <h1 className="text-2xl md:text-3xl font-bold tracking-tight mb-6" style={{ color: T.text }}>
+              Netflix System Design: <span style={{ color: N_RED }}>CDN &amp; Open Connect</span>
+            </h1>
             <CDNTab onNavigateTab={(tab) => switchTab(tab as TabId)} />
           </div>
         )}
         {activeTab === "encoding"       && (
-          <div className="flex-1 overflow-y-auto" style={{ background: T.bg }}>
+          <div className="flex-1 overflow-y-auto px-4 py-6 max-w-4xl mx-auto w-full" style={{ background: T.bg }}>
+            <h1 className="text-2xl md:text-3xl font-bold tracking-tight mb-6" style={{ color: T.text }}>
+              Netflix System Design: <span style={{ color: N_RED }}>Encoding Pipeline</span>
+            </h1>
             <EncodingTab onNavigateTab={(tab) => switchTab(tab as TabId)} />
           </div>
         )}
         {activeTab === "security"       && (
-          <div className="flex-1 overflow-y-auto" style={{ background: T.bg }}>
+          <div className="flex-1 overflow-y-auto px-4 py-6 max-w-4xl mx-auto w-full" style={{ background: T.bg }}>
+            <h1 className="text-2xl md:text-3xl font-bold tracking-tight mb-6" style={{ color: T.text }}>
+              Netflix System Design: <span style={{ color: N_RED }}>Security &amp; DRM</span>
+            </h1>
             <SecurityTab onNavigateTab={(tab) => switchTab(tab as TabId)} />
           </div>
         )}
-        {activeTab === "models"         && <ModelsTab />}
-        {activeTab === "tradeoffs"      && <TradeoffsTab interviewMode={interviewMode} />}
-        {activeTab === "capacity"       && <CapacityTab />}
+        {activeTab === "models"         && (
+          <>
+            <h1 className="sr-only">Netflix System Design: Data Models</h1>
+            <ModelsTab />
+          </>
+        )}
+        {activeTab === "tradeoffs"      && (
+          <>
+            <h1 className="sr-only">Netflix System Design: Trade-offs</h1>
+            <TradeoffsTab interviewMode={interviewMode} />
+          </>
+        )}
+        {activeTab === "capacity"       && (
+          <>
+            <h1 className="sr-only">Netflix System Design: Capacity Estimation</h1>
+            <CapacityTab />
+          </>
+        )}
         {activeTab === "failures"       && (
-          <div className="flex-1 overflow-y-auto" style={{ background: T.bg }}>
+          <div className="flex-1 overflow-y-auto px-4 py-6 max-w-4xl mx-auto w-full" style={{ background: T.bg }}>
+            <h1 className="text-2xl md:text-3xl font-bold tracking-tight mb-6" style={{ color: T.text }}>
+              Netflix System Design: <span style={{ color: N_RED }}>Failure Scenarios</span>
+            </h1>
             <FailuresTab />
           </div>
         )}
-        {activeTab === "quiz"           && <QuizTab />}
+        {activeTab === "quiz"           && (
+          <>
+            <h1 className="sr-only">Netflix System Design: Quiz</h1>
+            <QuizTab />
+          </>
+        )}
         {activeTab === "mock-interview" && (
-          <div className="flex-1 overflow-y-auto" style={{ background: T.bg }}>
+          <div className="flex-1 overflow-y-auto px-4 py-6 max-w-4xl mx-auto w-full" style={{ background: T.bg }}>
+            <h1 className="text-2xl md:text-3xl font-bold tracking-tight mb-6" style={{ color: T.text }}>
+              Netflix System Design: <span style={{ color: N_RED }}>Mock Interview</span>
+            </h1>
             <MockInterviewTab role="Backend Engineer" />
           </div>
         )}
         {activeTab === "cheat-sheet"    && (
-          <div className="flex-1 overflow-y-auto" style={{ background: T.bg }}>
+          <div className="flex-1 overflow-y-auto px-4 py-6 max-w-4xl mx-auto w-full" style={{ background: T.bg }}>
+            <h1 className="text-2xl md:text-3xl font-bold tracking-tight mb-6" style={{ color: T.text }}>
+              Netflix System Design: <span style={{ color: N_RED }}>Cheat Sheet</span>
+            </h1>
             <CheatSheetTab role="Backend Engineer" />
           </div>
         )}
