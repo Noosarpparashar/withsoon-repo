@@ -2,6 +2,8 @@
 
 import { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { useTheme } from "next-themes";
 import { NODES, CONNECTIONS, FLOWS, type NodeData, type NodeId, type Flow } from "./nodes-data";
 import { C } from "./constants";
 import ModelsTab from "./ModelsTab";
@@ -923,7 +925,7 @@ function ArchitectureTab({
 
       {/* Flows bar — desktop only */}
       <div className="hidden sm:flex shrink-0 items-center gap-1.5 px-4 overflow-x-auto"
-        style={{ height: 56, background: "#0d0d0d", borderTop: `1px solid ${N_BORDER}`, minWidth: 0 }}>
+        style={{ height: 56, background: N_BG, borderTop: `1px solid ${N_BORDER}`, minWidth: 0 }}>
         <span className="text-[9px] font-bold uppercase tracking-widest whitespace-nowrap mr-1" style={{ color: N_FAINT }}>Flows</span>
         {FLOWS.map(flow => {
           const isActive = activeFlow?.id === flow.id;
@@ -945,8 +947,37 @@ function ArchitectureTab({
   );
 }
 
+// ── Theme-aware color helpers ───────────────────────────────────────────────────
+const LIGHT_COLORS = {
+  bg:     "#f8f9fa",
+  card:   "#ffffff",
+  card2:  "#f1f3f5",
+  border: "#e2e8f0",
+  muted:  "#64748b",
+  faint:  "#94a3b8",
+  text:   "#0f172a",
+  text2:  "#64748b",
+};
+const DARK_COLORS = {
+  bg:     "#0d0d0d",
+  card:   "#161616",
+  card2:  "#1c1c1c",
+  border: "#2a2a2a",
+  muted:  "#94a3b8",
+  faint:  "#475569",
+  text:   "#f1f5f9",
+  text2:  "#94a3b8",
+};
+
 // ── Main shell ─────────────────────────────────────────────────────────────────
 export default function NetflixArchPage({ initialTab }: { initialTab?: string }) {
+  const router = useRouter();
+  const { resolvedTheme } = useTheme();
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => setMounted(true), []);
+  const isDark = !mounted || resolvedTheme !== "light";
+  const T = isDark ? DARK_COLORS : LIGHT_COLORS;
+
   const resolvedInitial = TABS.find(t => t.id === initialTab) ? (initialTab as TabId) : "architecture";
   const [activeTab, setActiveTab] = useState<TabId>(resolvedInitial);
   const [tabVisible, setTabVisible] = useState(true);
@@ -959,21 +990,13 @@ export default function NetflixArchPage({ initialTab }: { initialTab?: string })
   const [shareToast, setShareToast] = useState(false);
   const tabRefs = useRef<(HTMLButtonElement | null)[]>([]);
 
-  // Load from localStorage + URL hash on mount
+  // Load from localStorage on mount (initialTab from URL already handled by prop)
   useEffect(() => {
     try {
       const s = localStorage.getItem("netflix-studied");
       if (s) setStudiedNodes(new Set(JSON.parse(s)));
       const ls = localStorage.getItem("netflix-last-studied");
       if (ls) setLastStudied(ls);
-      // URL hash takes priority over localStorage
-      const hash = window.location.hash.slice(1) as TabId;
-      if (hash && TABS.find(t => t.id === hash)) {
-        setActiveTab(hash);
-      } else {
-        const tab = localStorage.getItem("netflix-active-tab") as TabId | null;
-        if (tab && TABS.find(t => t.id === tab)) setActiveTab(tab);
-      }
     } catch { /* ignore */ }
   }, []);
 
@@ -988,10 +1011,10 @@ export default function NetflixArchPage({ initialTab }: { initialTab?: string })
     setTimeout(() => {
       setActiveTab(id);
       setTabVisible(true);
-      window.location.hash = id;
+      router.push(`/system-design/netflix/${id}`);
       try { localStorage.setItem("netflix-active-tab", id); } catch { /* ignore */ }
     }, 80);
-  }, [activeTab]);
+  }, [activeTab, router]);
 
   const handleMarkStudied = useCallback((id: NodeId) => {
     setStudiedNodes(prev => {
@@ -1005,7 +1028,7 @@ export default function NetflixArchPage({ initialTab }: { initialTab?: string })
   }, []);
 
   const handleShare = () => {
-    const url = `${window.location.origin}/system-design/netflix#${activeTab}`;
+    const url = `${window.location.origin}/system-design/netflix/${activeTab}`;
     navigator.clipboard.writeText(url).then(() => {
       setShareToast(true);
       setTimeout(() => setShareToast(false), 2000);
@@ -1015,19 +1038,19 @@ export default function NetflixArchPage({ initialTab }: { initialTab?: string })
   const studiedCount = studiedNodes.size;
 
   return (
-    <div className="dark flex flex-col" style={{ height: "100vh", background: N_BG, color: N_TEXT, fontFamily: C.sans, overflow: "hidden" }}>
+    <div className={`${isDark ? "dark" : ""} flex flex-col`} style={{ height: "100vh", background: T.bg, color: T.text, fontFamily: C.sans, overflow: "hidden" }}>
       {/* ── Topbar ── */}
-      <div className="shrink-0 z-40" style={{ background: "#0d0d0d", borderBottom: `1px solid ${N_BORDER}` }}>
+      <div className="shrink-0 z-40" style={{ background: T.bg, borderBottom: `1px solid ${T.border}` }}>
         {/* Row 1: logo + controls */}
         <div className="flex items-center gap-3 px-4 h-11">
           <Link href="/" className="flex items-center gap-1.5 shrink-0" style={{ textDecoration: "none" }}>
             <span className="text-lg font-black tracking-tight" style={{ color: N_RED }}>N</span>
-            <span className="text-xs font-semibold hidden sm:block" style={{ color: "#666" }}>withsoon</span>
+            <span className="text-xs font-semibold hidden sm:block" style={{ color: T.faint }}>withsoon</span>
           </Link>
-          <span className="hidden sm:block text-xs" style={{ color: N_FAINT }}>/</span>
-          <Link href="/system-design" className="text-xs hidden sm:block hover:underline" style={{ color: N_FAINT }}>System Design</Link>
-          <span className="hidden sm:block text-xs" style={{ color: N_FAINT }}>/</span>
-          <span className="text-xs font-semibold hidden sm:block" style={{ color: N_TEXT }}>Netflix</span>
+          <span className="hidden sm:block text-xs" style={{ color: T.faint }}>/</span>
+          <Link href="/system-design" className="text-xs hidden sm:block hover:underline" style={{ color: T.faint }}>System Design</Link>
+          <span className="hidden sm:block text-xs" style={{ color: T.faint }}>/</span>
+          <span className="text-xs font-semibold hidden sm:block" style={{ color: T.text }}>Netflix</span>
           <span className="text-[10px] px-1.5 py-0.5 rounded font-medium hidden md:block"
             style={{ background: N_GREEN + "18", color: N_GREEN, border: `1px solid ${N_GREEN}30` }}>
             Senior Backend
@@ -1036,35 +1059,35 @@ export default function NetflixArchPage({ initialTab }: { initialTab?: string })
           <div className="flex-1" />
 
           {lastStudied && (
-            <span className="text-[10px] hidden lg:block" style={{ color: N_FAINT }}>Last studied {lastStudied}</span>
+            <span className="text-[10px] hidden lg:block" style={{ color: T.faint }}>Last studied {lastStudied}</span>
           )}
-          <span className="text-[10px] hidden sm:block" style={{ color: N_MUTED }}>
+          <span className="text-[10px] hidden sm:block" style={{ color: T.muted }}>
             {studiedCount}/{NODES.length} studied
           </span>
 
           <button onClick={() => setInterviewMode(v => !v)}
             className="text-xs px-2.5 py-1.5 rounded-lg font-medium transition-all"
-            style={{ background: interviewMode ? N_RED + "18" : "transparent", color: interviewMode ? N_RED : N_MUTED, border: `1px solid ${interviewMode ? N_RED + "40" : N_BORDER}` }}>
+            style={{ background: interviewMode ? N_RED + "18" : "transparent", color: interviewMode ? N_RED : T.muted, border: `1px solid ${interviewMode ? N_RED + "40" : T.border}` }}>
             Interview
           </button>
 
           <button onClick={handleShare}
             className="text-xs px-2.5 py-1.5 rounded-lg hidden sm:block"
-            style={{ background: "transparent", border: `1px solid ${N_BORDER}`, color: shareToast ? N_GREEN : N_MUTED }}>
+            style={{ background: "transparent", border: `1px solid ${T.border}`, color: shareToast ? N_GREEN : T.muted }}>
             {shareToast ? "Copied!" : "Share"}
           </button>
 
           <button onClick={() => setShortcutsOpen(true)}
             className="text-xs px-2 py-1.5 rounded-lg hidden sm:block"
-            style={{ background: "transparent", border: `1px solid ${N_BORDER}`, color: N_MUTED }}>?</button>
+            style={{ background: "transparent", border: `1px solid ${T.border}`, color: T.muted }}>?</button>
 
           {/* Mobile hamburger */}
           <button onClick={() => setMobileMenuOpen(v => !v)}
             className="sm:hidden flex flex-col gap-1 p-1.5 rounded"
-            style={{ border: `1px solid ${N_BORDER}` }}>
-            <span className="block w-4 h-0.5 rounded" style={{ background: N_MUTED }} />
-            <span className="block w-4 h-0.5 rounded" style={{ background: N_MUTED }} />
-            <span className="block w-4 h-0.5 rounded" style={{ background: N_MUTED }} />
+            style={{ border: `1px solid ${T.border}` }}>
+            <span className="block w-4 h-0.5 rounded" style={{ background: T.muted }} />
+            <span className="block w-4 h-0.5 rounded" style={{ background: T.muted }} />
+            <span className="block w-4 h-0.5 rounded" style={{ background: T.muted }} />
           </button>
         </div>
 
@@ -1086,7 +1109,7 @@ export default function NetflixArchPage({ initialTab }: { initialTab?: string })
                 }
               }}
               className="relative px-3 py-2 text-xs font-medium transition-colors shrink-0"
-              style={{ color: activeTab === tab.id ? N_TEXT : N_MUTED }}>
+              style={{ color: activeTab === tab.id ? T.text : T.muted }}>
               {tab.label}
               {activeTab === tab.id && (
                 <span className="absolute bottom-0 left-0 right-0 h-0.5 rounded-full"
@@ -1100,14 +1123,14 @@ export default function NetflixArchPage({ initialTab }: { initialTab?: string })
               const prev = TABS[idx - 1];
               const next = TABS[idx + 1];
               return <>
-                <span className="text-[10px]" style={{ color: N_FAINT }}>{idx + 1}/{TABS.length}</span>
+                <span className="text-[10px]" style={{ color: T.faint }}>{idx + 1}/{TABS.length}</span>
                 {prev && (
                   <button onClick={() => switchTab(prev.id)} className="text-[10px] px-2 py-0.5 rounded transition-colors"
-                    style={{ color: N_MUTED, border: `1px solid ${N_BORDER}` }}>← {prev.label}</button>
+                    style={{ color: T.muted, border: `1px solid ${T.border}` }}>← {prev.label}</button>
                 )}
                 {next && (
                   <button onClick={() => switchTab(next.id)} className="text-[10px] px-2 py-0.5 rounded transition-colors"
-                    style={{ color: N_MUTED, border: `1px solid ${N_BORDER}` }}>{next.label} →</button>
+                    style={{ color: T.muted, border: `1px solid ${T.border}` }}>{next.label} →</button>
                 )}
               </>;
             })()}
@@ -1116,13 +1139,13 @@ export default function NetflixArchPage({ initialTab }: { initialTab?: string })
 
         {/* Mobile: show active tab label + prev/next */}
         <div className="sm:hidden px-4 pb-2 flex items-center justify-between">
-          <span className="text-xs font-medium" style={{ color: N_TEXT }}>
+          <span className="text-xs font-medium" style={{ color: T.text }}>
             {TABS.find(t => t.id === activeTab)?.label}
           </span>
           {(() => {
             const idx = TABS.findIndex(t => t.id === activeTab);
             return (
-              <span className="text-[10px]" style={{ color: N_FAINT }}>{idx + 1}/{TABS.length}</span>
+              <span className="text-[10px]" style={{ color: T.faint }}>{idx + 1}/{TABS.length}</span>
             );
           })()}
         </div>
@@ -1131,29 +1154,29 @@ export default function NetflixArchPage({ initialTab }: { initialTab?: string })
       {/* Mobile menu overlay */}
       {mobileMenuOpen && (
         <div className="fixed inset-0 z-50 sm:hidden flex flex-col"
-          style={{ background: "#0d0d0d" }}>
-          <div className="flex items-center justify-between px-4 py-3" style={{ borderBottom: `1px solid ${N_BORDER}` }}>
-            <span className="text-sm font-bold" style={{ color: N_TEXT }}>Menu</span>
-            <button onClick={() => setMobileMenuOpen(false)} style={{ color: N_MUTED, fontSize: 18 }}>✕</button>
+          style={{ background: T.bg }}>
+          <div className="flex items-center justify-between px-4 py-3" style={{ borderBottom: `1px solid ${T.border}` }}>
+            <span className="text-sm font-bold" style={{ color: T.text }}>Menu</span>
+            <button onClick={() => setMobileMenuOpen(false)} style={{ color: T.muted, fontSize: 18 }}>✕</button>
           </div>
           <div className="p-4 space-y-1">
             {TABS.map(tab => (
               <button key={tab.id} onClick={() => { switchTab(tab.id); setMobileMenuOpen(false); }}
                 className="w-full text-left px-4 py-3 rounded-lg text-sm font-medium transition-colors"
-                style={{ background: activeTab === tab.id ? N_RED + "10" : "transparent", color: activeTab === tab.id ? N_RED : N_TEXT, border: `1px solid ${activeTab === tab.id ? N_RED + "30" : "transparent"}` }}>
+                style={{ background: activeTab === tab.id ? N_RED + "10" : "transparent", color: activeTab === tab.id ? N_RED : T.text, border: `1px solid ${activeTab === tab.id ? N_RED + "30" : "transparent"}` }}>
                 {tab.label}
               </button>
             ))}
           </div>
-          <div className="p-4 mt-auto space-y-3" style={{ borderTop: `1px solid ${N_BORDER}` }}>
+          <div className="p-4 mt-auto space-y-3" style={{ borderTop: `1px solid ${T.border}` }}>
             <button onClick={() => { setInterviewMode(v => !v); }}
               className="w-full py-2.5 rounded-lg text-sm font-medium"
-              style={{ background: interviewMode ? N_RED + "18" : N_BORDER, color: interviewMode ? N_RED : N_TEXT }}>
+              style={{ background: interviewMode ? N_RED + "18" : T.border, color: interviewMode ? N_RED : T.text }}>
               {interviewMode ? "Exit Interview Mode" : "Interview Mode"}
             </button>
             <button onClick={() => { handleShare(); setMobileMenuOpen(false); }}
               className="w-full py-2.5 rounded-lg text-sm font-medium"
-              style={{ background: N_BORDER, color: N_TEXT }}>
+              style={{ background: T.border, color: T.text }}>
               Share this page
             </button>
           </div>
@@ -1164,7 +1187,7 @@ export default function NetflixArchPage({ initialTab }: { initialTab?: string })
       <div className="flex-1 overflow-hidden flex flex-col"
         style={{ opacity: tabVisible ? 1 : 0, transition: "opacity 0.1s ease" }}>
         {activeTab === "start-here"     && (
-          <div className="flex-1 overflow-y-auto px-4 py-6 max-w-4xl mx-auto w-full" style={{ background: N_BG }}>
+          <div className="flex-1 overflow-y-auto px-4 py-6 max-w-4xl mx-auto w-full" style={{ background: T.bg }}>
             <StartHereTab
               role={role}
               onRoleChange={setRole}
@@ -1173,28 +1196,28 @@ export default function NetflixArchPage({ initialTab }: { initialTab?: string })
           </div>
         )}
         {activeTab === "requirements"   && (
-          <div className="flex-1 overflow-y-auto" style={{ background: "#0d0d0d" }}>
+          <div className="flex-1 overflow-y-auto" style={{ background: T.bg }}>
             <RequirementsTab />
           </div>
         )}
         {activeTab === "architecture"   && <ArchitectureTab studiedNodes={studiedNodes} onMarkStudied={handleMarkStudied} interviewMode={interviewMode} />}
         {activeTab === "playback"       && (
-          <div className="flex-1 overflow-y-auto" style={{ background: "#0d0d0d" }}>
+          <div className="flex-1 overflow-y-auto" style={{ background: T.bg }}>
             <PlaybackTab onNavigateTab={(tab) => switchTab(tab as TabId)} />
           </div>
         )}
         {activeTab === "cdn"            && (
-          <div className="flex-1 overflow-y-auto" style={{ background: "#0d0d0d" }}>
+          <div className="flex-1 overflow-y-auto" style={{ background: T.bg }}>
             <CDNTab onNavigateTab={(tab) => switchTab(tab as TabId)} />
           </div>
         )}
         {activeTab === "encoding"       && (
-          <div className="flex-1 overflow-y-auto" style={{ background: "#0d0d0d" }}>
+          <div className="flex-1 overflow-y-auto" style={{ background: T.bg }}>
             <EncodingTab onNavigateTab={(tab) => switchTab(tab as TabId)} />
           </div>
         )}
         {activeTab === "security"       && (
-          <div className="flex-1 overflow-y-auto" style={{ background: "#0d0d0d" }}>
+          <div className="flex-1 overflow-y-auto" style={{ background: T.bg }}>
             <SecurityTab onNavigateTab={(tab) => switchTab(tab as TabId)} />
           </div>
         )}
@@ -1202,18 +1225,18 @@ export default function NetflixArchPage({ initialTab }: { initialTab?: string })
         {activeTab === "tradeoffs"      && <TradeoffsTab interviewMode={interviewMode} />}
         {activeTab === "capacity"       && <CapacityTab />}
         {activeTab === "failures"       && (
-          <div className="flex-1 overflow-y-auto" style={{ background: "#0d0d0d" }}>
+          <div className="flex-1 overflow-y-auto" style={{ background: T.bg }}>
             <FailuresTab />
           </div>
         )}
         {activeTab === "quiz"           && <QuizTab />}
         {activeTab === "mock-interview" && (
-          <div className="flex-1 overflow-y-auto" style={{ background: "#0d0d0d" }}>
+          <div className="flex-1 overflow-y-auto" style={{ background: T.bg }}>
             <MockInterviewTab role="Backend Engineer" />
           </div>
         )}
         {activeTab === "cheat-sheet"    && (
-          <div className="flex-1 overflow-y-auto" style={{ background: "#0d0d0d" }}>
+          <div className="flex-1 overflow-y-auto" style={{ background: T.bg }}>
             <CheatSheetTab role="Backend Engineer" />
           </div>
         )}
@@ -1223,9 +1246,9 @@ export default function NetflixArchPage({ initialTab }: { initialTab?: string })
 
       <style>{`
         ::-webkit-scrollbar { width: 4px; height: 4px; }
-        ::-webkit-scrollbar-track { background: ${N_BG}; }
-        ::-webkit-scrollbar-thumb { background: ${N_BORDER}; border-radius: 2px; }
-        ::-webkit-scrollbar-thumb:hover { background: #444; }
+        ::-webkit-scrollbar-track { background: ${T.bg}; }
+        ::-webkit-scrollbar-thumb { background: ${T.border}; border-radius: 2px; }
+        ::-webkit-scrollbar-thumb:hover { background: ${T.muted}; }
         svg g[role="button"]:focus { outline: none; }
         svg g[role="button"]:focus-visible rect:first-child { stroke: ${N_RED}; stroke-width: 2; }
         @keyframes fadeInNode {

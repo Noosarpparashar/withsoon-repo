@@ -118,6 +118,26 @@ function EntityBox({ entity, highlighted, onNavigateToEntity }: EntityBoxProps) 
           </div>
         ))}
       </div>
+      {/* DB rationale — why this store for this entity */}
+      {entity.dbRationale && (
+        <div
+          className="px-3 py-2"
+          style={{
+            borderTop: `1px solid ${C.border}22`,
+            background: color + "08",
+          }}
+        >
+          <p
+            className="text-[8px] font-bold uppercase tracking-widest mb-1"
+            style={{ color }}
+          >
+            Why {entity.store}?
+          </p>
+          <p className="text-[9px] leading-relaxed" style={{ color: C.muted }}>
+            {entity.dbRationale}
+          </p>
+        </div>
+      )}
       {entity.accessPatterns && entity.accessPatterns.length > 0 && (
         <div
           className="px-3 py-2"

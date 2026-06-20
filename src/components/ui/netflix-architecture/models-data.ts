@@ -311,6 +311,220 @@ USING TTL 7776000;`,
       },
     ],
   },
+  // ─── PlaybackSession ─────────────────────────────────────────────────────────
+  {
+    id: "playback-session",
+    label: "Playback Session",
+    icon: "▶",
+    store: "Redis + DynamoDB",
+    storeColor: REDIS_C,
+    rationale: "An active playback session is a hot, ephemeral object: the player pings it every 30 seconds, and once the user stops watching it should vanish automatically. Redis holds the live session for sub-ms reads on the streaming hot path; DynamoDB persists an audit record for device-limit enforcement, GDPR exports, and post-session analytics.",
+    antiPatterns: [
+      "Don't store the in-flight session only in DynamoDB — even with DAX, the 30s heartbeat write cadence at 15M concurrent viewers overwhelms provisioned WCU budgets",
+      "Don't store the in-flight session only in Redis — a Redis restart during a popular event (World Cup final) would drop all active sessions simultaneously",
+      "Don't use a relational DB for session state — connection-count exhaustion at 15M concurrent writes is a known failure mode",
+    ],
+    interviewTip: "Explain the Redis + DynamoDB split by lifecycle: Redis owns the 'alive' window (30s TTL refresh), DynamoDB owns the audit record. Both writes happen on session start; only Redis is on the 30s heartbeat path.",
+    scalingNote: "At 10× scale (150M concurrent): Redis cluster shards by session_id prefix across 32+ nodes. DynamoDB on-demand absorbs burst without provisioning changes. The critical insight: heartbeat writes go only to Redis — DynamoDB write rate is bounded by session starts/ends, not heartbeats.",
+    storageCost: "Redis: ~15M sessions × 400B = ~6 GB. DynamoDB: ~15M active records × 1 KB = ~15 GB (mostly TTL'd within hours).",
+    entities: [
+      {
+        name: "active_session (Redis)",
+        store: "Redis",
+        storeColor: REDIS_C,
+        dbRationale: "Redis because the 30-second heartbeat from every concurrent viewer is the highest-write-rate operation in the system — Redis SETEX is the only store that absorbs this with sub-ms latency and automatic TTL expiry.",
+        fields: [
+          { name: "Key: session:{session_id}", type: "String",  pk: true, note: "UUID per active stream; set on play start" },
+          { name: "user_id",                   type: "String",  note: "Owner — for device-limit check via KEYS session:* scans" },
+          { name: "content_id",                type: "String",  note: "What is being streamed" },
+          { name: "device_id",                 type: "String",  note: "Hashed device fingerprint — enforces device_limit" },
+          { name: "quality_level",             type: "String",  note: "'240p'|'480p'|'720p'|'1080p'|'4K' — written by adaptive bitrate controller" },
+          { name: "position_ms",               type: "Number",  note: "Playback head position in milliseconds — updated on heartbeat" },
+          { name: "started_at",                type: "String",  note: "ISO timestamp of play event" },
+          { name: "TTL: 90s",                  type: "TTL",     ttl: true, note: "Refreshed on each 30s heartbeat. Expires automatically if player dies silently (mobile background kill)" },
+        ],
+        accessPatterns: [
+          "heartbeat upsert → SETEX session:{session_id} 90 {json} (every 30s)",
+          "device-limit check → SCAN 0 MATCH session:* COUNT 100, filter by user_id (or use a secondary set key: user_sessions:{user_id})",
+          "stop session → DEL session:{session_id}",
+        ],
+      },
+      {
+        name: "playback_sessions",
+        store: "DynamoDB",
+        storeColor: DYNAMO,
+        dbRationale: "DynamoDB for durable audit: device-limit enforcement queries (all active sessions for a user), GDPR data exports, and post-session analytics fan-out to Kinesis — Redis alone cannot serve these multi-minute retention queries.",
+        fields: [
+          { name: "PK: session_id",    type: "String",    pk: true, note: "UUID — matches Redis key suffix" },
+          { name: "SK: 'SESSION'",      type: "String",    pk: true, note: "Constant SK; enables future GSI fan-out" },
+          { name: "user_id",           type: "String",    index: true, note: "GSI PK — enables list-sessions-by-user for device-limit enforcement" },
+          { name: "content_id",        type: "String",    note: "What was (is being) streamed" },
+          { name: "device_id",         type: "String",    note: "Hashed device fingerprint" },
+          { name: "started_at",        type: "String",    note: "ISO timestamp" },
+          { name: "last_heartbeat",    type: "String",    note: "ISO timestamp of last 30s ping — written async, not on critical path" },
+          { name: "position_ms",       type: "Number",    note: "Last known playback position — written on session end" },
+          { name: "quality_level",     type: "String",    note: "Final quality tier at session end" },
+          { name: "status",            type: "String",    note: "'ACTIVE'|'COMPLETED'|'ABANDONED'|'ERROR'" },
+          { name: "TTL",               type: "Number",    ttl: true, note: "epoch of started_at + 7 days — auto-purges resolved sessions" },
+        ],
+        indexes: [
+          { name: "user-sessions-index (GSI)", desc: "PK=user_id, SK=started_at — list all active sessions for a user to enforce device_limit" },
+          { name: "content-sessions-index (GSI)", desc: "PK=content_id, SK=started_at — concurrent viewer count per title (analytics)" },
+        ],
+        accessPatterns: [
+          "check device limit → query user-sessions-index GSI, PK=user_id, filter status=ACTIVE",
+          "end session → UpdateItem status=COMPLETED, position_ms, last_heartbeat",
+          "GDPR export → query user-sessions-index, all records for user_id",
+        ],
+      },
+    ],
+    ddl: [
+      {
+        label: "active_session (Redis patterns)",
+        code: `-- Session start: write to both Redis and DynamoDB
+SETEX session:{session_id} 90 '{"user_id":"u-123","content_id":"tt456",
+  "device_id":"d-abc","quality_level":"1080p",
+  "position_ms":0,"started_at":"2024-06-10T12:00:00Z"}'
+
+-- Heartbeat (every 30s, Redis only — DynamoDB async via SQS):
+SETEX session:{session_id} 90 '{"position_ms":45000,...}'
+
+-- Device-limit check (before allowing new session):
+-- Option A: secondary set key
+SMEMBERS user_sessions:{user_id}  -- returns set of session_ids
+-- cross-check with HMGET to verify each is still alive
+
+-- Session stop:
+DEL session:{session_id}
+SREM user_sessions:{user_id} {session_id}`,
+      },
+      {
+        label: "playback_sessions (DynamoDB)",
+        code: `-- Create session record (on play start)
+PutItem: {
+  session_id: "s-uuid-1",
+  SK: "SESSION",
+  user_id: "u-123",        -- indexed for device-limit GSI
+  content_id: "tt456",
+  device_id: "d-abc",
+  started_at: "2024-06-10T12:00:00Z",
+  last_heartbeat: "2024-06-10T12:00:00Z",
+  position_ms: 0,
+  quality_level: "1080p",
+  status: "ACTIVE",
+  TTL: 1718236800          -- started_at + 7 days
+}
+
+-- End session (UpdateItem):
+UpdateExpression: SET #s = :done, position_ms = :pos,
+  last_heartbeat = :hb
+ConditionExpression: attribute_exists(session_id)
+
+-- Device-limit enforcement (Query GSI):
+SELECT * FROM playback_sessions."user-sessions-index"
+WHERE user_id = 'u-123'
+  AND #status = 'ACTIVE'
+-- if COUNT >= user.device_limit → reject new session`,
+      },
+    ],
+  },
+  // ─── WatchHistory (DynamoDB) ─────────────────────────────────────────────────
+  {
+    id: "watch-history-dynamo",
+    label: "Watch History (DynamoDB)",
+    icon: "📋",
+    store: "DynamoDB",
+    storeColor: DYNAMO,
+    rationale: "The DynamoDB watch history table complements the Cassandra write-path log: it is the queryable, durable, globally-replicated record for the recommendation engine, the 'My Activity' GDPR export, and the account settings page. DynamoDB Global Tables replicate to 3 regions with <1 s replication lag, and the composite sort key (watched_at#content_id) enables time-range queries and per-title deduplication in a single index.",
+    antiPatterns: [
+      "Don't use user_id alone as the PK — unbounded item collections for power users create hot partitions",
+      "Don't store raw video analytics here — use Kinesis Data Firehose → S3 → Athena for event-level telemetry",
+      "Don't use scan for 'recently watched' — always Query with a time-range SK condition to avoid full-partition reads",
+    ],
+    interviewTip: "The composite SK (watched_at#content_id) is the interviewer's litmus test. It lets you answer 'did user watch title X last week?' with a single Query (no FilterExpression) AND prevent duplicate entries for the same title on the same day — two requirements, one key design.",
+    scalingNote: "At 10× scale: partition by (user_id, year) composite key exactly like the Cassandra table — prevents unbounded growth for power users who watch 10 titles/day × 10 years. Or use DynamoDB time-to-live to keep only 12 months and archive older records to S3.",
+    storageCost: "~60 GB (300M users × avg 20 watched items × ~10 KB per item). At $0.25/GB, ~$15/month — dwarfed by WCU/RCU cost.",
+    entities: [
+      {
+        name: "watch_history (DynamoDB)",
+        store: "DynamoDB",
+        storeColor: DYNAMO,
+        dbRationale: "DynamoDB because the recommendation service and 'My Activity' page need globally-replicated, durable, queryable watch records with time-range access — Cassandra is fine for the write path but DynamoDB Global Tables give zero-ops multi-region replication the reco service depends on.",
+        fields: [
+          { name: "PK: user_id",                   type: "String",  pk: true, note: "Partition key — all watch history for a user on one shard set; enables list-by-user in O(1) partition read" },
+          { name: "SK: watched_at#content_id",      type: "String",  pk: true, note: "e.g. '2024-06-10T14:32:00Z#tt1234567' — ISO timestamp prefix enables time-range queries; content_id suffix makes SK unique per title per watch event" },
+          { name: "content_id",                     type: "String",  index: true, note: "Extracted for GSI — enables 'how many users watched title X' queries" },
+          { name: "episode_id",                     type: "String",  note: "NULL for movies; episode UUID for series" },
+          { name: "watched_at",                     type: "String",  note: "ISO 8601 timestamp — also embedded in SK prefix" },
+          { name: "progress_secs",                  type: "Number",  note: "Playback position at end of session (for resume and % completion)" },
+          { name: "duration_secs",                  type: "Number",  note: "Total content duration — derived from content table; stored here to avoid cross-table reads in reco service" },
+          { name: "completed",                      type: "Boolean", note: "true if progress_secs / duration_secs > 0.95" },
+          { name: "device_id",                      type: "String",  note: "For cross-device watch history correlation" },
+          { name: "quality_level",                  type: "String",  note: "Quality tier at session end — reco and A/B analytics signal" },
+          { name: "TTL",                            type: "Number",  ttl: true, note: "epoch of watched_at + 365 days — archive older records to S3 via DynamoDB Streams" },
+        ],
+        indexes: [
+          { name: "content-index (GSI)",    desc: "PK=content_id, SK=watched_at — aggregate views per title over time (analytics, trending algorithm)" },
+          { name: "device-index (GSI)",     desc: "PK=device_id, SK=watched_at — cross-device watch history for family sharing detection" },
+        ],
+        accessPatterns: [
+          "get watch history for reco model → PK=user_id, SK begins_with '2024-' (last 90 days)",
+          "check if user watched title → PK=user_id, SK begins_with '{watched_at_prefix}#{content_id}'",
+          "GDPR full export → PK=user_id, all records (paginated)",
+          "trending titles today → query content-index GSI, SK between today-1d and today",
+        ],
+      },
+    ],
+    ddl: [
+      {
+        label: "watch_history (DynamoDB schema)",
+        code: `-- Table definition (AWS CDK / CloudFormation equivalent)
+-- Partition key  : user_id        (String)
+-- Sort key       : watched_at#content_id  (String)
+--
+-- SK format: ISO-8601 timestamp + '#' + content_id
+--   "2024-06-10T14:32:00Z#tt1234567"
+--
+-- Why this SK?
+--   1. Time-range query: SK between '2024-06-01' and '2024-07-01'
+--      returns all watches in June — single Query, no FilterExpression
+--   2. Uniqueness: two watches of the same title on the same day
+--      have different timestamps → no collision
+--   3. Point lookup: SK = '{exact_ts}#{content_id}' for dedup check
+
+-- Write on session end:
+PutItem: {
+  user_id:       "u-abc123",
+  SK:            "2024-06-10T14:32:00Z#tt1234567",
+  content_id:    "tt1234567",
+  episode_id:    null,
+  watched_at:    "2024-06-10T14:32:00Z",
+  progress_secs: 5400,
+  duration_secs: 5640,
+  completed:     true,
+  device_id:     "d-xyz",
+  quality_level: "4K",
+  TTL:           1749600000    -- watched_at + 365 days
+}
+
+-- Query: last 30 days of watch history
+Query:
+  KeyConditionExpression:
+    user_id = :uid
+    AND SK BETWEEN :start AND :end
+  ExpressionAttributeValues:
+    :uid   = "u-abc123"
+    :start = "2024-05-10"    -- ISO prefix, lexicographically ordered
+    :end   = "2024-06-10\xff"
+
+-- Query: trending titles today (GSI)
+Query on content-index:
+  KeyConditionExpression:
+    content_id = :cid
+    AND watched_at BETWEEN :today AND :tomorrow`,
+      },
+    ],
+  },
   {
     id: "subscription",
     label: "Subscription & Payment",

@@ -13,10 +13,10 @@ const COMPANIES = [
     name: "Netflix",
     emoji: "🎬",
     tagline: "Video-on-demand streaming",
-    tabs: ["Architecture", "Data Models", "Trade-offs", "Capacity", "Quiz"],
+    tabs: ["Architecture", "Playback · CDN", "Failures", "Mock Interview", "Cheat Sheet"],
     difficulty: "senior",
     status: "live",
-    href: "/system-design/netflix/architecture",
+    href: "/system-design/netflix/start-here",
   },
   {
     slug: "uber",
