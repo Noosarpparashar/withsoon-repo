@@ -17,7 +17,19 @@ const TAB_META: Record<string, { title: string; description: string }> = {
   },
   playback: {
     title: "Netflix System Design — Playback Deep Dive | withsoon.com",
-    description: "Step-by-step walkthrough of the Netflix playback request flow: 16 hops from client to OCA, latency budgets, parallel fan-out, DRM licensing, and failure modes for every downstream dependency.",
+    description: "Step-by-step walkthrough of the Netflix playback request flow: client to OCA, latency budgets, DRM licensing, and failure modes.",
+  },
+  cdn: {
+    title: "Netflix System Design — CDN & Open Connect | withsoon.com",
+    description: "How Netflix Open Connect works: ISP-embedded appliances, proactive caching, anycast routing, 300 Tbps delivery, and CDN failure handling.",
+  },
+  encoding: {
+    title: "Netflix System Design — Encoding Pipeline | withsoon.com",
+    description: "Netflix encoding: per-title encoding, chunk-based parallel transcoding, VMAF quality scoring, HDR/DolbyAtmos tracks, and S3 + CDN delivery chain.",
+  },
+  security: {
+    title: "Netflix System Design — Security & DRM | withsoon.com",
+    description: "Netflix security architecture: Widevine/FairPlay/PlayReady DRM, license server design, device authentication, HTTPS everywhere, and auth token lifecycle.",
   },
   models: {
     title: "Netflix System Design — Data Models | withsoon.com",
@@ -64,11 +76,18 @@ export async function generateMetadata({ params }: { params: Promise<{ tab: stri
       url: `https://withsoon.com/system-design/netflix/${tab}`,
       siteName: "withsoon",
       type: "website",
+      images: [{
+        url: `/og?title=${encodeURIComponent(meta.title.replace(" | withsoon.com", ""))}&section=System+Design`,
+        width: 1200,
+        height: 630,
+        alt: meta.title,
+      }],
     },
     twitter: {
       card: "summary_large_image",
       title: meta.title,
       description: meta.description,
+      images: [`/og?title=${encodeURIComponent(meta.title.replace(" | withsoon.com", ""))}&section=System+Design`],
     },
     alternates: {
       canonical: `https://withsoon.com/system-design/netflix/${tab}`,
@@ -83,10 +102,10 @@ export default async function TabPage({ params }: { params: Promise<{ tab: strin
     "apis-data-model", "scale-estimation", "failures-tradeoffs",
     "interview-qa",
     "scale", "services", "apis",
-    "data-design", "cdn", "encoding", "data-pipeline",
-    "recommendations", "security", "observability-cost",
+    "data-design", "data-pipeline",
+    "recommendations", "observability-cost",
   ];
-  const VALID = ["start-here", "requirements", "architecture", "playback", "models", "tradeoffs", "capacity", "failures", "quiz", "mock-interview", "cheat-sheet"];
+  const VALID = ["start-here", "requirements", "architecture", "playback", "cdn", "encoding", "security", "models", "tradeoffs", "capacity", "failures", "quiz", "mock-interview", "cheat-sheet"];
   if (!VALID.includes(tab) && LEGACY.includes(tab)) {
     redirect("/system-design/netflix/architecture");
   }

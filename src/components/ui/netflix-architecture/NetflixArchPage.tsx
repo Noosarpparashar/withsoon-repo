@@ -14,6 +14,9 @@ import { RequirementsTab } from "../netflix-tabs/RequirementsTab";
 import { FailuresTab } from "../netflix-tabs/FailuresTab";
 import { StartHereTab } from "../netflix-tabs/StartHereTab";
 import { PlaybackTab } from "../netflix-tabs/PlaybackTab";
+import { CDNTab } from "../netflix-tabs/CDNTab";
+import { SecurityTab } from "../netflix-tabs/SecurityTab";
+import { EncodingTab } from "../netflix-tabs/EncodingTab";
 import type { Role } from "../netflix-tabs/types";
 
 // ── Tab config ─────────────────────────────────────────────────────────────────
@@ -21,7 +24,10 @@ const TABS = [
   { id: "start-here",     label: "Start Here"     },
   { id: "requirements",   label: "Requirements"   },
   { id: "architecture",   label: "Architecture"   },
-  { id: "playback",       label: "Playback Flow"  },
+  { id: "playback",       label: "Playback"       },
+  { id: "cdn",            label: "CDN"            },
+  { id: "encoding",       label: "Encoding"       },
+  { id: "security",       label: "Security"       },
   { id: "models",         label: "Data Models"    },
   { id: "tradeoffs",      label: "Trade-offs"     },
   { id: "capacity",       label: "Capacity"       },
@@ -727,7 +733,63 @@ function ArchitectureTab({
 
   return (
     <div className="flex flex-col flex-1 overflow-hidden">
-      <div className="flex flex-1 overflow-hidden" style={{ height: "calc(100vh - 96px - 56px)" }}>
+      {/* ── Mobile accordion fallback (hidden on sm+) ── */}
+      <div className="sm:hidden flex-1 overflow-y-auto" style={{ background: N_BG }}>
+        <div className="px-4 py-3 text-center" style={{ borderBottom: `1px solid ${N_BORDER}` }}>
+          <p className="text-xs font-semibold" style={{ color: N_MUTED }}>Full interactive diagram on desktop</p>
+          <p className="text-[10px] mt-0.5" style={{ color: N_FAINT }}>All {NODES.length} components listed below</p>
+        </div>
+        {[1, 2, 3, 4, 5, 6].map(layer => {
+          const layerNodes = NODES.filter(n => n.layer === layer).sort((a, b) => a.col - b.col);
+          return (
+            <div key={layer} style={{ borderBottom: `1px solid ${N_BORDER}` }}>
+              <div className="px-4 py-2" style={{ background: N_CARD }}>
+                <p className="text-[9px] font-bold uppercase tracking-widest" style={{ color: N_FAINT }}>{LAYER_LABELS[layer]}</p>
+              </div>
+              {layerNodes.map(node => {
+                const typeColor = TYPE_COLORS[node.type] ?? N_MUTED;
+                const isSelected = selectedNode === node.id;
+                return (
+                  <div key={node.id}>
+                    <button
+                      className="w-full text-left px-4 py-3 flex items-center gap-3"
+                      style={{ background: isSelected ? typeColor + "0a" : "transparent", borderBottom: `1px solid ${N_BORDER}` }}
+                      onClick={() => setSelectedNode(isSelected ? null : node.id)}
+                    >
+                      <div className="w-2 h-2 rounded-full shrink-0" style={{ background: typeColor }} />
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-semibold truncate" style={{ color: N_TEXT }}>{node.label}</p>
+                        <p className="text-[10px] truncate" style={{ color: N_MUTED }}>{node.sublabel}</p>
+                      </div>
+                      <span className="text-[9px] px-1.5 py-0.5 rounded shrink-0" style={{ background: typeColor + "18", color: typeColor }}>{node.type}</span>
+                      <span style={{ color: N_FAINT, fontSize: 10 }}>{isSelected ? "▲" : "▼"}</span>
+                    </button>
+                    {isSelected && (
+                      <div className="px-4 py-4 space-y-3" style={{ background: N_CARD, borderBottom: `1px solid ${N_BORDER}` }}>
+                        <p className="text-xs leading-relaxed" style={{ color: "#bbb" }}>{node.overview}</p>
+                        <div>
+                          <p className="text-[9px] font-bold uppercase tracking-wider mb-1.5" style={{ color: N_FAINT }}>Interview answer</p>
+                          <div className="rounded-lg p-3" style={{ background: "#0d0d0d", border: `1px solid ${N_BORDER}` }}>
+                            <p className="text-[11px] leading-relaxed" style={{ color: "#d4d4d4" }}>{node.interviewAnswer}</p>
+                          </div>
+                        </div>
+                        <div className="flex flex-wrap gap-1.5">
+                          {node.techChips.map(c => (
+                            <span key={c} className="text-[10px] px-1.5 py-0.5 rounded" style={{ background: typeColor + "18", color: typeColor, border: `1px solid ${typeColor}40` }}>{c}</span>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          );
+        })}
+      </div>
+
+      {/* ── Desktop canvas + detail panel (hidden on mobile) ── */}
+      <div className="hidden sm:flex flex-1 overflow-hidden" style={{ height: "calc(100vh - 96px - 56px)" }}>
         {/* Canvas */}
         <div ref={canvasContainerRef} className="flex-1 overflow-hidden relative" style={{ background: "#0d0d0d" }}>
           {/* Layer tint bands */}
@@ -859,8 +921,8 @@ function ArchitectureTab({
         </div>
       </div>
 
-      {/* Flows bar */}
-      <div className="shrink-0 flex items-center gap-1.5 px-4 overflow-x-auto"
+      {/* Flows bar — desktop only */}
+      <div className="hidden sm:flex shrink-0 items-center gap-1.5 px-4 overflow-x-auto"
         style={{ height: 56, background: "#0d0d0d", borderTop: `1px solid ${N_BORDER}`, minWidth: 0 }}>
         <span className="text-[9px] font-bold uppercase tracking-widest whitespace-nowrap mr-1" style={{ color: N_FAINT }}>Flows</span>
         {FLOWS.map(flow => {
@@ -1118,7 +1180,22 @@ export default function NetflixArchPage({ initialTab }: { initialTab?: string })
         {activeTab === "architecture"   && <ArchitectureTab studiedNodes={studiedNodes} onMarkStudied={handleMarkStudied} interviewMode={interviewMode} />}
         {activeTab === "playback"       && (
           <div className="flex-1 overflow-y-auto" style={{ background: "#0d0d0d" }}>
-            <PlaybackTab />
+            <PlaybackTab onNavigateTab={(tab) => switchTab(tab as TabId)} />
+          </div>
+        )}
+        {activeTab === "cdn"            && (
+          <div className="flex-1 overflow-y-auto" style={{ background: "#0d0d0d" }}>
+            <CDNTab onNavigateTab={(tab) => switchTab(tab as TabId)} />
+          </div>
+        )}
+        {activeTab === "encoding"       && (
+          <div className="flex-1 overflow-y-auto" style={{ background: "#0d0d0d" }}>
+            <EncodingTab onNavigateTab={(tab) => switchTab(tab as TabId)} />
+          </div>
+        )}
+        {activeTab === "security"       && (
+          <div className="flex-1 overflow-y-auto" style={{ background: "#0d0d0d" }}>
+            <SecurityTab onNavigateTab={(tab) => switchTab(tab as TabId)} />
           </div>
         )}
         {activeTab === "models"         && <ModelsTab />}

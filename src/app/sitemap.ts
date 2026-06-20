@@ -4,8 +4,10 @@ import { getAllContent } from "@/lib/content";
 const BASE = "https://withsoon.com";
 
 const NETFLIX_TABS = [
-  "start-here", "requirements", "architecture", "playback", "models", "tradeoffs",
-  "capacity", "failures", "quiz", "mock-interview", "cheat-sheet",
+  "start-here", "requirements", "architecture", "playback",
+  "cdn", "encoding", "security",
+  "models", "tradeoffs", "capacity", "failures",
+  "quiz", "mock-interview", "cheat-sheet",
 ];
 
 const STATIC_ROUTES = [
