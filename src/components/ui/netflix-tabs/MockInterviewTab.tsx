@@ -423,22 +423,24 @@ export function MockInterviewTab({ role }: { role: Role }) {
         </div>
         {phase === "interview" && (
           <div className="flex items-center gap-2 ml-auto">
-            <span className="text-xs font-mono" style={{ color: "var(--text-faint)" }}>Total: {totalMm}:{totalSs}</span>
+            <span role="timer" aria-label={`Total elapsed time: ${totalMm} minutes ${totalSs} seconds`} className="text-xs font-mono" style={{ color: "var(--text-faint)" }}>Total: {totalMm}:{totalSs}</span>
             <button
               onClick={() => setTimerPaused(v => !v)}
+              aria-pressed={timerPaused}
+              aria-label={timerPaused ? "Resume interview timer" : "Pause interview timer"}
               className="text-xs px-3 py-1.5 rounded-lg font-medium"
               style={{ background: timerPaused ? "#f59e0b20" : "var(--bg)", color: timerPaused ? "#f59e0b" : "var(--text-muted)", border: "1px solid var(--border)", cursor: "pointer" }}
             >
               {timerPaused ? "▶ Resume" : "⏸ Pause"}
             </button>
-            <button onClick={resetInterview} className="text-xs px-3 py-1.5 rounded-lg font-medium"
+            <button onClick={resetInterview} aria-label="Restart interview from the beginning" className="text-xs px-3 py-1.5 rounded-lg font-medium"
               style={{ background: "var(--bg)", border: "1px solid var(--border)", color: "var(--text-muted)", cursor: "pointer" }}>
               Restart
             </button>
           </div>
         )}
         {phase === "scoring" && (
-          <button onClick={resetInterview} className="ml-auto text-xs px-3 py-1.5 rounded-lg font-medium"
+          <button onClick={resetInterview} aria-label="Start over with a new interview session" className="ml-auto text-xs px-3 py-1.5 rounded-lg font-medium"
             style={{ background: "var(--bg)", border: "1px solid var(--border)", color: "var(--text-muted)", cursor: "pointer" }}>
             Start Over
           </button>
@@ -488,6 +490,7 @@ export function MockInterviewTab({ role }: { role: Role }) {
               </ul>
             </div>
             <button onClick={startInterview}
+              aria-label={`Start mock interview for ${activeRole} — ${totalSteps} questions`}
               className="w-full py-3 rounded-xl text-sm font-bold"
               style={{ background: roleColor, color: "#fff", cursor: "pointer", border: "none" }}>
               Start Mock Interview
@@ -502,7 +505,11 @@ export function MockInterviewTab({ role }: { role: Role }) {
           {/* Progress + timer bar */}
           <div className="rounded-xl px-5 py-3 space-y-2" style={{ background: "var(--bg-card)", border: "1px solid var(--border)" }}>
             <div className="flex items-center justify-between">
-              <span className="text-xs font-bold" style={{ color: roleColor }}>
+              <span
+                className="text-xs font-bold"
+                aria-label={`Question ${currentStep + 1} of ${totalSteps}`}
+                style={{ color: roleColor }}
+              >
                 Question {currentStep + 1} / {totalSteps}
               </span>
               <div className="flex items-center gap-3">
@@ -512,6 +519,8 @@ export function MockInterviewTab({ role }: { role: Role }) {
                   </span>
                 )}
                 <span
+                  role="timer"
+                  aria-label={`${timer.display} elapsed of ${timer.target} target${timer.over ? ", over time" : ""}`}
                   className="text-sm font-mono font-bold"
                   style={{ color: timerColor, fontVariantNumeric: "tabular-nums" }}
                 >
@@ -675,6 +684,7 @@ export function MockInterviewTab({ role }: { role: Role }) {
           <div className="flex gap-2">
             {currentStep > 0 && (
               <button onClick={() => goToStep(currentStep - 1)}
+                aria-label={`Go back to question ${currentStep}`}
                 className="px-4 py-2.5 rounded-xl text-sm font-medium"
                 style={{ background: "var(--bg)", border: "1px solid var(--border)", color: "var(--text)", cursor: "pointer" }}>
                 ← Back
@@ -682,6 +692,7 @@ export function MockInterviewTab({ role }: { role: Role }) {
             )}
             <button
               onClick={advanceStep}
+              aria-label={currentStep < totalSteps - 1 ? `Submit answer and go to question ${currentStep + 2} of ${totalSteps}` : "Submit final answer and view your score"}
               className="px-4 py-2.5 rounded-xl text-sm font-bold flex-1"
               style={{ background: roleColor, color: "#fff", cursor: "pointer", border: "none" }}
             >
@@ -779,6 +790,7 @@ export function MockInterviewTab({ role }: { role: Role }) {
           </div>
 
           <button onClick={resetInterview}
+            aria-label="Restart the mock interview from the beginning"
             className="w-full py-3 rounded-xl text-sm font-bold"
             style={{ background: roleColor, color: "#fff", cursor: "pointer", border: "none" }}>
             Restart Mock Interview

@@ -56,8 +56,8 @@ function StartHereTab({ onNavigateTab, role, onRoleChange }: {
         "SRE and incident management",
       ],
       prepTime: "30–45 minutes",
-      cta: "Start Backend Track",
-      ctaTab: "backend-track" as TabSlug,
+      cta: "Explore Architecture",
+      ctaTab: "architecture" as TabSlug,
     },
     {
       role: "Data Engineer" as Role,
@@ -78,8 +78,8 @@ function StartHereTab({ onNavigateTab, role, onRoleChange }: {
         "Frontend and UI personalization",
       ],
       prepTime: "30–45 minutes",
-      cta: "Start Data Engineering Track",
-      ctaTab: "data-engineering" as TabSlug,
+      cta: "See Data Models",
+      ctaTab: "models" as TabSlug,
     },
   ];
 

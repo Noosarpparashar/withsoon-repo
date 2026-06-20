@@ -90,6 +90,38 @@ export default function SystemDesignPage() {
         </p>
       </div>
 
+      {/* Netflix system design featured callout */}
+      <div className="mb-10 rounded-2xl overflow-hidden border border-[var(--border)] bg-[var(--bg-card)]">
+        <div className="h-1 w-full" style={{ background: "linear-gradient(90deg, #e50914, #ff6b6b, #e50914)" }} />
+        <div className="p-6 flex flex-col sm:flex-row items-start sm:items-center gap-5">
+          <div className="flex-1">
+            <div className="flex flex-wrap items-center gap-2 mb-2">
+              <span className="text-[10px] font-bold px-2.5 py-1 rounded-full bg-red-500/10 text-red-400 border border-red-500/20">Featured</span>
+              <span className="text-[10px] font-bold px-2.5 py-1 rounded-full bg-[var(--bg-muted)] text-[var(--text-faint)] border border-[var(--border)]">Interactive</span>
+              <span className="text-[10px] font-bold px-2.5 py-1 rounded-full bg-[var(--bg-muted)] text-[var(--text-faint)] border border-[var(--border)]">10 tabs</span>
+              <span className="text-[10px] font-bold px-2.5 py-1 rounded-full bg-[var(--bg-muted)] text-[var(--text-faint)] border border-[var(--border)]">Senior Backend · Data Engineer</span>
+            </div>
+            <h3 className="text-xl font-bold text-[var(--text)] mb-1">Netflix System Design — Complete Interview Prep</h3>
+            <p className="text-sm text-[var(--text-muted)] mb-3">
+              Interactive 19-node architecture diagram, 5 animated request flows, 75-card quiz, mock interview with grilling, and a full cheat sheet — across 10 deep-dive tabs.
+            </p>
+            <div className="flex flex-wrap gap-3 text-xs text-[var(--text-faint)]">
+              <span>🗺️ 19-node architecture canvas</span>
+              <span>▶ 5 animated request flows</span>
+              <span>🧠 75 flashcards with spaced repetition</span>
+              <span>🎤 Mock interview + grilling</span>
+            </div>
+          </div>
+          <Link
+            href="/system-design/netflix/start-here"
+            className="shrink-0 inline-flex items-center gap-2 px-5 py-3 rounded-xl text-sm font-bold text-white transition-all hover:opacity-90"
+            style={{ background: "#e50914" }}
+          >
+            Start Prep →
+          </Link>
+        </div>
+      </div>
+
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
         {COMPANIES.map((c) => {
           const isLive = c.status === "live";

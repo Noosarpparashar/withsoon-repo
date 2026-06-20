@@ -12,11 +12,16 @@ import { MockInterviewTab } from "../netflix-tabs/MockInterviewTab";
 import { CheatSheetTab } from "../netflix-tabs/CheatSheetTab";
 import { RequirementsTab } from "../netflix-tabs/RequirementsTab";
 import { FailuresTab } from "../netflix-tabs/FailuresTab";
+import { StartHereTab } from "../netflix-tabs/StartHereTab";
+import { PlaybackTab } from "../netflix-tabs/PlaybackTab";
+import type { Role } from "../netflix-tabs/types";
 
 // ── Tab config ─────────────────────────────────────────────────────────────────
 const TABS = [
+  { id: "start-here",     label: "Start Here"     },
   { id: "requirements",   label: "Requirements"   },
   { id: "architecture",   label: "Architecture"   },
+  { id: "playback",       label: "Playback Flow"  },
   { id: "models",         label: "Data Models"    },
   { id: "tradeoffs",      label: "Trade-offs"     },
   { id: "capacity",       label: "Capacity"       },
@@ -618,6 +623,7 @@ function ArchitectureTab({
   const [zoom, setZoom] = useState(1);
   const [pan, setPan] = useState({ x: 0, y: 0 });
   const [containerSize, setContainerSize] = useState({ w: 800, h: 600 });
+  const [mobileOverlayDismissed, setMobileOverlayDismissed] = useState(false);
   const isPanning = useRef(false);
   const lastPan = useRef({ x: 0, y: 0 });
   const canvasContainerRef = useRef<HTMLDivElement>(null);
@@ -817,6 +823,24 @@ function ArchitectureTab({
 
           {/* Mini-map */}
           <MiniMap zoom={zoom} pan={pan} containerW={containerSize.w} containerH={containerSize.h} />
+
+          {/* Mobile hint overlay */}
+          {!mobileOverlayDismissed && (
+            <div className="sm:hidden absolute inset-0 flex flex-col items-center justify-center z-10 text-center px-6"
+              style={{ background: "rgba(10,10,10,0.95)" }}>
+              <div className="text-5xl mb-4" aria-hidden="true">🗺</div>
+              <p className="text-base font-bold mb-2" style={{ color: N_TEXT }}>Full diagram available on desktop</p>
+              <p className="text-sm leading-relaxed mb-6" style={{ color: N_MUTED }}>
+                Use the tabs above to explore Requirements, Data Models, Trade-offs, Capacity, and Failures on mobile
+              </p>
+              <button
+                onClick={() => setMobileOverlayDismissed(true)}
+                className="px-5 py-2.5 rounded-lg text-sm font-semibold transition-opacity active:opacity-70"
+                style={{ background: N_RED, color: N_TEXT, border: `1px solid ${N_BORDER}` }}>
+                Continue on mobile
+              </button>
+            </div>
+          )}
         </div>
 
         {/* Detail panel */}
@@ -866,6 +890,7 @@ export default function NetflixArchPage({ initialTab }: { initialTab?: string })
   const [tabVisible, setTabVisible] = useState(true);
   const [studiedNodes, setStudiedNodes] = useState<Set<NodeId>>(new Set());
   const [interviewMode, setInterviewMode] = useState(false);
+  const [role, setRole] = useState<Role>("Backend Engineer");
   const [shortcutsOpen, setShortcutsOpen] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [lastStudied, setLastStudied] = useState<string | null>(null);
@@ -928,7 +953,7 @@ export default function NetflixArchPage({ initialTab }: { initialTab?: string })
   const studiedCount = studiedNodes.size;
 
   return (
-    <div className="flex flex-col" style={{ height: "100vh", background: N_BG, color: N_TEXT, fontFamily: C.sans, overflow: "hidden" }}>
+    <div className="dark flex flex-col" style={{ height: "100vh", background: N_BG, color: N_TEXT, fontFamily: C.sans, overflow: "hidden" }}>
       {/* ── Topbar ── */}
       <div className="shrink-0 z-40" style={{ background: "#0d0d0d", borderBottom: `1px solid ${N_BORDER}` }}>
         {/* Row 1: logo + controls */}
@@ -1076,12 +1101,26 @@ export default function NetflixArchPage({ initialTab }: { initialTab?: string })
       {/* ── Tab content with crossfade ── */}
       <div className="flex-1 overflow-hidden flex flex-col"
         style={{ opacity: tabVisible ? 1 : 0, transition: "opacity 0.1s ease" }}>
+        {activeTab === "start-here"     && (
+          <div className="flex-1 overflow-y-auto px-4 py-6 max-w-4xl mx-auto w-full" style={{ background: N_BG }}>
+            <StartHereTab
+              role={role}
+              onRoleChange={setRole}
+              onNavigateTab={(tab) => switchTab(tab as TabId)}
+            />
+          </div>
+        )}
         {activeTab === "requirements"   && (
           <div className="flex-1 overflow-y-auto" style={{ background: "#0d0d0d" }}>
             <RequirementsTab />
           </div>
         )}
         {activeTab === "architecture"   && <ArchitectureTab studiedNodes={studiedNodes} onMarkStudied={handleMarkStudied} interviewMode={interviewMode} />}
+        {activeTab === "playback"       && (
+          <div className="flex-1 overflow-y-auto" style={{ background: "#0d0d0d" }}>
+            <PlaybackTab />
+          </div>
+        )}
         {activeTab === "models"         && <ModelsTab />}
         {activeTab === "tradeoffs"      && <TradeoffsTab interviewMode={interviewMode} />}
         {activeTab === "capacity"       && <CapacityTab />}

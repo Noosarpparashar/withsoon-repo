@@ -15,6 +15,8 @@ export interface EntityDef {
   fields: FieldDef[];
   indexes?: { name: string; desc: string }[];
   accessPatterns?: string[];
+  /** One-sentence reason why THIS entity lives in THIS specific store */
+  dbRationale?: string;
 }
 export interface ModelGroup {
   id: string;
@@ -57,15 +59,19 @@ export const MODEL_GROUPS: ModelGroup[] = [
         name: "users",
         store: "Aurora",
         storeColor: AURORA,
+        dbRationale: "Aurora because billing identity needs ACID transactions, FK constraints to subscriptions/payment_methods, and GDPR hard-delete semantics — none of which DynamoDB can enforce natively.",
         fields: [
-          { name: "user_id",       type: "UUID",         pk: true,    note: "DEFAULT gen_random_uuid()" },
-          { name: "email",         type: "VARCHAR(255)",  unique: true, note: "NOT NULL, indexed" },
-          { name: "password_hash", type: "VARCHAR(255)",  note: "bcrypt cost 12, never plaintext" },
-          { name: "plan_type",     type: "ENUM",          note: "'basic'|'standard'|'premium'" },
-          { name: "country_code",  type: "CHAR(2)",       note: "ISO 3166-1, drives CDN geo-restriction" },
-          { name: "created_at",    type: "TIMESTAMP",     note: "DEFAULT NOW()" },
-          { name: "updated_at",    type: "TIMESTAMP",     note: "DEFAULT NOW()" },
-          { name: "deleted_at",    type: "TIMESTAMP",     note: "NULL = active, set on GDPR deletion request" },
+          { name: "user_id",           type: "UUID",         pk: true,    note: "DEFAULT gen_random_uuid()" },
+          { name: "email",             type: "VARCHAR(255)",  unique: true, note: "NOT NULL, indexed" },
+          { name: "password_hash",     type: "VARCHAR(255)",  note: "bcrypt cost 12, never plaintext" },
+          { name: "subscription_tier", type: "VARCHAR(20)",   note: "'basic'|'standard'|'premium' — authoritative billing tier; denormalised on JWT claim" },
+          { name: "plan_type",         type: "VARCHAR(20)",   note: "Alias kept for FK consumers; same enum as subscription_tier" },
+          { name: "region",            type: "VARCHAR(50)",   note: "e.g. 'us-east-1' — drives CDN PoP selection and content licensing" },
+          { name: "country_code",      type: "CHAR(2)",       note: "ISO 3166-1, drives content geo-restriction" },
+          { name: "device_limit",      type: "SMALLINT",      note: "Max concurrent streams: 1(basic)/2(standard)/4(premium)" },
+          { name: "created_at",        type: "TIMESTAMP",     note: "DEFAULT NOW()" },
+          { name: "updated_at",        type: "TIMESTAMP",     note: "DEFAULT NOW()" },
+          { name: "deleted_at",        type: "TIMESTAMP",     note: "NULL = active, set on GDPR deletion request" },
         ],
         accessPatterns: ["get by email (login)", "get by user_id (profile load)", "list all for billing reports (rare)"],
       },
@@ -73,6 +79,7 @@ export const MODEL_GROUPS: ModelGroup[] = [
         name: "profiles",
         store: "Aurora",
         storeColor: AURORA,
+        dbRationale: "Aurora because profiles are a child entity of users (FK → ON DELETE CASCADE) and are always read with a JOIN to users for access-control checks — keeping them in the same RDBMS avoids cross-store transactions.",
         fields: [
           { name: "profile_id",    type: "UUID",         pk: true,    note: "DEFAULT gen_random_uuid()" },
           { name: "user_id",       type: "UUID",         fk: "users.user_id", note: "ON DELETE CASCADE" },
@@ -91,16 +98,22 @@ export const MODEL_GROUPS: ModelGroup[] = [
       {
         label: "users.sql",
         code: `CREATE TABLE users (
-  user_id        UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  email          VARCHAR(255) UNIQUE NOT NULL,
-  password_hash  VARCHAR(255) NOT NULL,
-  plan_type      VARCHAR(20) NOT NULL CHECK (plan_type IN ('basic','standard','premium')),
-  country_code   CHAR(2) NOT NULL,
-  created_at     TIMESTAMP DEFAULT NOW(),
-  updated_at     TIMESTAMP DEFAULT NOW(),
-  deleted_at     TIMESTAMP
+  user_id           UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  email             VARCHAR(255) UNIQUE NOT NULL,
+  password_hash     VARCHAR(255) NOT NULL,
+  subscription_tier VARCHAR(20) NOT NULL
+    CHECK (subscription_tier IN ('basic','standard','premium')),
+  plan_type         VARCHAR(20) GENERATED ALWAYS AS (subscription_tier) STORED,
+  region            VARCHAR(50) NOT NULL,  -- e.g. 'us-east-1'
+  country_code      CHAR(2) NOT NULL,      -- ISO 3166-1
+  device_limit      SMALLINT NOT NULL
+    CHECK (device_limit IN (1,2,4)),       -- basic=1, std=2, premium=4
+  created_at        TIMESTAMP DEFAULT NOW(),
+  updated_at        TIMESTAMP DEFAULT NOW(),
+  deleted_at        TIMESTAMP              -- NULL = active (soft-delete)
 );
-CREATE INDEX idx_users_email ON users(email);
+CREATE INDEX idx_users_email   ON users(email);
+CREATE INDEX idx_users_region  ON users(region);
 CREATE INDEX idx_users_country ON users(country_code);`,
       },
       {
@@ -140,6 +153,7 @@ CREATE INDEX idx_profiles_user_id ON profiles(user_id);`,
         name: "content",
         store: "DynamoDB",
         storeColor: DYNAMO,
+        dbRationale: "DynamoDB because content metadata is read-heavy at 50 K RPS with fully predictable access patterns (get-by-id, list-by-genre). Schemaless attributes handle the wide variation between movies, series, and shorts without NULL columns or ALTER TABLE migrations.",
         fields: [
           { name: "PK: content_id",     type: "String",    pk: true,  note: "e.g. 'tt1234567' (IMDb-style ID)" },
           { name: "SK: 'METADATA'",      type: "String",    pk: true,  note: "Constant SK for metadata item" },
@@ -149,10 +163,11 @@ CREATE INDEX idx_profiles_user_id ON profiles(user_id);`,
           { name: "cast",               type: "List",      note: "Array of {name, role}" },
           { name: "director",           type: "String",    note: "For search boosting" },
           { name: "release_year",       type: "Number",    note: "Used for date-sorted GSI SK" },
-          { name: "rating",             type: "String",    note: "'PG-13' — enforced by profile.max_rating" },
+          { name: "maturity_rating",    type: "String",    note: "'G'|'PG'|'PG-13'|'R'|'TV-MA' — enforced by profile.max_rating" },
           { name: "thumbnail_url",      type: "String",    note: "S3 path; personalized at display time" },
           { name: "available_regions",  type: "StringSet", note: "['US','CA','GB'] — hard filter in queries" },
-          { name: "duration_minutes",   type: "Number",    note: "For 'X min away from finishing' UX" },
+          { name: "duration_secs",      type: "Number",    note: "Duration in seconds (precision needed for progress % and '3 min left' UX); also stored as duration_minutes = duration_secs/60 for display" },
+          { name: "duration_minutes",   type: "Number",    note: "Derived display field — kept for backward compat" },
           { name: "description",        type: "String",    note: "Used in OpenSearch full-text index" },
         ],
         indexes: [
@@ -171,6 +186,7 @@ CREATE INDEX idx_profiles_user_id ON profiles(user_id);`,
         name: "episodes",
         store: "DynamoDB",
         storeColor: DYNAMO,
+        dbRationale: "DynamoDB because episodes belong to a series (same partition key), so get-all-episodes is a single Query with no cross-partition scatter — impossible to match with a relational range scan at this read throughput.",
         fields: [
           { name: "PK: series_id",      type: "String",  pk: true, note: "Same as content_id for series" },
           { name: "SK: 'S{n}E{n}'",     type: "String",  pk: true, note: "e.g. 'S02E05' — enables range query" },
@@ -225,6 +241,7 @@ ORDER BY SK ASC`,
         name: "watch_progress",
         store: "Cassandra",
         storeColor: CASS,
+        dbRationale: "Cassandra because this table absorbs 500 K heartbeat writes/sec — its LSM-tree engine turns random writes into sequential I/O, and partitioning by profile_id keeps each resume-position lookup a single-node O(1) read.",
         fields: [
           { name: "profile_id",   type: "UUID",      pk: true, note: "Partition key — all progress for a profile on one node" },
           { name: "content_id",   type: "TEXT",      pk: true, note: "Clustering key — enables get-by-content" },
@@ -242,6 +259,7 @@ ORDER BY SK ASC`,
         name: "watch_history",
         store: "Cassandra",
         storeColor: CASS,
+        dbRationale: "Cassandra because this is an append-only time-series log; year-bucketed composite partition key prevents hot partitions for power users, and native TTL auto-expires old records without a batch delete job.",
         fields: [
           { name: "profile_id",   type: "UUID",      pk: true, note: "Partition key component" },
           { name: "year",         type: "INT",        pk: true, note: "Bucket key — prevents unbounded partition growth" },
@@ -313,6 +331,7 @@ USING TTL 7776000;`,
         name: "subscriptions",
         store: "Aurora",
         storeColor: AURORA,
+        dbRationale: "Aurora because subscription state transitions (ACTIVE → PAST_DUE → CANCELLED) must be atomic with the Stripe webhook update — a DynamoDB conditional write can't enforce the state machine invariants that billing correctness requires.",
         fields: [
           { name: "subscription_id",        type: "UUID",         pk: true, note: "DEFAULT gen_random_uuid()" },
           { name: "user_id",                type: "UUID",         fk: "users.user_id", note: "ON DELETE CASCADE" },
@@ -334,6 +353,7 @@ USING TTL 7776000;`,
         name: "payment_methods",
         store: "Aurora",
         storeColor: AURORA,
+        dbRationale: "Aurora because we need a partial unique index (only one is_default=true per user) — a constraint only expressible in a relational engine; the write frequency is low (one write per card add/remove) so Aurora throughput is not a bottleneck.",
         fields: [
           { name: "pm_id",          type: "UUID",         pk: true, note: "Internal ID" },
           { name: "user_id",        type: "UUID",         fk: "users.user_id", note: "ON DELETE CASCADE" },
@@ -412,6 +432,7 @@ CREATE UNIQUE INDEX idx_pm_default
         name: "refresh_tokens (Redis)",
         store: "Redis",
         storeColor: REDIS_C,
+        dbRationale: "Redis because token validation happens on every API call (every 15 min per active session at scale) — sub-ms GET is mandatory; TTL is automatic and DEL gives instant revocation without a full-table scan.",
         fields: [
           { name: "Key: refresh:{uuid}",  type: "String",  pk: true, note: "Opaque UUID, NOT the user_id" },
           { name: "Value: user_id",        type: "String",  note: "Maps token → user for /auth/refresh" },
@@ -427,6 +448,7 @@ CREATE UNIQUE INDEX idx_pm_default
         name: "sessions",
         store: "DynamoDB",
         storeColor: DYNAMO,
+        dbRationale: "DynamoDB because session records must survive Redis restarts (durability) while still delivering single-digit ms for list-sessions-by-user — the 'manage devices' page in account settings.",
         fields: [
           { name: "PK: user_id",           type: "String",    pk: true, note: "Enables 'list all sessions for user'" },
           { name: "SK: session_id",         type: "String",    pk: true, note: "UUID per session" },
@@ -446,6 +468,7 @@ CREATE UNIQUE INDEX idx_pm_default
         name: "drm_licenses",
         store: "DynamoDB",
         storeColor: DYNAMO,
+        dbRationale: "DynamoDB because license records need durable audit trail (revocation, GDPR) plus a built-in TTL to auto-expire 8 h/48 h licenses — no cron job required; access pattern is always by profile_id making PK design trivial.",
         fields: [
           { name: "PK: profile_id",         type: "String",    pk: true, note: "Partition by profile for fast license lookup" },
           { name: "SK: license_id",          type: "String",    pk: true, note: "UUID per license issuance" },
@@ -502,6 +525,7 @@ DEL refresh:{uuid}
         name: "notification_preferences",
         store: "DynamoDB",
         storeColor: DYNAMO,
+        dbRationale: "DynamoDB because preferences are a simple key-value lookup by user_id and the schemaless model allows adding new notification types (e.g. live_sports_alert) as new attributes without ALTER TABLE or deployment downtime.",
         fields: [
           { name: "PK: user_id",            type: "String",   pk: true, note: "Direct lookup by user_id on notification send" },
           { name: "email_new_episodes",      type: "Boolean",  note: "Default: true" },
@@ -521,6 +545,7 @@ DEL refresh:{uuid}
         name: "notification_log",
         store: "DynamoDB",
         storeColor: DYNAMO,
+        dbRationale: "DynamoDB because this is an append-only deduplication log; composite SK (type#timestamp) enables idempotency checks with a single range Query, and 90-day TTL auto-purges without a cron job.",
         fields: [
           { name: "PK: user_id",            type: "String",   pk: true, note: "Partition by recipient" },
           { name: "SK: {type}#{timestamp}", type: "String",   pk: true, note: "e.g. 'billing#1718000000' — enables deduplication" },

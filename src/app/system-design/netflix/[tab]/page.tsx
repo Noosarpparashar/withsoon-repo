@@ -3,6 +3,10 @@ import type { Metadata } from "next";
 import NetflixPage from "@/components/ui/NetflixPage";
 
 const TAB_META: Record<string, { title: string; description: string }> = {
+  "start-here": {
+    title: "Netflix System Design — Start Here | withsoon.com",
+    description: "Guided start for Netflix system design interview prep. Choose Backend Engineer or Data Engineer track, get clarifying questions, opening scripts, and common mistakes to avoid.",
+  },
   requirements: {
     title: "Netflix System Design — Requirements | withsoon.com",
     description: "Netflix functional and non-functional requirements: scale targets, latency SLAs, consistency models, and how to frame requirements in a system design interview.",
@@ -10,6 +14,10 @@ const TAB_META: Record<string, { title: string; description: string }> = {
   architecture: {
     title: "Netflix System Design — Architecture | withsoon.com",
     description: "Interactive Netflix architecture diagram: 19 components, 7 request flows, CDN, DRM, microservices. Interview-ready depth for senior backend engineers.",
+  },
+  playback: {
+    title: "Netflix System Design — Playback Deep Dive | withsoon.com",
+    description: "Step-by-step walkthrough of the Netflix playback request flow: 16 hops from client to OCA, latency budgets, parallel fan-out, DRM licensing, and failure modes for every downstream dependency.",
   },
   models: {
     title: "Netflix System Design — Data Models | withsoon.com",
@@ -57,6 +65,11 @@ export async function generateMetadata({ params }: { params: Promise<{ tab: stri
       siteName: "withsoon",
       type: "website",
     },
+    twitter: {
+      card: "summary_large_image",
+      title: meta.title,
+      description: meta.description,
+    },
     alternates: {
       canonical: `https://withsoon.com/system-design/netflix/${tab}`,
     },
@@ -66,14 +79,14 @@ export async function generateMetadata({ params }: { params: Promise<{ tab: stri
 export default async function TabPage({ params }: { params: Promise<{ tab: string }> }) {
   const { tab } = await params;
   const LEGACY = [
-    "start-here", "backend-track", "data-engineering", "architecture-map",
+    "backend-track", "data-engineering", "architecture-map",
     "apis-data-model", "scale-estimation", "failures-tradeoffs",
     "interview-qa",
     "scale", "services", "apis",
-    "data-design", "playback", "cdn", "encoding", "data-pipeline",
+    "data-design", "cdn", "encoding", "data-pipeline",
     "recommendations", "security", "observability-cost",
   ];
-  const VALID = ["requirements", "architecture", "models", "tradeoffs", "capacity", "failures", "quiz", "mock-interview", "cheat-sheet"];
+  const VALID = ["start-here", "requirements", "architecture", "playback", "models", "tradeoffs", "capacity", "failures", "quiz", "mock-interview", "cheat-sheet"];
   if (!VALID.includes(tab) && LEGACY.includes(tab)) {
     redirect("/system-design/netflix/architecture");
   }

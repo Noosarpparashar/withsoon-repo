@@ -44,9 +44,14 @@ function FlipCard({ card, state, onKnow, onLearn }: {
     <div className="flex flex-col items-center w-full max-w-xl mx-auto">
       {/* Card */}
       <div
+        role="button"
+        tabIndex={0}
+        aria-label={flipped ? "Flip flashcard to see question" : "Flip flashcard to see answer"}
+        aria-pressed={flipped}
         className="w-full cursor-pointer select-none"
         style={{ perspective: 1000 }}
-        onClick={() => setFlipped(v => !v)}>
+        onClick={() => setFlipped(v => !v)}
+        onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); setFlipped(v => !v); } }}>
         <div style={{
           position: "relative",
           width: "100%",
@@ -92,6 +97,8 @@ function FlipCard({ card, state, onKnow, onLearn }: {
       <div className="flex gap-3 mt-5 w-full">
         <button
           onClick={onLearn}
+          aria-pressed={state === "learning"}
+          aria-label="Mark as still learning"
           className="flex-1 py-2.5 rounded-xl text-sm font-bold transition-all"
           style={{
             background: state === "learning" ? "#ef444418" : "transparent",
@@ -102,6 +109,8 @@ function FlipCard({ card, state, onKnow, onLearn }: {
         </button>
         <button
           onClick={onKnow}
+          aria-pressed={state === "known"}
+          aria-label="Mark as known"
           className="flex-1 py-2.5 rounded-xl text-sm font-bold transition-all"
           style={{
             background: state === "known" ? C.green + "18" : "transparent",
@@ -175,11 +184,21 @@ export default function QuizTab() {
   // Reset card index when filter changes
   useEffect(() => { setCardIndex(0); }, [activeTopic, filterMode]);
 
+  // Keyboard navigation: arrow keys move between cards
+  useEffect(() => {
+    function handleKey(e: KeyboardEvent) {
+      if (e.key === "ArrowRight") goNext();
+      else if (e.key === "ArrowLeft") goPrev();
+    }
+    window.addEventListener("keydown", handleKey);
+    return () => window.removeEventListener("keydown", handleKey);
+  }, [goNext, goPrev]);
+
   const knownCount = Object.values(cardStates).filter(s => s === "known").length;
   const learningCount = Object.values(cardStates).filter(s => s === "learning").length;
 
   return (
-    <div className="flex h-full overflow-hidden" style={{ background: C.bg }}>
+    <div role="region" aria-label="Flashcard quiz" className="flex h-full overflow-hidden" style={{ background: C.bg }}>
       {/* Topic sidebar */}
       <div className="w-44 shrink-0 overflow-y-auto hidden sm:block" style={{ background: C.card, borderRight: `1px solid ${C.border}` }}>
         <div className="px-3 py-3" style={{ borderBottom: `1px solid ${C.border}` }}>
@@ -222,9 +241,10 @@ export default function QuizTab() {
         {/* Toolbar */}
         <div className="shrink-0 px-4 py-3 flex items-center gap-3" style={{ borderBottom: `1px solid ${C.border}`, background: C.card }}>
           {/* Filter */}
-          <div className="flex gap-1">
+          <div className="flex gap-1" role="group" aria-label="Filter cards by status">
             {(["all", "learning", "known"] as const).map(m => (
               <button key={m} onClick={() => setFilterMode(m)}
+                aria-pressed={filterMode === m}
                 className="text-[10px] px-2 py-1 rounded capitalize transition-colors"
                 style={{
                   background: filterMode === m ? C.amber + "18" : "transparent",
@@ -244,6 +264,8 @@ export default function QuizTab() {
 
           {/* Shuffle toggle */}
           <button onClick={handleToggleShuffle}
+            aria-pressed={shuffled}
+            aria-label={shuffled ? "Disable shuffle, switch to spaced repetition order" : "Enable shuffle mode"}
             className="text-[10px] px-2 py-1 rounded transition-colors"
             style={{
               background: shuffled ? "#818cf818" : "transparent",
@@ -255,7 +277,13 @@ export default function QuizTab() {
 
           {/* Card counter */}
           {filtered.length > 0 && (
-            <span className="text-[10px]" style={{ color: C.muted }}>
+            <span
+              aria-live="polite"
+              aria-atomic="true"
+              aria-label={`Card ${cardIndex + 1} of ${filtered.length}`}
+              className="text-[10px]"
+              style={{ color: C.muted }}
+            >
               {cardIndex + 1} / {filtered.length}
             </span>
           )}
@@ -291,16 +319,22 @@ export default function QuizTab() {
               {/* Navigation */}
               <div className="flex gap-2 mt-4">
                 <button onClick={goPrev} disabled={cardIndex === 0}
+                  aria-label="Go to previous card"
                   className="px-4 py-2 rounded-lg text-xs font-medium disabled:opacity-30 transition-colors"
                   style={{ background: C.border, color: C.text }}>
                   ← Prev
                 </button>
                 <button onClick={goNext} disabled={cardIndex === filtered.length - 1}
+                  aria-label="Go to next card"
                   className="px-4 py-2 rounded-lg text-xs font-medium disabled:opacity-30 transition-colors"
                   style={{ background: C.border, color: C.text }}>
                   Next →
                 </button>
               </div>
+              {/* Keyboard navigation hint */}
+              <p className="text-[10px] text-center mt-2" style={{ color: C.faint }}>
+                Tip: use ← → arrow keys to navigate cards, Space or Enter to flip
+              </p>
             </>
           ) : null}
         </div>

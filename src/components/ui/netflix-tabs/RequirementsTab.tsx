@@ -88,16 +88,66 @@ const FUNCTIONAL_REQS = [
 
 const NFR_ROWS = [
   { category: "Playback Startup", requirement: "Video starts playing in <2s from click (P99)", slo: "<2s P99", priority: "P0" },
+  { category: "TTFB (First Byte)", requirement: "First video byte delivered from CDN edge within 200ms", slo: "<200ms P95", priority: "P0" },
   { category: "Search Autocomplete", requirement: "Results shown in <100ms", slo: "<100ms P95", priority: "P0" },
   { category: "Homepage Load", requirement: "Recommendations visible within <500ms", slo: "<500ms P95", priority: "P0" },
   { category: "Playback Availability", requirement: "Existing streams continue during partial outages", slo: "99.99%", priority: "P0" },
+  { category: "Overall Service Availability", requirement: "Auth, catalog, playback APIs remain reachable", slo: "99.99%", priority: "P0" },
   { category: "CDN Cache Hit", requirement: "Video segments served from edge, not origin", slo: ">99% top titles", priority: "P0" },
+  { category: "Throughput", requirement: "Sustain peak egress bandwidth across all streams", slo: "45+ Tbps peak", priority: "P0" },
+  { category: "Request Rate", requirement: "API gateway handles peak global RPS", slo: "260K RPS peak", priority: "P0" },
+  { category: "Concurrent Stream Limit", requirement: "Enforce per-account device concurrency at play time", slo: "≤8 streams/account", priority: "P0" },
   { category: "Billing Consistency", requirement: "Subscription changes reflected immediately", slo: "Strong consistency", priority: "P0" },
   { category: "Watch History Freshness", requirement: "Resume position synced within 1 heartbeat interval", slo: "~30s eventual", priority: "P1" },
   { category: "Rec. Freshness", requirement: "Recommendations reflect recent watches within minutes", slo: "<5min nearline", priority: "P1" },
   { category: "Data Retention", requirement: "Event data retained for ML training and compliance", slo: "90 days raw, 2y curated", priority: "P1" },
   { category: "DRM Security", requirement: "Content protected — no playback without valid device-bound license", slo: "Zero plaintext fallback", priority: "P0" },
   { category: "Fault Tolerance", requirement: "Recommendation/search failure must not block playback", slo: "Degraded, not down", priority: "P0" },
+];
+
+const SCALE_ANCHORS = [
+  {
+    label: "Subscribers",
+    value: "230M+",
+    note: "~60M peak concurrent streams",
+    color: "#3b82f6",
+    tag: "Users",
+  },
+  {
+    label: "Peak Egress",
+    value: "45 Tbps",
+    note: "Served via CDN / Open Connect Appliances",
+    color: "#f59e0b",
+    tag: "CDN",
+  },
+  {
+    label: "Peak API RPS",
+    value: "260K RPS",
+    note: "Across all services at prime time",
+    color: "#10b981",
+    tag: "API",
+  },
+  {
+    label: "Concurrent Streams / Account",
+    value: "≤8",
+    note: "Enforced at DRM license issue time",
+    color: "#ec4899",
+    tag: "DRM",
+  },
+  {
+    label: "Watch-History Write Rate",
+    value: "~2M writes/s",
+    note: "60M streams × heartbeat every 30s",
+    color: "#8b5cf6",
+    tag: "Cassandra",
+  },
+  {
+    label: "Content Library",
+    value: "15,000+ titles",
+    note: "Each encoded in 1,200+ variants for ABR",
+    color: "#06b6d4",
+    tag: "Encoding",
+  },
 ];
 
 const SCOPE_TRADEOFFS = [
@@ -127,12 +177,50 @@ export function RequirementsTab({ onNavigateTab }: { onNavigateTab?: (tab: TabSl
 
   return (
     <div className="space-y-8 pb-10">
-      {/* Header */}
-      <div className="rounded-2xl p-6" style={{ background: "var(--bg-card)", border: "1px solid var(--border)", borderLeft: "4px solid #f59e0b" }}>
-        <h2 className="text-xl font-bold mb-2" style={{ color: "var(--text)" }}>Interview Tip</h2>
-        <p className="text-sm leading-relaxed" style={{ color: "var(--text-muted)" }}>
-          Don&apos;t recite requirements from memory. <strong>Ask the interviewer</strong> which scope they care about, then state requirements for that scope. Flag consistency, latency, and availability trade-offs for every P0 requirement.
+      {/* Interview Framing */}
+      <div className="rounded-2xl p-6 space-y-4" style={{ background: "var(--bg-card)", border: "1px solid var(--border)", borderLeft: "4px solid #f59e0b" }}>
+        <div>
+          <h2 className="text-xl font-bold mb-1" style={{ color: "var(--text)" }}>How to Open a Netflix Design Interview</h2>
+          <p className="text-sm leading-relaxed" style={{ color: "var(--text-muted)" }}>
+            When asked &ldquo;Design Netflix&rdquo;, resist the urge to dive into architecture. Spend the first 3–5 minutes clarifying scope, stating scale, and agreeing on requirements. This signals senior engineering judgment.
+          </p>
+        </div>
+        <div className="rounded-xl p-4 space-y-2" style={{ background: "var(--bg)", border: "1px solid var(--border)" }}>
+          <p className="text-xs font-bold uppercase tracking-wide" style={{ color: "#f59e0b" }}>Step-by-step opening script</p>
+          {[
+            { step: "1. Clarify scope", say: "\"Are we designing the full streaming platform, or focused on a specific component — say playback, recommendations, or content ingestion?\"" },
+            { step: "2. State scale", say: "\"Netflix has ~230M subscribers, ~60M peak concurrent streams, roughly 45 Tbps peak egress, and around 260K API requests/second at prime time. I'll design to those numbers.\"" },
+            { step: "3. Enumerate functional reqs", say: "\"Core features: auth + profiles, browse/search catalog, video playback with DRM and ABR, resume across devices, recommendations, billing, and a content encoding pipeline for ingest.\"" },
+            { step: "4. State NFRs and SLOs", say: "\"Non-functional: <2s playback start P99, <200ms TTFB from CDN, 99.99% playback availability, >99% CDN cache hit for top titles, ≤8 concurrent streams per account enforced at license time.\"" },
+            { step: "5. Flag trade-offs up front", say: "\"Watch history and recommendations are eventually consistent. Auth, billing, and concurrency limits need strong consistency. I'll call out each trade-off as I design.\"" },
+          ].map(({ step, say }) => (
+            <div key={step} className="flex gap-3 items-start">
+              <span className="text-[10px] font-bold px-2 py-0.5 rounded shrink-0 mt-0.5 whitespace-nowrap" style={{ background: "#fef3c7", color: "#92400e" }}>{step}</span>
+              <p className="text-xs leading-relaxed italic" style={{ color: "var(--text-muted)" }}>{say}</p>
+            </div>
+          ))}
+        </div>
+        <p className="text-xs" style={{ color: "var(--text-faint)" }}>
+          Pro tip: Don&apos;t recite requirements from memory. <strong>Ask the interviewer</strong> which scope they care about before committing to a design area. Flagging consistency and availability trade-offs on every P0 requirement signals senior judgment.
         </p>
+      </div>
+
+      {/* Scale Anchors */}
+      <div>
+        <h2 className="text-2xl font-bold mb-1" style={{ color: "var(--text)" }}>Scale Anchors</h2>
+        <p className="text-sm mb-4" style={{ color: "var(--text-muted)" }}>Memorise these numbers — they anchor every capacity and architecture decision that follows.</p>
+        <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+          {SCALE_ANCHORS.map((s) => (
+            <div key={s.label} className="rounded-xl p-4" style={{ background: "var(--bg-card)", border: `1px solid var(--border)`, borderTop: `3px solid ${s.color}` }}>
+              <div className="flex items-center gap-2 mb-2">
+                <span className="text-[10px] font-bold px-1.5 py-0.5 rounded" style={{ background: "var(--blue-soft)", color: "var(--blue-text)" }}>{s.tag}</span>
+              </div>
+              <p className="font-mono font-bold text-xl leading-none mb-1" style={{ color: s.color }}>{s.value}</p>
+              <p className="text-xs font-medium mb-1" style={{ color: "var(--text)" }}>{s.label}</p>
+              <p className="text-[11px] leading-snug" style={{ color: "var(--text-faint)" }}>{s.note}</p>
+            </div>
+          ))}
+        </div>
       </div>
 
       {/* Functional Requirements */}
@@ -238,7 +326,7 @@ export function RequirementsTab({ onNavigateTab }: { onNavigateTab?: (tab: TabSl
         </div>
       </div>
 
-      <SayThisBlock text="My requirements: auth, profiles, browse/search, playback with DRM and adaptive bitrate, resume across devices, recommendations, billing with entitlement, content encoding pipeline, and event-driven data platform. Non-functional: <2s playback start P99, 99.99% playback availability, >99% CDN cache hit for top titles, eventual consistency for watch history, strong consistency for billing and concurrency limits." />
+      <SayThisBlock text="Netflix scale: 230M+ subscribers, ~60M peak concurrent streams, 45 Tbps peak egress, 260K RPS at prime time, ≤8 concurrent streams enforced per account. Functional requirements: auth + profiles, browse/search, playback with DRM and ABR, cross-device resume, recommendations, billing with entitlement, content encoding pipeline, event-driven data platform. Non-functional SLOs: <2s playback start P99, <200ms TTFB from CDN edge P95, 99.99% playback availability, >99% CDN cache hit for top titles, ~30s eventual consistency for watch history, strong consistency for billing and concurrency limits." />
 
       {/* CTA */}
       {onNavigateTab && (
