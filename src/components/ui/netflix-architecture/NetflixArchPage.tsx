@@ -10,13 +10,17 @@ import CapacityTab from "./CapacityTab";
 import QuizTab from "./QuizTab";
 import { MockInterviewTab } from "../netflix-tabs/MockInterviewTab";
 import { CheatSheetTab } from "../netflix-tabs/CheatSheetTab";
+import { RequirementsTab } from "../netflix-tabs/RequirementsTab";
+import { FailuresTab } from "../netflix-tabs/FailuresTab";
 
 // ── Tab config ─────────────────────────────────────────────────────────────────
 const TABS = [
+  { id: "requirements",   label: "Requirements"   },
   { id: "architecture",   label: "Architecture"   },
   { id: "models",         label: "Data Models"    },
   { id: "tradeoffs",      label: "Trade-offs"     },
   { id: "capacity",       label: "Capacity"       },
+  { id: "failures",       label: "Failures"       },
   { id: "quiz",           label: "Quiz"           },
   { id: "mock-interview", label: "Mock Interview" },
   { id: "cheat-sheet",    label: "Cheat Sheet"    },
@@ -1072,10 +1076,20 @@ export default function NetflixArchPage({ initialTab }: { initialTab?: string })
       {/* ── Tab content with crossfade ── */}
       <div className="flex-1 overflow-hidden flex flex-col"
         style={{ opacity: tabVisible ? 1 : 0, transition: "opacity 0.1s ease" }}>
+        {activeTab === "requirements"   && (
+          <div className="flex-1 overflow-y-auto" style={{ background: "#0d0d0d" }}>
+            <RequirementsTab />
+          </div>
+        )}
         {activeTab === "architecture"   && <ArchitectureTab studiedNodes={studiedNodes} onMarkStudied={handleMarkStudied} interviewMode={interviewMode} />}
         {activeTab === "models"         && <ModelsTab />}
         {activeTab === "tradeoffs"      && <TradeoffsTab interviewMode={interviewMode} />}
         {activeTab === "capacity"       && <CapacityTab />}
+        {activeTab === "failures"       && (
+          <div className="flex-1 overflow-y-auto" style={{ background: "#0d0d0d" }}>
+            <FailuresTab />
+          </div>
+        )}
         {activeTab === "quiz"           && <QuizTab />}
         {activeTab === "mock-interview" && (
           <div className="flex-1 overflow-y-auto" style={{ background: "#0d0d0d" }}>

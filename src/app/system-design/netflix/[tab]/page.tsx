@@ -3,6 +3,10 @@ import type { Metadata } from "next";
 import NetflixPage from "@/components/ui/NetflixPage";
 
 const TAB_META: Record<string, { title: string; description: string }> = {
+  requirements: {
+    title: "Netflix System Design — Requirements | withsoon.com",
+    description: "Netflix functional and non-functional requirements: scale targets, latency SLAs, consistency models, and how to frame requirements in a system design interview.",
+  },
   architecture: {
     title: "Netflix System Design — Architecture | withsoon.com",
     description: "Interactive Netflix architecture diagram: 19 components, 7 request flows, CDN, DRM, microservices. Interview-ready depth for senior backend engineers.",
@@ -30,6 +34,10 @@ const TAB_META: Record<string, { title: string; description: string }> = {
   "cheat-sheet": {
     title: "Netflix System Design — Cheat Sheet | withsoon.com",
     description: "Netflix system design cheat sheet: key numbers, 30-second answer, opening statement, component chain, and interview scripts. Print-ready.",
+  },
+  failures: {
+    title: "Netflix System Design — Failure Scenarios | withsoon.com",
+    description: "Netflix failure scenarios: what happens when Playback Service, Redis, DRM, CDN, or Kafka goes down. Failure modes, mitigations, and interview scripts.",
   },
 };
 
@@ -61,11 +69,11 @@ export default async function TabPage({ params }: { params: Promise<{ tab: strin
     "start-here", "backend-track", "data-engineering", "architecture-map",
     "apis-data-model", "scale-estimation", "failures-tradeoffs",
     "interview-qa",
-    "requirements", "scale", "services", "apis",
+    "scale", "services", "apis",
     "data-design", "playback", "cdn", "encoding", "data-pipeline",
-    "recommendations", "failures", "security", "observability-cost",
+    "recommendations", "security", "observability-cost",
   ];
-  const VALID = ["architecture", "models", "tradeoffs", "capacity", "quiz", "mock-interview", "cheat-sheet"];
+  const VALID = ["requirements", "architecture", "models", "tradeoffs", "capacity", "failures", "quiz", "mock-interview", "cheat-sheet"];
   if (!VALID.includes(tab) && LEGACY.includes(tab)) {
     redirect("/system-design/netflix/architecture");
   }
