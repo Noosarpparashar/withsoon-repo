@@ -64,15 +64,15 @@ function FlipCard({ card, state, onKnow, onLearn }: {
           <div style={{
             position: "absolute", inset: 0, backfaceVisibility: "hidden",
             borderRadius: 16, border: `2px solid ${card.topicColor}40`,
-            background: C.card,
+            background: "var(--bg-card)",
             display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: 32,
           }}>
             <span className="text-[9px] font-bold uppercase tracking-widest px-2 py-0.5 rounded mb-4"
               style={{ background: card.topicColor + "18", color: card.topicColor, border: `1px solid ${card.topicColor}30` }}>
               {card.topic}
             </span>
-            <p className="text-center text-sm font-semibold leading-relaxed" style={{ color: C.text }}>{card.question}</p>
-            <p className="text-[9px] mt-6" style={{ color: C.faint }}>Click to reveal answer</p>
+            <p className="text-center text-sm font-semibold leading-relaxed" style={{ color: "var(--text)" }}>{card.question}</p>
+            <p className="text-[9px] mt-6" style={{ color: "var(--text-faint)" }}>Click to reveal answer</p>
           </div>
 
           {/* Back */}
@@ -80,14 +80,14 @@ function FlipCard({ card, state, onKnow, onLearn }: {
             position: "absolute", inset: 0, backfaceVisibility: "hidden",
             transform: "rotateY(180deg)",
             borderRadius: 16, border: `2px solid ${card.topicColor}60`,
-            background: `linear-gradient(135deg, ${C.card} 0%, ${card.topicColor}08 100%)`,
+            background: `linear-gradient(135deg, var(--bg-card) 0%, ${card.topicColor}08 100%)`,
             display: "flex", flexDirection: "column", padding: 24, overflowY: "auto",
           }}>
             <p className="text-xs font-bold mb-3" style={{ color: card.topicColor }}>Answer</p>
-            <p className="text-sm font-semibold leading-relaxed mb-3" style={{ color: C.text }}>{card.answer}</p>
-            <div className="rounded-lg p-3 mt-auto" style={{ background: C.bg, border: `1px solid ${C.border}` }}>
-              <p className="text-[9px] font-bold uppercase tracking-widest mb-1" style={{ color: C.faint }}>Why it matters</p>
-              <p className="text-[10px] leading-relaxed" style={{ color: C.muted }}>{card.explanation}</p>
+            <p className="text-sm font-semibold leading-relaxed mb-3" style={{ color: "var(--text)" }}>{card.answer}</p>
+            <div className="rounded-lg p-3 mt-auto" style={{ background: "var(--bg)", border: `1px solid var(--border)` }}>
+              <p className="text-[9px] font-bold uppercase tracking-widest mb-1" style={{ color: "var(--text-faint)" }}>Why it matters</p>
+              <p className="text-[10px] leading-relaxed" style={{ color: "var(--text-muted)" }}>{card.explanation}</p>
             </div>
           </div>
         </div>
@@ -102,8 +102,8 @@ function FlipCard({ card, state, onKnow, onLearn }: {
           className="flex-1 py-2.5 rounded-xl text-sm font-bold transition-all"
           style={{
             background: state === "learning" ? "#ef444418" : "transparent",
-            color: state === "learning" ? "#ef4444" : C.muted,
-            border: `2px solid ${state === "learning" ? "#ef4444" : C.border}`,
+            color: state === "learning" ? "#ef4444" : "var(--text-muted)",
+            border: `2px solid ${state === "learning" ? "#ef4444" : "var(--border)"}`,
           }}>
           Still learning
         </button>
@@ -114,8 +114,8 @@ function FlipCard({ card, state, onKnow, onLearn }: {
           className="flex-1 py-2.5 rounded-xl text-sm font-bold transition-all"
           style={{
             background: state === "known" ? C.green + "18" : "transparent",
-            color: state === "known" ? C.green : C.muted,
-            border: `2px solid ${state === "known" ? C.green : C.border}`,
+            color: state === "known" ? C.green : "var(--text-muted)",
+            border: `2px solid ${state === "known" ? C.green : "var(--border)"}`,
           }}>
           Know it ✓
         </button>
@@ -198,18 +198,18 @@ export default function QuizTab() {
   const learningCount = Object.values(cardStates).filter(s => s === "learning").length;
 
   return (
-    <div role="region" aria-label="Flashcard quiz" className="flex h-full overflow-hidden" style={{ background: C.bg }}>
+    <div role="region" aria-label="Flashcard quiz" className="flex h-full overflow-hidden" style={{ background: "var(--bg)" }}>
       {/* Topic sidebar */}
-      <div className="w-44 shrink-0 overflow-y-auto hidden sm:block" style={{ background: C.card, borderRight: `1px solid ${C.border}` }}>
-        <div className="px-3 py-3" style={{ borderBottom: `1px solid ${C.border}` }}>
-          <p className="text-[9px] font-bold uppercase tracking-widest" style={{ color: C.faint }}>Topics</p>
-          <p className="text-[10px] mt-0.5" style={{ color: C.muted }}>{FLASHCARDS.length} cards</p>
+      <div className="w-44 shrink-0 overflow-y-auto hidden sm:block" style={{ background: "var(--bg-card)", borderRight: `1px solid var(--border)` }}>
+        <div className="px-3 py-3" style={{ borderBottom: `1px solid var(--border)` }}>
+          <p className="text-[9px] font-bold uppercase tracking-widest" style={{ color: "var(--text-faint)" }}>Topics</p>
+          <p className="text-[10px] mt-0.5" style={{ color: "var(--text-muted)" }}>{FLASHCARDS.length} cards</p>
         </div>
         <div className="p-2 space-y-0.5">
           <button
             onClick={() => setActiveTopic(null)}
             className="w-full text-left px-2 py-2 rounded text-xs transition-colors"
-            style={{ background: activeTopic === null ? C.red + "10" : "transparent", color: activeTopic === null ? C.red : C.text2 }}>
+            style={{ background: activeTopic === null ? C.red + "10" : "transparent", color: activeTopic === null ? C.red : "var(--text-muted)" }}>
             All Topics
           </button>
           {ALL_TOPICS.map(t => {
@@ -221,11 +221,11 @@ export default function QuizTab() {
                 className="w-full text-left px-2 py-2 rounded transition-colors"
                 style={{ background: activeTopic === t ? color + "10" : "transparent" }}>
                 <div className="flex items-center justify-between">
-                  <span className="text-xs" style={{ color: activeTopic === t ? color : C.text2 }}>{t}</span>
-                  <span className="text-[9px]" style={{ color: C.muted }}>{topicKnown}/{count}</span>
+                  <span className="text-xs" style={{ color: activeTopic === t ? color : "var(--text-muted)" }}>{t}</span>
+                  <span className="text-[9px]" style={{ color: "var(--text-muted)" }}>{topicKnown}/{count}</span>
                 </div>
                 {topicKnown > 0 && (
-                  <div className="mt-1 h-0.5 rounded-full" style={{ background: C.border }}>
+                  <div className="mt-1 h-0.5 rounded-full" style={{ background: "var(--border)" }}>
                     <div className="h-full rounded-full transition-all"
                       style={{ width: `${(topicKnown / count) * 100}%`, background: color }} />
                   </div>
@@ -239,7 +239,7 @@ export default function QuizTab() {
       {/* Main area */}
       <div className="flex-1 flex flex-col overflow-hidden">
         {/* Toolbar */}
-        <div className="shrink-0 px-4 py-3 flex items-center gap-3" style={{ borderBottom: `1px solid ${C.border}`, background: C.card }}>
+        <div className="shrink-0 px-4 py-3 flex items-center gap-3" style={{ borderBottom: `1px solid var(--border)`, background: "var(--bg-card)" }}>
           {/* Filter */}
           <div className="flex gap-1" role="group" aria-label="Filter cards by status">
             {(["all", "learning", "known"] as const).map(m => (
@@ -248,8 +248,8 @@ export default function QuizTab() {
                 className="text-[10px] px-2 py-1 rounded capitalize transition-colors"
                 style={{
                   background: filterMode === m ? C.amber + "18" : "transparent",
-                  color: filterMode === m ? C.amber : C.muted,
-                  border: `1px solid ${filterMode === m ? C.amber + "40" : C.border}`,
+                  color: filterMode === m ? C.amber : "var(--text-muted)",
+                  border: `1px solid ${filterMode === m ? C.amber + "40" : "var(--border)"}`,
                 }}>
                 {m === "all" ? `All (${FLASHCARDS.length})` : m === "known" ? `Known (${knownCount})` : `Learning (${learningCount})`}
               </button>
@@ -258,7 +258,7 @@ export default function QuizTab() {
           <div className="flex-1" />
 
           {/* Spaced repetition label */}
-          <span className="text-[9px] hidden sm:block" style={{ color: C.faint }}>
+          <span className="text-[9px] hidden sm:block" style={{ color: "var(--text-faint)" }}>
             {shuffled ? "🔀 Shuffle" : "⬆ Spaced Rep"}
           </span>
 
@@ -269,8 +269,8 @@ export default function QuizTab() {
             className="text-[10px] px-2 py-1 rounded transition-colors"
             style={{
               background: shuffled ? "#818cf818" : "transparent",
-              color: shuffled ? "#818cf8" : C.muted,
-              border: `1px solid ${shuffled ? "#818cf840" : C.border}`,
+              color: shuffled ? "#818cf8" : "var(--text-muted)",
+              border: `1px solid ${shuffled ? "#818cf840" : "var(--border)"}`,
             }}>
             Shuffle
           </button>
@@ -282,14 +282,14 @@ export default function QuizTab() {
               aria-atomic="true"
               aria-label={`Card ${cardIndex + 1} of ${filtered.length}`}
               className="text-[10px]"
-              style={{ color: C.muted }}
+              style={{ color: "var(--text-muted)" }}
             >
               {cardIndex + 1} / {filtered.length}
             </span>
           )}
           {/* Progress bar */}
           {FLASHCARDS.length > 0 && (
-            <div className="w-20 h-1.5 rounded-full" style={{ background: C.border }}>
+            <div className="w-20 h-1.5 rounded-full" style={{ background: "var(--border)" }}>
               <div className="h-full rounded-full transition-all"
                 style={{ width: `${(knownCount / FLASHCARDS.length) * 100}%`, background: C.green }} />
             </div>
@@ -301,10 +301,10 @@ export default function QuizTab() {
           {filtered.length === 0 ? (
             <div className="text-center">
               <p className="text-4xl mb-3" style={{ opacity: 0.3 }}>🎉</p>
-              <p className="text-sm font-semibold mb-1" style={{ color: C.muted }}>
+              <p className="text-sm font-semibold mb-1" style={{ color: "var(--text-muted)" }}>
                 {filterMode === "known" ? "No known cards yet" : "No cards in this filter"}
               </p>
-              <button onClick={() => setFilterMode("all")} className="text-xs mt-2 underline" style={{ color: C.muted }}>
+              <button onClick={() => setFilterMode("all")} className="text-xs mt-2 underline" style={{ color: "var(--text-muted)" }}>
                 Show all cards
               </button>
             </div>
@@ -321,18 +321,18 @@ export default function QuizTab() {
                 <button onClick={goPrev} disabled={cardIndex === 0}
                   aria-label="Go to previous card"
                   className="px-4 py-2 rounded-lg text-xs font-medium disabled:opacity-30 transition-colors"
-                  style={{ background: C.border, color: C.text }}>
+                  style={{ background: "var(--border)", color: "var(--text)" }}>
                   ← Prev
                 </button>
                 <button onClick={goNext} disabled={cardIndex === filtered.length - 1}
                   aria-label="Go to next card"
                   className="px-4 py-2 rounded-lg text-xs font-medium disabled:opacity-30 transition-colors"
-                  style={{ background: C.border, color: C.text }}>
+                  style={{ background: "var(--border)", color: "var(--text)" }}>
                   Next →
                 </button>
               </div>
               {/* Keyboard navigation hint */}
-              <p className="text-[10px] text-center mt-2" style={{ color: C.faint }}>
+              <p className="text-[10px] text-center mt-2" style={{ color: "var(--text-faint)" }}>
                 Tip: use ← → arrow keys to navigate cards, Space or Enter to flip
               </p>
             </>

@@ -30,21 +30,21 @@ function EntityBox({ entity, highlighted, onNavigateToEntity }: EntityBoxProps) 
       style={{
         border: highlighted
           ? `2px solid #f59e0b`
-          : `1px solid ${C.border}`,
+          : `1px solid var(--border)`,
         boxShadow: highlighted ? `0 0 0 3px #f59e0b40` : undefined,
         animation: highlighted ? "pulseAmber 2s ease-out" : undefined,
       }}
     >
       <div
         className="px-3 py-2 flex items-center justify-between"
-        style={{ background: C.card2, borderBottom: `1px solid ${C.border}` }}
+        style={{ background: "var(--bg-muted)", borderBottom: `1px solid var(--border)` }}
       >
-        <span className="text-xs font-bold font-mono" style={{ color: C.text }}>
+        <span className="text-xs font-bold font-mono" style={{ color: "var(--text)" }}>
           {entity.name}
         </span>
         <span
           className="text-[9px] px-1.5 py-0.5 rounded"
-          style={{ background: C.border, color: C.text2 }}
+          style={{ background: "var(--border)", color: "var(--text-muted)" }}
         >
           {entity.store}
         </span>
@@ -57,7 +57,7 @@ function EntityBox({ entity, highlighted, onNavigateToEntity }: EntityBoxProps) 
             style={{
               borderBottom:
                 i < entity.fields.length - 1
-                  ? `1px solid ${C.border}22`
+                  ? `1px solid var(--border)`
                   : undefined,
             }}
           >
@@ -70,12 +70,12 @@ function EntityBox({ entity, highlighted, onNavigateToEntity }: EntityBoxProps) 
                   ? "#818cf8"
                   : f.index
                   ? C.green
-                  : C.faint,
+                  : "var(--text-faint)",
               }}
             />
             <span
               className="text-[10px] font-mono flex-1"
-              style={{ color: C.text }}
+              style={{ color: "var(--text)" }}
             >
               {f.name}
             </span>
@@ -123,7 +123,7 @@ function EntityBox({ entity, highlighted, onNavigateToEntity }: EntityBoxProps) 
         <div
           className="px-3 py-2"
           style={{
-            borderTop: `1px solid ${C.border}22`,
+            borderTop: `1px solid var(--border)`,
             background: color + "08",
           }}
         >
@@ -133,7 +133,7 @@ function EntityBox({ entity, highlighted, onNavigateToEntity }: EntityBoxProps) 
           >
             Why {entity.store}?
           </p>
-          <p className="text-[9px] leading-relaxed" style={{ color: C.muted }}>
+          <p className="text-[9px] leading-relaxed" style={{ color: "var(--text-muted)" }}>
             {entity.dbRationale}
           </p>
         </div>
@@ -142,7 +142,7 @@ function EntityBox({ entity, highlighted, onNavigateToEntity }: EntityBoxProps) 
         <div
           className="px-3 py-2"
           style={{
-            borderTop: `1px solid ${C.border}22`,
+            borderTop: `1px solid var(--border)`,
             background: color + "05",
           }}
         >
@@ -153,7 +153,7 @@ function EntityBox({ entity, highlighted, onNavigateToEntity }: EntityBoxProps) 
             Access Patterns
           </p>
           {entity.accessPatterns.map((ap, i) => (
-            <p key={i} className="text-[9px]" style={{ color: C.muted }}>
+            <p key={i} className="text-[9px]" style={{ color: "var(--text-muted)" }}>
               → {ap}
             </p>
           ))}
@@ -183,8 +183,8 @@ function DDLViewer({
             className="text-[10px] px-2 py-1 rounded font-mono transition-colors"
             style={{
               background: active === i ? storeColor + "18" : "transparent",
-              color: active === i ? storeColor : C.muted,
-              border: `1px solid ${active === i ? storeColor + "40" : C.border}`,
+              color: active === i ? storeColor : "var(--text-muted)",
+              border: `1px solid ${active === i ? storeColor + "40" : "var(--border)"}`,
             }}
           >
             {b.label}
@@ -193,7 +193,7 @@ function DDLViewer({
       </div>
       <div
         className="rounded-lg p-3 overflow-x-auto"
-        style={{ background: "#080808", border: `1px solid ${C.border}` }}
+        style={{ background: "#080808", border: `1px solid var(--border)` }}
       >
         <pre
           className="text-[10px] leading-relaxed whitespace-pre"
@@ -284,12 +284,12 @@ function GroupPanel({
             {group.store}
           </span>
         </div>
-        <h2 className="text-lg font-bold" style={{ color: C.text }}>
+        <h2 className="text-lg font-bold" style={{ color: "var(--text)" }}>
           {group.label}
         </h2>
         <p
           className="text-xs mt-1 leading-relaxed"
-          style={{ color: C.text2 }}
+          style={{ color: "var(--text-muted)" }}
         >
           {group.rationale}
         </p>
@@ -299,7 +299,7 @@ function GroupPanel({
       <div>
         <p
           className="text-[9px] font-bold uppercase tracking-widest mb-2"
-          style={{ color: C.faint }}
+          style={{ color: "var(--text-faint)" }}
         >
           Schema
         </p>
@@ -318,7 +318,7 @@ function GroupPanel({
         <div>
           <p
             className="text-[9px] font-bold uppercase tracking-widest mb-2"
-            style={{ color: C.faint }}
+            style={{ color: "var(--text-faint)" }}
           >
             Anti-Patterns to Avoid
           </p>
@@ -333,7 +333,7 @@ function GroupPanel({
                 </span>
                 <span
                   className="text-[10px] leading-relaxed"
-                  style={{ color: C.text2 }}
+                  style={{ color: "var(--text-muted)" }}
                 >
                   {ap}
                 </span>
@@ -359,7 +359,7 @@ function GroupPanel({
         </p>
         <p
           className="text-[10px] leading-relaxed"
-          style={{ color: C.muted }}
+          style={{ color: "var(--text-muted)" }}
         >
           {group.interviewTip}
         </p>
@@ -382,7 +382,7 @@ function GroupPanel({
           </p>
           <p
             className="text-[10px] leading-relaxed"
-            style={{ color: C.muted }}
+            style={{ color: "var(--text-muted)" }}
           >
             {group.scalingNote}
           </p>
@@ -393,9 +393,9 @@ function GroupPanel({
       {group.storageCost && (
         <div
           className="rounded-lg px-3 py-2 flex items-center justify-between"
-          style={{ background: C.card2, border: `1px solid ${C.border}` }}
+          style={{ background: "var(--bg-muted)", border: `1px solid var(--border)` }}
         >
-          <span className="text-[10px]" style={{ color: C.muted }}>
+          <span className="text-[10px]" style={{ color: "var(--text-muted)" }}>
             Storage estimate
           </span>
           <span
@@ -415,8 +415,8 @@ function GroupPanel({
               onClick={() => setShowDDL((v) => !v)}
               className="text-[10px] px-3 py-1.5 rounded-lg font-medium transition-colors"
               style={{
-                background: showDDL ? storeColor + "18" : C.border,
-                color: showDDL ? storeColor : C.text2,
+                background: showDDL ? storeColor + "18" : "var(--border)",
+                color: showDDL ? storeColor : "var(--text-muted)",
               }}
             >
               {showDDL ? "Hide DDL" : "Show DDL / Schema"}
@@ -425,9 +425,9 @@ function GroupPanel({
               onClick={handleDownloadSQL}
               className="text-[10px] px-3 py-1.5 rounded-lg font-medium transition-colors flex items-center gap-1"
               style={{
-                background: C.card2,
-                color: C.text2,
-                border: `1px solid ${C.border}`,
+                background: "var(--bg-muted)",
+                color: "var(--text-muted)",
+                border: `1px solid var(--border)`,
               }}
               title={`Download ${group.id}.sql`}
             >
@@ -486,23 +486,23 @@ export default function ModelsTab() {
   }, []);
 
   return (
-    <div className="flex h-full overflow-hidden" style={{ background: C.bg }}>
+    <div className="flex h-full overflow-hidden" style={{ background: "var(--bg)" }}>
       {/* Sidebar */}
       <div
         className="w-52 shrink-0 overflow-y-auto"
-        style={{ background: C.card, borderRight: `1px solid ${C.border}` }}
+        style={{ background: "var(--bg-card)", borderRight: `1px solid var(--border)` }}
       >
         <div
           className="px-3 py-3"
-          style={{ borderBottom: `1px solid ${C.border}` }}
+          style={{ borderBottom: `1px solid var(--border)` }}
         >
           <p
             className="text-[9px] font-bold uppercase tracking-widest"
-            style={{ color: C.faint }}
+            style={{ color: "var(--text-faint)" }}
           >
             Data Models
           </p>
-          <p className="text-[10px] mt-0.5" style={{ color: C.muted }}>
+          <p className="text-[10px] mt-0.5" style={{ color: "var(--text-muted)" }}>
             {MODEL_GROUPS.length} entity groups
           </p>
         </div>
@@ -517,18 +517,18 @@ export default function ModelsTab() {
               style={{
                 background: isActive ? color + "10" : "transparent",
                 borderLeft: `3px solid ${isActive ? color : "transparent"}`,
-                borderBottom: `1px solid ${C.border}18`,
+                borderBottom: `1px solid var(--border)`,
               }}
             >
               <p
                 className="text-xs font-medium"
-                style={{ color: isActive ? C.text : C.text2 }}
+                style={{ color: isActive ? "var(--text)" : "var(--text-muted)" }}
               >
                 {g.label}
               </p>
               <p
                 className="text-[9px] mt-0.5"
-                style={{ color: isActive ? color : C.muted }}
+                style={{ color: isActive ? color : "var(--text-muted)" }}
               >
                 {g.store}
               </p>
@@ -546,7 +546,7 @@ export default function ModelsTab() {
             top: 0,
             zIndex: 10,
             height: 3,
-            background: C.border,
+            background: "var(--border)",
           }}
         >
           <div

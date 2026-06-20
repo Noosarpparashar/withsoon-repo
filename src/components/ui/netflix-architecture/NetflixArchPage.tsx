@@ -172,7 +172,7 @@ function NodeCard({
 }) {
   const pos = NODE_POSITIONS[node.id];
   const typeColor = TYPE_COLORS[node.type] ?? N_MUTED;
-  const borderColor = isSelected ? N_RED : isFlowVisited ? N_AMBER : N_BORDER;
+  const borderColor = isSelected ? N_RED : isFlowVisited ? N_AMBER : "var(--border)";
 
   return (
     <g
@@ -187,19 +187,19 @@ function NodeCard({
       onMouseLeave={() => onHover(null)}
     >
       <rect x={pos.x} y={pos.y} width={NODE_W} height={NODE_H} rx="8"
-        style={{ fill: isSelected ? "#1a0a0a" : isFlowVisited ? "#140f00" : N_CARD, stroke: borderColor, strokeWidth: isSelected || isFlowVisited ? 1.5 : 1 }} />
+        style={{ fill: isSelected ? "#1a0a0a" : isFlowVisited ? "#140f00" : "var(--bg-card)", stroke: borderColor, strokeWidth: isSelected || isFlowVisited ? 1.5 : 1 }} />
       {/* Top accent bar */}
       <rect x={pos.x} y={pos.y} width={NODE_W} height={3} rx="8" style={{ fill: typeColor, opacity: 0.7 }} />
       {/* Custom SVG icon */}
       <NodeIconSVG nodeId={node.id} x={pos.x + 4} y={pos.y + 8} color={typeColor} />
       {/* Label */}
       <text x={pos.x + 22} y={pos.y + 22}
-        style={{ fill: N_TEXT, fontSize: 11, fontWeight: "bold", fontFamily: "Inter, sans-serif" }}>
+        style={{ fill: "var(--text)", fontSize: 11, fontWeight: "bold", fontFamily: "Inter, sans-serif" }}>
         {node.label.length > 14 ? node.label.slice(0, 14) + "…" : node.label}
       </text>
       {/* Sublabel */}
       <text x={pos.x + 8} y={pos.y + 42}
-        style={{ fill: N_MUTED, fontSize: 9, fontFamily: "Inter, sans-serif" }}>
+        style={{ fill: "var(--text-muted)", fontSize: 9, fontFamily: "Inter, sans-serif" }}>
         {node.sublabel.length > 20 ? node.sublabel.slice(0, 20) + "…" : node.sublabel}
       </text>
       {/* Type chip background */}
@@ -232,7 +232,7 @@ function ConnectionArrows({ activeNodeId, activeFlowNodeIds }: { activeNodeId?: 
     <g>
       <defs>
         <marker id="arr-d" markerWidth="6" markerHeight="6" refX="5" refY="3" orient="auto">
-          <path d="M0,0 L0,6 L6,3 z" style={{ fill: N_FAINT }} />
+          <path d="M0,0 L0,6 L6,3 z" style={{ fill: "var(--text-faint)" }} />
         </marker>
         <marker id="arr-a" markerWidth="6" markerHeight="6" refX="5" refY="3" orient="auto">
           <path d="M0,0 L0,6 L6,3 z" style={{ fill: N_RED }} />
@@ -249,7 +249,7 @@ function ConnectionArrows({ activeNodeId, activeFlowNodeIds }: { activeNodeId?: 
         const tx = toPos.x + NODE_W / 2, ty = toPos.y;
         const isActive = activeNodeId && (conn.from === activeNodeId || conn.to === activeNodeId);
         const isFlow = activeFlowNodeIds && activeFlowNodeIds.includes(conn.from) && activeFlowNodeIds.includes(conn.to);
-        const color = isActive ? N_RED : isFlow ? N_AMBER : N_FAINT;
+        const color = isActive ? N_RED : isFlow ? N_AMBER : "var(--text-faint)";
         const markerId = isActive ? "arr-a" : isFlow ? "arr-f" : "arr-d";
         const dx = tx - fx;
         const cy1 = fy + Math.min(30, Math.abs(fy - ty) * 0.4);
@@ -262,7 +262,7 @@ function ConnectionArrows({ activeNodeId, activeFlowNodeIds }: { activeNodeId?: 
               markerEnd={`url(#${markerId})`} />
             {(isActive || isFlow) && <>
               <rect x={midX - 18} y={midY - 8} width={36} height={14} rx={3}
-                style={{ fill: N_CARD, stroke: color + "60", strokeWidth: 0.5 }} />
+                style={{ fill: "var(--bg-card)", stroke: color + "60", strokeWidth: 0.5 }} />
               <text x={midX} y={midY + 4}
                 style={{ fill: color, fontSize: 8, textAnchor: "middle", fontFamily: "JetBrains Mono, monospace" }}>
                 {conn.label}
@@ -281,7 +281,7 @@ function LayerLabels() {
     <g>
       {Object.entries(LAYER_Y).map(([layer, y]) => (
         <text key={layer} x={8} y={y + NODE_H / 2}
-          style={{ fill: N_FAINT, fontSize: 8, fontWeight: "bold", letterSpacing: 1, fontFamily: "Inter, sans-serif" }}>
+          style={{ fill: "var(--text-faint)", fontSize: 8, fontWeight: "bold", letterSpacing: 1, fontFamily: "Inter, sans-serif" }}>
           {LAYER_LABELS[parseInt(layer)]}
         </text>
       ))}
@@ -304,7 +304,7 @@ function MiniMap({
   return (
     <div
       className="absolute pointer-events-none rounded-lg overflow-hidden"
-      style={{ bottom: 48, left: 8, width: MM_W, height: MM_H, background: "rgba(10,10,10,0.85)", border: `1px solid ${N_BORDER}`, zIndex: 5 }}>
+      style={{ bottom: 48, left: 8, width: MM_W, height: MM_H, background: "rgba(10,10,10,0.85)", border: `1px solid var(--border)`, zIndex: 5 }}>
       <svg width={MM_W} height={MM_H}>
         {/* node dots */}
         {NODES.map(n => {
@@ -323,7 +323,7 @@ function MiniMap({
           width={Math.min(MM_W, vpW * MM_SCALE)} height={Math.min(MM_H, vpH * MM_SCALE)}
           fill="none" stroke={N_RED} strokeWidth={1.5} opacity={0.8} rx={1} />
       </svg>
-      <div className="absolute bottom-0.5 left-1 text-[7px]" style={{ color: N_FAINT }}>MAP</div>
+      <div className="absolute bottom-0.5 left-1 text-[7px]" style={{ color: "var(--text-faint)" }}>MAP</div>
     </div>
   );
 }
@@ -370,19 +370,19 @@ function DetailPanel({
     const total = activeFlow.steps.length;
     return (
       <div ref={panelRef} className="flex flex-col h-full overflow-y-auto"
-        style={{ background: N_CARD, borderLeft: `1px solid ${N_BORDER}` }}>
-        <div className="sticky top-0 z-10 px-4 py-3" style={{ background: N_CARD, borderBottom: `1px solid ${N_BORDER}` }}>
+        style={{ background: "var(--bg-card)", borderLeft: `1px solid var(--border)` }}>
+        <div className="sticky top-0 z-10 px-4 py-3" style={{ background: "var(--bg-card)", borderBottom: `1px solid var(--border)` }}>
           <div className="flex items-center justify-between mb-2">
             <span className="text-xs font-bold" style={{ color: N_AMBER }}>{activeFlow.label}</span>
-            <button onClick={onExitFlow} className="text-xs px-2 py-1 rounded" style={{ background: N_BORDER, color: N_MUTED }}>✕</button>
+            <button onClick={onExitFlow} className="text-xs px-2 py-1 rounded" style={{ background: "var(--border)", color: "var(--text-muted)" }}>✕</button>
           </div>
           <div className="flex items-center gap-1.5 mb-2">
             {activeFlow.steps.map((_, i) => (
               <div key={i} className="h-1.5 rounded-full transition-all duration-200"
-                style={{ width: i === activeFlowStep ? 20 : 8, background: i <= activeFlowStep ? N_AMBER : N_FAINT }} />
+                style={{ width: i === activeFlowStep ? 20 : 8, background: i <= activeFlowStep ? N_AMBER : "var(--text-faint)" }} />
             ))}
           </div>
-          <div className="text-[10px]" style={{ color: N_MUTED }}>Step {activeFlowStep + 1} of {total}</div>
+          <div className="text-[10px]" style={{ color: "var(--text-muted)" }}>Step {activeFlowStep + 1} of {total}</div>
         </div>
         <div className="p-4 flex-1">
           <div className="rounded-lg p-4 mb-4" style={{ background: "#141400", border: `1px solid ${N_AMBER}30` }}>
@@ -391,26 +391,26 @@ function DetailPanel({
                 style={{ background: N_AMBER, color: "#000" }}>{activeFlowStep + 1}</span>
               <div>
                 <p className="text-sm font-bold" style={{ color: N_AMBER }}>{step.name}</p>
-                <p className="text-[10px]" style={{ color: N_MUTED }}>{NODES.find(n => n.id === step.nodeId)?.label}</p>
+                <p className="text-[10px]" style={{ color: "var(--text-muted)" }}>{NODES.find(n => n.id === step.nodeId)?.label}</p>
               </div>
             </div>
             <p className="text-xs leading-relaxed mb-3" style={{ color: "#aaa" }}>{step.description}</p>
             {step.payload && (
-              <div className="rounded-md p-2.5 mb-3" style={{ background: "#0d0d0d", border: `1px solid ${N_BORDER}` }}>
+              <div className="rounded-md p-2.5 mb-3" style={{ background: "var(--bg)", border: `1px solid var(--border)` }}>
                 <pre className="text-[10px] leading-relaxed overflow-x-auto" style={{ color: "#6ee7b7", fontFamily: C.mono }}>{step.payload}</pre>
               </div>
             )}
             {step.whyItMatters && (
               <div className="rounded p-2" style={{ background: "rgba(245,166,35,0.06)", border: `1px solid ${N_AMBER}25` }}>
                 <p className="text-[10px] font-bold mb-0.5" style={{ color: N_AMBER }}>Why this matters</p>
-                <p className="text-[10px] leading-relaxed" style={{ color: N_MUTED }}>{step.whyItMatters}</p>
+                <p className="text-[10px] leading-relaxed" style={{ color: "var(--text-muted)" }}>{step.whyItMatters}</p>
               </div>
             )}
           </div>
           <div className="flex gap-2">
             <button onClick={onFlowPrev} disabled={activeFlowStep === 0}
               className="flex-1 py-2 rounded-lg text-xs font-medium disabled:opacity-30"
-              style={{ background: N_BORDER, color: N_TEXT }}>← Prev</button>
+              style={{ background: "var(--border)", color: "var(--text)" }}>← Prev</button>
             <button onClick={onFlowNext} disabled={activeFlowStep === total - 1}
               className="flex-1 py-2 rounded-lg text-xs font-medium disabled:opacity-30"
               style={{ background: N_AMBER, color: "#000" }}>Next →</button>
@@ -423,11 +423,11 @@ function DetailPanel({
   if (!node) {
     return (
       <div className="flex flex-col items-center justify-center h-full text-center px-6"
-        style={{ background: N_CARD, borderLeft: `1px solid ${N_BORDER}` }}>
+        style={{ background: "var(--bg-card)", borderLeft: `1px solid var(--border)` }}>
         <div className="text-4xl mb-4" style={{ opacity: 0.3 }}>←</div>
-        <p className="text-sm font-semibold mb-1" style={{ color: N_MUTED }}>Click any component</p>
-        <p className="text-xs" style={{ color: N_FAINT }}>to explore its design, interview answers, and deep dives</p>
-        <div className="mt-6 text-[10px] space-y-1" style={{ color: N_FAINT }}>
+        <p className="text-sm font-semibold mb-1" style={{ color: "var(--text-muted)" }}>Click any component</p>
+        <p className="text-xs" style={{ color: "var(--text-faint)" }}>to explore its design, interview answers, and deep dives</p>
+        <div className="mt-6 text-[10px] space-y-1" style={{ color: "var(--text-faint)" }}>
           <p>1 / 2 / 3 — switch depth</p>
           <p>N / P — next / prev node</p>
           <p>⌘K — command palette</p>
@@ -439,30 +439,30 @@ function DetailPanel({
   const typeColor = TYPE_COLORS[node.type] ?? N_MUTED;
   return (
     <div ref={panelRef} className="flex flex-col h-full overflow-y-auto"
-      style={{ background: N_CARD, borderLeft: `1px solid ${N_BORDER}` }}>
-      <div className="sticky top-0 z-10 px-4 py-3" style={{ background: N_CARD, borderBottom: `1px solid ${N_BORDER}` }}>
+      style={{ background: "var(--bg-card)", borderLeft: `1px solid var(--border)` }}>
+      <div className="sticky top-0 z-10 px-4 py-3" style={{ background: "var(--bg-card)", borderBottom: `1px solid var(--border)` }}>
         <div className="flex items-start justify-between gap-2 mb-2">
           <div>
             <span className="text-[9px] font-bold uppercase tracking-widest px-1.5 py-0.5 rounded"
               style={{ background: typeColor + "18", color: typeColor, border: `1px solid ${typeColor}30` }}>
               {node.type}
             </span>
-            <h2 className="text-base font-bold mt-1" style={{ color: N_TEXT }}>{node.label}</h2>
-            <p className="text-[10px]" style={{ color: N_MUTED }}>{node.sublabel}</p>
+            <h2 className="text-base font-bold mt-1" style={{ color: "var(--text)" }}>{node.label}</h2>
+            <p className="text-[10px]" style={{ color: "var(--text-muted)" }}>{node.sublabel}</p>
           </div>
           <label className="flex items-center gap-1.5 cursor-pointer shrink-0 mt-1">
             <input type="checkbox" checked={isStudied} onChange={() => onMarkStudied(node.id)}
               className="w-3.5 h-3.5 cursor-pointer" style={{ accentColor: N_GREEN }} />
-            <span className="text-[10px]" style={{ color: isStudied ? N_GREEN : N_FAINT }}>
+            <span className="text-[10px]" style={{ color: isStudied ? N_GREEN : "var(--text-faint)" }}>
               {isStudied ? "✓ Studied" : "Mark studied"}
             </span>
           </label>
         </div>
-        <div className="flex rounded-lg overflow-hidden" style={{ border: `1px solid ${N_BORDER}` }}>
+        <div className="flex rounded-lg overflow-hidden" style={{ border: `1px solid var(--border)` }}>
           {(["overview", "interview", "deepdive"] as DepthLevel[]).map((d, i) => (
             <button key={d} onClick={() => setDepth(d)}
               className="flex-1 py-1.5 text-[10px] font-medium transition-colors"
-              style={{ background: depth === d ? typeColor : "transparent", color: depth === d ? "#000" : N_MUTED, borderRight: i < 2 ? `1px solid ${N_BORDER}` : undefined }}>
+              style={{ background: depth === d ? typeColor : "transparent", color: depth === d ? "#000" : "var(--text-muted)", borderRight: i < 2 ? `1px solid var(--border)` : undefined }}>
               {d === "overview" ? "Overview" : d === "interview" ? "Interview" : "Deep Dive"}
             </button>
           ))}
@@ -472,17 +472,17 @@ function DetailPanel({
         {depth === "overview" && <>
           <p className="text-xs leading-relaxed" style={{ color: "#bbb" }}>{node.overview}</p>
           <div>
-            <p className="text-[9px] font-bold uppercase tracking-widest mb-2" style={{ color: N_FAINT }}>Tech Stack</p>
+            <p className="text-[9px] font-bold uppercase tracking-widest mb-2" style={{ color: "var(--text-faint)" }}>Tech Stack</p>
             <div className="flex flex-wrap gap-1.5">{node.techChips.map(c => <Chip key={c} label={c} color={typeColor} />)}</div>
           </div>
           <div>
-            <p className="text-[9px] font-bold uppercase tracking-widest mb-2" style={{ color: N_FAINT }}>Key Numbers</p>
-            <div className="rounded-lg overflow-hidden" style={{ border: `1px solid ${N_BORDER}` }}>
+            <p className="text-[9px] font-bold uppercase tracking-widest mb-2" style={{ color: "var(--text-faint)" }}>Key Numbers</p>
+            <div className="rounded-lg overflow-hidden" style={{ border: `1px solid var(--border)` }}>
               {node.kvPairs.map((kv, i) => (
                 <div key={i} className="flex justify-between px-3 py-1.5"
-                  style={{ borderBottom: i < node.kvPairs.length - 1 ? `1px solid ${N_BORDER}` : undefined }}>
-                  <span className="text-[10px]" style={{ color: N_MUTED }}>{kv.label}</span>
-                  <span className="text-[10px] font-mono font-medium" style={{ color: N_TEXT }}>{kv.value}</span>
+                  style={{ borderBottom: i < node.kvPairs.length - 1 ? `1px solid var(--border)` : undefined }}>
+                  <span className="text-[10px]" style={{ color: "var(--text-muted)" }}>{kv.label}</span>
+                  <span className="text-[10px] font-mono font-medium" style={{ color: "var(--text)" }}>{kv.value}</span>
                 </div>
               ))}
             </div>
@@ -490,21 +490,21 @@ function DetailPanel({
         </>}
         {depth === "interview" && <>
           <div className="flex items-center justify-between mb-1">
-            <p className="text-[9px] font-bold uppercase tracking-widest" style={{ color: N_FAINT }}>Say out loud</p>
+            <p className="text-[9px] font-bold uppercase tracking-widest" style={{ color: "var(--text-faint)" }}>Say out loud</p>
             <span className="text-[9px] px-1.5 py-0.5 rounded" style={{ background: N_GREEN + "18", color: N_GREEN, border: `1px solid ${N_GREEN}30` }}>
               {node.interviewTime}
             </span>
           </div>
-          <div className="rounded-lg p-3" style={{ background: "#0d0d0d", border: `1px solid ${N_BORDER}` }}>
+          <div className="rounded-lg p-3" style={{ background: "var(--bg)", border: `1px solid var(--border)` }}>
             <p className="text-[11px] leading-relaxed" style={{ color: "#d4d4d4" }}>{node.interviewAnswer}</p>
           </div>
           <div>
-            <p className="text-[9px] font-bold uppercase tracking-widest mb-2" style={{ color: N_FAINT }}>Don&apos;t forget</p>
+            <p className="text-[9px] font-bold uppercase tracking-widest mb-2" style={{ color: "var(--text-faint)" }}>Don&apos;t forget</p>
             <ul className="space-y-1.5">
               {node.dontForget.map((d, i) => (
                 <li key={i} className="flex items-start gap-2">
                   <span className="text-xs shrink-0 mt-0.5" style={{ color: N_RED }}>→</span>
-                  <span className="text-[10px] leading-relaxed" style={{ color: N_MUTED }}>{d}</span>
+                  <span className="text-[10px] leading-relaxed" style={{ color: "var(--text-muted)" }}>{d}</span>
                 </li>
               ))}
             </ul>
@@ -514,7 +514,7 @@ function DetailPanel({
           <>{node.deepDives.map((dd, i) => <Callout key={i} variant={dd.variant} title={dd.title} body={dd.body} />)}</>
         )}
         <div>
-          <p className="text-[9px] font-bold uppercase tracking-widest mb-2" style={{ color: N_FAINT }}>Related</p>
+          <p className="text-[9px] font-bold uppercase tracking-widest mb-2" style={{ color: "var(--text-faint)" }}>Related</p>
           <div className="flex flex-wrap gap-1.5">
             {node.relatedNodes.filter(id => NODES.find(n => n.id === id)).map(id => {
               const related = NODES.find(n => n.id === id)!;
@@ -522,9 +522,9 @@ function DetailPanel({
               return (
                 <button key={id} onClick={() => onNavigateTo(id)}
                   className="text-[10px] px-2 py-1 rounded-md hover:opacity-80 transition-colors"
-                  style={{ background: N_BORDER, color: N_TEXT, border: `1px solid ${N_BORDER}` }}>
+                  style={{ background: "var(--border)", color: "var(--text)", border: `1px solid var(--border)` }}>
                   {related.label}
-                  {conn && <span className="ml-1 opacity-60" style={{ color: PROTOCOL_COLORS[conn.style ?? "HTTPS"] ?? N_MUTED }}>{conn.label}</span>}
+                  {conn && <span className="ml-1 opacity-60" style={{ color: PROTOCOL_COLORS[conn.style ?? "HTTPS"] ?? "var(--text-muted)" }}>{conn.label}</span>}
                 </button>
               );
             })}
@@ -553,14 +553,14 @@ function CommandPalette({ onSelect, onClose }: { onSelect: (id: NodeId) => void;
     <div className="fixed inset-0 z-[100] flex items-start justify-center pt-16"
       style={{ background: "rgba(0,0,0,0.8)" }} onClick={onClose}>
       <div className="w-full max-w-lg rounded-xl overflow-hidden shadow-2xl"
-        style={{ background: N_CARD, border: `1px solid ${N_BORDER}` }}
+        style={{ background: "var(--bg-card)", border: `1px solid var(--border)` }}
         onClick={e => e.stopPropagation()}>
-        <div className="flex items-center gap-3 px-4 py-3" style={{ borderBottom: `1px solid ${N_BORDER}` }}>
-          <span style={{ color: N_MUTED }}>⌘</span>
+        <div className="flex items-center gap-3 px-4 py-3" style={{ borderBottom: `1px solid var(--border)` }}>
+          <span style={{ color: "var(--text-muted)" }}>⌘</span>
           <input ref={inputRef} value={query} onChange={e => setQuery(e.target.value)}
             placeholder="Jump to any component…"
-            className="flex-1 bg-transparent text-sm outline-none" style={{ color: N_TEXT }} />
-          <span className="text-xs px-1.5 py-0.5 rounded" style={{ background: N_BORDER, color: N_MUTED }}>Esc</span>
+            className="flex-1 bg-transparent text-sm outline-none" style={{ color: "var(--text)" }} />
+          <span className="text-xs px-1.5 py-0.5 rounded" style={{ background: "var(--border)", color: "var(--text-muted)" }}>Esc</span>
         </div>
         <div className="max-h-72 overflow-y-auto">
           {results.map(n => (
@@ -570,8 +570,8 @@ function CommandPalette({ onSelect, onClose }: { onSelect: (id: NodeId) => void;
                 <NodeIconSVG nodeId={n.id} x={0} y={0} color={TYPE_COLORS[n.type] ?? N_MUTED} />
               </svg>
               <div>
-                <p className="text-sm" style={{ color: N_TEXT }}>{n.label}</p>
-                <p className="text-[10px]" style={{ color: N_MUTED }}>{n.sublabel}</p>
+                <p className="text-sm" style={{ color: "var(--text)" }}>{n.label}</p>
+                <p className="text-[10px]" style={{ color: "var(--text-muted)" }}>{n.sublabel}</p>
               </div>
               <span className="ml-auto text-[9px] px-1.5 py-0.5 rounded"
                 style={{ background: TYPE_COLORS[n.type] + "18", color: TYPE_COLORS[n.type], border: `1px solid ${TYPE_COLORS[n.type]}30` }}>
@@ -599,18 +599,18 @@ function ShortcutsModal({ onClose }: { onClose: () => void }) {
     <div className="fixed inset-0 z-[100] flex items-center justify-center"
       style={{ background: "rgba(0,0,0,0.8)" }} onClick={onClose}>
       <div className="w-full max-w-sm rounded-xl overflow-hidden"
-        style={{ background: N_CARD, border: `1px solid ${N_BORDER}` }}
+        style={{ background: "var(--bg-card)", border: `1px solid var(--border)` }}
         onClick={e => e.stopPropagation()}>
-        <div className="flex items-center justify-between px-4 py-3" style={{ borderBottom: `1px solid ${N_BORDER}` }}>
-          <p className="text-sm font-bold" style={{ color: N_TEXT }}>Keyboard Shortcuts</p>
-          <button onClick={onClose} style={{ color: N_MUTED }}>✕</button>
+        <div className="flex items-center justify-between px-4 py-3" style={{ borderBottom: `1px solid var(--border)` }}>
+          <p className="text-sm font-bold" style={{ color: "var(--text)" }}>Keyboard Shortcuts</p>
+          <button onClick={onClose} style={{ color: "var(--text-muted)" }}>✕</button>
         </div>
         <div className="p-4 space-y-2">
           {rows.map(([key, desc]) => (
             <div key={key} className="flex items-center gap-3">
               <code className="text-[10px] font-mono px-2 py-0.5 rounded shrink-0"
-                style={{ background: N_BORDER, color: N_TEXT }}>{key}</code>
-              <span className="text-[10px]" style={{ color: N_MUTED }}>{desc}</span>
+                style={{ background: "var(--border)", color: "var(--text)" }}>{key}</code>
+              <span className="text-[10px]" style={{ color: "var(--text-muted)" }}>{desc}</span>
             </div>
           ))}
         </div>
@@ -736,17 +736,17 @@ function ArchitectureTab({
   return (
     <div className="flex flex-col flex-1 overflow-hidden">
       {/* ── Mobile accordion fallback (hidden on sm+) ── */}
-      <div className="sm:hidden flex-1 overflow-y-auto" style={{ background: N_BG }}>
-        <div className="px-4 py-3 text-center" style={{ borderBottom: `1px solid ${N_BORDER}` }}>
-          <p className="text-xs font-semibold" style={{ color: N_MUTED }}>Full interactive diagram on desktop</p>
-          <p className="text-[10px] mt-0.5" style={{ color: N_FAINT }}>All {NODES.length} components listed below</p>
+      <div className="sm:hidden flex-1 overflow-y-auto" style={{ background: "var(--bg)" }}>
+        <div className="px-4 py-3 text-center" style={{ borderBottom: `1px solid var(--border)` }}>
+          <p className="text-xs font-semibold" style={{ color: "var(--text-muted)" }}>Full interactive diagram on desktop</p>
+          <p className="text-[10px] mt-0.5" style={{ color: "var(--text-faint)" }}>All {NODES.length} components listed below</p>
         </div>
         {[1, 2, 3, 4, 5, 6].map(layer => {
           const layerNodes = NODES.filter(n => n.layer === layer).sort((a, b) => a.col - b.col);
           return (
-            <div key={layer} style={{ borderBottom: `1px solid ${N_BORDER}` }}>
-              <div className="px-4 py-2" style={{ background: N_CARD }}>
-                <p className="text-[9px] font-bold uppercase tracking-widest" style={{ color: N_FAINT }}>{LAYER_LABELS[layer]}</p>
+            <div key={layer} style={{ borderBottom: `1px solid var(--border)` }}>
+              <div className="px-4 py-2" style={{ background: "var(--bg-card)" }}>
+                <p className="text-[9px] font-bold uppercase tracking-widest" style={{ color: "var(--text-faint)" }}>{LAYER_LABELS[layer]}</p>
               </div>
               {layerNodes.map(node => {
                 const typeColor = TYPE_COLORS[node.type] ?? N_MUTED;
@@ -755,23 +755,23 @@ function ArchitectureTab({
                   <div key={node.id}>
                     <button
                       className="w-full text-left px-4 py-3 flex items-center gap-3"
-                      style={{ background: isSelected ? typeColor + "0a" : "transparent", borderBottom: `1px solid ${N_BORDER}` }}
+                      style={{ background: isSelected ? typeColor + "0a" : "transparent", borderBottom: `1px solid var(--border)` }}
                       onClick={() => setSelectedNode(isSelected ? null : node.id)}
                     >
                       <div className="w-2 h-2 rounded-full shrink-0" style={{ background: typeColor }} />
                       <div className="flex-1 min-w-0">
-                        <p className="text-sm font-semibold truncate" style={{ color: N_TEXT }}>{node.label}</p>
-                        <p className="text-[10px] truncate" style={{ color: N_MUTED }}>{node.sublabel}</p>
+                        <p className="text-sm font-semibold truncate" style={{ color: "var(--text)" }}>{node.label}</p>
+                        <p className="text-[10px] truncate" style={{ color: "var(--text-muted)" }}>{node.sublabel}</p>
                       </div>
                       <span className="text-[9px] px-1.5 py-0.5 rounded shrink-0" style={{ background: typeColor + "18", color: typeColor }}>{node.type}</span>
-                      <span style={{ color: N_FAINT, fontSize: 10 }}>{isSelected ? "▲" : "▼"}</span>
+                      <span style={{ color: "var(--text-faint)", fontSize: 10 }}>{isSelected ? "▲" : "▼"}</span>
                     </button>
                     {isSelected && (
-                      <div className="px-4 py-4 space-y-3" style={{ background: N_CARD, borderBottom: `1px solid ${N_BORDER}` }}>
+                      <div className="px-4 py-4 space-y-3" style={{ background: "var(--bg-card)", borderBottom: `1px solid var(--border)` }}>
                         <p className="text-xs leading-relaxed" style={{ color: "#bbb" }}>{node.overview}</p>
                         <div>
-                          <p className="text-[9px] font-bold uppercase tracking-wider mb-1.5" style={{ color: N_FAINT }}>Interview answer</p>
-                          <div className="rounded-lg p-3" style={{ background: "#0d0d0d", border: `1px solid ${N_BORDER}` }}>
+                          <p className="text-[9px] font-bold uppercase tracking-wider mb-1.5" style={{ color: "var(--text-faint)" }}>Interview answer</p>
+                          <div className="rounded-lg p-3" style={{ background: "var(--bg)", border: `1px solid var(--border)` }}>
                             <p className="text-[11px] leading-relaxed" style={{ color: "#d4d4d4" }}>{node.interviewAnswer}</p>
                           </div>
                         </div>
@@ -793,7 +793,7 @@ function ArchitectureTab({
       {/* ── Desktop canvas + detail panel (hidden on mobile) ── */}
       <div className="hidden sm:flex flex-1 overflow-hidden" style={{ height: "calc(100vh - 96px - 56px)" }}>
         {/* Canvas */}
-        <div ref={canvasContainerRef} className="flex-1 overflow-hidden relative" style={{ background: "#0d0d0d" }}>
+        <div ref={canvasContainerRef} className="flex-1 overflow-hidden relative" style={{ background: "var(--bg)" }}>
           {/* Layer tint bands */}
           <div className="absolute inset-0 pointer-events-none overflow-hidden">
             {Object.entries(LAYER_Y).map(([layer, y]) => (
@@ -859,11 +859,11 @@ function ArchitectureTab({
                 left: hoveredNode.x + 12,
                 top: hoveredNode.y - 36,
                 background: "#1a1a1a",
-                border: `1px solid ${N_BORDER}`,
+                border: `1px solid var(--border)`,
                 boxShadow: "0 4px 16px rgba(0,0,0,0.5)",
               }}>
-              <p className="text-xs font-semibold" style={{ color: N_TEXT }}>{hoveredNodeData.label}</p>
-              <p className="text-[10px]" style={{ color: N_MUTED }}>{hoveredNodeData.sublabel}</p>
+              <p className="text-xs font-semibold" style={{ color: "var(--text)" }}>{hoveredNodeData.label}</p>
+              <p className="text-[10px]" style={{ color: "var(--text-muted)" }}>{hoveredNodeData.sublabel}</p>
             </div>
           )}
 
@@ -872,17 +872,17 @@ function ArchitectureTab({
             {Object.entries(TYPE_COLORS).map(([type, color]) => (
               <div key={type} className="flex items-center gap-1">
                 <div className="w-2 h-2 rounded-full" style={{ background: color }} />
-                <span className="text-[9px] capitalize" style={{ color: N_FAINT }}>{type}</span>
+                <span className="text-[9px] capitalize" style={{ color: "var(--text-faint)" }}>{type}</span>
               </div>
             ))}
           </div>
 
           {/* Zoom controls */}
           <div className="absolute bottom-2 right-2 flex items-center gap-1" style={{ zIndex: 6 }}>
-            <button onClick={() => setZoom(z => Math.max(0.5, z - 0.1))} className="w-6 h-6 rounded text-xs" style={{ background: N_BORDER, color: N_MUTED }}>−</button>
-            <span className="text-[10px] w-8 text-center" style={{ color: N_MUTED }}>{Math.round(zoom * 100)}%</span>
-            <button onClick={() => setZoom(z => Math.min(1.5, z + 0.1))} className="w-6 h-6 rounded text-xs" style={{ background: N_BORDER, color: N_MUTED }}>+</button>
-            <button onClick={() => { setZoom(1); setPan({ x: 0, y: 0 }); }} className="text-[10px] px-1.5 py-0.5 rounded ml-1" style={{ background: N_BORDER, color: N_MUTED }}>Fit</button>
+            <button onClick={() => setZoom(z => Math.max(0.5, z - 0.1))} className="w-6 h-6 rounded text-xs" style={{ background: "var(--border)", color: "var(--text-muted)" }}>−</button>
+            <span className="text-[10px] w-8 text-center" style={{ color: "var(--text-muted)" }}>{Math.round(zoom * 100)}%</span>
+            <button onClick={() => setZoom(z => Math.min(1.5, z + 0.1))} className="w-6 h-6 rounded text-xs" style={{ background: "var(--border)", color: "var(--text-muted)" }}>+</button>
+            <button onClick={() => { setZoom(1); setPan({ x: 0, y: 0 }); }} className="text-[10px] px-1.5 py-0.5 rounded ml-1" style={{ background: "var(--border)", color: "var(--text-muted)" }}>Fit</button>
           </div>
 
           {/* Mini-map */}
@@ -893,14 +893,14 @@ function ArchitectureTab({
             <div className="sm:hidden absolute inset-0 flex flex-col items-center justify-center z-10 text-center px-6"
               style={{ background: "rgba(10,10,10,0.95)" }}>
               <div className="text-5xl mb-4" aria-hidden="true">🗺</div>
-              <p className="text-base font-bold mb-2" style={{ color: N_TEXT }}>Full diagram available on desktop</p>
-              <p className="text-sm leading-relaxed mb-6" style={{ color: N_MUTED }}>
+              <p className="text-base font-bold mb-2" style={{ color: "var(--text)" }}>Full diagram available on desktop</p>
+              <p className="text-sm leading-relaxed mb-6" style={{ color: "var(--text-muted)" }}>
                 Use the tabs above to explore Requirements, Data Models, Trade-offs, Capacity, and Failures on mobile
               </p>
               <button
                 onClick={() => setMobileOverlayDismissed(true)}
                 className="px-5 py-2.5 rounded-lg text-sm font-semibold transition-opacity active:opacity-70"
-                style={{ background: N_RED, color: N_TEXT, border: `1px solid ${N_BORDER}` }}>
+                style={{ background: N_RED, color: "var(--text)", border: `1px solid var(--border)` }}>
                 Continue on mobile
               </button>
             </div>
@@ -908,7 +908,7 @@ function ArchitectureTab({
         </div>
 
         {/* Detail panel */}
-        <div className="w-80 xl:w-96 shrink-0" style={{ borderLeft: `1px solid ${N_BORDER}` }}>
+        <div className="w-80 xl:w-96 shrink-0" style={{ borderLeft: `1px solid var(--border)` }}>
           <DetailPanel
             node={selectedNodeData}
             studiedNodes={studiedNodes}
@@ -925,21 +925,21 @@ function ArchitectureTab({
 
       {/* Flows bar — desktop only */}
       <div className="hidden sm:flex shrink-0 items-center gap-1.5 px-4 overflow-x-auto"
-        style={{ height: 56, background: N_BG, borderTop: `1px solid ${N_BORDER}`, minWidth: 0 }}>
-        <span className="text-[9px] font-bold uppercase tracking-widest whitespace-nowrap mr-1" style={{ color: N_FAINT }}>Flows</span>
+        style={{ height: 56, background: "var(--bg)", borderTop: `1px solid var(--border)`, minWidth: 0 }}>
+        <span className="text-[9px] font-bold uppercase tracking-widest whitespace-nowrap mr-1" style={{ color: "var(--text-faint)" }}>Flows</span>
         {FLOWS.map(flow => {
           const isActive = activeFlow?.id === flow.id;
           return (
             <button key={flow.id} onClick={() => handleActivateFlow(flow)}
               className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium whitespace-nowrap transition-all shrink-0"
-              style={{ background: isActive ? N_AMBER + "18" : "transparent", color: isActive ? N_AMBER : N_MUTED, border: `1px solid ${isActive ? N_AMBER + "50" : N_BORDER}` }}>
-              <span className="w-1.5 h-1.5 rounded-full" style={{ background: isActive ? N_AMBER : N_FAINT }} />
+              style={{ background: isActive ? N_AMBER + "18" : "transparent", color: isActive ? N_AMBER : "var(--text-muted)", border: `1px solid ${isActive ? N_AMBER + "50" : "var(--border)"}` }}>
+              <span className="w-1.5 h-1.5 rounded-full" style={{ background: isActive ? N_AMBER : "var(--text-faint)" }} />
               {flow.label}
               {isActive && <span className="text-[9px] opacity-60">{activeFlowStep + 1}/{flow.steps.length}</span>}
             </button>
           );
         })}
-        <span className="text-[9px] ml-auto whitespace-nowrap hidden sm:block" style={{ color: N_FAINT }}>← → navigate steps</span>
+        <span className="text-[9px] ml-auto whitespace-nowrap hidden sm:block" style={{ color: "var(--text-faint)" }}>← → navigate steps</span>
       </div>
 
       {cmdOpen && <CommandPalette onSelect={id => setSelectedNode(id)} onClose={() => setCmdOpen(false)} />}
@@ -1045,6 +1045,7 @@ export default function NetflixArchPage({ initialTab }: { initialTab?: string })
         <div className="flex items-center gap-3 px-4 h-11">
           <Link href="/" className="flex items-center gap-1.5 shrink-0" style={{ textDecoration: "none" }}>
             <span className="text-lg font-black tracking-tight" style={{ color: N_RED }}>N</span>
+            <span className="w-px h-3 shrink-0 hidden sm:block" style={{ background: T.border }} />
             <span className="text-xs font-semibold hidden sm:block" style={{ color: T.faint }}>withsoon</span>
           </Link>
           <span className="hidden sm:block text-xs" style={{ color: T.faint }}>/</span>
