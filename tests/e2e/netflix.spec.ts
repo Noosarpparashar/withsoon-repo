@@ -49,12 +49,12 @@ test.describe("OG / social metadata", () => {
 test.describe("Start Here content", () => {
   test("recommended path banner is present", async ({ page }) => {
     await page.goto("/system-design/netflix/start-here");
-    await expect(page.locator("text=Recommended path").first()).toBeVisible({ timeout: 15000 });
+    await expect(page.locator("text=Best path for interview prep").first()).toBeVisible({ timeout: 15000 });
   });
 
-  test("Backend Engineer CTA points to Playback", async ({ page }) => {
+  test("Backend Engineer primary CTA is Run User clicks Play", async ({ page }) => {
     await page.goto("/system-design/netflix/start-here");
-    await expect(page.locator("text=Start with Playback").first()).toBeVisible({ timeout: 15000 });
+    await expect(page.locator("text=Run User clicks Play").first()).toBeVisible({ timeout: 15000 });
   });
 });
 

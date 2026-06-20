@@ -6,6 +6,22 @@ import { C } from "./constants";
 
 const ALL_TOPICS = Array.from(new Set(FLASHCARDS.map(f => f.topic)));
 
+const TOPIC_REVIEW: Record<string, string> = {
+  "Auth":            "Playback",
+  "Streaming":       "Playback",
+  "CDN":             "CDN",
+  "DRM":             "Playback",
+  "Recommendations": "Data Models",
+  "Watch History":   "Data Models",
+  "Kafka":           "Architecture",
+  "DynamoDB":        "Data Models",
+  "Cassandra":       "Data Models",
+  "Redis":           "Architecture",
+  "Capacity":        "Capacity",
+  "CAP Theorem":     "Trade-offs",
+  "Failures":        "Failures",
+};
+
 type CardState = "known" | "learning" | "unset";
 
 // Simple spaced repetition: cards due soonest sort first.
@@ -77,10 +93,18 @@ function FlipCard({ card, state, onKnow, onLearn }: {
             }}>
             <p className="text-xs font-bold mb-2" style={{ color: card.topicColor }}>Correct answer</p>
             <p className="text-sm font-semibold leading-relaxed mb-4" style={{ color: "var(--text)" }}>{card.answer}</p>
-            <div className="rounded-lg p-3" style={{ background: "var(--bg)", border: `1px solid var(--border)` }}>
+            <div className="rounded-lg p-3 mb-3" style={{ background: "var(--bg)", border: `1px solid var(--border)` }}>
               <p className="text-[9px] font-bold uppercase tracking-widest mb-1" style={{ color: "var(--text-faint)" }}>Why this is correct</p>
               <p className="text-[10px] leading-relaxed" style={{ color: "var(--text-muted)" }}>{card.explanation}</p>
             </div>
+            {TOPIC_REVIEW[card.topic] && (
+              <div className="rounded-lg p-2.5 flex items-center gap-2" style={{ background: card.topicColor + "10", border: `1px solid ${card.topicColor}25` }}>
+                <span className="text-[10px] shrink-0" style={{ color: card.topicColor }}>→</span>
+                <p className="text-[10px] leading-relaxed" style={{ color: "var(--text-muted)" }}>
+                  Review <strong style={{ color: "var(--text)" }}>{TOPIC_REVIEW[card.topic]}</strong> tab to go deeper
+                </p>
+              </div>
+            )}
           </div>
 
           {/* Still learning / Know it — only after reveal */}
@@ -289,7 +313,7 @@ export default function QuizTab() {
         </div>
 
         {/* Card area */}
-        <div className="flex-1 overflow-y-auto flex flex-col items-center justify-center px-6 py-8">
+        <div className="flex-1 overflow-y-auto flex flex-col items-center justify-center px-6 py-8 pb-20 sm:pb-8">
           {filtered.length === 0 ? (
             <div className="text-center">
               <p className="text-4xl mb-3" style={{ opacity: 0.3 }}>🎉</p>
@@ -308,8 +332,8 @@ export default function QuizTab() {
                 onKnow={handleKnow}
                 onLearn={handleLearn}
               />
-              {/* Navigation */}
-              <div className="flex gap-2 mt-4">
+              {/* Navigation — desktop */}
+              <div className="hidden sm:flex gap-2 mt-4">
                 <button onClick={goPrev} disabled={cardIndex === 0}
                   aria-label="Go to previous card"
                   className="px-4 py-2 rounded-lg text-xs font-medium disabled:opacity-30 transition-colors"
@@ -323,13 +347,33 @@ export default function QuizTab() {
                   Next →
                 </button>
               </div>
-              {/* Keyboard navigation hint */}
-              <p className="text-[10px] text-center mt-2" style={{ color: "var(--text-faint)" }}>
+              <p className="text-[10px] text-center mt-2 hidden sm:block" style={{ color: "var(--text-faint)" }}>
                 Tip: use ← → arrow keys to navigate cards
               </p>
             </>
           ) : null}
         </div>
+
+        {/* Sticky bottom nav — mobile only */}
+        {currentCard && filtered.length > 0 && (
+          <div className="sm:hidden shrink-0 flex gap-3 px-4 py-3" style={{ background: "var(--bg-card)", borderTop: `1px solid var(--border)` }}>
+            <button onClick={goPrev} disabled={cardIndex === 0}
+              aria-label="Go to previous card"
+              className="flex-1 py-3 rounded-xl text-sm font-bold disabled:opacity-30 transition-colors"
+              style={{ background: "var(--bg-muted)", color: "var(--text-muted)", border: `1px solid var(--border)` }}>
+              ← Prev
+            </button>
+            <span className="flex items-center text-xs font-medium" style={{ color: "var(--text-faint)", minWidth: 36, textAlign: "center" }}>
+              {cardIndex + 1}/{filtered.length}
+            </span>
+            <button onClick={goNext} disabled={cardIndex === filtered.length - 1}
+              aria-label="Go to next card"
+              className="flex-1 py-3 rounded-xl text-sm font-bold disabled:opacity-30 transition-colors"
+              style={{ background: "var(--bg-muted)", color: "var(--text-muted)", border: `1px solid var(--border)` }}>
+              Next →
+            </button>
+          </div>
+        )}
       </div>
     </div>
   );

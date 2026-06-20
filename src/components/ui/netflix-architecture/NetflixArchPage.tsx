@@ -675,6 +675,159 @@ function ShortcutsModal({ onClose }: { onClose: () => void }) {
   );
 }
 
+// ── Mobile accordion ──────────────────────────────────────────────────────────
+type MobileSegment = "overview" | "services" | "datastores" | "flows";
+
+function MobileAccordion({
+  selectedNode, setSelectedNode, activeFlow, activeFlowStep, onActivateFlow,
+}: {
+  selectedNode: NodeId | null;
+  setSelectedNode: (id: NodeId | null) => void;
+  activeFlow: Flow | null;
+  activeFlowStep: number;
+  onActivateFlow: (flow: Flow) => void;
+}) {
+  const [segment, setSegment] = useState<MobileSegment>("overview");
+
+  const segments: { id: MobileSegment; label: string }[] = [
+    { id: "overview",    label: "Overview"    },
+    { id: "services",    label: "Services"    },
+    { id: "datastores",  label: "Datastores"  },
+    { id: "flows",       label: "Flows"       },
+  ];
+
+  const visibleNodes = NODES.filter(n => {
+    if (segment === "overview")   return true;
+    if (segment === "services")   return n.type === "service" || n.type === "gateway" || n.type === "client";
+    if (segment === "datastores") return n.type === "datastore" || n.type === "pipeline";
+    return false;
+  }).sort((a, b) => a.layer !== b.layer ? a.layer - b.layer : a.col - b.col);
+
+  return (
+    <div className="lg:hidden flex flex-col flex-1 overflow-hidden" style={{ background: "var(--bg)" }}>
+      {/* Sticky segmented control */}
+      <div className="sticky top-0 z-10 px-4 pt-3 pb-2" style={{ background: "var(--bg)", borderBottom: `1px solid var(--border)` }}>
+        <p className="text-[10px] font-semibold mb-2 text-center" style={{ color: "var(--text-faint)" }}>
+          Full interactive diagram on desktop · {NODES.length} components
+        </p>
+        <div className="flex rounded-xl overflow-hidden" style={{ border: `1px solid var(--border)` }}>
+          {segments.map((s, i) => (
+            <button
+              key={s.id}
+              onClick={() => setSegment(s.id)}
+              className="flex-1 py-2 text-xs font-medium transition-colors"
+              style={{
+                background: segment === s.id ? N_RED : "transparent",
+                color: segment === s.id ? "#fff" : "var(--text-muted)",
+                borderRight: i < segments.length - 1 ? `1px solid var(--border)` : undefined,
+              }}>
+              {s.label}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {/* Flows panel */}
+      {segment === "flows" ? (
+        <div className="flex-1 overflow-y-auto p-4 space-y-3">
+          {FLOWS.map(flow => {
+            const isActive = activeFlow?.id === flow.id;
+            return (
+              <div key={flow.id} className="rounded-xl overflow-hidden" style={{ border: `1px solid ${isActive ? N_AMBER + "60" : "var(--border)"}` }}>
+                <button
+                  onClick={() => onActivateFlow(flow)}
+                  className="w-full flex items-center gap-3 px-4 py-3 text-left"
+                  style={{ background: isActive ? N_AMBER + "10" : "var(--bg-card)" }}>
+                  <span className="w-2 h-2 rounded-full shrink-0" style={{ background: isActive ? N_AMBER : "var(--text-faint)" }} />
+                  <div className="flex-1">
+                    <p className="text-sm font-semibold" style={{ color: isActive ? N_AMBER : "var(--text)" }}>{flow.label}</p>
+                    <p className="text-[10px]" style={{ color: "var(--text-faint)" }}>{flow.steps.length} steps</p>
+                  </div>
+                  {isActive
+                    ? <span className="text-[10px] font-bold px-2 py-0.5 rounded" style={{ background: N_AMBER + "18", color: N_AMBER }}>Step {activeFlowStep + 1}/{flow.steps.length}</span>
+                    : <span className="text-[10px]" style={{ color: "var(--text-faint)" }}>▶ Run</span>
+                  }
+                </button>
+                {isActive && (
+                  <div className="px-4 py-3 space-y-2" style={{ background: "var(--bg)", borderTop: `1px solid ${N_AMBER}20` }}>
+                    {flow.steps.map((step, i) => (
+                      <div key={i} className="flex items-start gap-2.5">
+                        <span className="w-5 h-5 rounded-full text-[9px] font-bold flex items-center justify-center shrink-0 mt-0.5"
+                          style={{ background: i <= activeFlowStep ? N_AMBER : "var(--border)", color: i <= activeFlowStep ? "#000" : "var(--text-faint)" }}>
+                          {i + 1}
+                        </span>
+                        <div>
+                          <p className="text-xs font-medium" style={{ color: i === activeFlowStep ? N_AMBER : "var(--text-muted)" }}>{step.name}</p>
+                          {i === activeFlowStep && step.description && (
+                            <p className="text-[10px] mt-0.5 leading-relaxed" style={{ color: "var(--text-faint)" }}>{step.description}</p>
+                          )}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            );
+          })}
+        </div>
+      ) : (
+        /* Nodes accordion */
+        <div className="flex-1 overflow-y-auto">
+          {/* Group by layer */}
+          {[1, 2, 3, 4, 5, 6].map(layer => {
+            const layerNodes = visibleNodes.filter(n => n.layer === layer);
+            if (layerNodes.length === 0) return null;
+            return (
+              <div key={layer} style={{ borderBottom: `1px solid var(--border)` }}>
+                <div className="px-4 py-2" style={{ background: "var(--bg-card)" }}>
+                  <p className="text-[9px] font-bold uppercase tracking-widest" style={{ color: "var(--text-faint)" }}>{LAYER_LABELS[layer]}</p>
+                </div>
+                {layerNodes.map(node => {
+                  const typeColor = TYPE_COLORS[node.type] ?? N_MUTED;
+                  const isSelected = selectedNode === node.id;
+                  return (
+                    <div key={node.id}>
+                      <button
+                        className="w-full text-left px-4 py-3 flex items-center gap-3"
+                        style={{ background: isSelected ? typeColor + "0a" : "transparent", borderBottom: `1px solid var(--border)` }}
+                        onClick={() => setSelectedNode(isSelected ? null : node.id)}
+                      >
+                        <div className="w-2 h-2 rounded-full shrink-0" style={{ background: typeColor }} />
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm font-semibold truncate" style={{ color: "var(--text)" }}>{node.label}</p>
+                          <p className="text-[10px] truncate" style={{ color: "var(--text-muted)" }}>{node.sublabel}</p>
+                        </div>
+                        <span className="text-[9px] px-1.5 py-0.5 rounded shrink-0" style={{ background: typeColor + "18", color: typeColor }}>{node.type}</span>
+                        <span style={{ color: "var(--text-faint)", fontSize: 10 }}>{isSelected ? "▲" : "▼"}</span>
+                      </button>
+                      {isSelected && (
+                        <div className="px-4 py-4 space-y-3" style={{ background: "var(--bg-card)", borderBottom: `1px solid var(--border)` }}>
+                          <p className="text-xs leading-relaxed" style={{ color: "var(--text-muted)" }}>{node.overview}</p>
+                          <div>
+                            <p className="text-[9px] font-bold uppercase tracking-wider mb-1.5" style={{ color: "var(--text-faint)" }}>Interview answer</p>
+                            <div className="rounded-lg p-3" style={{ background: "var(--bg)", border: `1px solid var(--border)` }}>
+                              <p className="text-xs leading-relaxed" style={{ color: "var(--text)" }}>{node.interviewAnswer}</p>
+                            </div>
+                          </div>
+                          <div className="flex flex-wrap gap-1.5">
+                            {node.techChips.map(c => (
+                              <span key={c} className="text-[10px] px-1.5 py-0.5 rounded" style={{ background: typeColor + "18", color: typeColor, border: `1px solid ${typeColor}40` }}>{c}</span>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            );
+          })}
+        </div>
+      )}
+    </div>
+  );
+}
+
 // ── Architecture tab ───────────────────────────────────────────────────────────
 function ArchitectureTab({
   studiedNodes, onMarkStudied, onNavigatePlayback,
@@ -791,60 +944,14 @@ function ArchitectureTab({
 
   return (
     <div className="flex flex-col flex-1 overflow-hidden">
-      {/* ── Mobile/tablet accordion fallback (hidden on lg+) ── */}
-      <div className="lg:hidden flex-1 overflow-y-auto" style={{ background: "var(--bg)" }}>
-        <div className="px-4 py-3 text-center" style={{ borderBottom: `1px solid var(--border)` }}>
-          <p className="text-xs font-semibold" style={{ color: "var(--text-muted)" }}>Full interactive diagram on desktop</p>
-          <p className="text-[10px] mt-0.5" style={{ color: "var(--text-faint)" }}>All {NODES.length} components listed below</p>
-        </div>
-        {[1, 2, 3, 4, 5, 6].map(layer => {
-          const layerNodes = NODES.filter(n => n.layer === layer).sort((a, b) => a.col - b.col);
-          return (
-            <div key={layer} style={{ borderBottom: `1px solid var(--border)` }}>
-              <div className="px-4 py-2" style={{ background: "var(--bg-card)" }}>
-                <p className="text-[9px] font-bold uppercase tracking-widest" style={{ color: "var(--text-faint)" }}>{LAYER_LABELS[layer]}</p>
-              </div>
-              {layerNodes.map(node => {
-                const typeColor = TYPE_COLORS[node.type] ?? N_MUTED;
-                const isSelected = selectedNode === node.id;
-                return (
-                  <div key={node.id}>
-                    <button
-                      className="w-full text-left px-4 py-3 flex items-center gap-3"
-                      style={{ background: isSelected ? typeColor + "0a" : "transparent", borderBottom: `1px solid var(--border)` }}
-                      onClick={() => setSelectedNode(isSelected ? null : node.id)}
-                    >
-                      <div className="w-2 h-2 rounded-full shrink-0" style={{ background: typeColor }} />
-                      <div className="flex-1 min-w-0">
-                        <p className="text-sm font-semibold truncate" style={{ color: "var(--text)" }}>{node.label}</p>
-                        <p className="text-[10px] truncate" style={{ color: "var(--text-muted)" }}>{node.sublabel}</p>
-                      </div>
-                      <span className="text-[9px] px-1.5 py-0.5 rounded shrink-0" style={{ background: typeColor + "18", color: typeColor }}>{node.type}</span>
-                      <span style={{ color: "var(--text-faint)", fontSize: 10 }}>{isSelected ? "▲" : "▼"}</span>
-                    </button>
-                    {isSelected && (
-                      <div className="px-4 py-4 space-y-3" style={{ background: "var(--bg-card)", borderBottom: `1px solid var(--border)` }}>
-                        <p className="text-xs leading-relaxed" style={{ color: "var(--text-muted)" }}>{node.overview}</p>
-                        <div>
-                          <p className="text-[9px] font-bold uppercase tracking-wider mb-1.5" style={{ color: "var(--text-faint)" }}>Interview answer</p>
-                          <div className="rounded-lg p-3" style={{ background: "var(--bg)", border: `1px solid var(--border)` }}>
-                            <p className="text-xs leading-relaxed" style={{ color: "var(--text)" }}>{node.interviewAnswer}</p>
-                          </div>
-                        </div>
-                        <div className="flex flex-wrap gap-1.5">
-                          {node.techChips.map(c => (
-                            <span key={c} className="text-[10px] px-1.5 py-0.5 rounded" style={{ background: typeColor + "18", color: typeColor, border: `1px solid ${typeColor}40` }}>{c}</span>
-                          ))}
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                );
-              })}
-            </div>
-          );
-        })}
-      </div>
+      {/* ── Mobile/tablet fallback (hidden on lg+) ── */}
+      <MobileAccordion
+        selectedNode={selectedNode}
+        setSelectedNode={setSelectedNode}
+        activeFlow={activeFlow}
+        activeFlowStep={activeFlowStep}
+        onActivateFlow={handleActivateFlow}
+      />
 
       {/* ── Desktop canvas + detail panel (hidden below lg) ── */}
       <div className="hidden lg:flex flex-1 overflow-hidden" style={{ height: "calc(100vh - 96px - 56px)" }}>
@@ -1010,13 +1117,13 @@ function ArchitectureTab({
 
 // ── Theme-aware color helpers ───────────────────────────────────────────────────
 const LIGHT_COLORS = {
-  bg:     "#f8fafc",
-  card:   "#ffffff",
-  card2:  "#f1f5f9",
-  border: "#d7dee8",
+  bg:     "#F8FAFC",
+  card:   "#FFFFFF",
+  card2:  "#F6F8FC",
+  border: "#D8E0EC",
   muted:  "#475569",
-  faint:  "#64748b",
-  text:   "#0f172a",
+  faint:  "#64748B",
+  text:   "#0F172A",
   text2:  "#334155",
 };
 const DARK_COLORS = {
@@ -1161,46 +1268,64 @@ export default function NetflixArchPage({ initialTab }: { initialTab?: string })
           </button>
         </div>
 
-        {/* Row 2: tabs with animated underline + keyboard nav + prev/next */}
-        <div className="hidden sm:flex items-end px-4 gap-0" style={{ height: 37 }}>
-          {TABS.map((tab, idx) => (
-            <button
-              key={tab.id}
-              ref={el => { tabRefs.current[idx] = el; }}
-              onClick={() => switchTab(tab.id)}
-              onKeyDown={e => {
-                if (e.key === "ArrowRight" && idx < TABS.length - 1) {
-                  switchTab(TABS[idx + 1].id);
-                  tabRefs.current[idx + 1]?.focus();
-                }
-                if (e.key === "ArrowLeft" && idx > 0) {
-                  switchTab(TABS[idx - 1].id);
-                  tabRefs.current[idx - 1]?.focus();
-                }
-              }}
-              className="relative px-3 py-2 text-xs font-medium transition-colors shrink-0"
-              style={{ color: activeTab === tab.id ? T.text : T.muted }}>
-              {tab.label}
-              {activeTab === tab.id && (
-                <span className="absolute bottom-0 left-0 right-0 h-0.5 rounded-full"
-                  style={{ background: N_RED }} />
-              )}
-            </button>
-          ))}
-          <div className="ml-auto flex items-center gap-2 pb-1.5">
+        {/* Row 2: tabs — horizontal scroll, 40px height, right fade */}
+        <div className="hidden sm:flex items-stretch relative" style={{ height: 40 }}>
+          {/* Scrollable tab list */}
+          <div className="flex items-end overflow-x-auto px-4 gap-0 flex-1 min-w-0 no-scrollbar" style={{ scrollbarWidth: "none" }}>
+            {TABS.map((tab, idx) => {
+              const isPractice = tab.id === "quiz";
+              return (
+                <div key={tab.id} className="flex items-end shrink-0">
+                  {/* "Practice" group divider before quiz */}
+                  {isPractice && (
+                    <div className="flex items-center px-2 pb-2">
+                      <div className="w-px h-4 mx-1" style={{ background: T.border }} />
+                      <span className="text-[9px] font-bold uppercase tracking-widest px-1" style={{ color: T.faint }}>Practice</span>
+                    </div>
+                  )}
+                  <button
+                    ref={el => { tabRefs.current[idx] = el; }}
+                    onClick={() => switchTab(tab.id)}
+                    onKeyDown={e => {
+                      if (e.key === "ArrowRight" && idx < TABS.length - 1) {
+                        switchTab(TABS[idx + 1].id);
+                        tabRefs.current[idx + 1]?.focus();
+                      }
+                      if (e.key === "ArrowLeft" && idx > 0) {
+                        switchTab(TABS[idx - 1].id);
+                        tabRefs.current[idx - 1]?.focus();
+                      }
+                    }}
+                    className="relative px-3 pb-2 pt-1 font-medium transition-colors shrink-0 flex items-end"
+                    style={{ fontSize: 13, color: activeTab === tab.id ? T.text : T.muted, height: 40 }}>
+                    {tab.label}
+                    {activeTab === tab.id && (
+                      <span className="absolute bottom-0 left-0 right-0 h-0.5 rounded-full"
+                        style={{ background: N_RED }} />
+                    )}
+                  </button>
+                </div>
+              );
+            })}
+          </div>
+          {/* Right fade + prev/next */}
+          <div className="flex items-center gap-2 pr-4 pl-6 shrink-0" style={{
+            background: `linear-gradient(to right, transparent, ${T.bg} 30%)`,
+            position: "absolute", right: 0, top: 0, bottom: 0,
+          }}>
             {(() => {
               const idx = TABS.findIndex(t => t.id === activeTab);
               const prev = TABS[idx - 1];
               const next = TABS[idx + 1];
               return <>
-                <span className="text-[10px]" style={{ color: T.faint }}>{idx + 1}/{TABS.length}</span>
+                <span className="text-[10px] hidden xl:block" style={{ color: T.faint }}>{idx + 1}/{TABS.length}</span>
                 {prev && (
-                  <button onClick={() => switchTab(prev.id)} className="text-[10px] px-2.5 py-1.5 min-h-[32px] rounded-md transition-colors"
-                    style={{ color: T.muted, border: `1px solid ${T.border}` }}>← {prev.label}</button>
+                  <button onClick={() => switchTab(prev.id)} className="text-[10px] px-2.5 py-1.5 min-h-[32px] rounded-md transition-colors whitespace-nowrap"
+                    style={{ color: T.muted, border: `1px solid ${T.border}`, background: T.bg }}>← {prev.label}</button>
                 )}
                 {next && (
-                  <button onClick={() => switchTab(next.id)} className="text-[10px] px-2.5 py-1.5 min-h-[32px] rounded-md transition-colors"
-                    style={{ color: T.muted, border: `1px solid ${T.border}` }}>{next.label} →</button>
+                  <button onClick={() => switchTab(next.id)} className="text-[10px] px-2.5 py-1.5 min-h-[32px] rounded-md transition-colors whitespace-nowrap"
+                    style={{ color: T.muted, border: `1px solid ${T.border}`, background: T.bg }}>{next.label} →</button>
                 )}
               </>;
             })()}
