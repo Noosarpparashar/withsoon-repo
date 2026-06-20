@@ -48,12 +48,12 @@ export default function InterviewPage() {
             </div>
             <h3 className="text-xl font-bold text-[var(--text)] mb-1">Netflix System Design — Full Interview Prep</h3>
             <p className="text-sm text-[var(--text-muted)] mb-3">
-              Interactive 19-node architecture diagram, 5 animated request flows, 75-card quiz, mock interview with grilling, cheat sheet. Everything you need for a senior Netflix system design round.
+              Interactive 25-node architecture diagram, 8 animated request flows, 65-card quiz, mock interview with grilling, cheat sheet. Everything you need for a senior Netflix system design round.
             </p>
             <div className="flex flex-wrap gap-3 text-xs text-[var(--text-faint)]">
-              <span>🗺️ 19-node architecture canvas</span>
-              <span>▶ 5 animated request flows</span>
-              <span>🧠 75 flashcards with spaced repetition</span>
+              <span>🗺️ 25-node architecture canvas</span>
+              <span>▶ 8 animated request flows</span>
+              <span>🧠 65 flashcards with spaced repetition</span>
               <span>🎤 Mock interview + grilling</span>
             </div>
           </div>

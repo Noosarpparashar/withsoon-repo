@@ -98,17 +98,17 @@ export default function SystemDesignPage() {
             <div className="flex flex-wrap items-center gap-2 mb-2">
               <span className="text-[10px] font-bold px-2.5 py-1 rounded-full bg-red-500/10 text-red-400 border border-red-500/20">Featured</span>
               <span className="text-[10px] font-bold px-2.5 py-1 rounded-full bg-[var(--bg-muted)] text-[var(--text-faint)] border border-[var(--border)]">Interactive</span>
-              <span className="text-[10px] font-bold px-2.5 py-1 rounded-full bg-[var(--bg-muted)] text-[var(--text-faint)] border border-[var(--border)]">10 tabs</span>
+              <span className="text-[10px] font-bold px-2.5 py-1 rounded-full bg-[var(--bg-muted)] text-[var(--text-faint)] border border-[var(--border)]">14 tabs</span>
               <span className="text-[10px] font-bold px-2.5 py-1 rounded-full bg-[var(--bg-muted)] text-[var(--text-faint)] border border-[var(--border)]">Senior Backend · Data Engineer</span>
             </div>
             <h3 className="text-xl font-bold text-[var(--text)] mb-1">Netflix System Design — Complete Interview Prep</h3>
             <p className="text-sm text-[var(--text-muted)] mb-3">
-              Interactive 19-node architecture diagram, 5 animated request flows, 75-card quiz, mock interview with grilling, and a full cheat sheet — across 10 deep-dive tabs.
+              Interactive 25-node architecture diagram, 8 animated request flows, 65-card quiz, mock interview with grilling, and a full cheat sheet — across 14 deep-dive tabs.
             </p>
             <div className="flex flex-wrap gap-3 text-xs text-[var(--text-faint)]">
-              <span>🗺️ 19-node architecture canvas</span>
-              <span>▶ 5 animated request flows</span>
-              <span>🧠 75 flashcards with spaced repetition</span>
+              <span>🗺️ 25-node architecture canvas</span>
+              <span>▶ 8 animated request flows</span>
+              <span>🧠 65 flashcards with spaced repetition</span>
               <span>🎤 Mock interview + grilling</span>
             </div>
           </div>
