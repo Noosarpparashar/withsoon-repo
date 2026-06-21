@@ -29,7 +29,7 @@ function EntityBox({ entity, entityId, highlighted, onNavigateToEntity }: Entity
   return (
     <div
       id={entityId}
-      className="max-w-[740px] rounded-xl overflow-hidden mb-4 transition-all duration-300"
+      className="rounded-xl overflow-hidden transition-all duration-300"
       style={{
         border: highlighted
           ? `2px solid #f59e0b`
@@ -39,10 +39,10 @@ function EntityBox({ entity, entityId, highlighted, onNavigateToEntity }: Entity
       }}
     >
       <div
-        className="px-4 py-3 flex items-center justify-between gap-3"
+        className="px-3.5 py-2.5 flex items-center justify-between gap-3"
         style={{ background: "var(--bg-muted)", borderBottom: `1px solid var(--border)` }}
       >
-        <span className="text-sm font-bold font-mono" style={{ color: "var(--text)" }}>
+        <span className="text-[13px] font-bold font-mono" style={{ color: "var(--text)" }}>
           {entity.name}
         </span>
         <span
@@ -54,9 +54,9 @@ function EntityBox({ entity, entityId, highlighted, onNavigateToEntity }: Entity
       </div>
       <div>
         <div
-          className="grid items-center gap-2 px-4 py-2"
+          className="grid items-center gap-2 px-3.5 py-1.5"
           style={{
-            gridTemplateColumns: "minmax(0, 380px) max-content max-content",
+            gridTemplateColumns: "minmax(0, 1fr) 92px 42px",
             background: "var(--bg)",
             borderBottom: `1px solid var(--border)`,
           }}
@@ -83,16 +83,16 @@ function EntityBox({ entity, entityId, highlighted, onNavigateToEntity }: Entity
         {entity.fields.map((f, i) => (
           <div
             key={i}
-            className="grid items-start gap-2 px-4 py-2.5"
+            className="grid items-start gap-2 px-3.5 py-1.5"
             style={{
-              gridTemplateColumns: "minmax(0, 380px) max-content max-content",
+              gridTemplateColumns: "minmax(0, 1fr) 92px 42px",
               borderBottom:
                 i < entity.fields.length - 1
                   ? `1px solid var(--border)`
                   : undefined,
             }}
           >
-            <div className="min-w-0 flex items-start gap-3">
+            <div className="min-w-0 flex items-start gap-2.5">
               <span
                 className="w-1.5 h-1.5 rounded-full shrink-0 mt-1.5"
                 style={{
@@ -107,7 +107,7 @@ function EntityBox({ entity, entityId, highlighted, onNavigateToEntity }: Entity
               />
               <div className="min-w-0">
                 <p
-                  className="text-[14px] md:text-[13px] font-mono font-semibold break-words"
+                  className="text-[12px] font-mono font-semibold break-words leading-snug"
                   style={{ color: "var(--text)" }}
                 >
                   {f.name}
@@ -118,7 +118,7 @@ function EntityBox({ entity, entityId, highlighted, onNavigateToEntity }: Entity
                       const tableName = f.fk!.split(".")[0];
                       onNavigateToEntity(tableName);
                     }}
-                    className="mt-1 inline-flex text-[11px] px-1.5 py-0.5 rounded transition-opacity hover:opacity-80 cursor-pointer"
+                    className="mt-0.5 inline-flex text-[10px] px-1.5 py-0.5 rounded transition-opacity hover:opacity-80 cursor-pointer"
                     style={{
                       background: "#818cf818",
                       color: "#818cf8",
@@ -133,7 +133,7 @@ function EntityBox({ entity, entityId, highlighted, onNavigateToEntity }: Entity
             </div>
             <div className="shrink-0 pt-0.5 text-left min-w-[92px]">
               <span
-                className="text-[13px] font-mono font-medium"
+                className="text-[11px] font-mono font-medium leading-snug"
                 style={{ color: "#60a5fa" }}
               >
                 {f.type}
@@ -142,7 +142,7 @@ function EntityBox({ entity, entityId, highlighted, onNavigateToEntity }: Entity
             <div className="min-w-[44px] shrink-0 flex flex-wrap items-center justify-start gap-1 pt-0.5">
               {f.pk && (
                 <span
-                  className="text-[11px] px-1.5 rounded"
+                  className="text-[10px] px-1 rounded"
                   style={{ background: C.amber + "18", color: C.amber }}
                 >
                   PK
@@ -150,7 +150,7 @@ function EntityBox({ entity, entityId, highlighted, onNavigateToEntity }: Entity
               )}
               {f.index && !f.pk && (
                 <span
-                  className="text-[11px] px-1.5 rounded"
+                  className="text-[10px] px-1 rounded"
                   style={{ background: C.green + "18", color: C.green }}
                 >
                   IDX
@@ -161,44 +161,42 @@ function EntityBox({ entity, entityId, highlighted, onNavigateToEntity }: Entity
         ))}
       </div>
       {/* DB rationale — why this store for this entity */}
-      {entity.dbRationale && (
+      {(entity.dbRationale || (entity.accessPatterns && entity.accessPatterns.length > 0)) && (
         <div
-          className="px-3 py-2"
+          className="grid grid-cols-1 md:grid-cols-2"
           style={{
             borderTop: `1px solid var(--border)`,
-            background: color + "08",
+            background: color + "06",
           }}
         >
-          <p
-            className="text-[10px] font-bold uppercase tracking-widest mb-1.5"
-            style={{ color }}
-          >
-            Why {entity.store}?
-          </p>
-          <p className="text-[11px] leading-relaxed" style={{ color: "var(--text-muted)" }}>
-            {entity.dbRationale}
-          </p>
-        </div>
-      )}
-      {entity.accessPatterns && entity.accessPatterns.length > 0 && (
-        <div
-          className="px-3 py-2"
-          style={{
-            borderTop: `1px solid var(--border)`,
-            background: color + "05",
-          }}
-        >
-          <p
-            className="text-[10px] font-bold uppercase tracking-widest mb-1.5"
-            style={{ color }}
-          >
-            Access Patterns
-          </p>
-          {entity.accessPatterns.map((ap, i) => (
-            <p key={i} className="text-[11px] leading-relaxed" style={{ color: "var(--text-muted)" }}>
-              → {ap}
-            </p>
-          ))}
+          {entity.dbRationale && (
+            <div className="px-3 py-2" style={{ borderRight: entity.accessPatterns?.length ? `1px solid var(--border)` : undefined }}>
+              <p
+                className="text-[9px] font-bold uppercase tracking-[0.18em] mb-1"
+                style={{ color }}
+              >
+                Why {entity.store}
+              </p>
+              <p className="text-[10px] leading-relaxed" style={{ color: "var(--text-muted)" }}>
+                {entity.dbRationale}
+              </p>
+            </div>
+          )}
+          {entity.accessPatterns && entity.accessPatterns.length > 0 && (
+            <div className="px-3 py-2">
+              <p
+                className="text-[9px] font-bold uppercase tracking-[0.18em] mb-1"
+                style={{ color }}
+              >
+                Access
+              </p>
+              {entity.accessPatterns.slice(0, 3).map((ap, i) => (
+                <p key={i} className="text-[10px] leading-relaxed" style={{ color: "var(--text-muted)" }}>
+                  → {ap}
+                </p>
+              ))}
+            </div>
+          )}
         </div>
       )}
     </div>
@@ -325,15 +323,17 @@ function GroupSection({
           >
             Schema
           </p>
-          {group.entities.map((e, i) => (
-            <EntityBox
-              key={i}
-              entity={e}
-              entityId={getEntityDomId(e.name)}
-              highlighted={highlightedEntity === e.name}
-              onNavigateToEntity={onNavigateToEntity}
-            />
-          ))}
+          <div className={`grid gap-4 ${group.entities.length > 1 ? "xl:grid-cols-2" : "grid-cols-1"}`}>
+            {group.entities.map((e, i) => (
+              <EntityBox
+                key={i}
+                entity={e}
+                entityId={getEntityDomId(e.name)}
+                highlighted={highlightedEntity === e.name}
+                onNavigateToEntity={onNavigateToEntity}
+              />
+            ))}
+          </div>
         </div>
 
         {group.antiPatterns.length > 0 && (
