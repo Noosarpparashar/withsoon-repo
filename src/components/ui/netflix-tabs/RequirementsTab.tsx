@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { SayThisBlock } from "./shared";
-import type { TabSlug } from "./types";
+import type { Role, TabSlug } from "./types";
 
 const FUNCTIONAL_REQS = [
   {
@@ -172,8 +172,16 @@ function PBadge({ p }: { p: string }) {
   );
 }
 
-export function RequirementsTab({ onNavigateTab }: { onNavigateTab?: (tab: TabSlug) => void }) {
+export function RequirementsTab({
+  onNavigateTab,
+  role = "Backend Engineer",
+}: {
+  onNavigateTab?: (tab: TabSlug) => void;
+  role?: Role;
+}) {
   const [openDomain, setOpenDomain] = useState<string | null>("Playback");
+  const nextTab: TabSlug = role === "Backend Engineer" ? "architecture" : "models";
+  const nextLabel = role === "Backend Engineer" ? "Architecture" : "Data Models";
 
   return (
     <div className="space-y-8 pb-10">
@@ -340,11 +348,11 @@ export function RequirementsTab({ onNavigateTab }: { onNavigateTab?: (tab: TabSl
       {/* CTA */}
       {onNavigateTab && (
         <button
-          onClick={() => onNavigateTab("capacity")}
+          onClick={() => onNavigateTab(nextTab)}
           className="w-full py-4 rounded-2xl text-sm font-semibold transition-colors"
           style={{ background: "var(--blue-soft)", color: "var(--blue-text)", border: "1px solid var(--border)", cursor: "pointer" }}
         >
-          Next: Capacity Estimation →
+          Next: {nextLabel} →
         </button>
       )}
     </div>

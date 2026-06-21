@@ -68,7 +68,7 @@ function StartHereTab({ onNavigateTab, role, onRoleChange }: {
       ],
       prepTime: "30–45 minutes",
       cta: "Start Backend Track",
-      ctaTab: "architecture" as TabSlug,
+      ctaTab: "requirements" as TabSlug,
     },
     {
       role: "Data Engineer" as Role,
@@ -90,11 +90,12 @@ function StartHereTab({ onNavigateTab, role, onRoleChange }: {
       ],
       prepTime: "30–45 minutes",
       cta: "Start Data Track",
-      ctaTab: "models" as TabSlug,
+      ctaTab: "requirements" as TabSlug,
     },
   ];
 
   const backendPath = [
+    { step: "Requirements",    tab: "requirements"    as TabSlug, desc: "lock scope, SLOs, and interview assumptions" },
     { step: "Architecture",    tab: "architecture"    as TabSlug, desc: "see the big-picture system map" },
     { step: "Playback",        tab: "playback"        as TabSlug, desc: "walk through the request path" },
     { step: "CDN",             tab: "cdn"             as TabSlug, desc: "explain how video bypasses backend" },
@@ -107,6 +108,7 @@ function StartHereTab({ onNavigateTab, role, onRoleChange }: {
   ];
 
   const dataPath = [
+    { step: "Requirements",    tab: "requirements"    as TabSlug, desc: "agree on metric definitions and freshness goals" },
     { step: "Data Models",     tab: "models"          as TabSlug, desc: "understand storage patterns" },
     { step: "Capacity",        tab: "capacity"        as TabSlug, desc: "size the event pipeline" },
     { step: "Failures",        tab: "failures"        as TabSlug, desc: "cover late data and backfills" },
@@ -394,7 +396,7 @@ function StartHereTab({ onNavigateTab, role, onRoleChange }: {
             Recommended next
           </p>
           <p className="text-xs" style={{ color: "var(--text-muted)" }}>
-            Start the {role === "Backend Engineer" ? "architecture walkthrough" : "data models deep dive"} next.
+            Start with requirements next, then move into the {role === "Backend Engineer" ? "architecture walkthrough" : "data models deep dive"}.
           </p>
         </div>
         <button

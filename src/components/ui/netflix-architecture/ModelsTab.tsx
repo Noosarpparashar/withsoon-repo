@@ -18,16 +18,18 @@ const STORE_COLORS: Record<string, string> = {
 
 interface EntityBoxProps {
   entity: EntityDef;
+  entityId: string;
   highlighted: boolean;
   onNavigateToEntity: (tableName: string) => void;
 }
 
-function EntityBox({ entity, highlighted, onNavigateToEntity }: EntityBoxProps) {
+function EntityBox({ entity, entityId, highlighted, onNavigateToEntity }: EntityBoxProps) {
   const color = STORE_COLORS[entity.store === "Aurora" ? "Aurora PostgreSQL" : entity.store] ?? C.muted;
 
   return (
     <div
-      className="rounded-xl overflow-hidden mb-4 transition-all duration-300"
+      id={entityId}
+      className="max-w-[860px] rounded-xl overflow-hidden mb-4 transition-all duration-300"
       style={{
         border: highlighted
           ? `2px solid #f59e0b`
@@ -52,9 +54,9 @@ function EntityBox({ entity, highlighted, onNavigateToEntity }: EntityBoxProps) 
       </div>
       <div>
         <div
-          className="grid items-center gap-3 px-4 py-2"
+          className="grid items-center gap-2 px-4 py-2"
           style={{
-            gridTemplateColumns: "minmax(0, 1fr) 156px 72px",
+            gridTemplateColumns: "minmax(0, 1fr) 132px 56px",
             background: "var(--bg)",
             borderBottom: `1px solid var(--border)`,
           }}
@@ -81,9 +83,9 @@ function EntityBox({ entity, highlighted, onNavigateToEntity }: EntityBoxProps) 
         {entity.fields.map((f, i) => (
           <div
             key={i}
-            className="grid items-start gap-3 px-4 py-3"
+            className="grid items-start gap-2 px-4 py-3"
             style={{
-              gridTemplateColumns: "minmax(0, 1fr) 156px 72px",
+              gridTemplateColumns: "minmax(0, 1fr) 132px 56px",
               borderBottom:
                 i < entity.fields.length - 1
                   ? `1px solid var(--border)`
@@ -247,46 +249,31 @@ function DDLViewer({
   );
 }
 
-// ─── GroupPanel ───────────────────────────────────────────────────────────────
+// ─── GroupSections ────────────────────────────────────────────────────────────
 
-interface GroupPanelProps {
+interface GroupSectionProps {
   group: ModelGroup;
   isActive: boolean;
   storeColor: string;
   highlightedEntity: string | null;
   onNavigateToEntity: (tableName: string) => void;
-  onScrollProgress: (pct: number) => void;
+  sectionRef: (el: HTMLDivElement | null) => void;
 }
 
-function GroupPanel({
+function getEntityDomId(tableName: string) {
+  return `model-entity-${tableName.toLowerCase().replace(/[^a-z0-9]+/g, "-")}`;
+}
+
+function GroupSection({
   group,
   isActive,
   storeColor,
   highlightedEntity,
   onNavigateToEntity,
-  onScrollProgress,
-}: GroupPanelProps) {
+  sectionRef,
+}: GroupSectionProps) {
   const [showDDL, setShowDDL] = useState(false);
   const [ddlCopied, setDdlCopied] = useState(false);
-  const scrollRef = useRef<HTMLDivElement>(null);
-
-  const handleScroll = useCallback(() => {
-    const el = scrollRef.current;
-    if (!el) return;
-    const scrollable = el.scrollHeight - el.clientHeight;
-    const pct = scrollable > 0 ? (el.scrollTop / scrollable) * 100 : 0;
-    onScrollProgress(pct);
-  }, [onScrollProgress]);
-
-  // Reset scroll progress when the panel becomes active
-  useEffect(() => {
-    if (isActive) {
-      onScrollProgress(0);
-      if (scrollRef.current) {
-        scrollRef.current.scrollTop = 0;
-      }
-    }
-  }, [isActive, onScrollProgress]);
 
   const handleCopySQL = useCallback(() => {
     if (!group.ddl || group.ddl.length === 0) return;
@@ -300,15 +287,13 @@ function GroupPanel({
     });
   }, [group]);
 
-  if (!isActive) return null;
-
   return (
     <div
-      ref={scrollRef}
-      className="flex-1 overflow-y-auto"
-      onScroll={handleScroll}
+      ref={sectionRef}
+      className="scroll-mt-6 pb-10"
+      style={{ borderBottom: `1px solid ${isActive ? `${storeColor}25` : "var(--border)"}` }}
     >
-      <div className="mx-auto w-full max-w-5xl space-y-6 px-8 py-7">
+      <div className="space-y-6 px-8 py-7">
         <div>
           <div className="flex items-center gap-2 mb-2">
             <span
@@ -344,6 +329,7 @@ function GroupPanel({
             <EntityBox
               key={i}
               entity={e}
+              entityId={getEntityDomId(e.name)}
               highlighted={highlightedEntity === e.name}
               onNavigateToEntity={onNavigateToEntity}
             />
@@ -485,9 +471,37 @@ export default function ModelsTab() {
   const [scrollPct, setScrollPct] = useState(0);
   const [highlightedEntity, setHighlightedEntity] = useState<string | null>(null);
   const highlightTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const contentScrollRef = useRef<HTMLDivElement>(null);
+  const sectionRefs = useRef<Record<string, HTMLDivElement | null>>({});
+
+  const scrollToGroup = useCallback((groupId: string, behavior: ScrollBehavior = "smooth") => {
+    const container = contentScrollRef.current;
+    const section = sectionRefs.current[groupId];
+    if (!container || !section) return;
+    container.scrollTo({ top: Math.max(0, section.offsetTop - 24), behavior });
+    setActiveGroup(groupId);
+  }, []);
+
+  const handleContentScroll = useCallback(() => {
+    const container = contentScrollRef.current;
+    if (!container) return;
+
+    const scrollable = container.scrollHeight - container.clientHeight;
+    const pct = scrollable > 0 ? (container.scrollTop / scrollable) * 100 : 0;
+    setScrollPct(pct);
+
+    const checkpoint = container.scrollTop + 140;
+    let current = MODEL_GROUPS[0].id;
+    for (const group of MODEL_GROUPS) {
+      const section = sectionRefs.current[group.id];
+      if (!section) continue;
+      if (section.offsetTop <= checkpoint) current = group.id;
+      else break;
+    }
+    setActiveGroup((prev) => (prev === current ? prev : current));
+  }, []);
 
   const handleNavigateToEntity = useCallback((tableName: string) => {
-    // Find which group contains this table
     const allEntities = MODEL_GROUPS.flatMap((g) => g.entities);
     const targetEntity = allEntities.find((e) => e.name === tableName);
     if (!targetEntity) return;
@@ -497,21 +511,29 @@ export default function ModelsTab() {
     );
     if (!targetGroup) return;
 
-    setActiveGroup(targetGroup.id);
+    scrollToGroup(targetGroup.id);
 
-    // Clear any existing highlight timer
     if (highlightTimerRef.current) {
       clearTimeout(highlightTimerRef.current);
     }
 
     setHighlightedEntity(tableName);
+    window.setTimeout(() => {
+      document.getElementById(getEntityDomId(tableName))?.scrollIntoView({
+        behavior: "smooth",
+        block: "center",
+      });
+    }, 120);
     highlightTimerRef.current = setTimeout(() => {
       setHighlightedEntity(null);
       highlightTimerRef.current = null;
     }, 2000);
-  }, []);
+  }, [scrollToGroup]);
 
-  // Cleanup timer on unmount
+  useEffect(() => {
+    handleContentScroll();
+  }, [handleContentScroll]);
+
   useEffect(() => {
     return () => {
       if (highlightTimerRef.current) {
@@ -535,10 +557,10 @@ export default function ModelsTab() {
             className="text-[10px] font-bold uppercase tracking-widest"
             style={{ color: "var(--text-faint)" }}
           >
-            Data Models
+            Contents
           </p>
           <p className="text-xs mt-1 leading-relaxed" style={{ color: "var(--text-muted)" }}>
-            {MODEL_GROUPS.length} entity groups
+            {MODEL_GROUPS.length} entity groups · scroll to follow along
           </p>
         </div>
         {MODEL_GROUPS.map((g) => {
@@ -547,7 +569,7 @@ export default function ModelsTab() {
           return (
             <button
               key={g.id}
-              onClick={() => setActiveGroup(g.id)}
+              onClick={() => scrollToGroup(g.id)}
               className="w-full text-left px-4 py-3 transition-colors"
               style={{
                 background: isActive ? color + "10" : "transparent",
@@ -595,18 +617,27 @@ export default function ModelsTab() {
           />
         </div>
 
-        {/* Group panels */}
-        {MODEL_GROUPS.map((g) => (
-          <GroupPanel
-            key={g.id}
-            group={g}
-            isActive={g.id === activeGroup}
-            storeColor={STORE_COLORS[g.store] ?? C.muted}
-            highlightedEntity={highlightedEntity}
-            onNavigateToEntity={handleNavigateToEntity}
-            onScrollProgress={setScrollPct}
-          />
-        ))}
+        <div
+          ref={contentScrollRef}
+          className="flex-1 overflow-y-auto"
+          onScroll={handleContentScroll}
+        >
+          <div className="mx-auto w-full max-w-[980px] space-y-2">
+            {MODEL_GROUPS.map((g) => (
+              <GroupSection
+                key={g.id}
+                group={g}
+                isActive={g.id === activeGroup}
+                storeColor={STORE_COLORS[g.store] ?? C.muted}
+                highlightedEntity={highlightedEntity}
+                onNavigateToEntity={handleNavigateToEntity}
+                sectionRef={(el) => {
+                  sectionRefs.current[g.id] = el;
+                }}
+              />
+            ))}
+          </div>
+        </div>
       </div>
     </div>
   );

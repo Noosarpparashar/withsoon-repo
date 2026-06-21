@@ -1437,7 +1437,7 @@ function TabHeader({ title, color, textColor, mins }: { title: string; color: st
   return (
     <div className="flex items-baseline gap-3 mb-6 flex-wrap">
       <h1 className="text-2xl md:text-3xl font-bold tracking-tight" style={{ color: textColor }}>
-        Netflix System Design: <span style={{ color }}>{title}</span>
+        Netflix System Design: {title}
       </h1>
       <span className="text-[11px] px-2 py-0.5 rounded-full shrink-0" style={{ background: "var(--bg-muted)", color: "var(--text-faint)", border: "1px solid var(--border)" }}>
         ~{mins} min
@@ -1830,7 +1830,7 @@ export default function NetflixArchPage({ initialTab }: { initialTab?: string })
         {activeTab === "requirements"   && (
           <ScrollableTabShell bg={T.bg} tabId={activeTab} feedbackVote={feedback[activeTab]} onFeedback={handleFeedback}>
             <TabHeader title="Requirements" color={N_RED} textColor={T.text} mins={TABS.find(t => t.id === "requirements")!.mins} />
-            <RequirementsTab onNavigateTab={(tab) => switchTab(tab)} />
+            <RequirementsTab role={role} onNavigateTab={(tab) => switchTab(tab)} />
           </ScrollableTabShell>
         )}
         {activeTab === "architecture"   && (
