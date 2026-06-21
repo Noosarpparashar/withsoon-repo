@@ -16,12 +16,13 @@ const META_LINKS = [
   { href: "/roadmap",   label: "Roadmap" },
   { href: "/changelog", label: "Changelog" },
   { href: "/system-design/netflix/architecture", label: "Netflix System Design" },
+  { href: "/system-design/netflix-data-engineering/start-here", label: "Netflix Data Engineering" },
 ];
 
 export default function Footer() {
   const pathname = usePathname();
 
-  if (pathname.startsWith("/system-design/netflix")) {
+  if (pathname.startsWith("/system-design/netflix") || pathname.startsWith("/system-design/netflix-data-engineering")) {
     return null;
   }
 

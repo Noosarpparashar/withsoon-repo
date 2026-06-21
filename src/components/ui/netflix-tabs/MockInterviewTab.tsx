@@ -320,7 +320,7 @@ function ScoreInput({ dim, score, onScore }: { dim: RubricDimension; score: numb
 
 const SELF_RATING_SCORE: Record<NonNullable<SelfRating>, number> = { nailed: 10, okay: 6, missed: 3 };
 
-export function MockInterviewTab({ role }: { role: Role }) {
+export function MockInterviewTab({ role, lockRole = false }: { role: Role; lockRole?: boolean }) {
   const [activeRole, setActiveRole] = useState<Role>(role);
   const [phase, setPhase] = useState<"prep" | "interview" | "scoring">("prep");
   const [currentStep, setCurrentStep] = useState(0);
@@ -410,17 +410,23 @@ export function MockInterviewTab({ role }: { role: Role }) {
       {/* Role selector + controls */}
       <div className="rounded-xl p-4 flex flex-wrap items-center gap-3" style={{ background: "var(--bg-card)", border: "1px solid var(--border)" }}>
         <h2 className="text-xl font-bold" style={{ color: "var(--text)" }}>Mock Interview</h2>
-        <div className="flex gap-1 p-1 rounded-xl" style={{ background: "var(--bg)", border: "1px solid var(--border)" }}>
-          {(["Backend Engineer", "Data Engineer"] as Role[]).map((r) => (
-            <button key={r} onClick={() => { setActiveRole(r); resetInterview(); }}
-              className="px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors"
-              style={{ background: activeRole === r ? (r === "Backend Engineer" ? "rgba(59,130,246,0.15)" : "rgba(16,185,129,0.15)") : "transparent", color: activeRole === r ? (r === "Backend Engineer" ? "#3b82f6" : "#10b981") : "var(--text-muted)", cursor: "pointer", border: "none" }}
-              aria-pressed={activeRole === r}
-            >
-              {r}
-            </button>
-          ))}
-        </div>
+        {lockRole ? (
+          <div className="px-3 py-1.5 rounded-lg text-xs font-semibold" style={{ background: activeRole === "Backend Engineer" ? "rgba(59,130,246,0.15)" : "rgba(16,185,129,0.15)", color: roleColor }}>
+            {activeRole}
+          </div>
+        ) : (
+          <div className="flex gap-1 p-1 rounded-xl" style={{ background: "var(--bg)", border: "1px solid var(--border)" }}>
+            {(["Backend Engineer", "Data Engineer"] as Role[]).map((r) => (
+              <button key={r} onClick={() => { setActiveRole(r); resetInterview(); }}
+                className="px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors"
+                style={{ background: activeRole === r ? (r === "Backend Engineer" ? "rgba(59,130,246,0.15)" : "rgba(16,185,129,0.15)") : "transparent", color: activeRole === r ? (r === "Backend Engineer" ? "#3b82f6" : "#10b981") : "var(--text-muted)", cursor: "pointer", border: "none" }}
+                aria-pressed={activeRole === r}
+              >
+                {r}
+              </button>
+            ))}
+          </div>
+        )}
         {phase === "interview" && (
           <div className="flex items-center gap-2 ml-auto">
             <span role="timer" aria-label={`Total elapsed time: ${totalMm} minutes ${totalSs} seconds`} className="text-xs font-mono" style={{ color: "var(--text-faint)" }}>Total: {totalMm}:{totalSs}</span>

@@ -10,6 +10,13 @@ const NETFLIX_TABS = [
   "quiz", "mock-interview", "cheat-sheet",
 ];
 
+const NETFLIX_DATA_ENGINEERING_TABS = [
+  "start-here", "requirements", "architecture", "ingestion",
+  "streaming", "batch", "lakehouse", "modeling", "reliability",
+  "ml-serving", "stack", "governance", "performance-cost", "capacity",
+  "interview-qa", "quiz", "mock-interview", "cheat-sheet",
+];
+
 const STATIC_ROUTES = [
   { url: BASE,                      priority: 1.0, changeFrequency: "weekly" as const },
   { url: `${BASE}/big-data`,        priority: 0.9, changeFrequency: "weekly" as const },
@@ -41,5 +48,12 @@ export default function sitemap(): MetadataRoute.Sitemap {
     priority: 0.85,
   }));
 
-  return [...STATIC_ROUTES, ...netflixUrls, ...contentUrls];
+  const netflixDataUrls: MetadataRoute.Sitemap = NETFLIX_DATA_ENGINEERING_TABS.map((tab) => ({
+    url: `${BASE}/system-design/netflix-data-engineering/${tab}`,
+    lastModified: now,
+    changeFrequency: "weekly" as const,
+    priority: 0.85,
+  }));
+
+  return [...STATIC_ROUTES, ...netflixUrls, ...netflixDataUrls, ...contentUrls];
 }

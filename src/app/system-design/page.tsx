@@ -10,13 +10,23 @@ export const metadata: Metadata = {
 const COMPANIES = [
   {
     slug: "netflix",
-    name: "Netflix",
+    name: "Netflix Backend",
     emoji: "🎬",
-    tagline: "Video-on-demand streaming",
+    tagline: "Playback backend, CDN, failures, and trade-offs",
     tabs: ["Architecture", "Playback · CDN", "Failures", "Mock Interview", "Cheat Sheet"],
     difficulty: "senior",
     status: "live",
     href: "/system-design/netflix/start-here",
+  },
+  {
+    slug: "netflix-data",
+    name: "Netflix Data Engineering",
+    emoji: "📊",
+    tagline: "Streaming analytics, lakehouse, QoE, and governance",
+    tabs: ["Ingestion", "Streaming", "Lakehouse", "Reliability", "Capacity"],
+    difficulty: "senior",
+    status: "live",
+    href: "/system-design/netflix-data-engineering/start-here",
   },
   {
     slug: "uber",
@@ -98,27 +108,36 @@ export default function SystemDesignPage() {
             <div className="flex flex-wrap items-center gap-2 mb-2">
               <span className="text-[10px] font-bold px-2.5 py-1 rounded-full bg-red-500/10 text-red-400 border border-red-500/20">Featured</span>
               <span className="text-[10px] font-bold px-2.5 py-1 rounded-full bg-[var(--bg-muted)] text-[var(--text-faint)] border border-[var(--border)]">Interactive</span>
-              <span className="text-[10px] font-bold px-2.5 py-1 rounded-full bg-[var(--bg-muted)] text-[var(--text-faint)] border border-[var(--border)]">14 tabs</span>
-              <span className="text-[10px] font-bold px-2.5 py-1 rounded-full bg-[var(--bg-muted)] text-[var(--text-faint)] border border-[var(--border)]">Senior Backend · Data Engineer</span>
+              <span className="text-[10px] font-bold px-2.5 py-1 rounded-full bg-[var(--bg-muted)] text-[var(--text-faint)] border border-[var(--border)]">2 separate tracks</span>
+              <span className="text-[10px] font-bold px-2.5 py-1 rounded-full bg-[var(--bg-muted)] text-[var(--text-faint)] border border-[var(--border)]">Backend + Data Engineering</span>
             </div>
-            <h3 className="text-xl font-bold text-[var(--text)] mb-1">Netflix System Design — Complete Interview Prep</h3>
+            <h3 className="text-xl font-bold text-[var(--text)] mb-1">Netflix Interview Prep — Separate Backend and Data Engineering Flows</h3>
             <p className="text-sm text-[var(--text-muted)] mb-3">
-              Interactive 25-node architecture diagram, 8 animated request flows, 65-card quiz, mock interview with grilling, and a full cheat sheet — across 14 deep-dive tabs.
+              The backend flow stays focused on playback architecture and service design. The new data-engineering flow is fully separate: ingestion, streaming pipelines, watch-time logic, Bronze/Silver/Gold, governance, reliability, and capacity.
             </p>
             <div className="flex flex-wrap gap-3 text-xs text-[var(--text-faint)]">
-              <span>🗺️ 25-node architecture canvas</span>
-              <span>▶ 8 animated request flows</span>
-              <span>🧠 65 flashcards with spaced repetition</span>
-              <span>🎤 Mock interview + grilling</span>
+              <span>🗺️ Dedicated backend architecture canvas</span>
+              <span>📦 Dedicated data-engineering tab flow</span>
+              <span>🧠 Separate quizzes and revision surfaces</span>
+              <span>🎤 Mock interview + cheat sheet for each track</span>
             </div>
           </div>
-          <Link
-            href="/system-design/netflix/start-here"
-            className="shrink-0 inline-flex items-center gap-2 px-5 py-3 rounded-xl text-sm font-bold text-white transition-all hover:opacity-90"
-            style={{ background: "#e50914" }}
-          >
-            Start Prep →
-          </Link>
+          <div className="shrink-0 flex flex-col gap-3">
+            <Link
+              href="/system-design/netflix/start-here"
+              className="inline-flex items-center justify-center gap-2 px-5 py-3 rounded-xl text-sm font-bold text-white transition-all hover:opacity-90"
+              style={{ background: "#e50914" }}
+            >
+              Open Backend →
+            </Link>
+            <Link
+              href="/system-design/netflix-data-engineering/start-here"
+              className="inline-flex items-center justify-center gap-2 px-5 py-3 rounded-xl text-sm font-bold transition-all hover:opacity-90"
+              style={{ background: "#0f766e", color: "#fff" }}
+            >
+              Open Data Engineering →
+            </Link>
+          </div>
         </div>
       </div>
 

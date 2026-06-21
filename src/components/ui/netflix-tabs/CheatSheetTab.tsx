@@ -245,7 +245,7 @@ function buildMarkdown(role: Role): string {
   return lines.join("\n");
 }
 
-function CheatSheetTab({ role, onNavigateTab }: { role: Role; onNavigateTab?: (tab: TabSlug) => void }) {
+function CheatSheetTab({ role, onNavigateTab, lockRole = false }: { role: Role; onNavigateTab?: (tab: TabSlug) => void; lockRole?: boolean }) {
   const [activeRole, setActiveRole] = useState<Role>(role);
   const [copyMdState, setCopyMdState] = useState(false);
   const [activeSection, setActiveSection] = useState("cs-openings");
@@ -357,17 +357,23 @@ function CheatSheetTab({ role, onNavigateTab }: { role: Role; onNavigateTab?: (t
         <div className="flex items-center gap-3 flex-wrap">
           <h2 className="text-xl font-bold" style={{ color: "var(--text)" }}>Cheat Sheet</h2>
           <p className="text-xs flex-1" style={{ color: "var(--text-faint)" }}>Review, then close — the interview tests recall, not reading.</p>
-          <div className="flex gap-1 p-1 rounded-xl" style={{ background: "var(--bg)", border: "1px solid var(--border)" }}>
-            {(["Backend Engineer", "Data Engineer"] as Role[]).map((r) => (
-              <button key={r} onClick={() => setActiveRole(r)}
-                className="px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors"
-                style={{ background: activeRole === r ? (r === "Backend Engineer" ? "rgba(59,130,246,0.15)" : "rgba(16,185,129,0.15)") : "transparent", color: activeRole === r ? (r === "Backend Engineer" ? "#3b82f6" : "#10b981") : "var(--text-muted)", cursor: "pointer", border: "none" }}
-                aria-pressed={activeRole === r}
-              >
-                {r}
-              </button>
-            ))}
-          </div>
+          {lockRole ? (
+            <div className="px-3 py-1.5 rounded-lg text-xs font-semibold" style={{ background: activeRole === "Backend Engineer" ? "rgba(59,130,246,0.15)" : "rgba(16,185,129,0.15)", color }}>
+              {activeRole}
+            </div>
+          ) : (
+            <div className="flex gap-1 p-1 rounded-xl" style={{ background: "var(--bg)", border: "1px solid var(--border)" }}>
+              {(["Backend Engineer", "Data Engineer"] as Role[]).map((r) => (
+                <button key={r} onClick={() => setActiveRole(r)}
+                  className="px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors"
+                  style={{ background: activeRole === r ? (r === "Backend Engineer" ? "rgba(59,130,246,0.15)" : "rgba(16,185,129,0.15)") : "transparent", color: activeRole === r ? (r === "Backend Engineer" ? "#3b82f6" : "#10b981") : "var(--text-muted)", cursor: "pointer", border: "none" }}
+                  aria-pressed={activeRole === r}
+                >
+                  {r}
+                </button>
+              ))}
+            </div>
+          )}
         </div>
       </div>
 

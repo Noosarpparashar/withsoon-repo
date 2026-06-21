@@ -237,7 +237,15 @@ function StartHereTab({ onNavigateTab, role, onRoleChange }: {
                 <div className="flex items-center justify-between">
                   <span className="text-[11px]" style={{ color: "var(--text-faint)" }}>⏱ Prep time: {card.prepTime}</span>
                   <button
-                    onClick={(e) => { e.stopPropagation(); onRoleChange(card.role); onNavigateTab(card.ctaTab); }}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onRoleChange(card.role);
+                      if (card.role === "Data Engineer") {
+                        window.location.href = "/system-design/netflix-data-engineering/start-here";
+                        return;
+                      }
+                      onNavigateTab(card.ctaTab);
+                    }}
                     className="text-[13px] px-3.5 py-2 rounded-lg font-bold transition-colors"
                     style={{ background: card.color, color: "#fff", border: "none", cursor: "pointer" }}
                   >
