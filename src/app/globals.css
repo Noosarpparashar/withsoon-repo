@@ -33,16 +33,6 @@
   --yellow:      #ca8a04;
   --yellow-soft: #fef9c3;
   --yellow-text: #713f12;
-  --netflix-canvas-band: rgba(148,163,184,0.08);
-  --netflix-dot: #94a3b8;
-  --netflix-dot-opacity: 0.35;
-  --netflix-vignette: radial-gradient(ellipse 80% 80% at 50% 50%, rgba(255,255,255,0) 60%, rgba(226,232,240,0.45) 100%);
-  --netflix-tooltip-bg: #ffffff;
-  --netflix-tooltip-shadow: 0 12px 28px rgba(15,23,42,0.14);
-  --netflix-node-selected-fill: rgba(229,9,20,0.20);
-  --netflix-node-visited-fill: rgba(245,166,35,0.12);
-  --netflix-node-hover-fill: rgba(37,99,235,0.08);
-  --netflix-node-hover-stroke: rgba(37,99,235,0.55);
 }
 
 /* ── Dark mode ────────────────────────────────────────── */
@@ -76,16 +66,34 @@
   --yellow:      #eab308;
   --yellow-soft: rgba(234,179,8,0.12);
   --yellow-text: #fde047;
-  --netflix-canvas-band: rgba(255,255,255,0.012);
-  --netflix-dot: #252525;
-  --netflix-dot-opacity: 0.6;
-  --netflix-vignette: radial-gradient(ellipse 80% 80% at 50% 50%, transparent 55%, rgba(10,10,10,0.6) 100%);
-  --netflix-tooltip-bg: #1a1a1a;
-  --netflix-tooltip-shadow: 0 4px 16px rgba(0,0,0,0.5);
-  --netflix-node-selected-fill: rgba(229,9,20,0.18);
-  --netflix-node-visited-fill: rgba(245,166,35,0.16);
-  --netflix-node-hover-fill: rgba(59,130,246,0.12);
-  --netflix-node-hover-stroke: rgba(147,197,253,0.6);
+}
+
+/* ── Netflix diagram variables — wrapped in @layer base so Tailwind v4 does not tree-shake them ── */
+@layer base {
+  :root {
+    --netflix-canvas-band: rgba(148,163,184,0.08);
+    --netflix-dot: #94a3b8;
+    --netflix-dot-opacity: 0.35;
+    --netflix-vignette: radial-gradient(ellipse 80% 80% at 50% 50%, rgba(255,255,255,0) 60%, rgba(226,232,240,0.45) 100%);
+    --netflix-tooltip-bg: #ffffff;
+    --netflix-tooltip-shadow: 0 12px 28px rgba(15,23,42,0.14);
+    --netflix-node-selected-fill: rgba(229,9,20,0.20);
+    --netflix-node-visited-fill: rgba(245,166,35,0.12);
+    --netflix-node-hover-fill: rgba(37,99,235,0.08);
+    --netflix-node-hover-stroke: rgba(37,99,235,0.55);
+  }
+  .dark {
+    --netflix-canvas-band: rgba(255,255,255,0.012);
+    --netflix-dot: #252525;
+    --netflix-dot-opacity: 0.6;
+    --netflix-vignette: radial-gradient(ellipse 80% 80% at 50% 50%, transparent 55%, rgba(10,10,10,0.6) 100%);
+    --netflix-tooltip-bg: #1a1a1a;
+    --netflix-tooltip-shadow: 0 4px 16px rgba(0,0,0,0.5);
+    --netflix-node-selected-fill: rgba(229,9,20,0.18);
+    --netflix-node-visited-fill: rgba(245,166,35,0.16);
+    --netflix-node-hover-fill: rgba(59,130,246,0.12);
+    --netflix-node-hover-stroke: rgba(147,197,253,0.6);
+  }
 }
 
 @theme inline {
