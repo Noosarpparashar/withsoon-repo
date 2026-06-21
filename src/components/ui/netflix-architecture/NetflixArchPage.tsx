@@ -1435,13 +1435,36 @@ function ScrollableTabShell({ bg, tabId, feedbackVote, onFeedback, children }: {
 
 function TabHeader({ title, color, textColor, mins }: { title: string; color: string; textColor: string; mins: number }) {
   return (
-    <div className="flex items-baseline gap-3 mb-6 flex-wrap">
-      <h1 className="text-2xl md:text-3xl font-bold tracking-tight" style={{ color: textColor }}>
-        Netflix System Design: {title}
-      </h1>
-      <span className="text-[11px] px-2 py-0.5 rounded-full shrink-0" style={{ background: "var(--bg-muted)", color: "var(--text-faint)", border: "1px solid var(--border)" }}>
-        ~{mins} min
-      </span>
+    <div
+      className="relative overflow-hidden rounded-2xl p-6 md:p-7 mb-6"
+      style={{ background: "var(--bg-card)", border: "1px solid var(--border)" }}
+    >
+      <div
+        className="absolute top-0 left-0 h-1 w-full"
+        style={{ background: `linear-gradient(90deg, ${color}, ${color}99, #8b5cf699)` }}
+      />
+      <div className="flex items-start justify-between gap-4 flex-wrap">
+        <div>
+          <p
+            className="text-[11px] font-bold uppercase tracking-[0.22em]"
+            style={{ color: "var(--text-faint)" }}
+          >
+            Netflix System Design
+          </p>
+          <h1
+            className="text-3xl md:text-[2.7rem] font-bold tracking-[-0.03em] mt-2"
+            style={{ color: textColor }}
+          >
+            {title}
+          </h1>
+        </div>
+        <span
+          className="text-[12px] px-3 py-1 rounded-full shrink-0"
+          style={{ background: "var(--bg-muted)", color: "var(--text-muted)", border: "1px solid var(--border)" }}
+        >
+          ~{mins} min read
+        </span>
+      </div>
     </div>
   );
 }
@@ -1873,7 +1896,6 @@ export default function NetflixArchPage({ initialTab }: { initialTab?: string })
         )}
         {activeTab === "models"         && (
           <>
-            <h1 className="sr-only">Netflix System Design: Data Models</h1>
             <ModelsTab />
           </>
         )}

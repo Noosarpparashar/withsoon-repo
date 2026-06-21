@@ -29,7 +29,7 @@ function EntityBox({ entity, entityId, highlighted, onNavigateToEntity }: Entity
   return (
     <div
       id={entityId}
-      className="max-w-[860px] rounded-xl overflow-hidden mb-4 transition-all duration-300"
+      className="max-w-[740px] rounded-xl overflow-hidden mb-4 transition-all duration-300"
       style={{
         border: highlighted
           ? `2px solid #f59e0b`
@@ -56,7 +56,7 @@ function EntityBox({ entity, entityId, highlighted, onNavigateToEntity }: Entity
         <div
           className="grid items-center gap-2 px-4 py-2"
           style={{
-            gridTemplateColumns: "minmax(0, 1fr) 132px 56px",
+            gridTemplateColumns: "minmax(0, 380px) max-content max-content",
             background: "var(--bg)",
             borderBottom: `1px solid var(--border)`,
           }}
@@ -83,9 +83,9 @@ function EntityBox({ entity, entityId, highlighted, onNavigateToEntity }: Entity
         {entity.fields.map((f, i) => (
           <div
             key={i}
-            className="grid items-start gap-2 px-4 py-3"
+            className="grid items-start gap-2 px-4 py-2.5"
             style={{
-              gridTemplateColumns: "minmax(0, 1fr) 132px 56px",
+              gridTemplateColumns: "minmax(0, 380px) max-content max-content",
               borderBottom:
                 i < entity.fields.length - 1
                   ? `1px solid var(--border)`
@@ -131,7 +131,7 @@ function EntityBox({ entity, entityId, highlighted, onNavigateToEntity }: Entity
                 ) : null}
               </div>
             </div>
-            <div className="shrink-0 pt-0.5 text-left">
+            <div className="shrink-0 pt-0.5 text-left min-w-[92px]">
               <span
                 className="text-[13px] font-mono font-medium"
                 style={{ color: "#60a5fa" }}
@@ -139,7 +139,7 @@ function EntityBox({ entity, entityId, highlighted, onNavigateToEntity }: Entity
                 {f.type}
               </span>
             </div>
-            <div className="min-w-[56px] shrink-0 flex flex-wrap items-center justify-start gap-1 pt-0.5">
+            <div className="min-w-[44px] shrink-0 flex flex-wrap items-center justify-start gap-1 pt-0.5">
               {f.pk && (
                 <span
                   className="text-[11px] px-1.5 rounded"
@@ -623,6 +623,45 @@ export default function ModelsTab() {
           onScroll={handleContentScroll}
         >
           <div className="mx-auto w-full max-w-[980px] space-y-2">
+            <div className="px-8 pt-7 pb-2">
+              <div
+                className="relative overflow-hidden rounded-2xl p-6 md:p-7"
+                style={{ background: "var(--bg-card)", border: "1px solid var(--border)" }}
+              >
+                <div
+                  className="absolute top-0 left-0 h-1 w-full"
+                  style={{ background: `linear-gradient(90deg, ${C.red}, ${C.amber}, #8b5cf6)` }}
+                />
+                <div className="flex items-start justify-between gap-4 flex-wrap">
+                  <div>
+                    <p
+                      className="text-[11px] font-bold uppercase tracking-[0.22em]"
+                      style={{ color: "var(--text-faint)" }}
+                    >
+                      Netflix System Design
+                    </p>
+                    <h1
+                      className="text-3xl md:text-[2.7rem] font-bold tracking-[-0.03em] mt-2"
+                      style={{ color: "var(--text)" }}
+                    >
+                      Data Models
+                    </h1>
+                    <p
+                      className="text-sm mt-3 max-w-2xl leading-relaxed"
+                      style={{ color: "var(--text-muted)" }}
+                    >
+                      Read this like a compact ER diagram: each schema card keeps table name, fields, types, keys, storage reason, and access patterns close together.
+                    </p>
+                  </div>
+                  <span
+                    className="text-[12px] px-3 py-1 rounded-full shrink-0"
+                    style={{ background: "var(--bg-muted)", color: "var(--text-muted)", border: "1px solid var(--border)" }}
+                  >
+                    ~7 min read
+                  </span>
+                </div>
+              </div>
+            </div>
             {MODEL_GROUPS.map((g) => (
               <GroupSection
                 key={g.id}
