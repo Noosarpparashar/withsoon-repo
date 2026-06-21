@@ -84,6 +84,218 @@ type ServingWorkload = (typeof SERVING_MATRIX)[number]["workload"];
 type ReliabilityIncidentId = (typeof RELIABILITY_INCIDENTS)[number]["id"];
 type TradeoffDecision = (typeof TRADEOFFS)[number]["decision"];
 type InterviewQuestionId = (typeof INTERVIEW_QUESTIONS)[number]["id"];
+type OutlineItem = { id: string; title: string; note: string };
+type DepthMode = "beginner" | "senior" | "staff";
+
+const DE_TRACK_CHIPS = [
+  "Streaming Analytics",
+  "Kafka",
+  "Iceberg",
+  "Batch Pipelines",
+  "Data Quality",
+  "Feature Store",
+  "Replay",
+  "Cost",
+] as const;
+
+const PRODUCT_TAB_SECTIONS: Record<DataEngineeringTabSlug, OutlineItem[]> = {
+  "start-here": [
+    { id: "start-overview", title: "Track intent", note: "Clarify what this interview is and is not." },
+    { id: "start-journey", title: "Journey map", note: "Show the full DE answer sequence." },
+    { id: "start-say", title: "Say this", note: "Use a crisp opening script." },
+  ],
+  requirements: [
+    { id: "req-scope", title: "Scope + pro tip", note: "Keep the boundary tight." },
+    { id: "req-scale", title: "Scale anchors", note: "Anchor the discussion with numbers." },
+    { id: "req-domains", title: "Functional domains", note: "Group requirements by data domain." },
+    { id: "req-nfr", title: "SLA matrix", note: "Freshness, trust, and quality expectations." },
+    { id: "req-say", title: "Say this", note: "Opening answer for the tab." },
+  ],
+  "event-sources": [
+    { id: "sources-map", title: "Source map", note: "Producers and key event families." },
+    { id: "sources-contract", title: "Event contract", note: "Fields, topics, and consumers." },
+    { id: "sources-lineage", title: "Population flow", note: "How sources become trusted tables." },
+    { id: "sources-say", title: "Say this", note: "Explain why sources come first." },
+  ],
+  architecture: [
+    { id: "arch-layered", title: "Layered map", note: "Clickable end-to-end architecture." },
+    { id: "arch-journey", title: "Event journey", note: "Emit to serve in one strip." },
+    { id: "arch-decisions", title: "Decision cards", note: "Why this stack and shape." },
+    { id: "arch-say", title: "Say this", note: "Narrate the platform in order." },
+  ],
+  "ingestion-kafka": [
+    { id: "ingest-lanes", title: "Ingestion lanes", note: "Client, CDC, and external batch." },
+    { id: "ingest-topics", title: "Topic map", note: "Keys, partitions, retention, schemas." },
+    { id: "ingest-fanout", title: "Fan-out", note: "Raw sink, streaming, features, DLQ." },
+    { id: "ingest-say", title: "Say this", note: "Explain why Kafka is central." },
+  ],
+  "real-time-streaming": [
+    { id: "rt-jobs", title: "Streaming jobs", note: "What each Flink flow owns." },
+    { id: "rt-watch", title: "Watch-time rules", note: "Heartbeat truth and metric logic." },
+    { id: "rt-session", title: "Sessionization", note: "How noisy events become sessions." },
+    { id: "rt-late", title: "Late data", note: "Watermarks, updates, and correction." },
+    { id: "rt-say", title: "Say this", note: "Streaming answer shape." },
+  ],
+  "batch-pipelines": [
+    { id: "batch-dag", title: "Daily DAG", note: "Official batch truth publication." },
+    { id: "batch-gates", title: "Quality gates", note: "Readiness and publish conditions." },
+    { id: "batch-say", title: "Say this", note: "Explain why batch still matters." },
+  ],
+  "storage-lakehouse": [
+    { id: "lakehouse-medallion", title: "Bronze / Silver / Gold", note: "Layer responsibilities." },
+    { id: "lakehouse-layout", title: "Storage layout", note: "S3 paths, Iceberg, retention." },
+    { id: "lakehouse-say", title: "Say this", note: "Lakehouse framing line." },
+  ],
+  "data-modeling": [
+    { id: "model-tables", title: "Core tables", note: "Facts, dims, marts, audits." },
+    { id: "model-lineage", title: "Lineage flow", note: "Who writes what and when." },
+    { id: "model-erd", title: "ERD + star schema", note: "Entity relationships and serving shape." },
+    { id: "model-say", title: "Say this", note: "Modeling explanation for interviews." },
+  ],
+  "warehouse-serving": [
+    { id: "serve-matrix", title: "Workload matrix", note: "Which consumer uses which store." },
+    { id: "serve-freshness", title: "Freshness matrix", note: "Expected latency by consumer." },
+    { id: "serve-say", title: "Say this", note: "Serving layer interview line." },
+  ],
+  "feature-store-experimentation": [
+    { id: "feature-online-offline", title: "Online vs offline", note: "Separate low latency from training truth." },
+    { id: "feature-experiment", title: "Experimentation", note: "Assignments, exposure, and analysis." },
+    { id: "feature-say", title: "Say this", note: "How DE supports ML without becoming ML mode." },
+  ],
+  "governance-quality": [
+    { id: "gov-contracts", title: "Data contracts", note: "Validate schemas and ownership." },
+    { id: "gov-quality", title: "DQ dashboard", note: "Freshness, duplicates, nulls, severity." },
+    { id: "gov-privacy", title: "Privacy controls", note: "PII, deletes, retention, audit." },
+    { id: "gov-say", title: "Say this", note: "Governance and trust answer." },
+  ],
+  "backfill-replay": [
+    { id: "replay-late", title: "Late events", note: "Watermarks and correction windows." },
+    { id: "replay-dlq", title: "DLQ / quarantine", note: "Route bad events safely." },
+    { id: "replay-backfill", title: "Audited backfill", note: "How official metrics get corrected." },
+    { id: "replay-say", title: "Say this", note: "Correction workflow in interview language." },
+  ],
+  "capacity-cost": [
+    { id: "cost-scale", title: "Scale math", note: "Throughput, partitions, and storage." },
+    { id: "cost-tradeoffs", title: "Cost levers", note: "Where compute and storage spend moves." },
+    { id: "cost-tools", title: "AWS + OSS map", note: "How the stack maps to services." },
+    { id: "cost-say", title: "Say this", note: "Capacity and cost answer." },
+  ],
+  failures: [
+    { id: "failures-playbook", title: "Incident playbook", note: "Detection, mitigation, recovery." },
+    { id: "failures-matrix", title: "Failure matrix", note: "Schema breaks, lag, stale Gold, skew." },
+    { id: "failures-say", title: "Say this", note: "Failure answer shape." },
+  ],
+  quiz: [
+    { id: "quiz-followups", title: "Follow-up bank", note: "Filterable Q&A by topic." },
+    { id: "quiz-mock", title: "Mock interview", note: "Practice speaking end-to-end." },
+    { id: "quiz-flashcards", title: "Flashcards", note: "High-signal memory hooks." },
+  ],
+  "cheat-sheet": [
+    { id: "cheat-short", title: "Answer versions", note: "30-second, 2-minute, 5-minute." },
+    { id: "cheat-formulas", title: "Formulas", note: "Scale, watch-time, and partitions." },
+    { id: "cheat-copy", title: "Print / copy", note: "Takeaway revision actions." },
+  ],
+};
+
+const TAB_INTERVIEW_LINES: Record<DataEngineeringTabSlug, string> = {
+  "start-here": "I will scope this as the Netflix data platform behind events, streaming, lakehouse, analytics, quality, and replay rather than the playback backend itself.",
+  requirements: "I group requirements by data domain, then map each one to freshness, correctness, consumers, and the tables or streams that answer it.",
+  "event-sources": "Before I design Kafka or tables, I want to make the event sources explicit so the interviewer can see what data exists, who produces it, and what each event feeds.",
+  architecture: "My architecture is layered: emit, validate, publish to Kafka, process in streaming and batch, store in Bronze/Silver/Gold, and serve BI plus features with governance around every layer.",
+  "ingestion-kafka": "Kafka is the durable event backbone here because it decouples producers from many consumers while giving us replay, retention, ordered partitions, and clear schema contracts.",
+  "real-time-streaming": "The streaming layer turns raw events into trusted near-real-time facts using keyed state, watermarking, sessionization, and clearly defined metric logic like heartbeat-based watch time.",
+  "batch-pipelines": "Batch owns the official daily truth because it can reconcile late data, run broader joins, enforce DQ gates, and publish stable Gold outputs for reporting and training.",
+  "storage-lakehouse": "Bronze is immutable raw truth, Silver is cleaned and trusted, and Gold is curated for business use, so replay and correction stay possible without corrupting official metrics.",
+  "data-modeling": "I explain the model by grain first, then facts and dimensions, then how each table is populated, partitioned, and consumed downstream.",
+  "warehouse-serving": "Different consumers need different serving layers, so I match BI, ad hoc SQL, real-time OLAP, and raw forensic queries to the right engines instead of forcing one store to do everything.",
+  "feature-store-experimentation": "DE owns the freshness and correctness of feature data by separating online and offline paths while preserving point-in-time joins and experiment exposure lineage.",
+  "governance-quality": "Schema contracts, DQ checks, privacy controls, and audit trails are not side notes here; they are operating requirements of the platform.",
+  "backfill-replay": "Streaming gives speed, but replay, quarantine, and audited backfills are how we recover correctness when late data or bad code reaches production.",
+  "capacity-cost": "I derive capacity from event math, then show how topic retention, compaction, cluster sizing, storage layout, and query engine choices control cost.",
+  failures: "For failures, I describe detection, blast radius, immediate mitigation, safe recovery, and what design change prevents the same class of incident next time.",
+  quiz: "When I practice, I want to handle both direct questions and interviewer pushback, so I use follow-up Q&A, mock prompts, and short recall drills together.",
+  "cheat-sheet": "My cheat sheet reduces the full design into a few answer versions, formulas, and red-flag mistakes so I can recall it quickly under interview pressure.",
+};
+
+const DATA_CONTRACT_CARDS = [
+  {
+    title: "Ownership",
+    detail: "Every event family names an owning team, schema steward, and paging contact before it can publish into the platform.",
+  },
+  {
+    title: "Schema rules",
+    detail: "Required fields, enum compatibility, timestamp semantics, and PII tags are validated before events reach durable topics.",
+  },
+  {
+    title: "Breaking change path",
+    detail: "Breaking changes fork versioned schemas or topics, notify downstream owners, and block deploys until compatibility checks pass.",
+  },
+] as const;
+
+const TABLE_LINEAGE_FLOW = [
+  "video.heartbeat / playback events",
+  "Kafka playback topics",
+  "Bronze immutable raw events",
+  "Silver trusted playback session facts",
+  "Gold content and user metrics",
+  "BI dashboards + feature tables",
+] as const;
+
+const TOOL_MAPPING_CARDS = [
+  { title: "Event backbone", aws: "MSK", oss: "Kafka + Schema Registry", why: "Durable fan-out, replay, and independent consumers." },
+  { title: "Streaming compute", aws: "Kinesis Data Analytics / EMR on EKS", oss: "Flink", why: "Stateful stream processing, watermarks, and session logic." },
+  { title: "Batch compute", aws: "EMR / Glue", oss: "Spark + dbt", why: "Large joins, reconciliation, and official daily truth." },
+  { title: "Lakehouse format", aws: "S3 + Glue Catalog", oss: "Iceberg", why: "Schema evolution, snapshots, time travel, and controlled backfills." },
+  { title: "Serving", aws: "Redshift / Athena", oss: "Trino / Pinot", why: "Separate BI, ad hoc, and real-time OLAP workloads." },
+] as const;
+
+const ERD_GROUPS = [
+  {
+    title: "Core entities",
+    color: T.violet,
+    items: ["User", "Profile", "Content", "Episode", "Device", "Subscription", "Experiment"],
+  },
+  {
+    title: "Behavioral facts",
+    color: T.blue,
+    items: ["Watch Session", "Browse Impression", "Search Event", "Recommendation Exposure", "QoE Event"],
+  },
+  {
+    title: "Published marts",
+    color: T.amber,
+    items: ["content_daily_metrics", "user_retention", "feature_user_genre_affinity", "finance_revenue"],
+  },
+] as const;
+
+const FAILURE_MATRIX = [
+  ["Schema release breaks parser", "Block publish, divert to quarantine, keep previous schema readers alive."],
+  ["Kafka partition lag spikes", "Throttle low-priority consumers, scale processors, and protect live SLA topics."],
+  ["Gold metrics wrong for 30 days", "Freeze publication, replay trusted Silver snapshots, audit corrected ranges."],
+  ["Late event flood after outage", "Route to replay path and run bounded correction jobs by partition/date."],
+] as const;
+
+const QUIZ_FLASHCARDS = [
+  "Why heartbeat beats play/pause for watch time",
+  "When to update a late event in streaming vs batch correction",
+  "Why Bronze must stay immutable",
+  "How partition keys avoid hot shards",
+  "Why feature freshness and training correctness split online vs offline paths",
+] as const;
+
+const DEPTH_GUIDANCE: Record<DepthMode, { label: string; summary: string }> = {
+  beginner: {
+    label: "Beginner",
+    summary: "Focus on the event flow, the major platform layers, and why each layer exists.",
+  },
+  senior: {
+    label: "Senior",
+    summary: "Emphasize correctness, trade-offs, late data handling, and how each choice affects operations.",
+  },
+  staff: {
+    label: "Staff",
+    summary: "Lead with platform boundaries, ownership, governance, cost, and how you would scale the operating model.",
+  },
+};
 
 function cn(...values: Array<string | false | null | undefined>) {
   return values.filter(Boolean).join(" ");
@@ -180,6 +392,8 @@ function TabHeader({
   onToggleFocus,
   focusMode,
   onShare,
+  depthMode,
+  onChangeDepthMode,
 }: {
   tab: DataEngineeringTabSlug;
   activeIndex: number;
@@ -189,6 +403,8 @@ function TabHeader({
   onToggleFocus: () => void;
   focusMode: boolean;
   onShare: () => void;
+  depthMode: DepthMode;
+  onChangeDepthMode: (mode: DepthMode) => void;
 }) {
   const meta = DATA_ENGINEERING_TAB_META[tab];
   const accent = DATA_ENGINEERING_TABS.find((item) => item.id === tab)?.accent ?? T.red;
@@ -215,7 +431,7 @@ function TabHeader({
             </span>
             <Pill color={accent}>{DATA_ENGINEERING_TAB_META[tab].eyebrow}</Pill>
           </div>
-          <h1 className="text-[1.85rem] md:text-[2.25rem] font-bold tracking-[-0.04em] leading-[0.95]" style={{ color: T.text }}>
+          <h1 className="text-[1.7rem] md:text-[2rem] font-semibold tracking-[-0.045em] leading-[0.98]" style={{ color: T.text }}>
             {meta.heroTitle}
           </h1>
           <p className="text-sm md:text-base mt-3 max-w-4xl" style={{ color: T.muted }}>
@@ -247,7 +463,106 @@ function TabHeader({
         </div>
       </div>
       <div className="px-4 pb-3">
-        <RoleModeSwitcher />
+        <div className="rounded-2xl p-4 flex flex-wrap items-center justify-between gap-3" style={{ background: T.card, border: `1px solid ${T.border}` }}>
+          <div className="min-w-0">
+            <p className="text-[11px] font-bold uppercase tracking-[0.2em]" style={{ color: T.faint }}>
+              Netflix Data Engineering Track
+            </p>
+            <div className="flex flex-wrap gap-2 mt-3">
+              {DE_TRACK_CHIPS.map((chip) => (
+                <span key={chip} className="px-3 py-1.5 rounded-full text-[11px] font-semibold" style={{ background: `${accent}12`, color: T.text, border: `1px solid ${accent}22` }}>
+                  {chip}
+                </span>
+              ))}
+            </div>
+          </div>
+          <div className="flex flex-wrap items-center gap-3">
+            <DepthModeToggle value={depthMode} onChange={onChangeDepthMode} />
+            <Link
+              href="/system-design/netflix/start-here"
+              className="px-3 py-2 rounded-xl text-sm font-semibold"
+              style={{ background: T.card2, color: T.text, border: `1px solid ${T.border}` }}
+            >
+              View Backend Track
+            </Link>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function DepthModeToggle({
+  value,
+  onChange,
+}: {
+  value: DepthMode;
+  onChange: (mode: DepthMode) => void;
+}) {
+  return (
+    <div className="flex flex-wrap items-center gap-2">
+      <p className="text-[10px] font-bold uppercase tracking-[0.18em]" style={{ color: T.faint }}>
+        Depth
+      </p>
+      {(Object.keys(DEPTH_GUIDANCE) as DepthMode[]).map((mode) => {
+        const active = value === mode;
+        return (
+          <button
+            key={mode}
+            onClick={() => onChange(mode)}
+            className="px-3 py-2 rounded-xl text-xs font-semibold cursor-pointer"
+            style={{ background: active ? `${T.blue}16` : T.card2, color: active ? T.blue : T.text, border: `1px solid ${active ? `${T.blue}33` : T.border}` }}
+          >
+            {DEPTH_GUIDANCE[mode].label}
+          </button>
+        );
+      })}
+    </div>
+  );
+}
+
+function TopTabStrip({
+  activeTab,
+  visitedTabs,
+  onNavigate,
+}: {
+  activeTab: DataEngineeringTabSlug;
+  visitedTabs: Set<DataEngineeringTabSlug>;
+  onNavigate: (tab: DataEngineeringTabSlug) => void;
+}) {
+  return (
+    <div className="shrink-0 border-b" style={{ borderColor: T.border, background: T.bg }}>
+      <div className="px-4">
+        <div
+          className="py-3"
+          style={{ display: "flex", flexWrap: "wrap", gap: "0.5rem", alignItems: "stretch" }}
+        >
+          {DATA_ENGINEERING_TABS.map((tab, index) => {
+            const active = tab.id === activeTab;
+            return (
+              <button
+                key={tab.id}
+                onClick={() => onNavigate(tab.id)}
+                className="min-w-0 rounded-xl px-3 py-2 text-left cursor-pointer transition-all hover:-translate-y-px"
+                style={{
+                  background: active ? `${tab.accent}16` : T.card,
+                  border: `1px solid ${active ? `${tab.accent}36` : T.border}`,
+                  flex: "0 1 auto",
+                }}
+              >
+                <div className="flex items-center gap-2">
+                  <span className="text-[10px] font-bold uppercase tracking-[0.16em]" style={{ color: active ? tab.accent : T.faint }}>
+                    {String(index + 1).padStart(2, "0")}
+                  </span>
+                  <span className="text-sm font-semibold leading-5" style={{ color: T.text }}>
+                    {tab.label}
+                  </span>
+                  {visitedTabs.has(tab.id) ? <span className="text-[10px]" style={{ color: T.green }}>●</span> : null}
+                </div>
+              </button>
+            );
+          })}
+        </div>
       </div>
     </div>
   );
@@ -255,73 +570,70 @@ function TabHeader({
 
 function Sidebar({
   activeTab,
-  visitedTabs,
-  revisedTabs,
-  onNavigate,
+  activeSectionId,
+  onNavigateSection,
 }: {
   activeTab: DataEngineeringTabSlug;
-  visitedTabs: Set<DataEngineeringTabSlug>;
-  revisedTabs: Set<DataEngineeringTabSlug>;
-  onNavigate: (tab: DataEngineeringTabSlug) => void;
+  activeSectionId: string;
+  onNavigateSection: (sectionId: string) => void;
 }) {
-  const grouped = DATA_ENGINEERING_GROUPS.map((group) => ({
-    group,
-    tabs: DATA_ENGINEERING_TABS.filter((tab) => tab.group === group),
-  }));
+  const sections = PRODUCT_TAB_SECTIONS[activeTab];
+  const activeMeta = DATA_ENGINEERING_TAB_META[activeTab];
+  const accent = DATA_ENGINEERING_TABS.find((tab) => tab.id === activeTab)?.accent ?? T.red;
 
   return (
-    <aside className="hidden xl:flex w-[320px] shrink-0 border-r flex-col" style={{ borderColor: T.border, background: T.bg }}>
-      <div className="p-4 overflow-y-auto no-scrollbar space-y-5">
-        {grouped.map(({ group, tabs }) => (
-          <div key={group}>
-            <p className="text-[10px] font-bold uppercase tracking-[0.22em] mb-2" style={{ color: T.faint }}>
-              {group}
-            </p>
-            <div className="space-y-2">
-              {tabs.map((tab, index) => {
-                const active = tab.id === activeTab;
-                const visited = visitedTabs.has(tab.id);
-                const revised = revisedTabs.has(tab.id);
-                const chapterNumber = DATA_ENGINEERING_TABS.findIndex((item) => item.id === tab.id) + 1;
-                return (
-                  <button
-                    key={tab.id}
-                    onClick={() => onNavigate(tab.id)}
-                    className="w-full text-left rounded-2xl p-3 transition-all cursor-pointer"
-                    style={{
-                      background: active ? `${tab.accent}14` : T.card,
-                      border: `1px solid ${active ? `${tab.accent}33` : T.border}`,
-                    }}
-                  >
-                    <div className="flex items-start gap-3">
-                      <div
-                        className="w-8 h-8 rounded-xl flex items-center justify-center text-[11px] font-bold shrink-0"
-                        style={{
-                          background: active ? `${tab.accent}22` : T.card2,
-                          color: active ? tab.accent : T.faint,
-                        }}
-                      >
-                        {String(chapterNumber).padStart(2, "0")}
-                      </div>
-                      <div className="min-w-0 flex-1">
-                        <div className="flex items-center gap-1.5 flex-wrap">
-                          <p className="text-sm font-bold" style={{ color: active ? T.text : T.muted }}>
-                            {tab.label}
-                          </p>
-                          {visited && <span className="text-[10px]" style={{ color: T.green }}>Visited</span>}
-                          {revised && <span className="text-[10px]" style={{ color: T.amber }}>Revised</span>}
-                        </div>
-                        <p className="text-[11px] mt-1 leading-5" style={{ color: T.faint }}>
-                          {tab.summary}
-                        </p>
-                      </div>
+    <aside className="hidden xl:flex w-[290px] shrink-0 border-r flex-col" style={{ borderColor: T.border, background: T.bg }}>
+      <div className="p-4 overflow-y-auto no-scrollbar space-y-4">
+        <div className="rounded-2xl p-4" style={{ background: T.card, border: `1px solid ${accent}22` }}>
+          <p className="text-[10px] font-bold uppercase tracking-[0.18em]" style={{ color: accent }}>
+            {activeMeta.heroTitle}
+          </p>
+          <p className="text-[12px] mt-2 leading-5" style={{ color: T.faint }}>
+            {activeMeta.heroSubtitle}
+          </p>
+        </div>
+        <div>
+          <p className="text-[10px] font-bold uppercase tracking-[0.22em] mb-3" style={{ color: T.faint }}>
+            On this page
+          </p>
+          <div className="space-y-2">
+            {sections.map((section, index) => {
+              const active = activeSectionId === section.id;
+              return (
+                <button
+                  key={section.id}
+                  onClick={() => onNavigateSection(section.id)}
+                  className="w-full text-left rounded-2xl p-3 cursor-pointer transition-all hover:-translate-y-px"
+                  style={{
+                    background: active ? `${accent}12` : T.card,
+                    border: `1px solid ${active ? `${accent}33` : T.border}`,
+                    boxShadow: active ? `0 14px 26px ${accent}14` : "none",
+                  }}
+                >
+                  <div className="flex items-start gap-3">
+                    <span
+                      className="w-7 h-7 rounded-xl flex items-center justify-center text-[11px] font-bold shrink-0"
+                      style={{ background: active ? `${accent}22` : T.card2, color: active ? accent : T.faint }}
+                    >
+                      {index + 1}
+                    </span>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-semibold" style={{ color: T.text }}>
+                        {section.title}
+                      </p>
+                      <p className="text-[11px] mt-1 leading-5" style={{ color: T.faint }}>
+                        {section.note}
+                      </p>
                     </div>
-                  </button>
-                );
-              })}
-            </div>
+                    <span className="text-lg leading-none mt-0.5" style={{ color: active ? accent : T.faint }}>
+                      ›
+                    </span>
+                  </div>
+                </button>
+              );
+            })}
           </div>
-        ))}
+        </div>
       </div>
     </aside>
   );
@@ -331,55 +643,53 @@ function MobileMenu({
   activeTab,
   open,
   onClose,
-  onNavigate,
+  onNavigateSection,
 }: {
   activeTab: DataEngineeringTabSlug;
   open: boolean;
   onClose: () => void;
-  onNavigate: (tab: DataEngineeringTabSlug) => void;
+  onNavigateSection: (sectionId: string) => void;
 }) {
   if (!open) return null;
   return (
     <div className="fixed inset-0 z-50 xl:hidden" style={{ background: T.bg }}>
       <div className="flex items-center justify-between px-4 py-3" style={{ borderBottom: `1px solid ${T.border}` }}>
         <span className="text-sm font-bold" style={{ color: T.text }}>
-          Netflix Data Engineering
+          On this page
         </span>
         <button onClick={onClose} className="text-lg cursor-pointer" style={{ color: T.muted }}>
           ✕
         </button>
       </div>
       <div className="p-4 overflow-y-auto no-scrollbar space-y-5">
-        {DATA_ENGINEERING_GROUPS.map((group) => (
-          <div key={group}>
-            <p className="text-[10px] font-bold uppercase tracking-[0.22em] mb-2" style={{ color: T.faint }}>
-              {group}
-            </p>
-            <div className="space-y-2">
-              {DATA_ENGINEERING_TABS.filter((tab) => tab.group === group).map((tab) => (
-                <button
-                  key={tab.id}
-                  onClick={() => {
-                    onNavigate(tab.id);
-                    onClose();
-                  }}
-                  className="w-full text-left rounded-xl p-3 cursor-pointer"
-                  style={{
-                    background: activeTab === tab.id ? `${tab.accent}14` : T.card,
-                    border: `1px solid ${activeTab === tab.id ? `${tab.accent}33` : T.border}`,
-                  }}
-                >
-                  <p className="text-sm font-semibold" style={{ color: activeTab === tab.id ? T.text : T.muted }}>
-                    {tab.label}
-                  </p>
-                  <p className="text-[11px] mt-1" style={{ color: T.faint }}>
-                    {tab.summary}
-                  </p>
-                </button>
-              ))}
-            </div>
-          </div>
-        ))}
+        <div className="rounded-2xl p-4" style={{ background: T.card, border: `1px solid ${T.border}` }}>
+          <p className="text-sm font-semibold" style={{ color: T.text }}>
+            {DATA_ENGINEERING_TABS.find((tab) => tab.id === activeTab)?.label}
+          </p>
+          <p className="text-[12px] mt-2 leading-5" style={{ color: T.faint }}>
+            {DATA_ENGINEERING_TAB_META[activeTab].heroSubtitle}
+          </p>
+        </div>
+        <div className="space-y-2">
+          {PRODUCT_TAB_SECTIONS[activeTab].map((section, index) => (
+            <button
+              key={section.id}
+              onClick={() => {
+                onNavigateSection(section.id);
+                onClose();
+              }}
+              className="w-full text-left rounded-xl p-3 cursor-pointer"
+              style={{ background: T.card, border: `1px solid ${T.border}` }}
+            >
+              <p className="text-sm font-semibold" style={{ color: T.text }}>
+                {index + 1}. {section.title}
+              </p>
+              <p className="text-[11px] mt-1" style={{ color: T.faint }}>
+                {section.note}
+              </p>
+            </button>
+          ))}
+        </div>
       </div>
     </div>
   );
@@ -392,6 +702,9 @@ function ScrollableShell({
   onNavigate,
   onMarkRevised,
   revised,
+  scrollRef,
+  feedbackVote,
+  onFeedback,
 }: {
   children: React.ReactNode;
   prevTab?: { id: DataEngineeringTabSlug; label: string };
@@ -399,21 +712,23 @@ function ScrollableShell({
   onNavigate: (tab: DataEngineeringTabSlug) => void;
   onMarkRevised: () => void;
   revised: boolean;
+  scrollRef: React.RefObject<HTMLDivElement | null>;
+  feedbackVote: "up" | "down" | null;
+  onFeedback: (vote: "up" | "down") => void;
 }) {
-  const ref = useRef<HTMLDivElement>(null);
   const [showTop, setShowTop] = useState(false);
 
   useEffect(() => {
-    const el = ref.current;
+    const el = scrollRef.current;
     if (!el) return;
     const handler = () => setShowTop(el.scrollTop > 320);
     el.addEventListener("scroll", handler, { passive: true });
     return () => el.removeEventListener("scroll", handler);
-  }, []);
+  }, [scrollRef]);
 
   return (
-    <div ref={ref} className="flex-1 overflow-y-auto relative no-scrollbar" style={{ background: T.bg }}>
-      <div className="px-4 lg:px-6 py-6 max-w-[1240px] mx-auto">
+    <div ref={scrollRef} className="flex-1 overflow-y-auto relative no-scrollbar" style={{ background: T.bg }}>
+      <div className="px-4 lg:px-6 py-6 max-w-[1320px] mx-auto">
         {children}
         <div className="mt-10 rounded-2xl p-4 flex flex-wrap items-center justify-between gap-3" style={{ background: T.card, border: `1px solid ${T.border}` }}>
           <div className="flex items-center gap-2 flex-wrap">
@@ -432,10 +747,39 @@ function ScrollableShell({
             {revised ? "Marked revised" : "Mark as revised"}
           </button>
         </div>
+        <div className="mt-6 rounded-2xl p-4 flex flex-wrap items-center justify-between gap-3" style={{ background: T.card, border: `1px solid ${T.border}` }}>
+          <div>
+            <p className="text-sm font-semibold" style={{ color: T.text }}>
+              Last reviewed June 2026 · By Prasoon Parashar
+            </p>
+            <p className="text-[12px] mt-1" style={{ color: T.faint }}>
+              Numbers are interview assumptions, not real Netflix internal figures.
+            </p>
+          </div>
+          <div className="flex items-center gap-2">
+            <span className="text-[12px]" style={{ color: T.faint }}>
+              Was this tab useful?
+            </span>
+            <button
+              onClick={() => onFeedback("up")}
+              className="px-3 py-2 rounded-xl text-xs font-semibold cursor-pointer"
+              style={{ background: feedbackVote === "up" ? `${T.green}18` : T.card2, color: feedbackVote === "up" ? T.green : T.text, border: `1px solid ${feedbackVote === "up" ? `${T.green}33` : T.border}` }}
+            >
+              👍
+            </button>
+            <button
+              onClick={() => onFeedback("down")}
+              className="px-3 py-2 rounded-xl text-xs font-semibold cursor-pointer"
+              style={{ background: feedbackVote === "down" ? `${T.red}18` : T.card2, color: feedbackVote === "down" ? T.red : T.text, border: `1px solid ${feedbackVote === "down" ? `${T.red}33` : T.border}` }}
+            >
+              👎
+            </button>
+          </div>
+        </div>
       </div>
       {showTop ? (
         <button
-          onClick={() => ref.current?.scrollTo({ top: 0, behavior: "smooth" })}
+          onClick={() => scrollRef.current?.scrollTo({ top: 0, behavior: "smooth" })}
           className="fixed bottom-6 right-6 w-10 h-10 rounded-full flex items-center justify-center cursor-pointer shadow-lg"
           style={{ background: T.card, color: T.text, border: `1px solid ${T.border}` }}
           aria-label="Back to top"
@@ -457,6 +801,32 @@ function MetricCard({ label, value, note, color }: { label: string; value: strin
         {value}
       </p>
       <p className="text-[11px] mt-2 leading-5" style={{ color: T.faint }}>
+        {note}
+      </p>
+    </div>
+  );
+}
+
+function CompactMetricBadge({
+  label,
+  value,
+  note,
+  color,
+}: {
+  label: string;
+  value: string;
+  note: string;
+  color: string;
+}) {
+  return (
+    <div className="rounded-2xl px-4 py-3" style={{ background: T.card2, border: `1px solid ${color}20` }}>
+      <p className="text-[10px] font-bold uppercase tracking-[0.18em]" style={{ color }}>
+        {label}
+      </p>
+      <p className="text-xl font-semibold tracking-[-0.03em] mt-2" style={{ color: T.text }}>
+        {value}
+      </p>
+      <p className="text-[11px] leading-5 mt-2" style={{ color: T.faint }}>
         {note}
       </p>
     </div>
@@ -512,20 +882,272 @@ function FlowMapper({
   );
 }
 
+function AnchoredSection({
+  id,
+  eyebrow,
+  title,
+  subtitle,
+  accent,
+  children,
+}: {
+  id: string;
+  eyebrow: string;
+  title: string;
+  subtitle: string;
+  accent: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <section id={id} data-de-anchor className="scroll-mt-24">
+      <div className="mb-4">
+        <div className="flex items-center gap-2 flex-wrap">
+          <Pill color={accent}>{eyebrow}</Pill>
+        </div>
+        <h3 className="text-2xl font-bold mt-3 tracking-[-0.04em]" style={{ color: T.text }}>
+          {title}
+        </h3>
+        <p className="text-sm mt-2 max-w-3xl" style={{ color: T.faint }}>
+          {subtitle}
+        </p>
+      </div>
+      {children}
+    </section>
+  );
+}
+
+function CompactProTip({
+  title,
+  body,
+  accent,
+  actions,
+}: {
+  title: string;
+  body: string;
+  accent: string;
+  actions?: React.ReactNode;
+}) {
+  return (
+    <div className="rounded-[24px] p-5" style={{ background: `${accent}10`, border: `1px solid ${accent}28` }}>
+      <div className="flex items-start justify-between gap-3 flex-wrap">
+        <div className="max-w-3xl">
+          <p className="text-[10px] font-bold uppercase tracking-[0.18em]" style={{ color: accent }}>
+            Pro tip
+          </p>
+          <p className="text-lg font-bold mt-2" style={{ color: T.text }}>
+            {title}
+          </p>
+          <p className="text-sm mt-3 leading-7" style={{ color: T.muted }}>
+            {body}
+          </p>
+        </div>
+        {actions ? <div className="flex flex-wrap gap-2">{actions}</div> : null}
+      </div>
+    </div>
+  );
+}
+
+function InterviewAnswerStrip({
+  tab,
+  accent,
+}: {
+  tab: DataEngineeringTabSlug;
+  accent: string;
+}) {
+  return <AnswerCard title="Say This In Interview" body={TAB_INTERVIEW_LINES[tab]} accent={accent} />;
+}
+
+function DepthGuidancePanel({ mode }: { mode: DepthMode }) {
+  const item = DEPTH_GUIDANCE[mode];
+  return (
+    <div className="rounded-[22px] p-4 mb-6" style={{ background: T.card, border: `1px solid ${T.blue}20` }}>
+      <div className="flex items-start gap-3">
+        <span className="w-8 h-8 rounded-xl flex items-center justify-center text-xs font-bold shrink-0" style={{ background: `${T.blue}16`, color: T.blue }}>
+          {item.label[0]}
+        </span>
+        <div>
+          <p className="text-[10px] font-bold uppercase tracking-[0.18em]" style={{ color: T.blue }}>
+            {item.label} lens
+          </p>
+          <p className="text-sm mt-2" style={{ color: T.muted }}>
+            {item.summary}
+          </p>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function ToolMappingGrid() {
+  return (
+    <div className="grid gap-4 lg:grid-cols-2 xl:grid-cols-3">
+      {TOOL_MAPPING_CARDS.map((card) => (
+        <div key={card.title} className="rounded-[24px] p-5" style={{ background: T.card, border: `1px solid ${T.border}` }}>
+          <p className="text-[10px] font-bold uppercase tracking-[0.18em]" style={{ color: T.amber }}>
+            {card.title}
+          </p>
+          <div className="grid gap-3 mt-4">
+            <InfoTile label="AWS" value={card.aws} />
+            <InfoTile label="Open source" value={card.oss} />
+            <DetailBlock title="Why here" accent={T.amber}>{card.why}</DetailBlock>
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+function DataContractGrid() {
+  return (
+    <div className="grid gap-4 lg:grid-cols-3">
+      {DATA_CONTRACT_CARDS.map((card) => (
+        <div key={card.title} className="rounded-[24px] p-5" style={{ background: T.card, border: `1px solid ${T.green}24` }}>
+          <p className="text-[10px] font-bold uppercase tracking-[0.18em]" style={{ color: T.green }}>
+            {card.title}
+          </p>
+          <p className="text-sm mt-3 leading-7" style={{ color: T.muted }}>
+            {card.detail}
+          </p>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+function TableLineagePanel() {
+  return (
+    <div className="rounded-[26px] p-5" style={{ background: T.card, border: `1px solid ${T.violet}24` }}>
+      <div className="flex items-center justify-between gap-3 mb-4 flex-wrap">
+        <div>
+          <p className="text-[10px] font-bold uppercase tracking-[0.18em]" style={{ color: T.violet }}>
+            Table population flow
+          </p>
+          <p className="text-[12px] mt-1" style={{ color: T.faint }}>
+            Show how one event family becomes a trusted Gold metric.
+          </p>
+        </div>
+        <CopyButton value={TABLE_LINEAGE_FLOW.join(" -> ")} label="Copy flow" />
+      </div>
+      <FlowMapper steps={TABLE_LINEAGE_FLOW} accent={T.violet} />
+    </div>
+  );
+}
+
+function ErDiagramPanel() {
+  return (
+    <div className="grid gap-4 xl:grid-cols-[0.9fr_1.1fr]">
+      <div className="space-y-4">
+        {ERD_GROUPS.map((group) => (
+          <div key={group.title} className="rounded-[24px] p-5" style={{ background: T.card, border: `1px solid ${group.color}24` }}>
+            <p className="text-[10px] font-bold uppercase tracking-[0.18em]" style={{ color: group.color }}>
+              {group.title}
+            </p>
+            <div className="flex flex-wrap gap-2 mt-3">
+              {group.items.map((item) => (
+                <span key={item} className="px-3 py-2 rounded-full text-xs font-semibold" style={{ background: `${group.color}12`, color: T.text, border: `1px solid ${group.color}24` }}>
+                  {item}
+                </span>
+              ))}
+            </div>
+          </div>
+        ))}
+      </div>
+      <div className="rounded-[24px] p-5 relative overflow-hidden" style={{ background: T.card, border: `1px solid ${T.violet}24` }}>
+        <p className="text-[10px] font-bold uppercase tracking-[0.18em]" style={{ color: T.violet }}>
+          Star schema visual
+        </p>
+        <div className="mt-6 grid place-items-center min-h-[360px]">
+          <div className="relative w-full max-w-[520px] h-[320px]">
+            <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 rounded-[22px] px-6 py-5" style={{ background: `${T.violet}14`, border: `1px solid ${T.violet}28` }}>
+              <p className="text-sm font-bold" style={{ color: T.text }}>fact_watch_session</p>
+              <p className="text-[12px] mt-1" style={{ color: T.faint }}>grain: one trusted playback session</p>
+            </div>
+            {[
+              { label: "dim_user", left: "8%", top: "12%" },
+              { label: "dim_profile", left: "72%", top: "10%" },
+              { label: "dim_content", left: "8%", top: "72%" },
+              { label: "dim_device", left: "74%", top: "72%" },
+              { label: "dim_date", left: "40%", top: "0%" },
+            ].map((item) => (
+              <div key={item.label} className="absolute rounded-[18px] px-4 py-3" style={{ left: item.left, top: item.top, background: T.card2, border: `1px solid ${T.border}` }}>
+                <p className="text-xs font-semibold" style={{ color: T.text }}>{item.label}</p>
+              </div>
+            ))}
+            <ArchitectureArrow left={29} top={28} color={T.violet} />
+            <ArchitectureArrow left={55} top={28} color={T.violet} />
+            <ArchitectureArrow left={29} top={74} color={T.violet} />
+            <ArchitectureArrow left={55} top={74} color={T.violet} />
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function FailureMatrixPanel() {
+  return (
+    <div className="grid gap-4 lg:grid-cols-2">
+      {FAILURE_MATRIX.map(([title, response]) => (
+        <div key={title} className="rounded-[24px] p-5" style={{ background: T.card, border: `1px solid ${T.red}24` }}>
+          <p className="text-[10px] font-bold uppercase tracking-[0.18em]" style={{ color: T.red }}>
+            Failure mode
+          </p>
+          <p className="text-lg font-bold mt-2" style={{ color: T.text }}>
+            {title}
+          </p>
+          <p className="text-sm mt-3 leading-7" style={{ color: T.muted }}>
+            {response}
+          </p>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+function FlashcardPanel() {
+  const [index, setIndex] = useState(0);
+  return (
+    <div className="rounded-[26px] p-5" style={{ background: T.card, border: `1px solid ${T.blue}24` }}>
+      <div className="flex items-center justify-between gap-3 flex-wrap mb-4">
+        <div>
+          <p className="text-[10px] font-bold uppercase tracking-[0.18em]" style={{ color: T.blue }}>
+            Flashcard mode
+          </p>
+          <p className="text-[12px] mt-1" style={{ color: T.faint }}>
+            Quick high-signal prompts for recall before a round.
+          </p>
+        </div>
+        <div className="flex gap-2">
+          <button onClick={() => setIndex((value) => (value - 1 + QUIZ_FLASHCARDS.length) % QUIZ_FLASHCARDS.length)} className="px-3 py-2 rounded-xl text-xs font-semibold cursor-pointer" style={{ background: T.card2, color: T.text, border: `1px solid ${T.border}` }}>
+            Prev
+          </button>
+          <button onClick={() => setIndex((value) => (value + 1) % QUIZ_FLASHCARDS.length)} className="px-3 py-2 rounded-xl text-xs font-semibold cursor-pointer" style={{ background: T.card2, color: T.text, border: `1px solid ${T.border}` }}>
+            Next
+          </button>
+        </div>
+      </div>
+      <div className="rounded-[24px] p-8 min-h-[180px] flex items-center justify-center text-center" style={{ background: T.card2, border: `1px solid ${T.border}` }}>
+        <p className="text-2xl font-bold max-w-2xl tracking-[-0.03em]" style={{ color: T.text }}>
+          {QUIZ_FLASHCARDS[index]}
+        </p>
+      </div>
+    </div>
+  );
+}
+
 function StartHereTab({ onNavigate }: { onNavigate: (tab: DataEngineeringTabSlug) => void }) {
   const [scopeMode, setScopeMode] = useState<ScopeMode>("data");
   const visibleScope = scopeMode === "data" ? START_HERE_SCOPE.dataEngineeringScope : START_HERE_SCOPE.backendScope;
   const journeyTargets: Partial<Record<(typeof START_HERE_JOURNEY)[number]["step"], DataEngineeringTabSlug>> = {
     "Start Here": "start-here",
     Requirements: "requirements",
-    "Scale Estimation": "scale-estimation",
-    "Event Taxonomy": "event-taxonomy",
-    "High-Level Data Architecture": "high-level-data-architecture",
-    "Watch-Time Calculation": "watch-time-calculation",
-    Sessionization: "sessionization",
-    "Late Events + Replay": "late-events-replay",
-    "Lakehouse + Table Design": "lakehouse-design",
-    Practice: "interview-qa",
+    "Scale Estimation": "capacity-cost",
+    "Event Taxonomy": "event-sources",
+    "High-Level Data Architecture": "architecture",
+    "Watch-Time Calculation": "real-time-streaming",
+    Sessionization: "real-time-streaming",
+    "Late Events + Replay": "backfill-replay",
+    "Lakehouse + Table Design": "data-modeling",
+    Practice: "quiz",
   };
 
   return (
@@ -537,7 +1159,7 @@ function StartHereTab({ onNavigate }: { onNavigate: (tab: DataEngineeringTabSlug
             <p className="text-[10px] font-bold uppercase tracking-[0.2em] mb-3" style={{ color: T.red }}>
               Netflix Data Platform Interview Journey
             </p>
-            <h2 className="text-4xl md:text-[3.4rem] font-bold tracking-[-0.05em] leading-[0.92]" style={{ color: T.text }}>
+            <h2 className="text-[2.85rem] md:text-[3.15rem] font-semibold tracking-[-0.05em] leading-[0.93]" style={{ color: T.text }}>
               events → Kafka → Flink → S3/Iceberg → Spark/dbt → Gold metrics → BI + ML
             </h2>
             <p className="text-base mt-5 max-w-3xl leading-8" style={{ color: T.muted }}>
@@ -1086,7 +1708,7 @@ function ArchitectureTab({ onNavigate }: { onNavigate: (tab: DataEngineeringTabS
                 {selectedNode?.label}
               </h3>
             </div>
-            <button onClick={() => onNavigate(selectedNode.deepDive)} className="px-3 py-2 rounded-xl text-xs font-semibold cursor-pointer" style={{ background: T.card2, color: T.text, border: `1px solid ${T.border}` }}>
+            <button onClick={() => onNavigate(normalizeDataEngineeringTab(selectedNode.deepDive) ?? "architecture")} className="px-3 py-2 rounded-xl text-xs font-semibold cursor-pointer" style={{ background: T.card2, color: T.text, border: `1px solid ${T.border}` }}>
               Open deep dive
             </button>
           </div>
@@ -2116,7 +2738,7 @@ function InterviewQATab({ onNavigate }: { onNavigate: (tab: DataEngineeringTabSl
           </div>
           <div className="flex gap-2">
             <CopyButton value={question.strongAnswer} label="Copy answer" />
-            <button onClick={() => onNavigate(question.linkedTab)} className="px-3 py-2 rounded-xl text-xs font-semibold cursor-pointer" style={{ background: T.card2, color: T.text, border: `1px solid ${T.border}` }}>
+            <button onClick={() => onNavigate(normalizeDataEngineeringTab(question.linkedTab) ?? "architecture")} className="px-3 py-2 rounded-xl text-xs font-semibold cursor-pointer" style={{ background: T.card2, color: T.text, border: `1px solid ${T.border}` }}>
               Open diagram link
             </button>
           </div>
@@ -2261,6 +2883,15 @@ function MockInterviewTabCustom() {
 function CheatSheetTabCustom() {
   return (
     <div className="space-y-6">
+      <div className="flex justify-end">
+        <button
+          onClick={() => window.print()}
+          className="px-3 py-2 rounded-xl text-xs font-semibold cursor-pointer"
+          style={{ background: T.card, color: T.text, border: `1px solid ${T.border}` }}
+        >
+          Print cheat sheet
+        </button>
+      </div>
       <div className="grid gap-4 xl:grid-cols-3">
         <AnswerCard title="30-second answer" body={CHEAT_SHEET_CONTENT.thirtySecond} accent={T.red} />
         <AnswerCard title="2-minute answer" body={CHEAT_SHEET_CONTENT.twoMinute} accent={T.blue} />
@@ -2285,6 +2916,392 @@ function CheatSheetTabCustom() {
   );
 }
 
+function StartTrackTab({ onNavigate }: { onNavigate: (tab: DataEngineeringTabSlug) => void }) {
+  return (
+    <div className="space-y-8">
+      <AnchoredSection id="start-overview" eyebrow="Track intent" title="Design the data platform, not the playback backend" subtitle="Use the first screen to set the boundary, establish the event journey, and show this is a dedicated DE track." accent={T.red}>
+        <StartHereTab onNavigate={onNavigate} />
+      </AnchoredSection>
+      <AnchoredSection id="start-journey" eyebrow="Journey map" title="Interview flow in one glance" subtitle="Keep the narrative sequence visible before you dive into implementation details." accent={T.violet}>
+        <div className="rounded-[26px] p-5" style={{ background: T.card, border: `1px solid ${T.violet}24` }}>
+          <FlowMapper steps={START_HERE_JOURNEY.map((item) => `${item.step} — ${item.detail}`)} accent={T.violet} />
+        </div>
+      </AnchoredSection>
+      <AnchoredSection id="start-say" eyebrow="Say this" title="Use a strong opening script" subtitle="This keeps the interviewer aligned with your track from minute one." accent={T.red}>
+        <InterviewAnswerStrip tab="start-here" accent={T.red} />
+      </AnchoredSection>
+    </div>
+  );
+}
+
+function RequirementsTrackTab() {
+  return (
+    <div className="space-y-8">
+      <AnchoredSection id="req-scope" eyebrow="Scope + pro tip" title="Keep the page opening compact and directional" subtitle="A compact callout works better than a giant wall of scope text." accent={T.amber}>
+        <CompactProTip
+          title="Scope Netflix as a data platform."
+          body="Design events → ingestion → processing → lakehouse → serving. Skip playback APIs, CDN routing, and DRM internals unless the interviewer explicitly asks."
+          accent={T.amber}
+          actions={
+            <>
+              <CopyButton value={TAB_INTERVIEW_LINES.requirements} label="Copy opening script" />
+              <span className="px-3 py-2 rounded-xl text-xs font-semibold" style={{ background: `${T.green}12`, color: T.text, border: `1px solid ${T.green}24` }}>
+                In scope
+              </span>
+              <span className="px-3 py-2 rounded-xl text-xs font-semibold" style={{ background: `${T.red}12`, color: T.text, border: `1px solid ${T.red}24` }}>
+                Out of scope
+              </span>
+            </>
+          }
+        />
+      </AnchoredSection>
+      <AnchoredSection id="req-scale" eyebrow="Scale anchors" title="Anchor the discussion with visual scale cards" subtitle="Show the high-order numbers up front, then leave the full calculator for Capacity / Cost." accent={T.blue}>
+        <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+          {DATA_TRACK_NUMBERS.map((item) => (
+            <MetricCard key={item.label} label={item.label} value={item.value} note={item.note} color={item.color} />
+          ))}
+        </div>
+      </AnchoredSection>
+      <AnchoredSection id="req-domains" eyebrow="Functional domains" title="Group requirements by domain instead of one huge table" subtitle="Playback, search, QoE, recommendation, revenue, and governance should be easier to scan." accent={T.amber}>
+        <RequirementsTab />
+      </AnchoredSection>
+      <AnchoredSection id="req-nfr" eyebrow="SLA matrix" title="Show freshness and non-functional expectations clearly" subtitle="DE interviews care about freshness, durability, quality, and replay just as much as pure throughput." accent={T.red}>
+        <div className="grid gap-4 xl:grid-cols-[0.9fr_1.1fr]">
+          <div className="rounded-[24px] p-5" style={{ background: T.card, border: `1px solid ${T.amber}24` }}>
+            <p className="text-[10px] font-bold uppercase tracking-[0.18em] mb-4" style={{ color: T.amber }}>
+              Freshness ladder
+            </p>
+            <div className="space-y-3">
+              {LATENCY_SLA_ROWS.map(([label, value]) => (
+                <div key={label} className="rounded-xl p-3 flex items-center justify-between gap-3" style={{ background: T.card2, border: `1px solid ${T.border}` }}>
+                  <p className="text-sm font-medium" style={{ color: T.text }}>{label}</p>
+                  <span className="text-xs font-semibold px-3 py-1 rounded-full" style={{ background: `${T.amber}12`, color: T.amber, border: `1px solid ${T.amber}24` }}>{value}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+          <div className="rounded-[24px] p-5" style={{ background: T.card, border: `1px solid ${T.red}24` }}>
+            <p className="text-[10px] font-bold uppercase tracking-[0.18em] mb-4" style={{ color: T.red }}>
+              DE non-functional requirements
+            </p>
+            <div className="space-y-3">
+              {NFRS.map((item) => (
+                <div key={item} className="rounded-xl p-4" style={{ background: T.card2, border: `1px solid ${T.border}` }}>
+                  <p className="text-sm leading-7" style={{ color: T.muted }}>{item}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      </AnchoredSection>
+      <AnchoredSection id="req-say" eyebrow="Say this" title="Use a crisp requirements framing line" subtitle="This should sound like a senior data engineer defining the problem space." accent={T.red}>
+        <InterviewAnswerStrip tab="requirements" accent={T.red} />
+      </AnchoredSection>
+    </div>
+  );
+}
+
+function EventSourcesTrackTab() {
+  return (
+    <div className="space-y-8">
+      <AnchoredSection id="sources-map" eyebrow="Source map" title="Start from what emits data" subtitle="Users should understand event origins before they read any topic or table detail." accent={T.amber}>
+        <EventTaxonomyTab />
+      </AnchoredSection>
+      <AnchoredSection id="sources-contract" eyebrow="Contracts" title="Make the event contract visible" subtitle="Schemas, ownership, compatibility, and PII tagging are part of the product, not back-office notes." accent={T.green}>
+        <DataContractGrid />
+      </AnchoredSection>
+      <AnchoredSection id="sources-lineage" eyebrow="Population flow" title="Show how sources become trusted facts" subtitle="This is the missing bridge between events and tables that both feedback files called out." accent={T.violet}>
+        <TableLineagePanel />
+      </AnchoredSection>
+      <AnchoredSection id="sources-say" eyebrow="Say this" title="Explain why source mapping comes first" subtitle="Use one line to justify this tab in the interview flow." accent={T.red}>
+        <InterviewAnswerStrip tab="event-sources" accent={T.red} />
+      </AnchoredSection>
+    </div>
+  );
+}
+
+function ArchitectureTrackTab({ onNavigate }: { onNavigate: (tab: DataEngineeringTabSlug) => void }) {
+  return (
+    <div className="space-y-8">
+      <AnchoredSection id="arch-layered" eyebrow="Layered map" title="Use a clickable system map as the main explainer" subtitle="The architecture should teach visually first, with text supporting the selected path." accent={T.blue}>
+        <ArchitectureTab onNavigate={onNavigate} />
+      </AnchoredSection>
+      <AnchoredSection id="arch-journey" eyebrow="Event journey" title="Emit → validate → publish → stream → store → aggregate → serve" subtitle="This strip keeps the whole DE journey intuitive even when the full diagram gets dense." accent={T.violet}>
+        <div className="rounded-[26px] p-5" style={{ background: T.card, border: `1px solid ${T.violet}24` }}>
+          <div className="flex flex-wrap items-center gap-2">
+            {["Emit", "Validate", "Publish", "Stream", "Store Bronze", "Clean Silver", "Aggregate Gold", "Serve"].map((step, index, array) => (
+              <div key={step} className="flex items-center gap-2">
+                <span className="px-3 py-2 rounded-full text-xs font-semibold" style={{ background: `${T.violet}12`, color: T.text, border: `1px solid ${T.violet}24` }}>{step}</span>
+                {index < array.length - 1 ? <span style={{ color: T.violet }}>→</span> : null}
+              </div>
+            ))}
+          </div>
+        </div>
+      </AnchoredSection>
+      <AnchoredSection id="arch-decisions" eyebrow="Decision cards" title="Defend major architectural choices" subtitle="Keep the trade-off cards close to the big picture so the user understands why the shape exists." accent={T.amber}>
+        <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+          {TRADEOFFS.slice(0, 6).map((item) => (
+            <div key={item.decision} className="rounded-[24px] p-5" style={{ background: T.card, border: `1px solid ${T.amber}24` }}>
+              <p className="text-[10px] font-bold uppercase tracking-[0.18em]" style={{ color: T.amber }}>Decision</p>
+              <p className="text-lg font-bold mt-2" style={{ color: T.text }}>{item.decision}</p>
+              <p className="text-sm mt-3 leading-7" style={{ color: T.muted }}>{item.recommendation}</p>
+            </div>
+          ))}
+        </div>
+      </AnchoredSection>
+      <AnchoredSection id="arch-say" eyebrow="Say this" title="Narrate the architecture in one flow" subtitle="Avoid jumping layer-to-layer randomly when you speak." accent={T.red}>
+        <InterviewAnswerStrip tab="architecture" accent={T.red} />
+      </AnchoredSection>
+    </div>
+  );
+}
+
+function IngestionKafkaTrackTab() {
+  return (
+    <div className="space-y-8">
+      <AnchoredSection id="ingest-lanes" eyebrow="Ingestion lanes" title="Separate client, CDC, and external batch clearly" subtitle="The three-way ingest split should be obvious without reading long paragraphs." accent={T.amber}>
+        <IngestionTab />
+      </AnchoredSection>
+      <AnchoredSection id="ingest-topics" eyebrow="Topic map" title="Connect event families to Kafka topics and keys" subtitle="Keep retention, schema, and partition choices visible and interview-ready." accent={T.amber}>
+        <KafkaTopicsTab />
+      </AnchoredSection>
+      <AnchoredSection id="ingest-fanout" eyebrow="Fan-out" title="Show what happens after publish" subtitle="A single topic is not the destination; it fans out to raw sinks, stream jobs, DLQ, and feature paths." accent={T.blue}>
+        <div className="rounded-[26px] p-5" style={{ background: T.card, border: `1px solid ${T.blue}24` }}>
+          <div className="flex flex-wrap items-center gap-3">
+            {["video.heartbeat.events", "raw sink", "sessionizer", "qoe monitor", "feature builder", "dlq / replay"].map((step, index, array) => (
+              <div key={step} className="flex items-center gap-3">
+                <span className="px-3 py-2 rounded-full text-xs font-semibold" style={{ background: `${T.blue}12`, color: T.text, border: `1px solid ${T.blue}24` }}>{step}</span>
+                {index < array.length - 1 ? <span style={{ color: T.blue }}>→</span> : null}
+              </div>
+            ))}
+          </div>
+        </div>
+      </AnchoredSection>
+      <AnchoredSection id="ingest-say" eyebrow="Say this" title="Explain why Kafka sits at the center" subtitle="Use a concise justification that covers replay, decoupling, and many consumers." accent={T.red}>
+        <InterviewAnswerStrip tab="ingestion-kafka" accent={T.red} />
+      </AnchoredSection>
+    </div>
+  );
+}
+
+function RealtimeTrackTab() {
+  return (
+    <div className="space-y-8">
+      <AnchoredSection id="rt-jobs" eyebrow="Streaming jobs" title="Visualize the near-real-time processing layer" subtitle="This is where topics become trusted live facts, alerts, and features." accent={T.blue}>
+        <StreamingPipelineTab />
+      </AnchoredSection>
+      <AnchoredSection id="rt-watch" eyebrow="Watch-time rules" title="Make metric logic visual instead of prose-heavy" subtitle="Heartbeat truth and coverage logic should be obvious from the timeline." accent={T.blue}>
+        <WatchTimeTab />
+      </AnchoredSection>
+      <AnchoredSection id="rt-session" eyebrow="Sessionization" title="Turn noisy raw events into trusted sessions" subtitle="The user should see exactly where pause logic, duplicates, and device changes are handled." accent={T.blue}>
+        <SessionizationTab />
+      </AnchoredSection>
+      <AnchoredSection id="rt-late" eyebrow="Late data" title="Streaming speed still needs correction paths" subtitle="Watermarks and late updates belong right next to the real-time pipeline story." accent={T.red}>
+        <LateEventsTab />
+      </AnchoredSection>
+      <AnchoredSection id="rt-say" eyebrow="Say this" title="Use a compact streaming explanation" subtitle="This line should separate live facts from official batch truth." accent={T.red}>
+        <InterviewAnswerStrip tab="real-time-streaming" accent={T.red} />
+      </AnchoredSection>
+    </div>
+  );
+}
+
+function BatchTrackTab() {
+  return (
+    <div className="space-y-8">
+      <AnchoredSection id="batch-dag" eyebrow="Daily DAG" title="Visualize the batch publication path" subtitle="Official daily truth should feel like an orchestrated system, not a text paragraph about Spark." accent={T.gold}>
+        <BatchPipelineTab />
+      </AnchoredSection>
+      <AnchoredSection id="batch-gates" eyebrow="Quality gates" title="Show what must pass before publish" subtitle="Batch only becomes official when partitions are ready, checks pass, and downstream refreshes are safe." accent={T.amber}>
+        <div className="grid gap-4 md:grid-cols-3">
+          {["Partition readiness", "DQ checks", "Publish + warehouse refresh"].map((title) => (
+            <div key={title} className="rounded-[24px] p-5" style={{ background: T.card, border: `1px solid ${T.amber}24` }}>
+              <p className="text-sm font-bold" style={{ color: T.text }}>{title}</p>
+              <p className="text-[12px] mt-2 leading-6" style={{ color: T.faint }}>
+                Batch jobs should not publish partial truth. Every stage needs clear readiness and rollback rules.
+              </p>
+            </div>
+          ))}
+        </div>
+      </AnchoredSection>
+      <AnchoredSection id="batch-say" eyebrow="Say this" title="Explain why batch still owns official truth" subtitle="This should sound deliberate, not like streaming failed." accent={T.red}>
+        <InterviewAnswerStrip tab="batch-pipelines" accent={T.red} />
+      </AnchoredSection>
+    </div>
+  );
+}
+
+function LakehouseTrackTab() {
+  return (
+    <div className="space-y-8">
+      <AnchoredSection id="lakehouse-medallion" eyebrow="Bronze / Silver / Gold" title="Make the medallion layers feel operational" subtitle="The lakehouse must explain immutability, trust, and official reporting visually." accent={T.violet}>
+        <LakehouseTab />
+      </AnchoredSection>
+      <AnchoredSection id="lakehouse-layout" eyebrow="Storage layout" title="Explain storage paths, versions, and retention" subtitle="Users should see why Iceberg snapshots and S3 layout matter for replay and recovery." accent={T.violet}>
+        <ToolMappingGrid />
+      </AnchoredSection>
+      <AnchoredSection id="lakehouse-say" eyebrow="Say this" title="Use a clean lakehouse framing line" subtitle="Keep Bronze, Silver, and Gold responsibilities clear." accent={T.red}>
+        <InterviewAnswerStrip tab="storage-lakehouse" accent={T.red} />
+      </AnchoredSection>
+    </div>
+  );
+}
+
+function ModelingTrackTab() {
+  return (
+    <div className="space-y-8">
+      <AnchoredSection id="model-tables" eyebrow="Core tables" title="Show the key data model interactively" subtitle="Let users inspect the grain, columns, and examples rather than reading generic table descriptions." accent={T.violet}>
+        <TableDesignTab />
+      </AnchoredSection>
+      <AnchoredSection id="model-lineage" eyebrow="Lineage flow" title="Show who writes each table and who reads it" subtitle="This is the missing DE-specific visual that makes the platform feel intuitive." accent={T.violet}>
+        <TableLineagePanel />
+      </AnchoredSection>
+      <AnchoredSection id="model-erd" eyebrow="ERD + star schema" title="Connect operational entities to analytical tables" subtitle="Explain how source relationships become serving-friendly dimensions and facts." accent={T.violet}>
+        <ErDiagramPanel />
+      </AnchoredSection>
+      <AnchoredSection id="model-say" eyebrow="Say this" title="Explain modeling by grain first" subtitle="That keeps your answer senior and avoids column-by-column noise." accent={T.red}>
+        <InterviewAnswerStrip tab="data-modeling" accent={T.red} />
+      </AnchoredSection>
+    </div>
+  );
+}
+
+function WarehouseServingTrackTab() {
+  return (
+    <div className="space-y-8">
+      <AnchoredSection id="serve-matrix" eyebrow="Workload matrix" title="Match each consumer to the right serving store" subtitle="One store should not pretend to solve BI, ad hoc, live ops, and raw forensic truth equally well." accent={T.gold}>
+        <ServingLayerTab />
+      </AnchoredSection>
+      <AnchoredSection id="serve-freshness" eyebrow="Freshness matrix" title="Tie serving decisions back to freshness" subtitle="Make dashboard latency and warehouse expectations explicit." accent={T.amber}>
+        <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+          {LATENCY_SLA_ROWS.map(([label, value]) => (
+            <MetricCard key={label} label={label} value={value} note="Expected availability for this consumer style" color={T.amber} />
+          ))}
+        </div>
+      </AnchoredSection>
+      <AnchoredSection id="serve-say" eyebrow="Say this" title="Use a serving-layer answer that sounds intentional" subtitle="The main point is matching workload shape to store shape." accent={T.red}>
+        <InterviewAnswerStrip tab="warehouse-serving" accent={T.red} />
+      </AnchoredSection>
+    </div>
+  );
+}
+
+function FeatureExperimentTrackTab() {
+  return (
+    <div className="space-y-8">
+      <AnchoredSection id="feature-online-offline" eyebrow="Online vs offline" title="Separate low-latency features from training truth" subtitle="This avoids the page feeling like an ML Engineer mode while still covering the DE responsibility well." accent={T.purple}>
+        <FeatureStoreTab />
+      </AnchoredSection>
+      <AnchoredSection id="feature-experiment" eyebrow="Experimentation" title="Show how experimentation data fits the pipeline" subtitle="Assignments, exposure events, and outcome joins should feel like first-class consumers of the platform." accent={T.purple}>
+        <div className="rounded-[26px] p-5" style={{ background: T.card, border: `1px solid ${T.purple}24` }}>
+          <FlowMapper
+            steps={[
+              "experiment.assigned event",
+              "recommendation.served / title.impression exposure",
+              "playback / click / retention outcome events",
+              "Silver user timeline",
+              "Gold experiment analysis mart",
+            ]}
+            accent={T.purple}
+          />
+        </div>
+      </AnchoredSection>
+      <AnchoredSection id="feature-say" eyebrow="Say this" title="Describe how DE supports features and experiments" subtitle="Keep the focus on data correctness and freshness." accent={T.red}>
+        <InterviewAnswerStrip tab="feature-store-experimentation" accent={T.red} />
+      </AnchoredSection>
+    </div>
+  );
+}
+
+function GovernanceQualityTrackTab() {
+  return (
+    <div className="space-y-8">
+      <AnchoredSection id="gov-contracts" eyebrow="Data contracts" title="Put contracts before dashboards of trust" subtitle="If schemas and ownership are weak, downstream quality is always reactive." accent={T.green}>
+        <DataContractGrid />
+      </AnchoredSection>
+      <AnchoredSection id="gov-quality" eyebrow="DQ dashboard" title="Make quality visible like a production surface" subtitle="The page should show DQ as a system with severity, not a checklist hidden in prose." accent={T.red}>
+        <DataQualityTab />
+      </AnchoredSection>
+      <AnchoredSection id="gov-privacy" eyebrow="Privacy controls" title="Keep governance and privacy operational" subtitle="PII, deletes, retention, and access controls must feel concrete." accent={T.green}>
+        <GovernanceTab />
+      </AnchoredSection>
+      <AnchoredSection id="gov-say" eyebrow="Say this" title="Use a trust-and-governance framing line" subtitle="Good answers make contracts, quality, and privacy feel core to the design." accent={T.red}>
+        <InterviewAnswerStrip tab="governance-quality" accent={T.red} />
+      </AnchoredSection>
+    </div>
+  );
+}
+
+function ReplayTrackTab() {
+  return (
+    <div className="space-y-8">
+      <AnchoredSection id="replay-late" eyebrow="Late events" title="Show where streaming stops and correction begins" subtitle="Watermarks and allowed lateness should be visible before you talk about replay." accent={T.red}>
+        <LateEventsTab />
+      </AnchoredSection>
+      <AnchoredSection id="replay-dlq" eyebrow="DLQ / quarantine" title="Make bad-event routing a first-class visual flow" subtitle="This is one of the major missing DE-specific flows from the feedback." accent={T.red}>
+        <FailureMatrixPanel />
+      </AnchoredSection>
+      <AnchoredSection id="replay-backfill" eyebrow="Audited backfill" title="Show how official truth gets corrected safely" subtitle="Backfills need auditability, idempotency, and a visible publish-control story." accent={T.red}>
+        <ReliabilityTab />
+      </AnchoredSection>
+      <AnchoredSection id="replay-say" eyebrow="Say this" title="Use a clear correction workflow answer" subtitle="Streaming speed is not enough without a correctness recovery path." accent={T.red}>
+        <InterviewAnswerStrip tab="backfill-replay" accent={T.red} />
+      </AnchoredSection>
+    </div>
+  );
+}
+
+function CapacityCostTrackTab() {
+  return (
+    <div className="space-y-8">
+      <AnchoredSection id="cost-scale" eyebrow="Scale math" title="Keep the calculator interactive and visual" subtitle="Capacity and cost should be explainable, not just stated." accent={T.blue}>
+        <ScaleEstimationTab />
+      </AnchoredSection>
+      <AnchoredSection id="cost-tradeoffs" eyebrow="Cost levers" title="Show where cost changes as the platform scales" subtitle="Retention, partitions, cluster sizing, and serving engine choices all move spend." accent={T.amber}>
+        <TradeoffsTab />
+      </AnchoredSection>
+      <AnchoredSection id="cost-tools" eyebrow="AWS + OSS map" title="Map the design to concrete services" subtitle="Make the stack feel deployable, not abstract." accent={T.amber}>
+        <ToolMappingGrid />
+      </AnchoredSection>
+      <AnchoredSection id="cost-say" eyebrow="Say this" title="Use a scale-and-cost line with real numbers" subtitle="Good answers derive capacity instead of hand-waving it." accent={T.red}>
+        <InterviewAnswerStrip tab="capacity-cost" accent={T.red} />
+      </AnchoredSection>
+    </div>
+  );
+}
+
+function FailuresTrackTab() {
+  return (
+    <div className="space-y-8">
+      <AnchoredSection id="failures-playbook" eyebrow="Incident playbook" title="Present failures as a response system" subtitle="Detection, mitigation, recovery, and prevention should all be visible." accent={T.red}>
+        <ReliabilityTab />
+      </AnchoredSection>
+      <AnchoredSection id="failures-matrix" eyebrow="Failure matrix" title="Call out the highest-signal failure modes explicitly" subtitle="This makes the DE section feel more production-ready than article-like." accent={T.red}>
+        <FailureMatrixPanel />
+      </AnchoredSection>
+      <AnchoredSection id="failures-say" eyebrow="Say this" title="Use a structured incident answer" subtitle="Senior answers always include blast radius and safe recovery." accent={T.red}>
+        <InterviewAnswerStrip tab="failures" accent={T.red} />
+      </AnchoredSection>
+    </div>
+  );
+}
+
+function QuizTrackTab({ onNavigate }: { onNavigate: (tab: DataEngineeringTabSlug) => void }) {
+  return (
+    <div className="space-y-8">
+      <AnchoredSection id="quiz-followups" eyebrow="Follow-up bank" title="Practice the tough follow-up questions" subtitle="Keep direct Q&A linked back to the deeper diagrams so the whole product feels connected." accent={T.blue}>
+        <InterviewQATab onNavigate={onNavigate} />
+      </AnchoredSection>
+      <AnchoredSection id="quiz-mock" eyebrow="Mock interview" title="Practice the full spoken answer flow" subtitle="This gives the DE track the same preparation depth the backend track already has." accent={T.red}>
+        <MockInterviewTabCustom />
+      </AnchoredSection>
+      <AnchoredSection id="quiz-flashcards" eyebrow="Flashcards" title="Keep a light-weight recall mode too" subtitle="Not every revision session needs the full mock interview." accent={T.blue}>
+        <FlashcardPanel />
+      </AnchoredSection>
+    </div>
+  );
+}
+
 function ContentForTab({
   activeTab,
   onNavigate,
@@ -2294,49 +3311,37 @@ function ContentForTab({
 }) {
   switch (activeTab) {
     case "start-here":
-      return <StartHereTab onNavigate={onNavigate} />;
+      return <StartTrackTab onNavigate={onNavigate} />;
     case "requirements":
-      return <RequirementsTab />;
-    case "scale-estimation":
-      return <ScaleEstimationTab />;
-    case "event-taxonomy":
-      return <EventTaxonomyTab />;
-    case "high-level-data-architecture":
-      return <ArchitectureTab onNavigate={onNavigate} />;
-    case "ingestion-layer":
-      return <IngestionTab />;
-    case "kafka-topic-design":
-      return <KafkaTopicsTab />;
-    case "streaming-pipeline":
-      return <StreamingPipelineTab />;
-    case "watch-time-calculation":
-      return <WatchTimeTab />;
-    case "sessionization":
-      return <SessionizationTab />;
-    case "late-events-replay":
-      return <LateEventsTab />;
-    case "lakehouse-design":
-      return <LakehouseTab />;
-    case "table-design":
-      return <TableDesignTab />;
-    case "batch-pipeline":
-      return <BatchPipelineTab />;
-    case "data-quality":
-      return <DataQualityTab />;
-    case "governance-security":
-      return <GovernanceTab />;
-    case "feature-store-ml-data":
-      return <FeatureStoreTab />;
-    case "serving-layer":
-      return <ServingLayerTab />;
-    case "reliability-backfill":
-      return <ReliabilityTab />;
-    case "trade-offs":
-      return <TradeoffsTab />;
-    case "interview-qa":
-      return <InterviewQATab onNavigate={onNavigate} />;
-    case "mock-interview":
-      return <MockInterviewTabCustom />;
+      return <RequirementsTrackTab />;
+    case "event-sources":
+      return <EventSourcesTrackTab />;
+    case "architecture":
+      return <ArchitectureTrackTab onNavigate={onNavigate} />;
+    case "ingestion-kafka":
+      return <IngestionKafkaTrackTab />;
+    case "real-time-streaming":
+      return <RealtimeTrackTab />;
+    case "batch-pipelines":
+      return <BatchTrackTab />;
+    case "storage-lakehouse":
+      return <LakehouseTrackTab />;
+    case "data-modeling":
+      return <ModelingTrackTab />;
+    case "warehouse-serving":
+      return <WarehouseServingTrackTab />;
+    case "feature-store-experimentation":
+      return <FeatureExperimentTrackTab />;
+    case "governance-quality":
+      return <GovernanceQualityTrackTab />;
+    case "backfill-replay":
+      return <ReplayTrackTab />;
+    case "capacity-cost":
+      return <CapacityCostTrackTab />;
+    case "failures":
+      return <FailuresTrackTab />;
+    case "quiz":
+      return <QuizTrackTab onNavigate={onNavigate} />;
     case "cheat-sheet":
       return <CheatSheetTabCustom />;
   }
@@ -2620,20 +3625,28 @@ export default function DataEngineeringPage({ initialTab }: { initialTab?: strin
   const [activeTab, setActiveTab] = useState<DataEngineeringTabSlug>(initial);
   const [visitedTabs, setVisitedTabs] = useState<Set<DataEngineeringTabSlug>>(new Set([initial]));
   const [revisedTabs, setRevisedTabs] = useState<Set<DataEngineeringTabSlug>>(new Set());
+  const [feedback, setFeedback] = useState<Record<string, "up" | "down" | null>>({});
+  const [depthMode, setDepthMode] = useState<DepthMode>("senior");
   const [notesOpen, setNotesOpen] = useState(false);
   const [focusMode, setFocusMode] = useState(false);
   const [progressOpen, setProgressOpen] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [notes, setNotes] = useState<Record<string, string>>({});
+  const [activeSectionId, setActiveSectionId] = useState(PRODUCT_TAB_SECTIONS[initial][0]?.id ?? "");
+  const scrollRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     try {
       const visited = localStorage.getItem("netflix-de-visited-tabs");
       const revised = localStorage.getItem("netflix-de-revised-tabs");
       const noteState = localStorage.getItem("netflix-de-notes");
+      const feedbackState = localStorage.getItem("netflix-de-feedback");
+      const depthState = localStorage.getItem("netflix-de-depth-mode");
       if (visited) setVisitedTabs(new Set(JSON.parse(visited)));
       if (revised) setRevisedTabs(new Set(JSON.parse(revised)));
       if (noteState) setNotes(JSON.parse(noteState));
+      if (feedbackState) setFeedback(JSON.parse(feedbackState));
+      if (depthState === "beginner" || depthState === "senior" || depthState === "staff") setDepthMode(depthState);
     } catch {
       // ignore
     }
@@ -2644,16 +3657,21 @@ export default function DataEngineeringPage({ initialTab }: { initialTab?: strin
       localStorage.setItem("netflix-de-visited-tabs", JSON.stringify([...visitedTabs]));
       localStorage.setItem("netflix-de-revised-tabs", JSON.stringify([...revisedTabs]));
       localStorage.setItem("netflix-de-notes", JSON.stringify(notes));
+      localStorage.setItem("netflix-de-feedback", JSON.stringify(feedback));
+      localStorage.setItem("netflix-de-depth-mode", depthMode);
     } catch {
       // ignore
     }
-  }, [notes, revisedTabs, visitedTabs]);
+  }, [depthMode, feedback, notes, revisedTabs, visitedTabs]);
 
   useEffect(() => {
     const onPopState = () => {
       const pathTab = window.location.pathname.split("/").pop();
       const normalized = normalizeDataEngineeringTab(pathTab);
-      if (normalized) setActiveTab(normalized);
+      if (normalized) {
+        setActiveTab(normalized);
+        setActiveSectionId(PRODUCT_TAB_SECTIONS[normalized][0]?.id ?? "");
+      }
     };
     window.addEventListener("popstate", onPopState);
     return () => window.removeEventListener("popstate", onPopState);
@@ -2666,12 +3684,15 @@ export default function DataEngineeringPage({ initialTab }: { initialTab?: strin
 
   const prevTab = DATA_ENGINEERING_TABS[activeIndex - 1];
   const nextTab = DATA_ENGINEERING_TABS[activeIndex + 1];
+  const activeSections = PRODUCT_TAB_SECTIONS[activeTab];
 
   const switchTab = useCallback((tab: DataEngineeringTabSlug) => {
     if (tab === activeTab) return;
     setVisitedTabs((prev) => new Set([...prev, activeTab, tab]));
     setActiveTab(tab);
+    setActiveSectionId(PRODUCT_TAB_SECTIONS[tab][0]?.id ?? "");
     window.history.pushState(null, "", `/system-design/netflix-data-engineering/${tab}`);
+    window.setTimeout(() => scrollRef.current?.scrollTo({ top: 0, behavior: "smooth" }), 0);
   }, [activeTab]);
 
   const activeMeta = DATA_ENGINEERING_TAB_META[activeTab];
@@ -2683,6 +3704,38 @@ export default function DataEngineeringPage({ initialTab }: { initialTab?: strin
   const handleShare = () => {
     copyTextToClipboard(`${window.location.origin}/system-design/netflix-data-engineering/${activeTab}`).catch(() => {});
   };
+
+  useEffect(() => {
+    const shell = scrollRef.current;
+    if (!shell) return;
+    const computeActiveSection = () => {
+      const ranked = activeSections
+        .map((section) => {
+          const el = document.getElementById(section.id);
+          if (!el) return null;
+          const rect = el.getBoundingClientRect();
+          return { id: section.id, top: rect.top, distance: Math.abs(rect.top - 180) };
+        })
+        .filter((item): item is { id: string; top: number; distance: number } => Boolean(item))
+        .sort((a, b) => {
+          const aScore = a.top <= 180 ? 0 : 1;
+          const bScore = b.top <= 180 ? 0 : 1;
+          if (aScore !== bScore) return aScore - bScore;
+          return a.distance - b.distance;
+        });
+      if (ranked[0]) setActiveSectionId(ranked[0].id);
+    };
+    computeActiveSection();
+    shell.addEventListener("scroll", computeActiveSection, { passive: true });
+    return () => shell.removeEventListener("scroll", computeActiveSection);
+  }, [activeSections, activeTab]);
+
+  const navigateSection = useCallback((sectionId: string) => {
+    const node = document.getElementById(sectionId);
+    if (!node) return;
+    setActiveSectionId(sectionId);
+    node.scrollIntoView({ behavior: "smooth", block: "start" });
+  }, []);
 
   const handleExportNotes = () => {
     const lines: string[] = ["# Netflix Data Engineering Notes", ""];
@@ -2715,28 +3768,34 @@ export default function DataEngineeringPage({ initialTab }: { initialTab?: strin
           onToggleFocus={() => setFocusMode(true)}
           focusMode={focusMode}
           onShare={handleShare}
+          depthMode={depthMode}
+          onChangeDepthMode={setDepthMode}
         />
+      ) : null}
+
+      {!focusMode ? (
+        <TopTabStrip activeTab={activeTab} visitedTabs={visitedTabs} onNavigate={switchTab} />
       ) : null}
 
       {!focusMode ? (
         <div className="xl:hidden px-4 py-3 flex items-center justify-between" style={{ borderBottom: `1px solid ${T.border}`, background: T.bg }}>
           <div>
             <p className="text-[10px] font-bold uppercase tracking-[0.18em]" style={{ color: T.faint }}>
-              Current tab
+              On this page
             </p>
             <p className="text-sm font-semibold" style={{ color: T.text }}>
-              {DATA_ENGINEERING_TABS[activeIndex]?.label}
+              {activeSections.find((section) => section.id === activeSectionId)?.title ?? DATA_ENGINEERING_TABS[activeIndex]?.label}
             </p>
           </div>
           <button onClick={() => setMobileMenuOpen(true)} className="px-3 py-2 rounded-xl text-xs font-semibold cursor-pointer" style={{ background: T.card, color: T.text, border: `1px solid ${T.border}` }}>
-            Open navigation
+            Open outline
           </button>
         </div>
       ) : null}
 
       <div className="flex-1 flex overflow-hidden">
         {!focusMode ? (
-          <Sidebar activeTab={activeTab} visitedTabs={visitedTabs} revisedTabs={revisedTabs} onNavigate={switchTab} />
+          <Sidebar activeTab={activeTab} activeSectionId={activeSectionId} onNavigateSection={navigateSection} />
         ) : null}
         <ScrollableShell
           prevTab={prevTab}
@@ -2749,15 +3808,26 @@ export default function DataEngineeringPage({ initialTab }: { initialTab?: strin
             return next;
           })}
           revised={revisedTabs.has(activeTab)}
+          scrollRef={scrollRef}
+          feedbackVote={feedback[activeTab] ?? null}
+          onFeedback={(vote) => setFeedback((prev) => ({ ...prev, [activeTab]: vote }))}
         >
           {activeTab === "start-here" ? null : (
-            <SectionHero meta={activeMeta} accent={DATA_ENGINEERING_TABS[activeIndex]?.accent ?? T.red} activeIndex={activeIndex} />
+            <SectionHero
+              meta={activeMeta}
+              accent={DATA_ENGINEERING_TABS[activeIndex]?.accent ?? T.red}
+              activeIndex={activeIndex}
+              tab={activeTab}
+              sections={activeSections}
+              onNavigateSection={navigateSection}
+            />
           )}
+          <DepthGuidancePanel mode={depthMode} />
           <ContentForTab activeTab={activeTab} onNavigate={switchTab} />
         </ScrollableShell>
       </div>
 
-      <MobileMenu activeTab={activeTab} open={mobileMenuOpen} onClose={() => setMobileMenuOpen(false)} onNavigate={switchTab} />
+      <MobileMenu activeTab={activeTab} open={mobileMenuOpen} onClose={() => setMobileMenuOpen(false)} onNavigateSection={navigateSection} />
 
       {focusMode ? (
         <div className="fixed top-0 left-0 right-0 z-50 px-4 py-2 flex items-center justify-between" style={{ background: `${T.red}ee` }}>
@@ -2871,37 +3941,93 @@ function SectionHero({
   meta,
   accent,
   activeIndex,
+  tab,
+  sections,
+  onNavigateSection,
 }: {
   meta: (typeof DATA_ENGINEERING_TAB_META)[DataEngineeringTabSlug];
   accent: string;
   activeIndex: number;
+  tab: DataEngineeringTabSlug;
+  sections: OutlineItem[];
+  onNavigateSection: (sectionId: string) => void;
 }) {
+  const chapter = DATA_ENGINEERING_TABS[activeIndex];
+
   return (
-    <div className="rounded-[28px] p-6 md:p-7 mb-6 relative overflow-hidden" style={{ background: T.card, border: `1px solid ${accent}24` }}>
+    <div className="rounded-[28px] p-5 md:p-6 mb-6 relative overflow-hidden" style={{ background: T.card, border: `1px solid ${accent}24` }}>
       <div className="absolute inset-x-0 top-0 h-1" style={{ background: `linear-gradient(90deg, ${accent}, ${T.amber}, ${T.violet})` }} />
-      <div className="grid gap-6 xl:grid-cols-[1.1fr_0.9fr]">
-        <div>
-          <div className="flex items-center gap-2 flex-wrap mb-3">
-            <Pill color={accent}>{meta.eyebrow}</Pill>
-            <span className="text-[11px] px-3 py-1 rounded-full" style={{ background: T.card2, color: T.faint, border: `1px solid ${T.border}` }}>
-              Chapter {activeIndex + 1}
-            </span>
-          </div>
-          <h2 className="text-3xl md:text-[3rem] font-bold tracking-[-0.05em] leading-[0.95]" style={{ color: T.text }}>
-            {meta.heroSubtitle}
-          </h2>
-          <div className="flex flex-wrap gap-2 mt-4">
-            {meta.heroSignals.map((signal) => (
-              <span key={signal} className="px-3 py-1.5 rounded-full text-[11px] font-semibold" style={{ background: `${accent}12`, color: T.text, border: `1px solid ${accent}24` }}>
-                {signal}
-              </span>
-            ))}
-          </div>
+      <div>
+        <div className="flex items-center gap-2 flex-wrap mb-3">
+          <Pill color={accent}>{meta.eyebrow}</Pill>
+          <span className="text-[11px] px-3 py-1 rounded-full" style={{ background: T.card2, color: T.faint, border: `1px solid ${T.border}` }}>
+            Chapter {activeIndex + 1}
+          </span>
+          <span className="text-[11px] px-3 py-1 rounded-full" style={{ background: `${accent}10`, color: accent, border: `1px solid ${accent}22` }}>
+            {chapter?.mins ?? 0} min
+          </span>
         </div>
-        <div className="grid gap-3 md:grid-cols-3 xl:grid-cols-1">
-          {DATA_TRACK_NUMBERS.slice(0, 3).map((item) => (
-            <MetricCard key={item.label} label={item.label} value={item.value} note={item.note} color={item.color} />
-          ))}
+        <div className="grid gap-5 xl:grid-cols-[1.1fr_0.9fr] xl:items-start">
+          <div>
+            <h2 className="text-[1.95rem] md:text-[2.25rem] font-semibold tracking-[-0.05em] leading-[0.98] max-w-3xl" style={{ color: T.text }}>
+              {meta.heroSubtitle}
+            </h2>
+            <p className="text-sm md:text-[15px] leading-7 mt-3 max-w-3xl" style={{ color: T.muted }}>
+              {TAB_INTERVIEW_LINES[tab]}
+            </p>
+            <div className="flex flex-wrap gap-2 mt-4">
+              {meta.heroSignals.map((signal) => (
+                <span key={signal} className="px-3 py-1.5 rounded-full text-[11px] font-semibold" style={{ background: `${accent}12`, color: T.text, border: `1px solid ${accent}24` }}>
+                  {signal}
+                </span>
+              ))}
+            </div>
+            <div className="flex flex-wrap gap-2 mt-4">
+              <button
+                onClick={() => onNavigateSection(sections[0]?.id ?? "")}
+                className="px-3 py-2 rounded-xl text-xs font-semibold cursor-pointer"
+                style={{ background: `${accent}12`, color: T.text, border: `1px solid ${accent}24` }}
+              >
+                Open {sections[0]?.title ?? "first section"} →
+              </button>
+              <CopyButton value={TAB_INTERVIEW_LINES[tab]} label="Copy interview line" />
+            </div>
+          </div>
+          <div className="rounded-[24px] p-4" style={{ background: T.card2, border: `1px solid ${T.border}` }}>
+            <div className="flex items-center justify-between gap-2 mb-3">
+              <p className="text-[10px] font-bold uppercase tracking-[0.18em]" style={{ color: accent }}>
+                Quick jumps
+              </p>
+              <span className="text-[11px]" style={{ color: T.faint }}>
+                Click to jump
+              </span>
+            </div>
+            <div className="flex flex-wrap gap-2">
+              {sections.slice(0, 4).map((section, index) => (
+                <button
+                  key={section.id}
+                  onClick={() => onNavigateSection(section.id)}
+                  className="rounded-full px-3 py-2 text-left cursor-pointer transition-all hover:-translate-y-px"
+                  style={{ background: T.card, border: `1px solid ${T.border}` }}
+                >
+                  <div className="flex items-center gap-2">
+                    <span className="w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-bold shrink-0" style={{ background: `${accent}14`, color: accent }}>
+                      {index + 1}
+                    </span>
+                    <span className="text-xs font-semibold" style={{ color: T.text }}>
+                      {section.title}
+                    </span>
+                    <span style={{ color: accent }}>→</span>
+                  </div>
+                </button>
+              ))}
+            </div>
+            <div className="grid gap-3 md:grid-cols-3 mt-4">
+              {DATA_TRACK_NUMBERS.slice(0, 3).map((item) => (
+                <CompactMetricBadge key={item.label} label={item.label} value={item.value} note={item.note} color={item.color} />
+              ))}
+            </div>
+          </div>
         </div>
       </div>
     </div>
