@@ -168,7 +168,10 @@ export function FailuresTab({ onNavigateTab }: { onNavigateTab?: (tab: TabSlug) 
                 >
                   <div className="flex items-center gap-3 min-w-0">
                     <span className="text-[10px] font-bold px-2 py-1 rounded shrink-0"
-                      style={{ background: item.mode === "fail-open" ? "#d1fae5" : "#fee2e2", color: item.mode === "fail-open" ? "#065f46" : "#7f1d1d" }}>
+                      style={{
+                        background: item.mode === "fail-open" ? "var(--green-soft)" : "rgba(239,68,68,0.12)",
+                        color: item.mode === "fail-open" ? "var(--green-text)" : "#ef4444",
+                      }}>
                       {item.mode === "fail-open" ? "FAIL OPEN" : "FAIL CLOSED"}
                     </span>
                     <div className="min-w-0">
@@ -225,7 +228,10 @@ export function FailuresTab({ onNavigateTab }: { onNavigateTab?: (tab: TabSlug) 
                   <td className="px-4 py-3 text-sm" style={{ color: "var(--text)" }}>{r.component}</td>
                   <td className="px-4 py-3 text-center">
                     <span className="text-[10px] font-bold px-2 py-1 rounded"
-                      style={{ background: r.decision === "FAIL OPEN" ? "#d1fae5" : "#fee2e2", color: r.decision === "FAIL OPEN" ? "#065f46" : "#7f1d1d" }}>
+                      style={{
+                        background: r.decision === "FAIL OPEN" ? "var(--green-soft)" : "rgba(239,68,68,0.12)",
+                        color: r.decision === "FAIL OPEN" ? "var(--green-text)" : "#ef4444",
+                      }}>
                       {r.decision}
                     </span>
                   </td>

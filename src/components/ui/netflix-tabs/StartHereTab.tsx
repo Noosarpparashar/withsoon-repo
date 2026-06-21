@@ -6,19 +6,24 @@ import type { TabSlug } from "./types";
 import type { Role } from "./types";
 
 function CopyButton({ text }: { text: string }) {
-  const [copied, setCopied] = useState(false);
+  const [status, setStatus] = useState<"idle" | "copied" | "error">("idle");
   return (
     <button
       onClick={async () => {
         const copiedOk = await copyTextToClipboard(text);
-        if (!copiedOk) return;
-        setCopied(true);
-        setTimeout(() => setCopied(false), 2000);
+        setStatus(copiedOk ? "copied" : "error");
+        setTimeout(() => setStatus("idle"), 2000);
       }}
       className="text-[11px] px-3 py-1 rounded font-medium transition-colors"
-      style={{ background: copied ? "#0f766e" : "var(--bg-muted)", color: copied ? "#fff" : "var(--text-muted)", cursor: "pointer", border: `1px solid var(--border)` }}
+      aria-live="polite"
+      style={{
+        background: status === "copied" ? "#0f766e" : status === "error" ? "#ef4444" : "var(--bg-card)",
+        color: status === "idle" ? "var(--text-muted)" : "#fff",
+        cursor: "pointer",
+        border: `1px solid ${status === "error" ? "#ef4444" : "var(--border)"}`,
+      }}
     >
-      {copied ? "Copied!" : "Copy"}
+      {status === "copied" ? "Copied!" : status === "error" ? "Copy failed" : "Copy"}
     </button>
   );
 }
@@ -167,6 +172,8 @@ function StartHereTab({ onNavigateTab, role, onRoleChange }: {
   const activeClarifyQs = clarifyQs[role];
   const activeMistakes = commonMistakes[role];
   const activeCard = roleCards.find(c => c.role === role)!;
+  const activePath = role === "Backend Engineer" ? backendPath : dataPath;
+  const totalPrepTime = role === "Backend Engineer" ? "≈45 min total" : "≈35 min total";
 
   return (
     <div className="space-y-8">
@@ -179,7 +186,7 @@ function StartHereTab({ onNavigateTab, role, onRoleChange }: {
           This is a guided interview preparation product — not a general encyclopedia.
         </p>
         <p className="text-xs mb-6" style={{ color: "var(--text-faint)" }}>
-          In a Netflix-style interview, do not try to design every Netflix system. First clarify the scope, then go deep into the area relevant to your role.
+          Pick your role first, then go deep on the systems that actually matter for that interview loop.
         </p>
 
         {/* Role cards */}
@@ -247,10 +254,10 @@ function StartHereTab({ onNavigateTab, role, onRoleChange }: {
           Best path for interview prep
         </p>
         <p className="text-xs mb-4" style={{ color: "var(--text-faint)" }}>
-          {role === "Backend Engineer" ? "Backend Engineer track" : "Data Engineer track"}
+          {role === "Backend Engineer" ? "Backend Engineer track" : "Data Engineer track"} · {totalPrepTime}
         </p>
         <div className="space-y-2">
-          {(role === "Backend Engineer" ? backendPath : dataPath).map(({ step, tab, desc }, i) => (
+          {activePath.map(({ step, tab, desc }, i) => (
             <button
               key={step}
               onClick={() => onNavigateTab(tab)}
@@ -306,7 +313,13 @@ function StartHereTab({ onNavigateTab, role, onRoleChange }: {
                 onClick={() => setOpenIdx(openIdx === i ? null : i)}
                 role="button"
                 tabIndex={0}
-                onKeyDown={(e) => e.key === "Enter" && setOpenIdx(openIdx === i ? null : i)}
+                aria-expanded={openIdx === i}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" || e.key === " ") {
+                    e.preventDefault();
+                    setOpenIdx(openIdx === i ? null : i);
+                  }
+                }}
               >
                 <span className="w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold shrink-0 mt-0.5" style={{ background: `${activeCard.color}20`, color: activeCard.color }}>Q</span>
                 <div className="flex-1">
@@ -327,12 +340,12 @@ function StartHereTab({ onNavigateTab, role, onRoleChange }: {
           <span className="ml-2 text-sm font-normal" style={{ color: activeCard.color }}>— {role}</span>
         </h2>
         <p className="text-sm mb-4" style={{ color: "var(--text-muted)" }}>Copy and practice verbatim. It signals scope awareness before you draw a single box.</p>
-        <div className="relative rounded-xl overflow-hidden" style={{ background: "#1a1b26" }}>
+        <div className="relative rounded-xl overflow-hidden" style={{ background: "var(--bg-muted)", border: "1px solid var(--border)" }}>
           <div className="absolute top-2 right-3 z-10">
             <CopyButton text={role === "Backend Engineer" ? backendOpeningScript : dataOpeningScript} />
           </div>
           <pre className="p-4 pt-5 overflow-x-auto text-xs leading-relaxed whitespace-pre-wrap">
-            <code style={{ color: "#a9b1d6" }}>{role === "Backend Engineer" ? backendOpeningScript : dataOpeningScript}</code>
+            <code style={{ color: "var(--text)" }}>{role === "Backend Engineer" ? backendOpeningScript : dataOpeningScript}</code>
           </pre>
         </div>
       </div>
@@ -369,6 +382,27 @@ function StartHereTab({ onNavigateTab, role, onRoleChange }: {
           style={{ background: "var(--bg-card)", color: "var(--text-muted)", border: "1px solid var(--border)", cursor: "pointer" }}
         >
           Jump to Cheat Sheet →
+        </button>
+      </div>
+
+      <div
+        className="sticky bottom-3 z-10 rounded-2xl p-3 flex flex-col sm:flex-row items-center gap-3"
+        style={{ background: "color-mix(in srgb, var(--bg) 92%, transparent)", border: "1px solid var(--border)", backdropFilter: "blur(12px)" }}
+      >
+        <div className="min-w-0 flex-1">
+          <p className="text-[10px] font-bold uppercase tracking-wider" style={{ color: activeCard.color }}>
+            Recommended next
+          </p>
+          <p className="text-xs" style={{ color: "var(--text-muted)" }}>
+            Start the {role === "Backend Engineer" ? "architecture walkthrough" : "data models deep dive"} next.
+          </p>
+        </div>
+        <button
+          onClick={() => onNavigateTab(activeCard.ctaTab)}
+          className="w-full sm:w-auto px-4 py-2.5 rounded-xl text-sm font-bold transition-all"
+          style={{ background: activeCard.color, color: "#fff", border: "none", cursor: "pointer" }}
+        >
+          {activeCard.cta} →
         </button>
       </div>
 

@@ -645,7 +645,7 @@ export const NODES: NodeData[] = [
   {
     id: "cdn",
     label: "CloudFront CDN",
-    sublabel: "300 Tbps · Signed URLs · Origin Shield",
+    sublabel: "AWS analog · Signed URLs · Origin Shield",
     type: "pipeline",
     layer: 6, col: 3,
     overview: "Amazon CloudFront with 400+ PoPs worldwide delivers video segments from edge cache. 99%+ cache hit rate for top titles. Origin Shield adds a regional caching layer to reduce S3 origin requests by 60–70%. Signed URLs enforce DRM access control at the edge.",

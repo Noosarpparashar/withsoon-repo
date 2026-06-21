@@ -66,6 +66,14 @@ const TAB_META: Record<string, { title: string; description: string }> = {
   },
 };
 
+function getBreadcrumbName(tab: string) {
+  const metaTitle = TAB_META[tab]?.title;
+  if (!metaTitle) return tab;
+  return metaTitle
+    .replace("Netflix System Design — ", "")
+    .replace(" | withsoon.com", "");
+}
+
 export async function generateMetadata({ params }: { params: Promise<{ tab: string }> }): Promise<Metadata> {
   const { tab } = await params;
   const canonicalTab = normalizeNetflixTab(tab) ?? tab;
@@ -118,5 +126,26 @@ export default async function TabPage({ params }: { params: Promise<{ tab: strin
     redirect("/system-design/netflix/start-here");
   }
 
-  return <NetflixPage initialTab={tab as CurrentTabSlug} />;
+  const breadcrumbJsonLd = {
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    itemListElement: [
+      { "@type": "ListItem", position: 1, name: "Home", item: "https://withsoon.com" },
+      { "@type": "ListItem", position: 2, name: "System Design", item: "https://withsoon.com/system-design" },
+      { "@type": "ListItem", position: 3, name: "Netflix", item: "https://withsoon.com/system-design/netflix" },
+      {
+        "@type": "ListItem",
+        position: 4,
+        name: getBreadcrumbName(tab),
+        item: `https://withsoon.com/system-design/netflix/${tab}`,
+      },
+    ],
+  };
+
+  return (
+    <>
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbJsonLd) }} />
+      <NetflixPage initialTab={tab as CurrentTabSlug} />
+    </>
+  );
 }

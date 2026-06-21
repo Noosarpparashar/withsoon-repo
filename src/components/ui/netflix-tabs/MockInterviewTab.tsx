@@ -666,6 +666,7 @@ export function MockInterviewTab({ role }: { role: Role }) {
                       cursor: "pointer",
                     }}
                     aria-pressed={isSelected}
+                    aria-label={`Rate this answer as ${config[r].label.replace(/^[^A-Za-z]+/, "")}`}
                   >
                     {config[r].label}
                   </button>

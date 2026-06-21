@@ -360,6 +360,7 @@ function MiniMap({
     <div
       className="absolute rounded-lg overflow-hidden"
       onClick={handleClick}
+      title="Mini-map — click to pan the architecture"
       style={{
         bottom: 48,
         left: 8,
@@ -389,7 +390,7 @@ function MiniMap({
           width={Math.min(MM_W, vpW * MM_SCALE)} height={Math.min(MM_H, vpH * MM_SCALE)}
           fill="none" stroke={N_RED} strokeWidth={1.5} opacity={0.8} rx={1} />
       </svg>
-      <div className="absolute bottom-0.5 left-1 text-[7px]" style={{ color: "var(--text-faint)", pointerEvents: "none" }}>MAP</div>
+      <div className="absolute bottom-0.5 left-1 text-[11px]" style={{ color: "var(--text-faint)", pointerEvents: "none" }}>MAP</div>
     </div>
   );
 }
@@ -435,6 +436,7 @@ function DetailPanel({
     return (
       <div className="flex flex-col h-full overflow-y-auto"
         style={{ background: "var(--bg-card)", borderLeft: `1px solid var(--border)` }}>
+        <div aria-live="polite" aria-atomic="true" className="sr-only">Architecture panel ready. Click a node to inspect details.</div>
         <div className="p-5 flex-1 flex flex-col gap-4">
           <div className="rounded-xl overflow-hidden" style={{ background: "var(--bg)", border: `1px solid ${N_AMBER}30` }}>
             <div className="px-4 py-3" style={{ background: N_AMBER + "12", borderBottom: `1px solid ${N_AMBER}25` }}>
@@ -509,6 +511,9 @@ function DetailPanel({
   return (
     <div ref={panelRef} className="flex flex-col h-full overflow-y-auto"
       style={{ background: "var(--bg-card)", borderLeft: `1px solid var(--border)` }}>
+      <div aria-live="polite" aria-atomic="true" className="sr-only">
+        {node ? `Selected node ${node.label}` : "No node selected"}
+      </div>
       <div className="sticky top-0 z-10 px-4 py-3" style={{ background: "var(--bg-card)", borderBottom: `1px solid var(--border)` }}>
         <div className="flex items-start justify-between gap-2 mb-2">
           <div>
@@ -969,6 +974,7 @@ function ArchitectureTab({
   const [containerSize, setContainerSize] = useState({ w: 800, h: 600 });
   const [mobileOverlayDismissed, setMobileOverlayDismissed] = useState(false);
   const [guidePlaybackPill, setGuidePlaybackPill] = useState(false);
+  const [showFlowIntroPulse, setShowFlowIntroPulse] = useState(false);
   const isPanning = useRef(false);
   const lastPan = useRef({ x: 0, y: 0 });
   const canvasContainerRef = useRef<HTMLDivElement>(null);
@@ -1062,6 +1068,17 @@ function ArchitectureTab({
     };
   }, []);
 
+  useEffect(() => {
+    try {
+      if (!localStorage.getItem("netflix-flows-intro-seen")) {
+        setShowFlowIntroPulse(true);
+        localStorage.setItem("netflix-flows-intro-seen", "1");
+        const timeout = window.setTimeout(() => setShowFlowIntroPulse(false), 3200);
+        return () => window.clearTimeout(timeout);
+      }
+    } catch { /* ignore */ }
+  }, []);
+
   const handleMouseDown = useCallback((e: React.MouseEvent<SVGSVGElement>) => {
     if ((e.target as SVGElement).closest("g[role='button']")) return;
     isPanning.current = true;
@@ -1132,10 +1149,12 @@ function ArchitectureTab({
 
           {/* SVG canvas */}
           <svg width="100%" height="100%"
+            aria-label="Netflix system architecture diagram with interactive nodes across 6 layers"
             style={{ cursor: isPanning.current ? "grabbing" : "grab", userSelect: "none" }}
             onMouseDown={handleMouseDown} onMouseMove={handleMouseMove}
             onMouseUp={handleMouseUp} onMouseLeave={handleMouseUp}
             onWheel={handleWheel}>
+            <title>Netflix system architecture diagram with interactive nodes across six layers</title>
             <defs>
               {/* Dot-grid pattern */}
               <pattern id="dot-grid" x="0" y="0" width="20" height="20" patternUnits="userSpaceOnUse">
@@ -1287,10 +1306,14 @@ function ArchitectureTab({
                   cursor: "pointer",
                   boxShadow: guidePlaybackPill && isPlaybackPill
                     ? `0 0 0 2px ${N_AMBER}55, 0 0 22px ${N_AMBER}25`
+                    : showFlowIntroPulse && !activeFlow
+                      ? `0 0 0 2px ${N_AMBER}30, 0 0 18px ${N_AMBER}18`
                     : !activeFlow
                       ? `0 0 0 1px ${N_AMBER}12 inset`
                       : undefined,
-                  animation: guidePlaybackPill && isPlaybackPill ? "pulseAmber 1.4s ease-in-out infinite" : undefined,
+                  animation: (guidePlaybackPill && isPlaybackPill) || (showFlowIntroPulse && !activeFlow)
+                    ? "pulseAmber 1.4s ease-in-out infinite"
+                    : undefined,
                 }}>
                 <span className="w-1.5 h-1.5 rounded-full" style={{ background: isActive ? N_AMBER : N_AMBER + "CC" }} />
                 <span>{flow.label}</span>
@@ -1363,6 +1386,15 @@ function ScrollableTabShell({ bg, tabId, feedbackVote, onFeedback, children }: {
     <div ref={ref} className="flex-1 overflow-y-auto relative" style={{ background: bg }}>
       <div className="px-5 lg:px-6 py-7 max-w-6xl mx-auto w-full">
         {children}
+        <div className="mt-8 px-4 py-3 rounded-2xl flex flex-col sm:flex-row items-center justify-between gap-2"
+          style={{ background: "var(--bg-card)", border: "1px solid var(--border)" }}>
+          <span className="text-[11px]" style={{ color: "var(--text-faint)" }}>
+            Last reviewed June 2026 · By Prasoon Parashar
+          </span>
+          <span className="text-[11px]" style={{ color: "var(--text-muted)" }}>
+            Numbers are interview assumptions, not real Netflix internal figures.
+          </span>
+        </div>
         {/* Feedback widget */}
         {onFeedback && (
           <div className="mt-10 pt-5 flex items-center gap-3" style={{ borderTop: "1px solid var(--border)" }}>
@@ -1597,12 +1629,14 @@ export default function NetflixArchPage({ initialTab }: { initialTab?: string })
           <button onClick={() => setProgressCardOpen(v => !v)}
             className="min-h-[40px] text-xs px-3 py-2 rounded-lg font-medium hidden sm:block cursor-pointer"
             style={{ background: "transparent", color: T.muted, border: `1px solid ${T.border}`, cursor: "pointer" }}
+            aria-label={`View progress, currently ${visitedTabsCount} of ${TABS.length} tabs explored`}
             title="View progress card">
             Progress {visitedTabsCount}/{TABS.length}
           </button>
           <button onClick={() => setNotesOpen(v => !v)}
             className="min-h-[40px] text-xs px-3 py-2 rounded-lg font-medium hidden sm:block cursor-pointer"
             style={{ background: notesOpen ? N_RED + "18" : "transparent", color: notesOpen ? N_RED : T.muted, border: `1px solid ${notesOpen ? N_RED + "40" : T.border}`, cursor: "pointer" }}
+            aria-label={notesOpen ? "Close notes panel" : "Open notes panel"}
             title="Open notes panel">
             Notes
           </button>
@@ -1643,7 +1677,12 @@ export default function NetflixArchPage({ initialTab }: { initialTab?: string })
         {/* Row 2: tabs — horizontal scroll, 40px height, right fade */}
         <div className="hidden sm:flex items-stretch relative" style={{ height: 40 }}>
           {/* Scrollable tab list */}
-          <div className="flex items-end overflow-x-auto px-4 gap-0 flex-1 min-w-0 no-scrollbar" style={{ scrollbarWidth: "none" }}>
+          <div
+            className="flex items-end overflow-x-auto px-4 gap-0 flex-1 min-w-0 no-scrollbar"
+            style={{ scrollbarWidth: "none" }}
+            role="tablist"
+            aria-label="Netflix system design sections"
+          >
             {TABS.map((tab, idx) => {
               const isPractice = tab.id === "quiz";
               return (
@@ -1656,6 +1695,11 @@ export default function NetflixArchPage({ initialTab }: { initialTab?: string })
                   )}
                   <button
                     ref={el => { tabRefs.current[idx] = el; }}
+                    id={`netflix-tab-${tab.id}`}
+                    role="tab"
+                    aria-selected={activeTab === tab.id}
+                    aria-controls={`netflix-panel-${tab.id}`}
+                    tabIndex={activeTab === tab.id ? 0 : -1}
                     onClick={() => switchTab(tab.id)}
                     onKeyDown={e => {
                       if (e.key === "ArrowRight" && idx < TABS.length - 1) {
@@ -1767,7 +1811,12 @@ export default function NetflixArchPage({ initialTab }: { initialTab?: string })
       )}
 
       {/* ── Tab content ── */}
-      <div className="flex-1 overflow-hidden flex flex-col">
+      <div
+        className="flex-1 overflow-hidden flex flex-col"
+        role="tabpanel"
+        id={`netflix-panel-${activeTab}`}
+        aria-labelledby={`netflix-tab-${activeTab}`}
+      >
         {activeTab === "start-here"     && (
           <ScrollableTabShell bg={T.bg} tabId={activeTab} feedbackVote={feedback[activeTab]} onFeedback={handleFeedback}>
             <TabHeader title="Start Here" color={N_RED} textColor={T.text} mins={TABS.find(t => t.id === "start-here")!.mins} />

@@ -9,7 +9,7 @@ const PLAYBACK_STEPS = [
   { step: 3,  actor: "Zuul2 (API Gateway)",        action: "Validate JWT signature, rate-limit check, route to Playback Service",                          latency: "~2ms" },
   { step: 4,  actor: "Playback Service",           action: "Receives request — begins parallel fan-out to 4 services simultaneously",                     latency: "" },
   { step: 5,  actor: "→ EVCache",                  action: "Check entitlement cache: is account active? which plan?",                                     latency: "~1ms" },
-  { step: 6,  actor: "↳ Billing Service",          action: "Cache MISS only: verify subscription status via MySQL read replica",                          latency: "~10ms" },
+  { step: 6,  actor: "↳ EVCache → MySQL fallback", action: "Cache MISS only: entitlement falls through to billing data on a MySQL read replica. Cache hit rate stays above 99%.", latency: "~10ms" },
   { step: 7,  actor: "→ Concurrency Service",      action: "Redis Lua script: atomically check slot count ≤ plan limit, INCR, SADD sessionId, TTL=36s",   latency: "~1ms" },
   { step: 8,  actor: "→ Steering Service",         action: "Get ranked OCA list for client IP: ASN match + title cached + OCA health + load",             latency: "~5ms" },
   { step: 9,  actor: "→ DRM Service",              action: "Issue license token signed by HSM (Content Encryption Key wrapped for device TEE)",            latency: "~10ms" },
