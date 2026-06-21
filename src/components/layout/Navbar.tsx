@@ -23,7 +23,24 @@ export default function Navbar() {
   const [mounted, setMounted] = useState(false);
   const { resolvedTheme, setTheme } = useTheme();
 
+  const applyTheme = (nextTheme: "dark" | "light") => {
+    setTheme(nextTheme);
+    document.documentElement.classList.toggle("dark", nextTheme === "dark");
+    document.documentElement.style.colorScheme = nextTheme;
+    try {
+      localStorage.setItem("theme", nextTheme);
+    } catch {
+      // ignore localStorage failures
+    }
+  };
+
   useEffect(() => { setMounted(true); }, []);
+
+  useEffect(() => {
+    if (!mounted || !resolvedTheme) return;
+    document.documentElement.classList.toggle("dark", resolvedTheme === "dark");
+    document.documentElement.style.colorScheme = resolvedTheme;
+  }, [mounted, resolvedTheme]);
 
   // ⌘K / Ctrl+K opens search
   useEffect(() => {
@@ -94,7 +111,10 @@ export default function Navbar() {
 
             {/* Dark mode toggle */}
             <button
-              onClick={() => setTheme(resolvedTheme === "dark" ? "light" : "dark")}
+              onClick={() => {
+                if (!mounted) return;
+                applyTheme(resolvedTheme === "dark" ? "light" : "dark");
+              }}
               className="p-2 rounded-lg border border-[var(--border)] text-[var(--text-muted)] hover:text-[var(--text)] hover:bg-[var(--bg-muted)] transition-colors"
               aria-label="Toggle theme"
             >
