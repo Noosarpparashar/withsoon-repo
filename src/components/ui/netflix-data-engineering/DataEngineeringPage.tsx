@@ -297,6 +297,36 @@ const DEPTH_GUIDANCE: Record<DepthMode, { label: string; summary: string }> = {
   },
 };
 
+const DEPTH_PLAYBOOK: Record<DepthMode, { title: string; prompts: string[] }> = {
+  beginner: {
+    title: "Keep the first pass simple",
+    prompts: [
+      "State the event journey in one line before naming tools.",
+      "Use only the core pipeline: events → Kafka → stream/batch → Bronze/Silver/Gold → BI + ML.",
+      "Talk about correctness with one example: deduplication, late data, or replay.",
+    ],
+  },
+  senior: {
+    title: "Show trade-offs and operating choices",
+    prompts: [
+      "Tie freshness to each consumer instead of using one blanket SLA.",
+      "Explain where streaming stops and official batch truth takes over.",
+      "Name one likely failure mode per major layer and the containment path.",
+    ],
+  },
+  staff: {
+    title: "Lead with platform boundaries and operating model",
+    prompts: [
+      "Clarify ownership, contracts, privacy, and auditability as platform requirements.",
+      "Frame capacity, replay, and cost as ongoing operating concerns, not afterthoughts.",
+      "Call out where regional isolation, shared tooling, and governance reduce organizational risk.",
+    ],
+  },
+};
+
+const TRACK_ASSUMPTION_NOTE =
+  "Backend track uses playback-platform assumptions. Data Engineering track uses analytics-platform assumptions for events, freshness, and replay.";
+
 function cn(...values: Array<string | false | null | undefined>) {
   return values.filter(Boolean).join(" ");
 }
@@ -387,6 +417,8 @@ function TabHeader({
   tab,
   activeIndex,
   total,
+  visitedCount,
+  revisedCount,
   onToggleProgress,
   onToggleNotes,
   onToggleFocus,
@@ -398,6 +430,8 @@ function TabHeader({
   tab: DataEngineeringTabSlug;
   activeIndex: number;
   total: number;
+  visitedCount: number;
+  revisedCount: number;
   onToggleProgress: () => void;
   onToggleNotes: () => void;
   onToggleFocus: () => void;
@@ -408,6 +442,7 @@ function TabHeader({
 }) {
   const meta = DATA_ENGINEERING_TAB_META[tab];
   const accent = DATA_ENGINEERING_TABS.find((item) => item.id === tab)?.accent ?? T.red;
+  const progressPercent = Math.max(6, Math.round((visitedCount / total) * 100));
 
   return (
     <div className="shrink-0 z-30" style={{ background: T.bg, borderBottom: `1px solid ${T.border}` }}>
@@ -448,6 +483,22 @@ function TabHeader({
               {activeIndex + 1} / {total}
             </p>
           </div>
+          <div className="hidden xl:block min-w-[190px] px-3 py-2 rounded-xl" style={{ background: T.card, border: `1px solid ${T.border}` }}>
+            <div className="flex items-center justify-between gap-3">
+              <p className="text-[10px] font-bold uppercase tracking-[0.18em]" style={{ color: T.faint }}>
+                Progress
+              </p>
+              <p className="text-[11px] font-semibold" style={{ color: T.text }}>
+                {progressPercent}%
+              </p>
+            </div>
+            <div className="mt-2 h-2 rounded-full overflow-hidden" style={{ background: T.card2 }}>
+              <div className="h-full rounded-full" style={{ width: `${progressPercent}%`, background: `linear-gradient(90deg, ${accent}, ${T.blue})` }} />
+            </div>
+            <p className="text-[10px] mt-2" style={{ color: T.faint }}>
+              {visitedCount} visited · {revisedCount} revised
+            </p>
+          </div>
           <button onClick={onToggleProgress} className="text-xs px-3 py-2 rounded-xl font-semibold cursor-pointer" style={{ background: T.card, color: T.text, border: `1px solid ${T.border}` }}>
             Progress
           </button>
@@ -468,6 +519,9 @@ function TabHeader({
             <p className="text-[11px] font-bold uppercase tracking-[0.2em]" style={{ color: T.faint }}>
               Netflix Data Engineering Track
             </p>
+            <p className="hidden xl:block text-[12px] mt-2 max-w-3xl leading-6" style={{ color: T.faint }}>
+              {TRACK_ASSUMPTION_NOTE}
+            </p>
             <div className="flex flex-wrap gap-2 mt-3">
               {DE_TRACK_CHIPS.map((chip) => (
                 <span key={chip} className="px-3 py-1.5 rounded-full text-[11px] font-semibold" style={{ background: `${accent}12`, color: T.text, border: `1px solid ${accent}22` }}>
@@ -480,8 +534,8 @@ function TabHeader({
             <DepthModeToggle value={depthMode} onChange={onChangeDepthMode} />
             <Link
               href="/system-design/netflix/start-here"
-              className="px-3 py-2 rounded-xl text-sm font-semibold"
-              style={{ background: T.card2, color: T.text, border: `1px solid ${T.border}` }}
+              className="px-3 py-2 rounded-xl text-xs font-medium"
+              style={{ background: "transparent", color: T.faint, border: `1px solid ${T.border}` }}
             >
               View Backend Track
             </Link>
@@ -593,8 +647,16 @@ function Sidebar({
           </p>
         </div>
         <div>
-          <p className="text-[10px] font-bold uppercase tracking-[0.22em] mb-3" style={{ color: T.faint }}>
-            On this page
+          <div className="flex items-center justify-between gap-3 mb-3">
+            <p className="text-[10px] font-bold uppercase tracking-[0.22em]" style={{ color: T.faint }}>
+              Page anchors
+            </p>
+            <span className="text-[10px]" style={{ color: T.faint }}>
+              Chapters stay on top
+            </span>
+          </div>
+          <p className="text-[11px] mb-3 leading-5" style={{ color: T.faint }}>
+            Desktop uses the top strip for chapter navigation and this rail only for in-page anchors.
           </p>
           <div className="space-y-2">
             {sections.map((section, index) => {
@@ -953,7 +1015,49 @@ function InterviewAnswerStrip({
   tab: DataEngineeringTabSlug;
   accent: string;
 }) {
-  return <AnswerCard title="Say This In Interview" body={TAB_INTERVIEW_LINES[tab]} accent={accent} />;
+  const meta = DATA_ENGINEERING_TAB_META[tab];
+  const answerVersions = [
+    {
+      title: "30-second answer",
+      body: TAB_INTERVIEW_LINES[tab],
+    },
+    {
+      title: "2-minute answer",
+      body: `${meta.description} Focus on ${meta.heroSignals.slice(0, 3).join(", ")}.`,
+    },
+    {
+      title: "Deep answer",
+      body: `${TAB_INTERVIEW_LINES[tab]} Then go layer by layer through ${meta.heroSignals.join(", ")}, including trade-offs, failure handling, and why this shape is right for the consumer SLAs.`,
+    },
+  ];
+
+  return (
+    <>
+      <div className="xl:hidden">
+        <AnswerCard title="Say This In Interview" body={TAB_INTERVIEW_LINES[tab]} accent={accent} />
+      </div>
+      <div className="hidden xl:grid xl:grid-cols-3 gap-4">
+        {answerVersions.map((item, index) => (
+          <div key={item.title} className="rounded-[24px] p-5" style={{ background: T.card, border: `1px solid ${accent}24` }}>
+            <div className="flex items-center justify-between gap-3">
+              <p className="text-[10px] font-bold uppercase tracking-[0.18em]" style={{ color: accent }}>
+                {item.title}
+              </p>
+              <span className="text-[10px] px-2 py-1 rounded-full" style={{ background: `${accent}10`, color: accent, border: `1px solid ${accent}22` }}>
+                {index === 0 ? "Fast" : index === 1 ? "Balanced" : "Deep"}
+              </span>
+            </div>
+            <p className="text-sm mt-4 leading-7" style={{ color: T.muted }}>
+              {item.body}
+            </p>
+            <div className="mt-4">
+              <CopyButton value={item.body} label="Copy answer" />
+            </div>
+          </div>
+        ))}
+      </div>
+    </>
+  );
 }
 
 function DepthGuidancePanel({ mode }: { mode: DepthMode }) {
@@ -971,6 +1075,44 @@ function DepthGuidancePanel({ mode }: { mode: DepthMode }) {
           <p className="text-sm mt-2" style={{ color: T.muted }}>
             {item.summary}
           </p>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function DepthPlaybookPanel({
+  mode,
+  tab,
+}: {
+  mode: DepthMode;
+  tab: DataEngineeringTabSlug;
+}) {
+  const playbook = DEPTH_PLAYBOOK[mode];
+  const meta = DATA_ENGINEERING_TAB_META[tab];
+
+  return (
+    <div className="hidden xl:block rounded-[24px] p-5 mb-6" style={{ background: T.card, border: `1px solid ${T.violet}20` }}>
+      <div className="grid gap-4 xl:grid-cols-[0.85fr_1.15fr] xl:items-start">
+        <div>
+          <p className="text-[10px] font-bold uppercase tracking-[0.18em]" style={{ color: T.violet }}>
+            Desktop depth mode
+          </p>
+          <h3 className="text-xl font-bold mt-2" style={{ color: T.text }}>
+            {playbook.title}
+          </h3>
+          <p className="text-sm mt-3 leading-7" style={{ color: T.muted }}>
+            {meta.heroTitle} changes its visible guidance based on the selected depth so the page reads more like an interview coach than a static article.
+          </p>
+        </div>
+        <div className="grid gap-3 md:grid-cols-3">
+          {playbook.prompts.map((prompt) => (
+            <div key={prompt} className="rounded-2xl p-4" style={{ background: T.card2, border: `1px solid ${T.border}` }}>
+              <p className="text-sm leading-7" style={{ color: T.muted }}>
+                {prompt}
+              </p>
+            </div>
+          ))}
         </div>
       </div>
     </div>
@@ -1134,6 +1276,93 @@ function FlashcardPanel() {
   );
 }
 
+function DesktopJourneyCanvas({ onNavigate }: { onNavigate: (tab: DataEngineeringTabSlug) => void }) {
+  const steps: Array<{
+    label: string;
+    note: string;
+    preview: string[];
+    target: DataEngineeringTabSlug;
+    color: string;
+  }> = [
+    { label: "Scope", note: "Frame the platform boundary first.", preview: ["in scope", "out of scope", "track opening"], target: "start-here", color: T.red },
+    { label: "Events", note: "Map the producers and event families.", preview: ["clients", "CDC", "contracts"], target: "event-sources", color: T.blue },
+    { label: "Kafka", note: "Choose topics, keys, and replay posture.", preview: ["topic design", "partition key", "DLQ"], target: "ingestion-kafka", color: T.amber },
+    { label: "Streaming", note: "Turn events into trusted live facts.", preview: ["watermarks", "sessionization", "late events"], target: "real-time-streaming", color: T.blue },
+    { label: "Lakehouse", note: "Keep replayable truth by layer.", preview: ["Bronze", "Silver", "Gold"], target: "storage-lakehouse", color: T.violet },
+    { label: "Gold Metrics", note: "Publish decision-ready outputs.", preview: ["marts", "freshness", "quality"], target: "data-modeling", color: T.green },
+    { label: "BI / ML", note: "Serve each consumer correctly.", preview: ["warehouse", "Pinot", "features"], target: "warehouse-serving", color: T.gold },
+    { label: "Replay", note: "Protect correctness after failure.", preview: ["quarantine", "backfill", "audit"], target: "backfill-replay", color: T.red },
+  ];
+
+  return (
+    <div className="hidden xl:block rounded-[28px] p-5" style={{ background: T.card, border: `1px solid ${T.violet}24` }}>
+      <div className="flex items-center justify-between gap-3 mb-5">
+        <div>
+          <p className="text-[10px] font-bold uppercase tracking-[0.18em]" style={{ color: T.violet }}>
+            Desktop journey canvas
+          </p>
+          <p className="text-[12px] mt-1" style={{ color: T.faint }}>
+            Click any stage to jump into the deeper chapter.
+          </p>
+        </div>
+        <span className="text-[11px] px-3 py-1 rounded-full" style={{ background: `${T.violet}10`, color: T.violet, border: `1px solid ${T.violet}22` }}>
+          Diagram-first desktop view
+        </span>
+      </div>
+      <div className="grid gap-4 xl:grid-cols-[0.68fr_1.32fr]">
+        <div className="rounded-[24px] p-4" style={{ background: T.card2, border: `1px solid ${T.border}` }}>
+          <div className="space-y-3">
+            {steps.map((step, index) => (
+              <div key={step.label} className="flex items-center gap-3">
+                <span className="w-8 h-8 rounded-xl flex items-center justify-center text-[11px] font-bold shrink-0" style={{ background: `${step.color}16`, color: step.color }}>
+                  {index + 1}
+                </span>
+                <div className="flex-1">
+                  <p className="text-sm font-semibold" style={{ color: T.text }}>
+                    {step.label}
+                  </p>
+                  <p className="text-[12px] mt-1 leading-5" style={{ color: T.faint }}>
+                    {step.note}
+                  </p>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+        <div className="grid gap-3 md:grid-cols-2">
+          {steps.map((step) => (
+            <button
+              key={step.label}
+              onClick={() => onNavigate(step.target)}
+              className="rounded-[24px] p-4 text-left cursor-pointer transition-all hover:-translate-y-px"
+              style={{ background: T.card2, border: `1px solid ${step.color}24` }}
+            >
+              <div className="flex items-center justify-between gap-3">
+                <p className="text-sm font-bold" style={{ color: T.text }}>
+                  {step.label}
+                </p>
+                <span className="text-xs" style={{ color: step.color }}>
+                  Open →
+                </span>
+              </div>
+              <p className="text-[12px] mt-2 leading-6" style={{ color: T.faint }}>
+                {step.note}
+              </p>
+              <div className="flex flex-wrap gap-2 mt-4">
+                {step.preview.map((item) => (
+                  <span key={item} className="px-3 py-1.5 rounded-full text-[11px] font-semibold" style={{ background: `${step.color}10`, color: T.text, border: `1px solid ${step.color}22` }}>
+                    {item}
+                  </span>
+                ))}
+              </div>
+            </button>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function StartHereTab({ onNavigate }: { onNavigate: (tab: DataEngineeringTabSlug) => void }) {
   const [scopeMode, setScopeMode] = useState<ScopeMode>("data");
   const visibleScope = scopeMode === "data" ? START_HERE_SCOPE.dataEngineeringScope : START_HERE_SCOPE.backendScope;
@@ -1184,6 +1413,26 @@ function StartHereTab({ onNavigate }: { onNavigate: (tab: DataEngineeringTabSlug
                   </span>
                 ))}
               </div>
+            </div>
+            <div className="hidden xl:grid xl:grid-cols-2 gap-3 mt-4">
+              {[
+                { title: "Start interview flow", note: "Open with scope, event journey, and why this is a DE platform problem.", target: "requirements" as DataEngineeringTabSlug, color: T.red },
+                { title: "View architecture", note: "Jump straight into the layered system map and click through the pipeline nodes.", target: "architecture" as DataEngineeringTabSlug, color: T.blue },
+              ].map((item) => (
+                <button
+                  key={item.title}
+                  onClick={() => onNavigate(item.target)}
+                  className="rounded-2xl p-4 text-left cursor-pointer transition-all hover:-translate-y-px"
+                  style={{ background: `${item.color}10`, border: `1px solid ${item.color}24` }}
+                >
+                  <p className="text-sm font-bold" style={{ color: T.text }}>
+                    {item.title}
+                  </p>
+                  <p className="text-[12px] mt-2 leading-6" style={{ color: T.faint }}>
+                    {item.note}
+                  </p>
+                </button>
+              ))}
             </div>
           </div>
           <div className="grid gap-3">
@@ -1265,6 +1514,8 @@ function StartHereTab({ onNavigate }: { onNavigate: (tab: DataEngineeringTabSlug
           })}
         </div>
       </div>
+
+      <DesktopJourneyCanvas onNavigate={onNavigate} />
     </div>
   );
 }
@@ -1402,7 +1653,7 @@ function RequirementsTab() {
   );
 }
 
-function ScaleEstimationTab() {
+function ScaleEstimationTab({ depthMode }: { depthMode: DepthMode }) {
   const [dauMillions, setDauMillions] = useState(SCALE_DEFAULTS.dauMillions);
   const [watchHoursPerUser, setWatchHoursPerUser] = useState(SCALE_DEFAULTS.watchHoursPerUser);
   const [heartbeatSeconds, setHeartbeatSeconds] = useState(SCALE_DEFAULTS.heartbeatSeconds);
@@ -1481,22 +1732,55 @@ function ScaleEstimationTab() {
         </div>
 
         <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-          <MetricCard label="Heartbeats / user / day" value={formatNumber(calculations.heartbeatsPerUser, 0)} note="watch_seconds_per_day / heartbeat_interval" color={T.blue} />
-          <MetricCard label="Heartbeat events / day" value={`${formatBig(calculations.heartbeatEvents)}`} note={`${dauMillions}M users x ${formatNumber(calculations.heartbeatsPerUser, 0)}`} color={T.red} />
-          <MetricCard label="Raw TB / day" value={`${formatNumber(calculations.rawTb, 1)} TB`} note="Only compressed events, before replication and long-term lifecycle" color={T.amber} />
-          <MetricCard label="Avg events / sec" value={formatBig(calculations.avgEventsPerSecond)} note="daily_events / 86,400" color={T.green} />
-          <MetricCard label="Peak events / sec" value={formatBig(calculations.peakEventsPerSecond)} note="avg events/sec x peak multiplier" color={T.violet} />
-          <MetricCard label="Kafka partitions" value={String(calculations.partitions)} note="ceil(peak / per_partition x headroom)" color={T.gold} />
-          <MetricCard label="Bronze hot storage" value={`${formatNumber(calculations.bronzeHotPb, 2)} PB`} note="Assumes 90 hot days of raw history" color={T.blue} />
-          <MetricCard label="Silver retention" value={`${formatNumber(calculations.silverPb, 2)} PB`} note="Assumes Silver compresses to 50% and retains 2 years" color={T.violet} />
+          {[
+            { label: "Heartbeats / user / day", value: formatNumber(calculations.heartbeatsPerUser, 0), note: "watch_seconds_per_day / heartbeat_interval", color: T.blue },
+            { label: "Heartbeat events / day", value: `${formatBig(calculations.heartbeatEvents)}`, note: `${dauMillions}M users x ${formatNumber(calculations.heartbeatsPerUser, 0)}`, color: T.red },
+            { label: "Raw TB / day", value: `${formatNumber(calculations.rawTb, 1)} TB`, note: "Only compressed events, before replication and long-term lifecycle", color: T.amber },
+            { label: "Avg events / sec", value: formatBig(calculations.avgEventsPerSecond), note: "daily_events / 86,400", color: T.green },
+            { label: "Peak events / sec", value: formatBig(calculations.peakEventsPerSecond), note: "avg events/sec x peak multiplier", color: T.violet },
+            { label: "Kafka partitions", value: String(calculations.partitions), note: "ceil(peak / per_partition x headroom)", color: T.gold },
+            { label: "Bronze hot storage", value: `${formatNumber(calculations.bronzeHotPb, 2)} PB`, note: "Assumes 90 hot days of raw history", color: T.blue },
+            { label: "Silver retention", value: `${formatNumber(calculations.silverPb, 2)} PB`, note: "Assumes Silver compresses to 50% and retains 2 years", color: T.violet },
+          ]
+            .slice(0, depthMode === "beginner" ? 4 : 8)
+            .map((item) => (
+              <MetricCard key={item.label} label={item.label} value={item.value} note={item.note} color={item.color} />
+            ))}
         </div>
       </div>
 
-      <div className="grid gap-4 md:grid-cols-3">
-        <FormulaCard title="Heartbeats per user/day" formula="watch_seconds_per_day / heartbeat_interval_sec" example={`${formatNumber(calculations.watchSecondsPerDay, 0)} / ${heartbeatSeconds} = ${formatNumber(calculations.heartbeatsPerUser, 0)}`} />
-        <FormulaCard title="Peak events/sec" formula="daily_events / 86,400 x peak_multiplier" example={`${formatBig(calculations.avgEventsPerSecond)} x ${peakMultiplier} = ${formatBig(calculations.peakEventsPerSecond)}`} />
-        <FormulaCard title="Kafka partitions" formula="ceil(peak_events_per_sec / safe_events_per_partition x headroom)" example={`ceil(${formatBig(calculations.peakEventsPerSecond)} / ${safeEventsPerPartition} x ${1 + headroomPercent / 100}) = ${calculations.partitions}`} />
-      </div>
+      {depthMode === "beginner" ? (
+        <div className="rounded-[24px] p-5" style={{ background: T.card, border: `1px solid ${T.blue}24` }}>
+          <p className="text-[10px] font-bold uppercase tracking-[0.18em]" style={{ color: T.blue }}>
+            Beginner read
+          </p>
+          <p className="text-sm mt-3 leading-7" style={{ color: T.muted }}>
+            For a first-pass answer, it is enough to explain that DAU, heartbeat frequency, and peak multiplier drive throughput, and throughput drives partition count and storage.
+          </p>
+        </div>
+      ) : (
+        <div className="grid gap-4 md:grid-cols-3">
+          <FormulaCard title="Heartbeats per user/day" formula="watch_seconds_per_day / heartbeat_interval_sec" example={`${formatNumber(calculations.watchSecondsPerDay, 0)} / ${heartbeatSeconds} = ${formatNumber(calculations.heartbeatsPerUser, 0)}`} />
+          <FormulaCard title="Peak events/sec" formula="daily_events / 86,400 x peak_multiplier" example={`${formatBig(calculations.avgEventsPerSecond)} x ${peakMultiplier} = ${formatBig(calculations.peakEventsPerSecond)}`} />
+          <FormulaCard title="Kafka partitions" formula="ceil(peak_events_per_sec / safe_events_per_partition x headroom)" example={`ceil(${formatBig(calculations.peakEventsPerSecond)} / ${safeEventsPerPartition} x ${1 + headroomPercent / 100}) = ${calculations.partitions}`} />
+        </div>
+      )}
+
+      {depthMode === "staff" ? (
+        <div className="grid gap-4 md:grid-cols-3">
+          {[
+            "Regional isolation keeps replays and large backfills from starving global live SLAs.",
+            "Retention and small-file compaction are cost controls, not just storage hygiene.",
+            "Capacity plans should reserve room for correction jobs, not only steady-state traffic.",
+          ].map((item) => (
+            <div key={item} className="rounded-[24px] p-5" style={{ background: T.card, border: `1px solid ${T.gold}24` }}>
+              <p className="text-sm leading-7" style={{ color: T.muted }}>
+                {item}
+              </p>
+            </div>
+          ))}
+        </div>
+      ) : null}
     </div>
   );
 }
@@ -1663,6 +1947,20 @@ function ArchitectureTab({ onNavigate }: { onNavigate: (tab: DataEngineeringTabS
         <div className="rounded-[26px] p-5 relative overflow-hidden" style={{ background: T.card2, border: `1px solid ${T.border}` }}>
           <div className="absolute inset-0 opacity-45" style={{ backgroundImage: "linear-gradient(color-mix(in srgb, var(--border) 55%, transparent) 1px, transparent 1px), linear-gradient(90deg, color-mix(in srgb, var(--border) 55%, transparent) 1px, transparent 1px)", backgroundSize: "32px 32px" }} />
           <div className="relative min-h-[420px]">
+            <div className="hidden xl:block absolute inset-x-0 top-6 px-3">
+              <div className="grid grid-cols-4 gap-3">
+                {[
+                  { label: "Emit + validate", color: T.blue },
+                  { label: "Durable backbone", color: T.amber },
+                  { label: "Processing + lakehouse", color: T.violet },
+                  { label: "Serving + recovery", color: T.gold },
+                ].map((lane) => (
+                  <div key={lane.label} className="rounded-full px-3 py-2 text-center text-[10px] font-bold uppercase tracking-[0.16em]" style={{ background: `${lane.color}10`, color: lane.color, border: `1px solid ${lane.color}20` }}>
+                    {lane.label}
+                  </div>
+                ))}
+              </div>
+            </div>
             {visibleNodes.map((node, index) => (
               <button
                 key={node.id}
@@ -1677,7 +1975,7 @@ function ArchitectureTab({ onNavigate }: { onNavigate: (tab: DataEngineeringTabS
                 }}
               >
                 <p className="text-[10px] font-bold uppercase tracking-[0.18em]" style={{ color: node.color }}>
-                  Node
+                  {index < 2 ? "Source" : index < 4 ? "Backbone" : index < 7 ? "Processing" : "Serving"}
                 </p>
                 <p className="text-sm font-bold mt-1 leading-5" style={{ color: T.text }}>
                   {node.label}
@@ -1693,6 +1991,13 @@ function ArchitectureTab({ onNavigate }: { onNavigate: (tab: DataEngineeringTabS
             <AnimatedDot left={28} delay={1.1} color={T.amber} />
             <AnimatedDot left={44} delay={2.2} color={T.blue} />
             <AnimatedDot left={60} delay={3.1} color={T.violet} />
+            <div className="hidden xl:flex absolute bottom-3 right-3 gap-2 flex-wrap justify-end max-w-[340px]">
+              {["Click nodes", "Open deep dives", "Trace replay paths"].map((item) => (
+                <span key={item} className="px-3 py-1.5 rounded-full text-[11px] font-semibold" style={{ background: T.card, color: T.text, border: `1px solid ${T.border}` }}>
+                  {item}
+                </span>
+              ))}
+            </div>
           </div>
         </div>
       </div>
@@ -1801,6 +2106,7 @@ function IngestionTab() {
           ))}
         </div>
       </div>
+
     </div>
   );
 }
@@ -2916,7 +3222,13 @@ function CheatSheetTabCustom() {
   );
 }
 
-function StartTrackTab({ onNavigate }: { onNavigate: (tab: DataEngineeringTabSlug) => void }) {
+function StartTrackTab({
+  onNavigate,
+  depthMode,
+}: {
+  onNavigate: (tab: DataEngineeringTabSlug) => void;
+  depthMode: DepthMode;
+}) {
   return (
     <div className="space-y-8">
       <AnchoredSection id="start-overview" eyebrow="Track intent" title="Design the data platform, not the playback backend" subtitle="Use the first screen to set the boundary, establish the event journey, and show this is a dedicated DE track." accent={T.red}>
@@ -2930,6 +3242,21 @@ function StartTrackTab({ onNavigate }: { onNavigate: (tab: DataEngineeringTabSlu
       <AnchoredSection id="start-say" eyebrow="Say this" title="Use a strong opening script" subtitle="This keeps the interviewer aligned with your track from minute one." accent={T.red}>
         <InterviewAnswerStrip tab="start-here" accent={T.red} />
       </AnchoredSection>
+      {depthMode === "staff" ? (
+        <div className="hidden xl:grid xl:grid-cols-3 gap-4">
+          {[
+            "Talk about ownership boundaries early: event producers, platform stewards, and metric consumers.",
+            "Mention replay and governance as product requirements, not cleanup work after the design.",
+            "Anchor assumptions as analytics-platform numbers so they do not clash with playback-backend scale.",
+          ].map((item) => (
+            <div key={item} className="rounded-[24px] p-5" style={{ background: T.card, border: `1px solid ${T.red}20` }}>
+              <p className="text-sm leading-7" style={{ color: T.muted }}>
+                {item}
+              </p>
+            </div>
+          ))}
+        </div>
+      ) : null}
     </div>
   );
 }
@@ -3020,7 +3347,13 @@ function EventSourcesTrackTab() {
   );
 }
 
-function ArchitectureTrackTab({ onNavigate }: { onNavigate: (tab: DataEngineeringTabSlug) => void }) {
+function ArchitectureTrackTab({
+  onNavigate,
+  depthMode,
+}: {
+  onNavigate: (tab: DataEngineeringTabSlug) => void;
+  depthMode: DepthMode;
+}) {
   return (
     <div className="space-y-8">
       <AnchoredSection id="arch-layered" eyebrow="Layered map" title="Use a clickable system map as the main explainer" subtitle="The architecture should teach visually first, with text supporting the selected path." accent={T.blue}>
@@ -3040,7 +3373,7 @@ function ArchitectureTrackTab({ onNavigate }: { onNavigate: (tab: DataEngineerin
       </AnchoredSection>
       <AnchoredSection id="arch-decisions" eyebrow="Decision cards" title="Defend major architectural choices" subtitle="Keep the trade-off cards close to the big picture so the user understands why the shape exists." accent={T.amber}>
         <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-          {TRADEOFFS.slice(0, 6).map((item) => (
+          {TRADEOFFS.slice(0, depthMode === "beginner" ? 3 : 6).map((item) => (
             <div key={item.decision} className="rounded-[24px] p-5" style={{ background: T.card, border: `1px solid ${T.amber}24` }}>
               <p className="text-[10px] font-bold uppercase tracking-[0.18em]" style={{ color: T.amber }}>Decision</p>
               <p className="text-lg font-bold mt-2" style={{ color: T.text }}>{item.decision}</p>
@@ -3049,6 +3382,21 @@ function ArchitectureTrackTab({ onNavigate }: { onNavigate: (tab: DataEngineerin
           ))}
         </div>
       </AnchoredSection>
+      {depthMode === "staff" ? (
+        <div className="hidden xl:grid xl:grid-cols-3 gap-4">
+          {[
+            "Protect live streaming SLAs from replay traffic with separate quotas and consumer priorities.",
+            "Keep schema validation and contract ownership visible so the platform scales organizationally, not just technically.",
+            "Plan for governance, privacy, and cost signals directly in the architecture instead of bolting them on later.",
+          ].map((item) => (
+            <div key={item} className="rounded-[24px] p-5" style={{ background: T.card, border: `1px solid ${T.blue}20` }}>
+              <p className="text-sm leading-7" style={{ color: T.muted }}>
+                {item}
+              </p>
+            </div>
+          ))}
+        </div>
+      ) : null}
       <AnchoredSection id="arch-say" eyebrow="Say this" title="Narrate the architecture in one flow" subtitle="Avoid jumping layer-to-layer randomly when you speak." accent={T.red}>
         <InterviewAnswerStrip tab="architecture" accent={T.red} />
       </AnchoredSection>
@@ -3056,7 +3404,16 @@ function ArchitectureTrackTab({ onNavigate }: { onNavigate: (tab: DataEngineerin
   );
 }
 
-function IngestionKafkaTrackTab() {
+function IngestionKafkaTrackTab({ onNavigate }: { onNavigate: (tab: DataEngineeringTabSlug) => void }) {
+  const fanoutTargets: Array<{ label: string; target: DataEngineeringTabSlug; note: string }> = [
+    { label: "video.heartbeat.events", target: "event-sources", note: "Source taxonomy and contract" },
+    { label: "raw sink", target: "storage-lakehouse", note: "Bronze ingestion path" },
+    { label: "sessionizer", target: "real-time-streaming", note: "Streaming state and watch sessions" },
+    { label: "qoe monitor", target: "real-time-streaming", note: "QoE and watermark logic" },
+    { label: "feature builder", target: "feature-store-experimentation", note: "Online/offline feature outputs" },
+    { label: "dlq / replay", target: "backfill-replay", note: "Correction and replay flow" },
+  ];
+
   return (
     <div className="space-y-8">
       <AnchoredSection id="ingest-lanes" eyebrow="Ingestion lanes" title="Separate client, CDC, and external batch clearly" subtitle="The three-way ingest split should be obvious without reading long paragraphs." accent={T.amber}>
@@ -3068,11 +3425,30 @@ function IngestionKafkaTrackTab() {
       <AnchoredSection id="ingest-fanout" eyebrow="Fan-out" title="Show what happens after publish" subtitle="A single topic is not the destination; it fans out to raw sinks, stream jobs, DLQ, and feature paths." accent={T.blue}>
         <div className="rounded-[26px] p-5" style={{ background: T.card, border: `1px solid ${T.blue}24` }}>
           <div className="flex flex-wrap items-center gap-3">
-            {["video.heartbeat.events", "raw sink", "sessionizer", "qoe monitor", "feature builder", "dlq / replay"].map((step, index, array) => (
-              <div key={step} className="flex items-center gap-3">
-                <span className="px-3 py-2 rounded-full text-xs font-semibold" style={{ background: `${T.blue}12`, color: T.text, border: `1px solid ${T.blue}24` }}>{step}</span>
+            {fanoutTargets.map((step, index, array) => (
+              <div key={step.label} className="flex items-center gap-3">
+                <button onClick={() => onNavigate(step.target)} className="px-3 py-2 rounded-full text-xs font-semibold cursor-pointer transition-all hover:-translate-y-px" style={{ background: `${T.blue}12`, color: T.text, border: `1px solid ${T.blue}24` }}>
+                  {step.label}
+                </button>
                 {index < array.length - 1 ? <span style={{ color: T.blue }}>→</span> : null}
               </div>
+            ))}
+          </div>
+          <div className="grid gap-3 md:grid-cols-3 mt-4">
+            {fanoutTargets.slice(1).map((item) => (
+              <button
+                key={item.label}
+                onClick={() => onNavigate(item.target)}
+                className="rounded-2xl p-4 text-left cursor-pointer transition-all hover:-translate-y-px"
+                style={{ background: T.card2, border: `1px solid ${T.border}` }}
+              >
+                <p className="text-sm font-semibold" style={{ color: T.text }}>
+                  {item.label}
+                </p>
+                <p className="text-[12px] mt-2 leading-6" style={{ color: T.faint }}>
+                  {item.note}
+                </p>
+              </button>
             ))}
           </div>
         </div>
@@ -3251,11 +3627,11 @@ function ReplayTrackTab() {
   );
 }
 
-function CapacityCostTrackTab() {
+function CapacityCostTrackTab({ depthMode }: { depthMode: DepthMode }) {
   return (
     <div className="space-y-8">
       <AnchoredSection id="cost-scale" eyebrow="Scale math" title="Keep the calculator interactive and visual" subtitle="Capacity and cost should be explainable, not just stated." accent={T.blue}>
-        <ScaleEstimationTab />
+        <ScaleEstimationTab depthMode={depthMode} />
       </AnchoredSection>
       <AnchoredSection id="cost-tradeoffs" eyebrow="Cost levers" title="Show where cost changes as the platform scales" subtitle="Retention, partitions, cluster sizing, and serving engine choices all move spend." accent={T.amber}>
         <TradeoffsTab />
@@ -3305,21 +3681,23 @@ function QuizTrackTab({ onNavigate }: { onNavigate: (tab: DataEngineeringTabSlug
 function ContentForTab({
   activeTab,
   onNavigate,
+  depthMode,
 }: {
   activeTab: DataEngineeringTabSlug;
   onNavigate: (tab: DataEngineeringTabSlug) => void;
+  depthMode: DepthMode;
 }) {
   switch (activeTab) {
     case "start-here":
-      return <StartTrackTab onNavigate={onNavigate} />;
+      return <StartTrackTab onNavigate={onNavigate} depthMode={depthMode} />;
     case "requirements":
       return <RequirementsTrackTab />;
     case "event-sources":
       return <EventSourcesTrackTab />;
     case "architecture":
-      return <ArchitectureTrackTab onNavigate={onNavigate} />;
+      return <ArchitectureTrackTab onNavigate={onNavigate} depthMode={depthMode} />;
     case "ingestion-kafka":
-      return <IngestionKafkaTrackTab />;
+      return <IngestionKafkaTrackTab onNavigate={onNavigate} />;
     case "real-time-streaming":
       return <RealtimeTrackTab />;
     case "batch-pipelines":
@@ -3337,7 +3715,7 @@ function ContentForTab({
     case "backfill-replay":
       return <ReplayTrackTab />;
     case "capacity-cost":
-      return <CapacityCostTrackTab />;
+      return <CapacityCostTrackTab depthMode={depthMode} />;
     case "failures":
       return <FailuresTrackTab />;
     case "quiz":
@@ -3763,6 +4141,8 @@ export default function DataEngineeringPage({ initialTab }: { initialTab?: strin
           tab={activeTab}
           activeIndex={activeIndex}
           total={DATA_ENGINEERING_TABS.length}
+          visitedCount={visitedTabs.size}
+          revisedCount={revisedTabs.size}
           onToggleProgress={() => setProgressOpen((v) => !v)}
           onToggleNotes={() => setNotesOpen((v) => !v)}
           onToggleFocus={() => setFocusMode(true)}
@@ -3823,7 +4203,8 @@ export default function DataEngineeringPage({ initialTab }: { initialTab?: strin
             />
           )}
           <DepthGuidancePanel mode={depthMode} />
-          <ContentForTab activeTab={activeTab} onNavigate={switchTab} />
+          <DepthPlaybookPanel mode={depthMode} tab={activeTab} />
+          <ContentForTab activeTab={activeTab} onNavigate={switchTab} depthMode={depthMode} />
         </ScrollableShell>
       </div>
 
