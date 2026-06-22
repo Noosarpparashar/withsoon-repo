@@ -383,8 +383,6 @@ function TabHeader({
   onToggleFocus,
   focusMode,
   onShare,
-  depthMode,
-  onChangeDepthMode,
 }: {
   tab: DataEngineeringTabSlug;
   activeIndex: number;
@@ -396,8 +394,6 @@ function TabHeader({
   onToggleFocus: () => void;
   focusMode: boolean;
   onShare: () => void;
-  depthMode: DepthMode;
-  onChangeDepthMode: (mode: DepthMode) => void;
 }) {
   const meta = DATA_ENGINEERING_TAB_META[tab];
   const accent = DATA_ENGINEERING_TABS.find((item) => item.id === tab)?.accent ?? T.red;
@@ -434,7 +430,6 @@ function TabHeader({
         </div>
 
         <div className="flex items-center gap-2 flex-wrap">
-          <DepthModeToggle value={depthMode} onChange={onChangeDepthMode} />
           <Link
             href="/system-design/netflix/start-here"
             className="px-2.5 py-2 rounded-xl text-xs font-medium whitespace-nowrap"
@@ -672,17 +667,11 @@ function Sidebar({
           </p>
         </div>
         <div>
-          <div className="flex items-center justify-between gap-3 mb-3">
+          <div className="mb-3">
             <p className="text-[10px] font-bold uppercase tracking-[0.22em]" style={{ color: T.faint }}>
-              Page anchors
+              On this page
             </p>
-            <span className="text-[10px]" style={{ color: T.faint }}>
-              Chapters stay on top
-            </span>
           </div>
-          <p className="text-[11px] mb-3 leading-5" style={{ color: T.faint }}>
-            Desktop uses the top strip for chapter navigation and this rail only for in-page anchors.
-          </p>
           <div className="space-y-2">
             {sections.map((section, index) => {
               const active = activeSectionId === section.id;
@@ -1389,123 +1378,166 @@ function DesktopJourneyCanvas({ onNavigate }: { onNavigate: (tab: DataEngineerin
   );
 }
 
+const FLOW_NODES = [
+  {
+    id: "user-events",
+    label: "User Events",
+    sublabel: "Mobile · Web · TV · CDN",
+    color: "#38bdf8",
+    detail: "Playback, heartbeat, search, impression, click, QoE, billing, and recommendation-feedback events are emitted by apps and backend services at up to 500K events/sec peak.",
+  },
+  {
+    id: "kafka",
+    label: "Kafka / MSK",
+    sublabel: "Event backbone",
+    color: "#f59e0b",
+    detail: "Kafka buffers high-volume events, decouples producers and consumers, supports replay, and feeds streaming, raw lake, and feature pipelines in parallel.",
+  },
+  {
+    id: "streaming",
+    label: "Flink / Spark Streaming",
+    sublabel: "Real-time jobs",
+    color: "#a855f7",
+    detail: "Streaming jobs sessionize playback events, compute near-real-time QoE metrics, detect anomalies, and publish online feature updates — all within seconds to minutes.",
+  },
+  {
+    id: "lakehouse",
+    label: "S3 + Iceberg",
+    sublabel: "Bronze · Silver · Gold",
+    color: "#22c55e",
+    detail: "Bronze stores raw immutable events, Silver stores cleaned and sessionized data, and Gold stores business-ready aggregates. Iceberg enables time-travel and safe backfills.",
+  },
+  {
+    id: "batch",
+    label: "Spark / dbt Batch",
+    sublabel: "Daily official truth",
+    color: "#f97316",
+    detail: "Batch jobs publish the authoritative daily Gold metrics — watch hours, content performance, retention, revenue — after reconciling late events and running quality gates.",
+  },
+  {
+    id: "serving",
+    label: "BI + ML Serving",
+    sublabel: "Dashboards · Feature Store",
+    color: "#e50914",
+    detail: "Redshift and Athena serve BI and ad-hoc SQL. Pinot serves real-time OLAP. The feature store serves online ML models. Each consumer gets the right freshness from the right engine.",
+  },
+] as const;
+
+type FlowNodeId = typeof FLOW_NODES[number]["id"];
+
 function StartHereTab({ onNavigate }: { onNavigate: (tab: DataEngineeringTabSlug) => void }) {
-  const [scopeMode, setScopeMode] = useState<ScopeMode>("data");
-  const visibleScope = scopeMode === "data" ? START_HERE_SCOPE.dataEngineeringScope : START_HERE_SCOPE.backendScope;
+  const [selectedFlowNode, setSelectedFlowNode] = useState<FlowNodeId>("kafka");
+  const activeNode = FLOW_NODES.find((n) => n.id === selectedFlowNode) ?? FLOW_NODES[1];
+
+  const INTERVIEW_ANSWER = "I would design Netflix's data platform, not the playback backend. The system ingests playback, heartbeat, search, impression, QoE, billing, and recommendation events into Kafka. From there, real-time jobs compute freshness-sensitive metrics, while raw events land in S3/Iceberg for batch processing. Cleaned Silver tables and aggregated Gold tables power dashboards, experimentation, recommendations, data quality, replay, and backfills.";
+
   return (
     <div className="space-y-6">
-      <div className="rounded-[28px] p-6 md:p-8 relative overflow-hidden" style={{ background: T.card, border: `1px solid ${T.red}28` }}>
-        <div className="absolute inset-x-0 top-0 h-1" style={{ background: `linear-gradient(90deg, ${T.red}, ${T.amber}, ${T.violet})` }} />
-        <div className="grid gap-6 lg:grid-cols-[1.2fr_0.8fr]">
-          <div>
-            <p className="text-[10px] font-bold uppercase tracking-[0.2em] mb-3" style={{ color: T.red }}>
-              Netflix Data Platform Interview Journey
-            </p>
-            <h2 className="text-[2.85rem] md:text-[3.15rem] font-semibold tracking-[-0.05em] leading-[0.93]" style={{ color: T.text }}>
-              events → Kafka → Flink → S3/Iceberg → Spark/dbt → Gold metrics → BI + ML
-            </h2>
-            <p className="text-base mt-5 max-w-3xl leading-8" style={{ color: T.muted }}>
-              This mode is for learning how to design the Netflix-like data platform behind analytics, ML features, QoE dashboards, finance reporting, replay, and backfill. It is not the playback backend interview answer in prettier clothes.
-            </p>
-            <div className="flex flex-wrap gap-2 mt-5">
-              <button onClick={() => setScopeMode("backend")} className="px-3 py-2 rounded-xl text-sm font-semibold cursor-pointer" style={{ background: scopeMode === "backend" ? `${T.red}18` : T.card2, color: scopeMode === "backend" ? T.red : T.text, border: `1px solid ${scopeMode === "backend" ? `${T.red}33` : T.border}` }}>
-                Show Backend Scope
+
+      {/* Clickable flow diagram */}
+      <div className="rounded-[28px] p-5 md:p-6 relative overflow-hidden" style={{ background: T.card, border: `1px solid ${T.blue}24` }}>
+        <div className="absolute inset-x-0 top-0 h-1" style={{ background: `linear-gradient(90deg, ${T.blue}, ${T.violet}, ${T.red})` }} />
+        <p className="text-[10px] font-bold uppercase tracking-[0.2em] mb-4" style={{ color: T.blue }}>
+          Data platform end-to-end flow — click any stage
+        </p>
+        {/* Node row */}
+        <div className="flex flex-wrap items-center gap-0">
+          {FLOW_NODES.map((node, index) => (
+            <div key={node.id} className="flex items-center">
+              <button
+                onClick={() => setSelectedFlowNode(node.id)}
+                className="rounded-[18px] px-4 py-3 text-left cursor-pointer transition-all duration-200 hover:-translate-y-0.5 min-w-[130px]"
+                style={{
+                  background: selectedFlowNode === node.id ? `${node.color}18` : T.card2,
+                  border: `1px solid ${selectedFlowNode === node.id ? `${node.color}44` : T.border}`,
+                  boxShadow: selectedFlowNode === node.id ? `0 0 0 2px ${node.color}22, 0 12px 24px ${node.color}18` : "none",
+                }}
+              >
+                <p className="text-xs font-bold leading-5" style={{ color: selectedFlowNode === node.id ? node.color : T.text }}>
+                  {node.label}
+                </p>
+                <p className="text-[10px] mt-0.5" style={{ color: T.faint }}>
+                  {node.sublabel}
+                </p>
               </button>
-              <button onClick={() => setScopeMode("data")} className="px-3 py-2 rounded-xl text-sm font-semibold cursor-pointer" style={{ background: scopeMode === "data" ? `${T.blue}18` : T.card2, color: scopeMode === "data" ? T.blue : T.text, border: `1px solid ${scopeMode === "data" ? `${T.blue}33` : T.border}` }}>
-                Show Data Engineering Scope
-              </button>
+              {index < FLOW_NODES.length - 1 && (
+                <span className="mx-1.5 text-base font-bold" style={{ color: selectedFlowNode === node.id || selectedFlowNode === FLOW_NODES[index + 1].id ? activeNode.color : T.border }}>
+                  →
+                </span>
+              )}
             </div>
-            <div className="mt-4 rounded-2xl p-4" style={{ background: T.card2, border: `1px solid ${T.border}` }}>
-              <p className="text-[10px] font-bold uppercase tracking-[0.18em] mb-2" style={{ color: scopeMode === "data" ? T.blue : T.red }}>
-                Current scope
-              </p>
-              <div className="flex flex-wrap gap-2">
-                {visibleScope.map((item) => (
-                  <span key={item} className="px-3 py-2 rounded-full text-xs font-semibold" style={{ background: scopeMode === "data" ? `${T.blue}12` : `${T.red}12`, color: T.text, border: `1px solid ${scopeMode === "data" ? `${T.blue}24` : `${T.red}24`}` }}>
-                    {item}
-                  </span>
-                ))}
-              </div>
-            </div>
-            <div className="hidden xl:grid xl:grid-cols-2 gap-3 mt-4">
-              {[
-                { title: "Start interview flow", note: "Open with scope, event journey, and why this is a DE platform problem.", target: "requirements" as DataEngineeringTabSlug, color: T.red },
-                { title: "View architecture", note: "Jump straight into the layered system map and click through the pipeline nodes.", target: "architecture" as DataEngineeringTabSlug, color: T.blue },
-              ].map((item) => (
-                <button
-                  key={item.title}
-                  onClick={() => onNavigate(item.target)}
-                  className="rounded-2xl p-4 text-left cursor-pointer transition-all hover:-translate-y-px"
-                  style={{ background: `${item.color}10`, border: `1px solid ${item.color}24` }}
-                >
-                  <p className="text-sm font-bold" style={{ color: T.text }}>
-                    {item.title}
-                  </p>
-                  <p className="text-[12px] mt-2 leading-6" style={{ color: T.faint }}>
-                    {item.note}
-                  </p>
-                </button>
-              ))}
-            </div>
-          </div>
-          <div className="grid gap-3">
-            {DATA_TRACK_NUMBERS.slice(0, 4).map((item) => (
-              <MetricCard key={item.label} label={item.label} value={item.value} note={item.note} color={item.color} />
-            ))}
-          </div>
+          ))}
+        </div>
+        {/* Selected node detail */}
+        <div className="mt-4 rounded-[18px] p-4 transition-all duration-200" style={{ background: `${activeNode.color}0c`, border: `1px solid ${activeNode.color}28` }}>
+          <p className="text-[10px] font-bold uppercase tracking-[0.18em] mb-1.5" style={{ color: activeNode.color }}>
+            {activeNode.label}
+          </p>
+          <p className="text-sm leading-7" style={{ color: T.muted }}>
+            {activeNode.detail}
+          </p>
         </div>
       </div>
 
-      <div className="grid gap-4 lg:grid-cols-3">
-        <div className="rounded-2xl p-5" style={{ background: T.card, border: `1px solid ${T.blue}24` }}>
+      {/* Scope card */}
+      <div className="grid gap-4 md:grid-cols-2">
+        <div className="rounded-[22px] p-5" style={{ background: T.card, border: `1px solid ${T.blue}24` }}>
           <p className="text-[10px] font-bold uppercase tracking-[0.18em] mb-3" style={{ color: T.blue }}>
             What we are designing
           </p>
           <div className="space-y-2">
             {START_HERE_SCOPE.inScope.map((item) => (
-              <div key={item} className="flex items-start gap-3">
-                <span className="mt-2 w-2 h-2 rounded-full shrink-0" style={{ background: T.blue }} />
-                <p className="text-sm leading-6" style={{ color: T.muted }}>
-                  {item}
-                </p>
+              <div key={item} className="flex items-start gap-2.5">
+                <span className="mt-1.5 w-1.5 h-1.5 rounded-full shrink-0" style={{ background: T.blue }} />
+                <p className="text-sm leading-6" style={{ color: T.muted }}>{item}</p>
               </div>
             ))}
           </div>
         </div>
-        <div className="rounded-2xl p-5" style={{ background: T.card, border: `1px solid ${T.red}24` }}>
+        <div className="rounded-[22px] p-5" style={{ background: T.card, border: `1px solid ${T.red}24` }}>
           <p className="text-[10px] font-bold uppercase tracking-[0.18em] mb-3" style={{ color: T.red }}>
             What we are not designing
           </p>
           <div className="space-y-2">
             {START_HERE_SCOPE.outOfScope.map((item) => (
-              <div key={item} className="flex items-start gap-3">
-                <span className="mt-2 w-2 h-2 rounded-full shrink-0" style={{ background: T.red }} />
-                <p className="text-sm leading-6" style={{ color: T.muted }}>
-                  {item}
-                </p>
+              <div key={item} className="flex items-start gap-2.5">
+                <span className="mt-1.5 w-1.5 h-1.5 rounded-full shrink-0" style={{ background: T.red }} />
+                <p className="text-sm leading-6" style={{ color: T.muted }}>{item}</p>
               </div>
             ))}
           </div>
         </div>
-        <AnswerCard title="Interview opening answer" body={START_HERE_SCOPE.openingAnswer} accent={T.red} />
       </div>
 
-      <div className="grid gap-4 xl:grid-cols-4">
-        {[
-          { title: "What you will learn", body: "How to narrate events, streaming, lakehouse, serving, and replay as one interview story.", color: T.blue },
-          { title: "First 2 minutes", body: "Scope the platform, show the event journey, and anchor the consumer SLAs before naming tools.", color: T.violet },
-          { title: "Scale anchors", body: "Use 200M-250M monthly users, 80M DAU, 15M peak concurrency, and heartbeat-driven event math.", color: T.green },
-          { title: "Avoid this trap", body: "Do not drift into playback APIs, CDN routing, DRM internals, or recommendation-model architecture.", color: T.red },
-        ].map((item) => (
-          <div key={item.title} className="rounded-[24px] p-5" style={{ background: T.card, border: `1px solid ${item.color}24` }}>
-            <p className="text-[10px] font-bold uppercase tracking-[0.18em]" style={{ color: item.color }}>
-              {item.title}
-            </p>
-            <p className="text-sm mt-3 leading-7" style={{ color: T.muted }}>
-              {item.body}
-            </p>
-          </div>
-        ))}
+      {/* Single interview answer */}
+      <div className="rounded-[22px] p-5" style={{ background: T.card, border: `1px solid ${T.red}24` }}>
+        <div className="flex items-center justify-between gap-3 mb-3">
+          <p className="text-[10px] font-bold uppercase tracking-[0.18em]" style={{ color: T.red }}>
+            Say this in interview
+          </p>
+          <CopyButton value={INTERVIEW_ANSWER} label="Copy answer" />
+        </div>
+        <p className="text-sm leading-7" style={{ color: T.muted }}>
+          {INTERVIEW_ANSWER}
+        </p>
+      </div>
+
+      {/* Next CTA */}
+      <div className="flex gap-3 flex-wrap">
+        <button
+          onClick={() => onNavigate("requirements")}
+          className="px-5 py-3 rounded-xl text-sm font-semibold cursor-pointer transition-all hover:-translate-y-0.5"
+          style={{ background: T.red, color: "#fff", border: `1px solid ${T.red}` }}
+        >
+          Next: Requirements →
+        </button>
+        <Link
+          href="/system-design/netflix/start-here"
+          className="px-5 py-3 rounded-xl text-sm font-medium cursor-pointer"
+          style={{ background: "transparent", color: T.faint, border: `1px solid ${T.border}` }}
+        >
+          View Backend Track
+        </Link>
       </div>
     </div>
   );
@@ -3346,67 +3378,107 @@ function CheatSheetTabCustom() {
 
 function StartTrackTab({
   onNavigate,
-  depthMode,
 }: {
   onNavigate: (tab: DataEngineeringTabSlug) => void;
-  depthMode: DepthMode;
 }) {
   return (
     <div className="space-y-8">
-      <AnchoredSection id="start-overview" eyebrow="Track intent" title="Design the data platform, not the playback backend" subtitle="Use the first screen to set the boundary, establish the event journey, and show this is a dedicated DE track." accent={T.red}>
+      <AnchoredSection id="start-overview" eyebrow="Data platform journey" title="Design the data platform, not the playback backend" subtitle="Understand the full Netflix data-platform journey from events to Kafka, lakehouse, analytics, ML features, and backfill." accent={T.red}>
         <StartHereTab onNavigate={onNavigate} />
       </AnchoredSection>
-      <AnchoredSection id="start-journey" eyebrow="Journey map" title="Use one clickable interview journey map" subtitle="Keep the path visual, reduce repetition, and make each stage feel like a chapter in the spoken answer." accent={T.violet}>
+      <AnchoredSection id="start-journey" eyebrow="Interview journey map" title="The 14-chapter interview answer path" subtitle="Each chapter below is a tab. Work through them in order for a complete system design answer." accent={T.violet}>
         <DesktopJourneyCanvas onNavigate={onNavigate} />
-        <div className="grid gap-4 xl:grid-cols-[1.15fr_0.85fr] mt-4">
-          <div className="rounded-[24px] p-5" style={{ background: T.card, border: `1px solid ${T.violet}24` }}>
-            <p className="text-[10px] font-bold uppercase tracking-[0.18em]" style={{ color: T.violet }}>
-              First 2 minutes of the interview
-            </p>
-            <FlowMapper
-              accent={T.violet}
-              steps={[
-                "Scope it as the analytics and data platform, not the playback backend.",
-                "Name the journey: events → Kafka → streaming + batch → Bronze/Silver/Gold → BI + ML.",
-                "Anchor scale assumptions and freshness targets before drilling into tools.",
-                "Tell the interviewer you will cover replay, governance, and cost as part of the production answer.",
-              ]}
-            />
-          </div>
-          <div className="rounded-[24px] p-5" style={{ background: T.card, border: `1px solid ${T.red}24` }}>
-            <p className="text-[10px] font-bold uppercase tracking-[0.18em]" style={{ color: T.red }}>
-              Say this first
-            </p>
-            <p className="text-sm mt-3 leading-7" style={{ color: T.muted }}>
-              I would design this as Netflix&apos;s analytics and data platform: client and service events flow into Kafka, real-time jobs produce live facts, batch publishes trusted Gold metrics, and replay plus governance protect correctness when things go wrong.
-            </p>
-            <div className="mt-4">
-              <CopyButton
-                value="I would design this as Netflix's analytics and data platform: client and service events flow into Kafka, real-time jobs produce live facts, batch publishes trusted Gold metrics, and replay plus governance protect correctness when things go wrong."
-                label="Copy first 2-minute opener"
-              />
+      </AnchoredSection>
+    </div>
+  );
+}
+
+const BUSINESS_METRIC_CARDS = [
+  {
+    metric: "Watch Hours",
+    definition: "Total valid watch duration by content, region, device, and day.",
+    freshness: "Daily Gold + near-real-time approximation",
+    sources: "heartbeat, play, pause, stop events",
+    outputTable: "gold_content_watch_hours_daily",
+    color: "#38bdf8",
+  },
+  {
+    metric: "Content Performance",
+    definition: "Impressions, clicks, starts, completions, binge rate, and CTR per title.",
+    freshness: "Hourly Gold",
+    sources: "browse.impression, browse.click, playback.play, playback.complete",
+    outputTable: "gold_content_performance_hourly",
+    color: "#22c55e",
+  },
+  {
+    metric: "Trending Titles",
+    definition: "Real-time ranking of titles by view velocity, impressions, and session starts.",
+    freshness: "5–15 minutes",
+    sources: "browse.impression, playback.play",
+    outputTable: "pinot.trending_titles_live",
+    color: "#f59e0b",
+  },
+  {
+    metric: "QoE Metrics",
+    definition: "Buffering ratio, startup time, bitrate drops, and playback error rate by ISP and device.",
+    freshness: "Seconds to 5 minutes",
+    sources: "video.buffer, video.error, video.bitrate",
+    outputTable: "pinot.qoe_live / gold_qoe_device_region_hourly",
+    color: "#a855f7",
+  },
+  {
+    metric: "Recommendation Feedback",
+    definition: "Click-through rate and conversion from recommendation impression to play to completion.",
+    freshness: "Hourly",
+    sources: "recommendation.served, browse.click, playback.play, playback.complete",
+    outputTable: "gold_reco_funnel_daily",
+    color: "#f97316",
+  },
+  {
+    metric: "Experiment Metrics",
+    definition: "Assignment exposure, variant attribution, and primary/guardrail metric values per experiment.",
+    freshness: "Daily",
+    sources: "experiment.assigned, experiment.exposed + all tagged events",
+    outputTable: "gold_experiment_metrics_daily",
+    color: "#e50914",
+  },
+] as const;
+
+function BusinessMetricCard({ metric, definition, freshness, sources, outputTable, color }: typeof BUSINESS_METRIC_CARDS[number]) {
+  const [open, setOpen] = useState(false);
+  return (
+    <div
+      className="rounded-[20px] overflow-hidden cursor-pointer"
+      style={{ background: T.card, border: `1px solid ${open ? color + "40" : T.border}` }}
+      onClick={() => setOpen((v) => !v)}
+    >
+      <div className="px-4 py-3 flex items-center justify-between gap-3">
+        <div className="flex items-center gap-3">
+          <span className="w-2.5 h-2.5 rounded-full shrink-0" style={{ background: color }} />
+          <p className="text-sm font-semibold" style={{ color: T.text }}>{metric}</p>
+        </div>
+        <div className="flex items-center gap-2">
+          <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full" style={{ background: `${color}14`, color: color, border: `1px solid ${color}24` }}>
+            {freshness}
+          </span>
+          <span style={{ color: T.faint }}>{open ? "−" : "+"}</span>
+        </div>
+      </div>
+      {open && (
+        <div className="px-4 pb-4 space-y-2.5">
+          <p className="text-sm leading-6" style={{ color: T.muted }}>{definition}</p>
+          <div className="grid grid-cols-2 gap-2">
+            <div className="rounded-xl p-2.5" style={{ background: T.card2, border: `1px solid ${T.border}` }}>
+              <p className="text-[9px] uppercase tracking-[0.14em] mb-1" style={{ color: T.faint }}>Source events</p>
+              <p className="text-[11px]" style={{ color: T.muted }}>{sources}</p>
+            </div>
+            <div className="rounded-xl p-2.5" style={{ background: T.card2, border: `1px solid ${T.border}` }}>
+              <p className="text-[9px] uppercase tracking-[0.14em] mb-1" style={{ color: T.faint }}>Output table</p>
+              <p className="text-[11px] font-mono" style={{ color: color }}>{outputTable}</p>
             </div>
           </div>
         </div>
-      </AnchoredSection>
-      <AnchoredSection id="start-say" eyebrow="Say this" title="Use a strong opening script" subtitle="This keeps the interviewer aligned with your track from minute one." accent={T.red}>
-        <InterviewAnswerStrip tab="start-here" accent={T.red} />
-      </AnchoredSection>
-      {depthMode === "staff" ? (
-        <div className="hidden xl:grid xl:grid-cols-3 gap-4">
-          {[
-            "Talk about ownership boundaries early: event producers, platform stewards, and metric consumers.",
-            "Mention replay and governance as product requirements, not cleanup work after the design.",
-            "Anchor assumptions as analytics-platform numbers so they do not clash with playback-backend scale.",
-          ].map((item) => (
-            <div key={item} className="rounded-[24px] p-5" style={{ background: T.card, border: `1px solid ${T.red}20` }}>
-              <p className="text-sm leading-7" style={{ color: T.muted }}>
-                {item}
-              </p>
-            </div>
-          ))}
-        </div>
-      ) : null}
+      )}
     </div>
   );
 }
@@ -3414,7 +3486,7 @@ function StartTrackTab({
 function RequirementsTrackTab() {
   return (
     <div className="space-y-8">
-      <AnchoredSection id="req-scope" eyebrow="Scope + pro tip" title="Keep the page opening compact and directional" subtitle="A compact callout works better than a giant wall of scope text." accent={T.amber}>
+      <AnchoredSection id="req-scope" eyebrow="What to clarify first" title="Map business questions to data outputs" subtitle="Clarify what the data platform must produce, how fresh it must be, and which trade-offs matter." accent={T.amber}>
         <CompactProTip
           title="Scope Netflix as a data platform."
           body="Design events → ingestion → processing → lakehouse → serving. Skip playback APIs, CDN routing, and DRM internals unless the interviewer explicitly asks."
@@ -3422,27 +3494,32 @@ function RequirementsTrackTab() {
           actions={
             <>
               <CopyButton value={TAB_INTERVIEW_LINES.requirements} label="Copy opening script" />
-              <span className="px-3 py-2 rounded-xl text-xs font-semibold" style={{ background: `${T.green}12`, color: T.text, border: `1px solid ${T.green}24` }}>
-                In scope
-              </span>
-              <span className="px-3 py-2 rounded-xl text-xs font-semibold" style={{ background: `${T.red}12`, color: T.text, border: `1px solid ${T.red}24` }}>
-                Out of scope
-              </span>
             </>
           }
         />
+        {/* 6 business metric cards */}
+        <div className="mt-4 space-y-2">
+          <p className="text-[10px] font-bold uppercase tracking-[0.18em] mb-3" style={{ color: T.amber }}>
+            6 business metrics that drive the entire platform design
+          </p>
+          <div className="space-y-2">
+            {BUSINESS_METRIC_CARDS.map((card) => (
+              <BusinessMetricCard key={card.metric} {...card} />
+            ))}
+          </div>
+        </div>
       </AnchoredSection>
-      <AnchoredSection id="req-scale" eyebrow="Scale anchors" title="Anchor the discussion with visual scale cards" subtitle="Show the high-order numbers up front, then leave the full calculator for Capacity / Cost." accent={T.blue}>
+      <AnchoredSection id="req-scale" eyebrow="Scale anchors" title="Anchor the discussion with scale numbers" subtitle="Each number should connect to a design decision — Kafka partitions, streaming parallelism, or storage layout." accent={T.blue}>
         <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
           {DATA_TRACK_NUMBERS.map((item) => (
             <MetricCard key={item.label} label={item.label} value={item.value} note={item.note} color={item.color} />
           ))}
         </div>
       </AnchoredSection>
-      <AnchoredSection id="req-domains" eyebrow="Functional domains" title="Group requirements by domain instead of one huge table" subtitle="Playback, search, QoE, recommendation, revenue, and governance should be easier to scan." accent={T.amber}>
+      <AnchoredSection id="req-domains" eyebrow="Requirement domains" title="Group requirements by domain, not by table type" subtitle="Playback, QoE, recommendations, experiments, and governance map directly to the data pipelines you will design." accent={T.amber}>
         <RequirementsTab />
       </AnchoredSection>
-      <AnchoredSection id="req-nfr" eyebrow="SLA matrix" title="Show freshness and non-functional expectations clearly" subtitle="DE interviews care about freshness, durability, quality, and replay just as much as pure throughput." accent={T.red}>
+      <AnchoredSection id="req-nfr" eyebrow="SLA matrix" title="Freshness and non-functional requirements" subtitle="DE interviews care about freshness, correctness, replay, and quality SLAs just as much as raw throughput." accent={T.red}>
         <div className="grid gap-4 xl:grid-cols-[0.9fr_1.1fr]">
           <div className="rounded-[24px] p-5" style={{ background: T.card, border: `1px solid ${T.amber}24` }}>
             <p className="text-[10px] font-bold uppercase tracking-[0.18em] mb-4" style={{ color: T.amber }}>
@@ -3471,7 +3548,7 @@ function RequirementsTrackTab() {
           </div>
         </div>
       </AnchoredSection>
-      <AnchoredSection id="req-say" eyebrow="Say this" title="Use a crisp requirements framing line" subtitle="This should sound like a senior data engineer defining the problem space." accent={T.red}>
+      <AnchoredSection id="req-say" eyebrow="Say this" title="Requirements framing in interview language" subtitle="Open requirements with domain, consumer, freshness, and correctness — not a feature list." accent={T.red}>
         <InterviewAnswerStrip tab="requirements" accent={T.red} />
       </AnchoredSection>
     </div>
@@ -3499,17 +3576,15 @@ function EventSourcesTrackTab() {
 
 function ArchitectureTrackTab({
   onNavigate,
-  depthMode,
 }: {
   onNavigate: (tab: DataEngineeringTabSlug) => void;
-  depthMode: DepthMode;
 }) {
   return (
     <div className="space-y-8">
-      <AnchoredSection id="arch-layered" eyebrow="Layered map" title="Use a clickable system map as the main explainer" subtitle="The architecture should teach visually first, with text supporting the selected path." accent={T.blue}>
+      <AnchoredSection id="arch-layered" eyebrow="Architecture canvas" title="Interactive layered architecture" subtitle="Click any node to see its inputs, outputs, failure modes, and interview framing. Highlight paths with the overlay buttons." accent={T.blue}>
         <ArchitectureTab onNavigate={onNavigate} />
       </AnchoredSection>
-      <AnchoredSection id="arch-journey" eyebrow="Event journey" title="Emit → validate → publish → stream → store → aggregate → serve" subtitle="This strip keeps the whole DE journey intuitive even when the full diagram gets dense." accent={T.violet}>
+      <AnchoredSection id="arch-journey" eyebrow="Event journey" title="Emit → validate → publish → stream → store → aggregate → serve" subtitle="Walk through this sequence aloud before naming specific tools." accent={T.violet}>
         <div className="rounded-[26px] p-5" style={{ background: T.card, border: `1px solid ${T.violet}24` }}>
           <div className="flex flex-wrap items-center gap-2">
             {["Emit", "Validate", "Publish", "Stream", "Store Bronze", "Clean Silver", "Aggregate Gold", "Serve"].map((step, index, array) => (
@@ -3521,9 +3596,9 @@ function ArchitectureTrackTab({
           </div>
         </div>
       </AnchoredSection>
-      <AnchoredSection id="arch-decisions" eyebrow="Decision cards" title="Defend major architectural choices" subtitle="Keep the trade-off cards close to the big picture so the user understands why the shape exists." accent={T.amber}>
+      <AnchoredSection id="arch-decisions" eyebrow="Decision cards" title="Defend the major architectural choices" subtitle="Know why each design decision was made — interviewers probe these directly." accent={T.amber}>
         <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-          {TRADEOFFS.slice(0, depthMode === "beginner" ? 3 : 6).map((item) => (
+          {TRADEOFFS.slice(0, 6).map((item) => (
             <div key={item.decision} className="rounded-[24px] p-5" style={{ background: T.card, border: `1px solid ${T.amber}24` }}>
               <p className="text-[10px] font-bold uppercase tracking-[0.18em]" style={{ color: T.amber }}>Decision</p>
               <p className="text-lg font-bold mt-2" style={{ color: T.text }}>{item.decision}</p>
@@ -3532,22 +3607,7 @@ function ArchitectureTrackTab({
           ))}
         </div>
       </AnchoredSection>
-      {depthMode === "staff" ? (
-        <div className="hidden xl:grid xl:grid-cols-3 gap-4">
-          {[
-            "Protect live streaming SLAs from replay traffic with separate quotas and consumer priorities.",
-            "Keep schema validation and contract ownership visible so the platform scales organizationally, not just technically.",
-            "Plan for governance, privacy, and cost signals directly in the architecture instead of bolting them on later.",
-          ].map((item) => (
-            <div key={item} className="rounded-[24px] p-5" style={{ background: T.card, border: `1px solid ${T.blue}20` }}>
-              <p className="text-sm leading-7" style={{ color: T.muted }}>
-                {item}
-              </p>
-            </div>
-          ))}
-        </div>
-      ) : null}
-      <AnchoredSection id="arch-say" eyebrow="Say this" title="Narrate the architecture in one flow" subtitle="Avoid jumping layer-to-layer randomly when you speak." accent={T.red}>
+      <AnchoredSection id="arch-say" eyebrow="Say this" title="Narrate the architecture in one flow" subtitle="Cover layers in order: producers, ingestion, Kafka, processing, lakehouse, serving, governance." accent={T.red}>
         <InterviewAnswerStrip tab="architecture" accent={T.red} />
       </AnchoredSection>
     </div>
@@ -3777,11 +3837,11 @@ function ReplayTrackTab() {
   );
 }
 
-function CapacityCostTrackTab({ depthMode }: { depthMode: DepthMode }) {
+function CapacityCostTrackTab() {
   return (
     <div className="space-y-8">
-      <AnchoredSection id="cost-scale" eyebrow="Scale math" title="Keep the calculator interactive and visual" subtitle="Capacity and cost should be explainable, not just stated." accent={T.blue}>
-        <ScaleEstimationTab depthMode={depthMode} />
+      <AnchoredSection id="cost-scale" eyebrow="Scale math" title="Derive capacity from event math, not guesses" subtitle="Show the interviewer you can work from DAU and heartbeat frequency to partition count and storage." accent={T.blue}>
+        <ScaleEstimationTab depthMode="senior" />
       </AnchoredSection>
       <AnchoredSection id="cost-tradeoffs" eyebrow="Cost levers" title="Show where cost changes as the platform scales" subtitle="Retention, partitions, cluster sizing, and serving engine choices all move spend." accent={T.amber}>
         <TradeoffsTab />
@@ -3831,21 +3891,19 @@ function QuizTrackTab({ onNavigate }: { onNavigate: (tab: DataEngineeringTabSlug
 function ContentForTab({
   activeTab,
   onNavigate,
-  depthMode,
 }: {
   activeTab: DataEngineeringTabSlug;
   onNavigate: (tab: DataEngineeringTabSlug) => void;
-  depthMode: DepthMode;
 }) {
   switch (activeTab) {
     case "start-here":
-      return <StartTrackTab onNavigate={onNavigate} depthMode={depthMode} />;
+      return <StartTrackTab onNavigate={onNavigate} />;
     case "requirements":
       return <RequirementsTrackTab />;
     case "event-sources":
       return <EventSourcesTrackTab />;
     case "architecture":
-      return <ArchitectureTrackTab onNavigate={onNavigate} depthMode={depthMode} />;
+      return <ArchitectureTrackTab onNavigate={onNavigate} />;
     case "ingestion-kafka":
       return <IngestionKafkaTrackTab onNavigate={onNavigate} />;
     case "real-time-streaming":
@@ -3865,7 +3923,7 @@ function ContentForTab({
     case "backfill-replay":
       return <ReplayTrackTab />;
     case "capacity-cost":
-      return <CapacityCostTrackTab depthMode={depthMode} />;
+      return <CapacityCostTrackTab />;
     case "failures":
       return <FailuresTrackTab />;
     case "quiz":
@@ -4187,7 +4245,6 @@ export default function DataEngineeringPage({ initialTab }: { initialTab?: strin
   const [visitedTabs, setVisitedTabs] = useState<Set<DataEngineeringTabSlug>>(new Set([initial]));
   const [revisedTabs, setRevisedTabs] = useState<Set<DataEngineeringTabSlug>>(new Set());
   const [feedback, setFeedback] = useState<Record<string, "up" | "down" | null>>({});
-  const [depthMode, setDepthMode] = useState<DepthMode>("senior");
   const [notesOpen, setNotesOpen] = useState(false);
   const [focusMode, setFocusMode] = useState(false);
   const [progressOpen, setProgressOpen] = useState(false);
@@ -4202,12 +4259,10 @@ export default function DataEngineeringPage({ initialTab }: { initialTab?: strin
       const revised = localStorage.getItem("netflix-de-revised-tabs");
       const noteState = localStorage.getItem("netflix-de-notes");
       const feedbackState = localStorage.getItem("netflix-de-feedback");
-      const depthState = localStorage.getItem("netflix-de-depth-mode");
       if (visited) setVisitedTabs(new Set(JSON.parse(visited)));
       if (revised) setRevisedTabs(new Set(JSON.parse(revised)));
       if (noteState) setNotes(JSON.parse(noteState));
       if (feedbackState) setFeedback(JSON.parse(feedbackState));
-      if (depthState === "beginner" || depthState === "senior" || depthState === "staff") setDepthMode(depthState);
     } catch {
       // ignore
     }
@@ -4219,11 +4274,10 @@ export default function DataEngineeringPage({ initialTab }: { initialTab?: strin
       localStorage.setItem("netflix-de-revised-tabs", JSON.stringify([...revisedTabs]));
       localStorage.setItem("netflix-de-notes", JSON.stringify(notes));
       localStorage.setItem("netflix-de-feedback", JSON.stringify(feedback));
-      localStorage.setItem("netflix-de-depth-mode", depthMode);
     } catch {
       // ignore
     }
-  }, [depthMode, feedback, notes, revisedTabs, visitedTabs]);
+  }, [feedback, notes, revisedTabs, visitedTabs]);
 
   useEffect(() => {
     const onPopState = () => {
@@ -4345,8 +4399,6 @@ export default function DataEngineeringPage({ initialTab }: { initialTab?: strin
           onToggleFocus={() => setFocusMode(true)}
           focusMode={focusMode}
           onShare={handleShare}
-          depthMode={depthMode}
-          onChangeDepthMode={setDepthMode}
         />
       ) : null}
 
@@ -4399,9 +4451,7 @@ export default function DataEngineeringPage({ initialTab }: { initialTab?: strin
               onNavigateSection={navigateSection}
             />
           )}
-          {activeTab === "start-here" ? <DepthGuidancePanel mode={depthMode} /> : null}
-          {activeTab === "start-here" ? <DepthPlaybookPanel mode={depthMode} tab={activeTab} /> : null}
-          <ContentForTab activeTab={activeTab} onNavigate={switchTab} depthMode={depthMode} />
+          <ContentForTab activeTab={activeTab} onNavigate={switchTab} />
         </ScrollableShell>
       </div>
 
