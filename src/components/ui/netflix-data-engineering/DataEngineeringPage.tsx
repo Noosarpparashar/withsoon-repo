@@ -1425,9 +1425,51 @@ const FLOW_NODES = [
 
 type FlowNodeId = typeof FLOW_NODES[number]["id"];
 
+const FLOW_NODE_ICONS: Record<FlowNodeId, string> = {
+  "user-events": "📱",
+  "kafka": "⚡",
+  "streaming": "🌊",
+  "lakehouse": "🏔",
+  "batch": "⚙️",
+  "serving": "📊",
+};
+
+const WHAT_YOU_LEARN = [
+  { title: "Event journey", body: "How user actions become analytics facts via Kafka, streaming jobs, and lakehouse tables.", color: T.blue },
+  { title: "Correctness story", body: "Why heartbeat beats play/pause, how sessionization works, and when batch owns final truth.", color: T.violet },
+  { title: "Scale math", body: "How to derive Kafka partitions, storage size, and streaming parallelism from DAU and event rate.", color: T.green },
+  { title: "Failure recovery", body: "Late data, DLQ, quarantine, replay paths, and how to protect official metrics from bad code.", color: T.red },
+];
+
 function StartHereTab({ onNavigate }: { onNavigate: (tab: DataEngineeringTabSlug) => void }) {
   const [selectedFlowNode, setSelectedFlowNode] = useState<FlowNodeId>("kafka");
+  const [isPlaying, setIsPlaying] = useState(false);
   const activeNode = FLOW_NODES.find((n) => n.id === selectedFlowNode) ?? FLOW_NODES[1];
+  const activeIndex = FLOW_NODES.findIndex((n) => n.id === selectedFlowNode);
+  const playTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
+  const stopPlay = () => {
+    if (playTimerRef.current) clearInterval(playTimerRef.current);
+    playTimerRef.current = null;
+    setIsPlaying(false);
+  };
+
+  const startPlay = () => {
+    stopPlay();
+    setIsPlaying(true);
+    setSelectedFlowNode(FLOW_NODES[0].id);
+    let i = 0;
+    playTimerRef.current = setInterval(() => {
+      i++;
+      if (i >= FLOW_NODES.length) {
+        stopPlay();
+        return;
+      }
+      setSelectedFlowNode(FLOW_NODES[i].id);
+    }, 1800);
+  };
+
+  useEffect(() => () => stopPlay(), []);
 
   const INTERVIEW_ANSWER = "I would design Netflix's data platform, not the playback backend. The system ingests playback, heartbeat, search, impression, QoE, billing, and recommendation events into Kafka. From there, real-time jobs compute freshness-sensitive metrics, while raw events land in S3/Iceberg for batch processing. Cleaned Silver tables and aggregated Gold tables power dashboards, experimentation, recommendations, data quality, replay, and backfills.";
 
@@ -1437,46 +1479,142 @@ function StartHereTab({ onNavigate }: { onNavigate: (tab: DataEngineeringTabSlug
       {/* Clickable flow diagram */}
       <div className="rounded-[28px] p-5 md:p-6 relative overflow-hidden" style={{ background: T.card, border: `1px solid ${T.blue}24` }}>
         <div className="absolute inset-x-0 top-0 h-1" style={{ background: `linear-gradient(90deg, ${T.blue}, ${T.violet}, ${T.red})` }} />
-        <p className="text-[10px] font-bold uppercase tracking-[0.2em] mb-4" style={{ color: T.blue }}>
-          Data platform end-to-end flow — click any stage
-        </p>
+        <div className="flex items-center justify-between gap-3 flex-wrap mb-4">
+          <p className="text-[10px] font-bold uppercase tracking-[0.2em]" style={{ color: T.blue }}>
+            Data platform end-to-end flow — click any stage
+          </p>
+          <div className="flex items-center gap-2">
+            {isPlaying ? (
+              <button
+                onClick={stopPlay}
+                className="px-3 py-1.5 rounded-xl text-xs font-semibold cursor-pointer"
+                style={{ background: `${T.red}18`, color: T.red, border: `1px solid ${T.red}33` }}
+              >
+                ■ Stop
+              </button>
+            ) : (
+              <button
+                onClick={startPlay}
+                className="px-3 py-1.5 rounded-xl text-xs font-semibold cursor-pointer transition-all hover:-translate-y-0.5"
+                style={{ background: `${T.blue}18`, color: T.blue, border: `1px solid ${T.blue}33` }}
+              >
+                ▶ Play journey
+              </button>
+            )}
+            {selectedFlowNode !== "kafka" && (
+              <button
+                onClick={() => { stopPlay(); setSelectedFlowNode("kafka"); }}
+                className="px-3 py-1.5 rounded-xl text-xs font-semibold cursor-pointer"
+                style={{ background: T.card2, color: T.muted, border: `1px solid ${T.border}` }}
+              >
+                Reset
+              </button>
+            )}
+          </div>
+        </div>
+
+        {/* Progress dots */}
+        <div className="flex gap-1.5 mb-4">
+          {FLOW_NODES.map((node, i) => (
+            <button
+              key={node.id}
+              onClick={() => { stopPlay(); setSelectedFlowNode(node.id); }}
+              className="cursor-pointer rounded-full transition-all duration-200"
+              style={{
+                width: i === activeIndex ? 20 : 8,
+                height: 8,
+                background: i === activeIndex ? node.color : i < activeIndex ? `${node.color}55` : T.border,
+              }}
+              aria-label={node.label}
+            />
+          ))}
+        </div>
+
         {/* Node row */}
         <div className="flex flex-wrap items-center gap-0">
           {FLOW_NODES.map((node, index) => (
             <div key={node.id} className="flex items-center">
               <button
-                onClick={() => setSelectedFlowNode(node.id)}
-                className="rounded-[18px] px-4 py-3 text-left cursor-pointer transition-all duration-200 hover:-translate-y-0.5 min-w-[130px]"
+                onClick={() => { stopPlay(); setSelectedFlowNode(node.id); }}
+                className="rounded-[18px] px-3 py-2.5 text-left cursor-pointer transition-all duration-200 hover:-translate-y-0.5"
                 style={{
                   background: selectedFlowNode === node.id ? `${node.color}18` : T.card2,
                   border: `1px solid ${selectedFlowNode === node.id ? `${node.color}44` : T.border}`,
                   boxShadow: selectedFlowNode === node.id ? `0 0 0 2px ${node.color}22, 0 12px 24px ${node.color}18` : "none",
+                  minWidth: 110,
                 }}
               >
-                <p className="text-xs font-bold leading-5" style={{ color: selectedFlowNode === node.id ? node.color : T.text }}>
-                  {node.label}
-                </p>
-                <p className="text-[10px] mt-0.5" style={{ color: T.faint }}>
+                <div className="flex items-center gap-1.5 mb-0.5">
+                  <span className="text-base leading-none">{FLOW_NODE_ICONS[node.id as FlowNodeId]}</span>
+                  <p className="text-xs font-bold leading-5" style={{ color: selectedFlowNode === node.id ? node.color : T.text }}>
+                    {node.label}
+                  </p>
+                </div>
+                <p className="text-[10px]" style={{ color: T.faint }}>
                   {node.sublabel}
                 </p>
               </button>
               {index < FLOW_NODES.length - 1 && (
-                <span className="mx-1.5 text-base font-bold" style={{ color: selectedFlowNode === node.id || selectedFlowNode === FLOW_NODES[index + 1].id ? activeNode.color : T.border }}>
+                <span
+                  className="mx-1 text-sm font-bold transition-colors duration-300"
+                  style={{ color: index < activeIndex ? activeNode.color : T.border }}
+                >
                   →
                 </span>
               )}
             </div>
           ))}
         </div>
+
         {/* Selected node detail */}
         <div className="mt-4 rounded-[18px] p-4 transition-all duration-200" style={{ background: `${activeNode.color}0c`, border: `1px solid ${activeNode.color}28` }}>
-          <p className="text-[10px] font-bold uppercase tracking-[0.18em] mb-1.5" style={{ color: activeNode.color }}>
-            {activeNode.label}
-          </p>
+          <div className="flex items-center gap-2 mb-1.5">
+            <span className="text-lg leading-none">{FLOW_NODE_ICONS[activeNode.id as FlowNodeId]}</span>
+            <p className="text-[10px] font-bold uppercase tracking-[0.18em]" style={{ color: activeNode.color }}>
+              {activeNode.label}
+            </p>
+            <span className="text-[10px] px-2 py-0.5 rounded-full" style={{ background: `${activeNode.color}14`, color: activeNode.color }}>
+              {activeIndex + 1} / {FLOW_NODES.length}
+            </span>
+          </div>
           <p className="text-sm leading-7" style={{ color: T.muted }}>
             {activeNode.detail}
           </p>
+          <div className="flex gap-2 mt-3">
+            {activeIndex > 0 && (
+              <button
+                onClick={() => { stopPlay(); setSelectedFlowNode(FLOW_NODES[activeIndex - 1].id); }}
+                className="px-3 py-1.5 rounded-lg text-xs font-semibold cursor-pointer"
+                style={{ background: T.card2, color: T.muted, border: `1px solid ${T.border}` }}
+              >
+                ← {FLOW_NODES[activeIndex - 1].label}
+              </button>
+            )}
+            {activeIndex < FLOW_NODES.length - 1 && (
+              <button
+                onClick={() => { stopPlay(); setSelectedFlowNode(FLOW_NODES[activeIndex + 1].id); }}
+                className="px-3 py-1.5 rounded-lg text-xs font-semibold cursor-pointer"
+                style={{ background: `${FLOW_NODES[activeIndex + 1].color}14`, color: FLOW_NODES[activeIndex + 1].color, border: `1px solid ${FLOW_NODES[activeIndex + 1].color}30` }}
+              >
+                Next: {FLOW_NODES[activeIndex + 1].label} →
+              </button>
+            )}
+          </div>
         </div>
+      </div>
+
+      {/* What you will learn */}
+      <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+        {WHAT_YOU_LEARN.map((item) => (
+          <div key={item.title} className="rounded-[20px] p-4" style={{ background: T.card, border: `1px solid ${item.color}20` }}>
+            <p className="text-[10px] font-bold uppercase tracking-[0.18em] mb-2" style={{ color: item.color }}>
+              {item.title}
+            </p>
+            <p className="text-xs leading-5" style={{ color: T.muted }}>
+              {item.body}
+            </p>
+          </div>
+        ))}
       </div>
 
       {/* Scope card */}
@@ -1523,7 +1661,7 @@ function StartHereTab({ onNavigate }: { onNavigate: (tab: DataEngineeringTabSlug
       </div>
 
       {/* Next CTA */}
-      <div className="flex gap-3 flex-wrap">
+      <div className="flex gap-3 flex-wrap items-center">
         <button
           onClick={() => onNavigate("requirements")}
           className="px-5 py-3 rounded-xl text-sm font-semibold cursor-pointer transition-all hover:-translate-y-0.5"
@@ -1543,7 +1681,9 @@ function StartHereTab({ onNavigate }: { onNavigate: (tab: DataEngineeringTabSlug
   );
 }
 
-function RequirementsTab() {
+const REQ_SUMMARY = "Functional: Netflix data platform must ingest 500K events/sec, provide trending metrics in <1 min, QoE signals in <15 min, content performance in <1 hour, and official watch-hour counts by 06:00 UTC daily. Non-functional: 99.99% delivery guarantee via Kafka acks + idempotent sinks; correctness enforced through schema registry, DQ gates, and SLA alerts; replay capability via immutable Bronze layer; all PII events tagged at gateway; lineage tracked end-to-end for audits.";
+
+function RequirementsTab({ onNavigate }: { onNavigate: (tab: DataEngineeringTabSlug) => void }) {
   const [openDomains, setOpenDomains] = useState<Record<string, boolean>>(
     Object.fromEntries(REQUIREMENT_DOMAINS.map((domain, index) => [domain.id, index === 0]))
   );
@@ -1639,38 +1779,123 @@ function RequirementsTab() {
         </div>
       </div>
 
-      <div className="grid gap-4 lg:grid-cols-[1.1fr_0.9fr]">
-        <div className="rounded-[24px] p-5" style={{ background: T.card, border: `1px solid ${T.amber}24` }}>
-          <p className="text-[10px] font-bold uppercase tracking-[0.18em] mb-4" style={{ color: T.amber }}>
-            Freshness ladder
+      {/* Visual freshness timeline */}
+      <div className="rounded-[24px] p-5" style={{ background: T.card, border: `1px solid ${T.amber}24` }}>
+        <p className="text-[10px] font-bold uppercase tracking-[0.18em] mb-4" style={{ color: T.amber }}>
+          Freshness SLA timeline — where each metric sits
+        </p>
+        <div className="relative">
+          {/* Timeline track */}
+          <div className="flex items-center gap-0 mb-6">
+            {[
+              { label: "< 1 min", color: T.red },
+              { label: "1–15 min", color: T.orange },
+              { label: "Hourly", color: T.amber },
+              { label: "Daily", color: T.green },
+            ].map((tier, i, arr) => (
+              <div key={tier.label} className="flex items-center flex-1">
+                <div className="flex-1 flex flex-col items-center">
+                  <div className="w-full h-2 rounded-full" style={{ background: `${tier.color}30` }} />
+                  <span className="text-[10px] font-bold mt-1.5" style={{ color: tier.color }}>{tier.label}</span>
+                </div>
+                {i < arr.length - 1 && <div className="w-4 h-0.5 shrink-0" style={{ background: T.border }} />}
+              </div>
+            ))}
+          </div>
+          {/* Metrics placed on timeline */}
+          <div className="grid grid-cols-4 gap-3">
+            <div className="space-y-2">
+              {["QoE alerts", "Fraud / anomaly detection", "Playback error spikes"].map((m) => (
+                <div key={m} className="rounded-xl px-3 py-2 text-xs" style={{ background: `${T.red}10`, color: T.muted, border: `1px solid ${T.red}22` }}>{m}</div>
+              ))}
+            </div>
+            <div className="space-y-2">
+              {["Active sessions", "Trending titles", "Regional playback health"].map((m) => (
+                <div key={m} className="rounded-xl px-3 py-2 text-xs" style={{ background: `${T.orange}10`, color: T.muted, border: `1px solid ${T.orange}22` }}>{m}</div>
+              ))}
+            </div>
+            <div className="space-y-2">
+              {["Recommendation feedback", "Content engagement", "Experiment exposure"].map((m) => (
+                <div key={m} className="rounded-xl px-3 py-2 text-xs" style={{ background: `${T.amber}10`, color: T.muted, border: `1px solid ${T.amber}22` }}>{m}</div>
+              ))}
+            </div>
+            <div className="space-y-2">
+              {["Watch hours (official)", "Billing reconciliation", "Executive reporting", "ML training datasets"].map((m) => (
+                <div key={m} className="rounded-xl px-3 py-2 text-xs" style={{ background: `${T.green}10`, color: T.muted, border: `1px solid ${T.green}22` }}>{m}</div>
+              ))}
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Clarifying questions + NFRs side by side */}
+      <div className="grid gap-4 lg:grid-cols-[1fr_1fr]">
+        <div className="rounded-[24px] p-5" style={{ background: T.card, border: `1px solid ${T.blue}24` }}>
+          <p className="text-[10px] font-bold uppercase tracking-[0.18em] mb-3" style={{ color: T.blue }}>
+            Ask these clarifying questions first
           </p>
-          <div className="space-y-3">
-            {LATENCY_SLA_ROWS.map(([label, value]) => (
-              <div key={label} className="rounded-xl p-3 flex items-center justify-between gap-3" style={{ background: T.card2, border: `1px solid ${T.border}` }}>
-                <p className="text-sm font-medium" style={{ color: T.text }}>
-                  {label}
-                </p>
-                <span className="text-xs font-semibold px-3 py-1 rounded-full" style={{ background: `${T.amber}12`, color: T.amber, border: `1px solid ${T.amber}24` }}>
-                  {value}
+          <div className="space-y-2.5">
+            {[
+              "Are we designing for real-time dashboards, ML features, or both?",
+              "What is the expected freshness for the most latency-sensitive consumer?",
+              "Do we need to support replay and correction of historical data?",
+              "Is there a compliance or data-retention policy I should design around?",
+              "What is the primary consumer — BI analysts, on-call engineers, or ML models?",
+              "Should I design for one region or multi-region with data sovereignty constraints?",
+            ].map((q, i) => (
+              <div key={i} className="flex items-start gap-3 rounded-xl p-3" style={{ background: T.card2, border: `1px solid ${T.border}` }}>
+                <span className="w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-bold shrink-0 mt-0.5" style={{ background: `${T.blue}18`, color: T.blue }}>
+                  {i + 1}
                 </span>
+                <p className="text-xs leading-5" style={{ color: T.muted }}>{q}</p>
               </div>
             ))}
           </div>
         </div>
-        <div className="rounded-[24px] p-5" style={{ background: T.card, border: `1px solid ${T.red}24` }}>
-          <p className="text-[10px] font-bold uppercase tracking-[0.18em] mb-4" style={{ color: T.red }}>
-            Non-functional requirements
-          </p>
-          <div className="space-y-3">
-            {NFRS.map((item) => (
-              <div key={item} className="rounded-xl p-4" style={{ background: T.card2, border: `1px solid ${T.border}` }}>
-                <p className="text-sm leading-7" style={{ color: T.muted }}>
-                  {item}
-                </p>
-              </div>
-            ))}
+        <div className="space-y-4">
+          <div className="rounded-[24px] p-5" style={{ background: T.card, border: `1px solid ${T.red}24` }}>
+            <p className="text-[10px] font-bold uppercase tracking-[0.18em] mb-3" style={{ color: T.red }}>
+              DE non-functional requirements
+            </p>
+            <div className="space-y-2">
+              {NFRS.map((item) => (
+                <div key={item} className="rounded-xl p-3" style={{ background: T.card2, border: `1px solid ${T.border}` }}>
+                  <p className="text-xs leading-5" style={{ color: T.muted }}>{item}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+          {/* Common mistake */}
+          <div className="rounded-[20px] p-4" style={{ background: `${T.red}0a`, border: `1px solid ${T.red}28` }}>
+            <p className="text-[10px] font-bold uppercase tracking-[0.18em] mb-2" style={{ color: T.red }}>
+              Common interview mistake
+            </p>
+            <p className="text-xs leading-5" style={{ color: T.muted }}>
+              Jumping to tools (Kafka, Flink, Iceberg) before stating freshness requirements and business consumers. Interviewers want to see that you know <em>why</em> you need near-real-time before you name a streaming engine.
+            </p>
+          </div>
+          {/* What to skip */}
+          <div className="rounded-[20px] p-4" style={{ background: T.card2, border: `1px solid ${T.border}` }}>
+            <p className="text-[10px] font-bold uppercase tracking-[0.18em] mb-2" style={{ color: T.faint }}>
+              What to skip in a 45-min interview
+            </p>
+            <p className="text-xs leading-5" style={{ color: T.faint }}>
+              Skip compliance details, multi-region specifics, and advanced governance unless the interviewer asks. Cover freshness, correctness, replay, and one failure mode per layer instead.
+            </p>
           </div>
         </div>
+      </div>
+
+      {/* Copy summary + Next tab CTA */}
+      <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3 pt-2">
+        <CopyButton value={REQ_SUMMARY} label="Copy requirement summary" />
+        <button
+          onClick={() => onNavigate("architecture")}
+          className="px-5 py-3 rounded-2xl text-sm font-bold cursor-pointer transition-all duration-200 hover:-translate-y-0.5 hover:shadow-lg"
+          style={{ background: T.blue, color: "#fff", boxShadow: `0 8px 24px ${T.blue}33` }}
+        >
+          Next: Architecture →
+        </button>
       </div>
     </div>
   );
@@ -1922,11 +2147,44 @@ function EventTaxonomyTab() {
   );
 }
 
+const ARCH_JOURNEY_STEPS: ArchitectureNodeId[] = ["clients", "event-gateway", "kafka", "flink", "bronze", "silver", "gold", "bi-ml"];
+const ARCH_ANSWER = "My architecture is layered: client apps and backend services emit events into an event gateway that validates schemas and tags PII, then publishes to Kafka. From Kafka, real-time Flink jobs produce live dashboards and features while a parallel Bronze sink captures every raw event immutably in S3/Iceberg. Batch Spark and dbt jobs process Bronze to Silver to Gold daily, applying DQ gates before publishing official metrics. BI, ad-hoc SQL, OLAP, and feature stores each read from the appropriate layer. Governance, lineage, and replay are first-class concerns, not afterthoughts.";
+
 function ArchitectureTab({ onNavigate }: { onNavigate: (tab: DataEngineeringTabSlug) => void }) {
   const [reveals, setReveals] = useState<string[]>([]);
   const [selectedNodeId, setSelectedNodeId] = useState<ArchitectureNodeId>(ARCHITECTURE_NODES[2]?.id ?? ARCHITECTURE_NODES[0].id);
   const [overlayMode, setOverlayMode] = useState<"base" | "replay" | "governance" | "cost">("base");
   const [drawerTab, setDrawerTab] = useState<"overview" | "input" | "output" | "failure" | "interview">("overview");
+  const [journeyStep, setJourneyStep] = useState<number>(-1);
+  const journeyTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const isPlayingJourney = journeyStep >= 0;
+
+  const stopJourney = () => {
+    if (journeyTimerRef.current) clearInterval(journeyTimerRef.current);
+    journeyTimerRef.current = null;
+    setJourneyStep(-1);
+  };
+
+  const playJourney = () => {
+    stopJourney();
+    setOverlayMode("base");
+    setDrawerTab("overview");
+    setSelectedNodeId(ARCH_JOURNEY_STEPS[0]);
+    setJourneyStep(0);
+    let step = 0;
+    journeyTimerRef.current = setInterval(() => {
+      step++;
+      if (step >= ARCH_JOURNEY_STEPS.length) {
+        stopJourney();
+        return;
+      }
+      setSelectedNodeId(ARCH_JOURNEY_STEPS[step]);
+      setJourneyStep(step);
+    }, 1600);
+  };
+
+  useEffect(() => () => stopJourney(), []);
+
   const visibleNodes = ARCHITECTURE_NODES.filter((node) => node.reveal === "base" || reveals.includes(node.reveal));
   const selectedNode = visibleNodes.find((node) => node.id === selectedNodeId) ?? visibleNodes[0];
   const visibleNodeMap = new Map(visibleNodes.map((node) => [node.id, node] as const));
@@ -1961,6 +2219,16 @@ function ArchitectureTab({ onNavigate }: { onNavigate: (tab: DataEngineeringTabS
     }
   }, [selectedNodeId, visibleNodes]);
 
+  const LAYER_LABELS = [
+    { label: "Producers", color: T.blue },
+    { label: "Ingestion", color: T.amber },
+    { label: "Kafka backbone", color: T.amber },
+    { label: "Processing", color: T.violet },
+    { label: "Lakehouse", color: T.violet },
+    { label: "Serving", color: T.gold },
+    { label: "Governance", color: T.green },
+  ];
+
   return (
     <div className="space-y-5">
       <div className="rounded-[28px] p-5" style={{ background: T.card, border: `1px solid ${T.blue}24` }}>
@@ -1970,64 +2238,97 @@ function ArchitectureTab({ onNavigate }: { onNavigate: (tab: DataEngineeringTabS
               Interactive architecture canvas
             </p>
             <p className="text-[12px] mt-1" style={{ color: T.faint }}>
-              Click nodes, switch overlays, and trace how the event journey changes from source to replay and serving.
+              Click nodes to inspect. Use overlay buttons to trace replay, governance, and cost paths.
             </p>
           </div>
-          <div className="flex flex-wrap gap-2">
-            {[
-              { label: "Reset diagram", action: () => { setOverlayMode("base"); setDrawerTab("overview"); setSelectedNodeId("kafka"); }, active: false },
-              { label: "Play event journey", action: () => { setOverlayMode("base"); setSelectedNodeId("flink"); }, active: overlayMode === "base" },
-              { label: "Show replay path", action: () => { setOverlayMode("replay"); setSelectedNodeId("replay"); }, active: overlayMode === "replay" },
-              { label: "Show governance overlay", action: () => { setOverlayMode("governance"); setSelectedNodeId("governance"); }, active: overlayMode === "governance" },
-              { label: "Show cost overlay", action: () => { setOverlayMode("cost"); setSelectedNodeId("bronze"); }, active: overlayMode === "cost" },
-            ].map((item) => (
+          {/* Journey playback controls */}
+          <div className="flex flex-wrap gap-2 items-center">
+            {isPlayingJourney ? (
+              <>
+                <span className="text-xs px-3 py-1.5 rounded-full font-semibold" style={{ background: `${T.blue}14`, color: T.blue, border: `1px solid ${T.blue}30` }}>
+                  Step {journeyStep + 1} / {ARCH_JOURNEY_STEPS.length}
+                </span>
+                <button
+                  onClick={stopJourney}
+                  className="px-3 py-2 rounded-xl text-xs font-semibold cursor-pointer"
+                  style={{ background: `${T.red}18`, color: T.red, border: `1px solid ${T.red}33` }}
+                >
+                  ■ Stop
+                </button>
+              </>
+            ) : (
+              <button
+                onClick={playJourney}
+                className="px-3 py-2 rounded-xl text-xs font-semibold cursor-pointer transition-all duration-200 hover:-translate-y-0.5"
+                style={{ background: `${T.blue}16`, color: T.blue, border: `1px solid ${T.blue}33` }}
+              >
+                ▶ Play event journey
+              </button>
+            )}
+            <CopyButton value={ARCH_ANSWER} label="Copy architecture answer" />
+          </div>
+        </div>
+
+        {/* Overlay buttons */}
+        <div className="flex flex-wrap gap-2 mb-3">
+          {[
+            { label: "Base flow", mode: "base" as const, color: T.blue, action: () => { stopJourney(); setOverlayMode("base"); setSelectedNodeId("kafka"); } },
+            { label: "Replay path", mode: "replay" as const, color: T.violet, action: () => { stopJourney(); setOverlayMode("replay"); setSelectedNodeId("replay"); } },
+            { label: "Governance", mode: "governance" as const, color: T.green, action: () => { stopJourney(); setOverlayMode("governance"); setSelectedNodeId("governance"); } },
+            { label: "Cost view", mode: "cost" as const, color: T.amber, action: () => { stopJourney(); setOverlayMode("cost"); setSelectedNodeId("bronze"); } },
+          ].map((item) => {
+            const active = overlayMode === item.mode;
+            return (
               <button
                 key={item.label}
                 onClick={item.action}
                 className="px-3 py-2 rounded-xl text-xs font-semibold cursor-pointer transition-all duration-200 hover:-translate-y-0.5"
-                style={{ background: item.active ? `${T.red}18` : T.card2, color: item.active ? T.red : T.text, border: `1px solid ${item.active ? `${T.red}33` : T.border}` }}
+                style={{ background: active ? `${item.color}18` : T.card2, color: active ? item.color : T.text, border: `1px solid ${active ? `${item.color}33` : T.border}` }}
               >
                 {item.label}
               </button>
-            ))}
-          </div>
-          <div className="flex flex-wrap gap-2">
-            {ARCHITECTURE_REVEALS.map((item) => {
-              const active = reveals.includes(item.id);
-              return (
-                <button
-                  key={item.id}
-                  onClick={() => setReveals((prev) => (prev.includes(item.id) ? prev.filter((entry) => entry !== item.id) : [...prev, item.id]))}
-                  className="px-3 py-2 rounded-xl text-xs font-semibold cursor-pointer transition-all duration-200 hover:-translate-y-0.5"
-                  style={{
-                    background: active ? `${T.blue}18` : T.card2,
-                    color: active ? T.blue : T.text,
-                    border: `1px solid ${active ? `${T.blue}33` : T.border}`,
-                  }}
-                >
-                  + {item.label}
-                </button>
-              );
-            })}
-          </div>
+            );
+          })}
+          <button
+            onClick={() => { stopJourney(); setOverlayMode("base"); setDrawerTab("overview"); setSelectedNodeId("kafka"); }}
+            className="px-3 py-2 rounded-xl text-xs font-semibold cursor-pointer"
+            style={{ background: T.card2, color: T.muted, border: `1px solid ${T.border}` }}
+          >
+            Reset
+          </button>
+        </div>
+
+        {/* Reveal toggles */}
+        <div className="flex flex-wrap gap-2 mb-4">
+          {ARCHITECTURE_REVEALS.map((item) => {
+            const active = reveals.includes(item.id);
+            return (
+              <button
+                key={item.id}
+                onClick={() => setReveals((prev) => (prev.includes(item.id) ? prev.filter((entry) => entry !== item.id) : [...prev, item.id]))}
+                className="px-3 py-1.5 rounded-xl text-xs font-semibold cursor-pointer transition-all duration-200 hover:-translate-y-0.5"
+                style={{
+                  background: active ? `${T.blue}18` : T.card2,
+                  color: active ? T.blue : T.muted,
+                  border: `1px solid ${active ? `${T.blue}33` : T.border}`,
+                }}
+              >
+                + {item.label}
+              </button>
+            );
+          })}
         </div>
 
         <div className="rounded-[26px] p-5 relative overflow-hidden" style={{ background: T.card2, border: `1px solid ${T.border}` }}>
           <div className="absolute inset-0 opacity-45" style={{ backgroundImage: "linear-gradient(color-mix(in srgb, var(--border) 55%, transparent) 1px, transparent 1px), linear-gradient(90deg, color-mix(in srgb, var(--border) 55%, transparent) 1px, transparent 1px)", backgroundSize: "32px 32px" }} />
           <div className="relative min-h-[420px]">
-            <div className="hidden xl:block absolute inset-x-0 top-6 px-3">
-              <div className="grid grid-cols-4 gap-3">
-                {[
-                  { label: "Emit + validate", color: T.blue },
-                  { label: "Durable backbone", color: T.amber },
-                  { label: "Processing + lakehouse", color: T.violet },
-                  { label: "Serving + recovery", color: T.gold },
-                ].map((lane) => (
-                  <div key={lane.label} className="rounded-full px-3 py-2 text-center text-[10px] font-bold uppercase tracking-[0.16em]" style={{ background: `${lane.color}10`, color: lane.color, border: `1px solid ${lane.color}20` }}>
-                    {lane.label}
-                  </div>
-                ))}
-              </div>
+            {/* Layer labels */}
+            <div className="hidden xl:flex absolute left-2 top-6 flex-col gap-2 z-10">
+              {LAYER_LABELS.map((lane) => (
+                <div key={lane.label} className="rounded-full px-2.5 py-1 text-[9px] font-bold uppercase tracking-[0.14em]" style={{ background: `${lane.color}10`, color: lane.color, border: `1px solid ${lane.color}20`, whiteSpace: "nowrap" }}>
+                  {lane.label}
+                </div>
+              ))}
             </div>
             <svg className="absolute inset-0 h-full w-full" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true">
               {visibleLinks.map((link) => {
@@ -2035,6 +2336,7 @@ function ArchitectureTab({ onNavigate }: { onNavigate: (tab: DataEngineeringTabS
                 const to = visibleNodeMap.get(link.to as ArchitectureNodeId);
                 if (!from || !to) return null;
                 const highlighted = highlightedLinks.includes(link);
+                const isJourneyActive = isPlayingJourney && ARCH_JOURNEY_STEPS.slice(0, journeyStep + 1).includes(link.from as ArchitectureNodeId) && ARCH_JOURNEY_STEPS.slice(0, journeyStep + 1).includes(link.to as ArchitectureNodeId);
                 return (
                   <g key={`${link.from}-${link.to}`}>
                     <line
@@ -2042,89 +2344,90 @@ function ArchitectureTab({ onNavigate }: { onNavigate: (tab: DataEngineeringTabS
                       y1={from.y}
                       x2={to.x}
                       y2={to.y}
-                      stroke={highlighted ? from.color : "rgba(148,163,184,0.35)"}
-                      strokeWidth={highlighted ? 1.8 : 0.8}
+                      stroke={isJourneyActive ? from.color : highlighted ? from.color : "rgba(148,163,184,0.30)"}
+                      strokeWidth={isJourneyActive ? 2.2 : highlighted ? 1.8 : 0.8}
                       strokeDasharray={overlayMode === "replay" && link.groups.includes("replay") ? "3 2" : undefined}
                       strokeLinecap="round"
                     />
                     <circle
                       cx={(from.x + to.x) / 2}
                       cy={(from.y + to.y) / 2}
-                      r={highlighted ? 0.9 : 0}
-                      fill={highlighted ? from.color : "transparent"}
+                      r={isJourneyActive || highlighted ? 0.9 : 0}
+                      fill={isJourneyActive ? from.color : highlighted ? from.color : "transparent"}
                     />
                   </g>
                 );
               })}
             </svg>
-            <div className="hidden xl:block absolute left-[15%] top-[22%] rounded-full px-3 py-1 text-[10px] font-bold uppercase tracking-[0.16em]" style={{ background: `${T.blue}10`, color: T.blue, border: `1px solid ${T.blue}20` }}>
-              Schema Registry / Contract Validation
-            </div>
-            {visibleNodes.map((node, index) => (
-              <button
-                key={node.id}
-                onClick={() => {
-                  setSelectedNodeId(node.id);
-                  setDrawerTab("overview");
-                }}
-                className="absolute -translate-x-1/2 -translate-y-1/2 rounded-[20px] px-4 py-3 text-left min-w-[170px] max-w-[210px] cursor-pointer transition-all duration-200 hover:-translate-y-[53%]"
-                style={{
-                  left: `${node.x}%`,
-                  top: `${node.y}%`,
-                  background: selectedNode?.id === node.id ? `${node.color}16` : T.card,
-                  border: `1px solid ${selectedNode?.id === node.id ? `${node.color}35` : T.border}`,
-                  boxShadow: selectedNode?.id === node.id ? `0 0 0 2px ${node.color}26, 0 18px 28px ${node.color}22` : highlightedLinks.some((link) => link.from === node.id || link.to === node.id) ? `0 12px 24px ${node.color}10` : "none",
-                }}
-              >
-                <p className="text-[10px] font-bold uppercase tracking-[0.18em]" style={{ color: node.color }}>
-                  {index < 2 ? "Source" : index < 4 ? "Backbone" : index < 7 ? "Processing" : "Serving"}
-                </p>
-                <p className="text-sm font-bold mt-1 leading-5" style={{ color: T.text }}>
-                  {node.label}
-                </p>
-                <p className="text-[11px] mt-2" style={{ color: highlightedLinks.some((link) => link.from === node.id || link.to === node.id) ? node.color : T.faint }}>
-                  {selectedNode?.id === node.id ? "Selected path highlighted" : "Click to inspect"}
-                </p>
-              </button>
-            ))}
+            {visibleNodes.map((node, index) => {
+              const isJourneyNode = isPlayingJourney && ARCH_JOURNEY_STEPS.slice(0, journeyStep + 1).includes(node.id as ArchitectureNodeId);
+              const isCurrentJourneyNode = isPlayingJourney && ARCH_JOURNEY_STEPS[journeyStep] === node.id;
+              return (
+                <button
+                  key={node.id}
+                  onClick={() => {
+                    stopJourney();
+                    setSelectedNodeId(node.id);
+                    setDrawerTab("overview");
+                  }}
+                  className="absolute -translate-x-1/2 -translate-y-1/2 rounded-[20px] px-4 py-3 text-left min-w-[160px] max-w-[200px] cursor-pointer transition-all duration-300"
+                  style={{
+                    left: `${node.x}%`,
+                    top: `${node.y}%`,
+                    background: isCurrentJourneyNode ? `${node.color}22` : selectedNode?.id === node.id ? `${node.color}16` : T.card,
+                    border: `1px solid ${isCurrentJourneyNode ? `${node.color}55` : selectedNode?.id === node.id ? `${node.color}35` : T.border}`,
+                    boxShadow: isCurrentJourneyNode
+                      ? `0 0 0 3px ${node.color}35, 0 20px 32px ${node.color}28`
+                      : selectedNode?.id === node.id
+                      ? `0 0 0 2px ${node.color}26, 0 18px 28px ${node.color}22`
+                      : "none",
+                    opacity: isPlayingJourney && !isJourneyNode && !isCurrentJourneyNode ? 0.45 : 1,
+                  }}
+                >
+                  <p className="text-[10px] font-bold uppercase tracking-[0.18em]" style={{ color: node.color }}>
+                    {index < 2 ? "Producers" : index < 4 ? "Backbone" : index < 7 ? "Processing" : "Serving"}
+                  </p>
+                  <p className="text-sm font-bold mt-1 leading-5" style={{ color: T.text }}>
+                    {node.label}
+                  </p>
+                  <p className="text-[11px] mt-1.5" style={{ color: isCurrentJourneyNode ? node.color : T.faint }}>
+                    {isCurrentJourneyNode ? "▶ Active in journey" : selectedNode?.id === node.id ? "Selected" : "Click to inspect"}
+                  </p>
+                </button>
+              );
+            })}
             {highlightedLinks.slice(0, 4).map((link, index) => {
               const from = visibleNodeMap.get(link.from as ArchitectureNodeId);
               const to = visibleNodeMap.get(link.to as ArchitectureNodeId);
               if (!from || !to) return null;
               return <AnimatedDot key={`${link.from}-${link.to}`} left={from.x} top={from.y} endLeft={to.x} endTop={to.y} delay={index * 0.8} color={from.color} />;
             })}
-            <div className="hidden xl:flex absolute bottom-3 right-3 gap-2 flex-wrap justify-end max-w-[340px]">
-              {["Click nodes", "Open deep dives", "Trace replay paths", "Preview selected edges"].map((item) => (
-                <span key={item} className="px-3 py-1.5 rounded-full text-[11px] font-semibold" style={{ background: T.card, color: T.text, border: `1px solid ${T.border}` }}>
-                  {item}
-                </span>
-              ))}
-            </div>
           </div>
         </div>
       </div>
 
+      {/* Node detail drawer */}
       <div className="grid gap-4 xl:grid-cols-[0.95fr_1.05fr]">
         <div className="rounded-[24px] p-5" style={{ background: T.card, border: `1px solid ${selectedNode?.color ?? T.blue}24` }}>
           <div className="flex items-center justify-between gap-3 mb-4">
             <div>
               <p className="text-[10px] font-bold uppercase tracking-[0.18em]" style={{ color: selectedNode?.color ?? T.blue }}>
-                Pipeline node drawer
+                Node detail drawer
               </p>
               <h3 className="text-2xl font-bold mt-2" style={{ color: T.text }}>
                 {selectedNode?.label}
               </h3>
             </div>
             <button onClick={() => onNavigate(normalizeDataEngineeringTab(selectedNode.deepDive) ?? "architecture")} className="px-3 py-2 rounded-xl text-xs font-semibold cursor-pointer" style={{ background: T.card2, color: T.text, border: `1px solid ${T.border}` }}>
-              Open deep dive
+              Deep dive →
             </button>
           </div>
           <div className="flex flex-wrap gap-2 mb-4">
             {[
               { id: "overview", label: "Overview" },
-              { id: "input", label: "Input" },
-              { id: "output", label: "Output" },
-              { id: "failure", label: "Failure" },
+              { id: "input", label: "Inputs" },
+              { id: "output", label: "Outputs" },
+              { id: "failure", label: "Failures" },
               { id: "interview", label: "Interview line" },
             ].map((item) => {
               const active = drawerTab === item.id;
@@ -2151,27 +2454,31 @@ function ArchitectureTab({ onNavigate }: { onNavigate: (tab: DataEngineeringTabS
               </>
             ) : null}
             {drawerTab === "input" ? (
-              <DetailBlock title="Input" accent={selectedNode.color} className="md:col-span-2">{selectedNode.input}</DetailBlock>
+              <DetailBlock title="Inputs" accent={selectedNode.color} className="md:col-span-2">{selectedNode.input}</DetailBlock>
             ) : null}
             {drawerTab === "output" ? (
-              <DetailBlock title="Output" accent={selectedNode.color} className="md:col-span-2">{selectedNode.output}</DetailBlock>
+              <DetailBlock title="Outputs" accent={selectedNode.color} className="md:col-span-2">{selectedNode.output}</DetailBlock>
             ) : null}
             {drawerTab === "failure" ? (
-              <DetailBlock title="Failure mode" accent={selectedNode.color} className="md:col-span-2">{selectedNode.failure}</DetailBlock>
+              <DetailBlock title="Failure modes" accent={selectedNode.color} className="md:col-span-2">{selectedNode.failure}</DetailBlock>
             ) : null}
             {drawerTab === "interview" ? (
-              <DetailBlock title="Say this in interview" accent={selectedNode.color} className="md:col-span-2">{selectedNode.interview}</DetailBlock>
+              <div className="md:col-span-2 space-y-3">
+                <DetailBlock title="Say this in interview" accent={selectedNode.color}>{selectedNode.interview}</DetailBlock>
+                <CopyButton value={selectedNode.interview} label="Copy interview line" />
+              </div>
             ) : null}
           </div>
         </div>
 
+        {/* Quick node jumps */}
         <div className="rounded-[24px] p-5" style={{ background: T.card, border: `1px solid ${T.gold}24` }}>
           <div className="flex items-center justify-between gap-3 mb-4">
             <p className="text-[10px] font-bold uppercase tracking-[0.18em]" style={{ color: T.gold }}>
-              Quick node jumps
+              Quick jumps
             </p>
             <span className="text-[11px]" style={{ color: T.faint }}>
-              Jump directly to a layer
+              Click to select a node
             </span>
           </div>
           <div className="grid gap-3 md:grid-cols-2">
@@ -2179,20 +2486,42 @@ function ArchitectureTab({ onNavigate }: { onNavigate: (tab: DataEngineeringTabS
               <button
                 key={node.id}
                 onClick={() => {
+                  stopJourney();
                   setSelectedNodeId(node.id);
                   setDrawerTab("overview");
                 }}
                 className="rounded-2xl p-4 text-left cursor-pointer transition-all duration-200 hover:-translate-y-0.5"
                 style={{ background: selectedNode.id === node.id ? `${node.color}12` : T.card2, border: `1px solid ${selectedNode.id === node.id ? `${node.color}33` : T.border}` }}
               >
-                <p className="text-sm font-semibold" style={{ color: T.text }}>
-                  {node.label}
-                </p>
-                <p className="text-[12px] mt-2 leading-6" style={{ color: T.faint }}>
-                  {node.what}
+                <div className="flex items-center gap-2 mb-1.5">
+                  <span className="w-2 h-2 rounded-full shrink-0" style={{ background: node.color }} />
+                  <p className="text-sm font-semibold" style={{ color: T.text }}>
+                    {node.label}
+                  </p>
+                </div>
+                <p className="text-[11px] leading-5" style={{ color: T.faint }}>
+                  {node.what.slice(0, 60)}{node.what.length > 60 ? "…" : ""}
                 </p>
               </button>
             ))}
+          </div>
+          {/* Architecture legend */}
+          <div className="mt-4 pt-4" style={{ borderTop: `1px solid ${T.border}` }}>
+            <p className="text-[10px] font-bold uppercase tracking-[0.18em] mb-3" style={{ color: T.faint }}>Legend</p>
+            <div className="flex flex-wrap gap-2">
+              {[
+                { label: "Streaming", color: T.blue },
+                { label: "Batch", color: T.violet },
+                { label: "Storage", color: T.green },
+                { label: "Serving", color: T.gold },
+                { label: "Governance", color: T.amber },
+              ].map((item) => (
+                <span key={item.label} className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-full text-[10px] font-semibold" style={{ background: `${item.color}12`, color: item.color, border: `1px solid ${item.color}24` }}>
+                  <span className="w-1.5 h-1.5 rounded-full shrink-0" style={{ background: item.color }} />
+                  {item.label}
+                </span>
+              ))}
+            </div>
           </div>
         </div>
       </div>
@@ -3483,7 +3812,7 @@ function BusinessMetricCard({ metric, definition, freshness, sources, outputTabl
   );
 }
 
-function RequirementsTrackTab() {
+function RequirementsTrackTab({ onNavigate }: { onNavigate: (tab: DataEngineeringTabSlug) => void }) {
   return (
     <div className="space-y-8">
       <AnchoredSection id="req-scope" eyebrow="What to clarify first" title="Map business questions to data outputs" subtitle="Clarify what the data platform must produce, how fresh it must be, and which trade-offs matter." accent={T.amber}>
@@ -3517,7 +3846,7 @@ function RequirementsTrackTab() {
         </div>
       </AnchoredSection>
       <AnchoredSection id="req-domains" eyebrow="Requirement domains" title="Group requirements by domain, not by table type" subtitle="Playback, QoE, recommendations, experiments, and governance map directly to the data pipelines you will design." accent={T.amber}>
-        <RequirementsTab />
+        <RequirementsTab onNavigate={onNavigate} />
       </AnchoredSection>
       <AnchoredSection id="req-nfr" eyebrow="SLA matrix" title="Freshness and non-functional requirements" subtitle="DE interviews care about freshness, correctness, replay, and quality SLAs just as much as raw throughput." accent={T.red}>
         <div className="grid gap-4 xl:grid-cols-[0.9fr_1.1fr]">
@@ -3899,7 +4228,7 @@ function ContentForTab({
     case "start-here":
       return <StartTrackTab onNavigate={onNavigate} />;
     case "requirements":
-      return <RequirementsTrackTab />;
+      return <RequirementsTrackTab onNavigate={onNavigate} />;
     case "event-sources":
       return <EventSourcesTrackTab />;
     case "architecture":
