@@ -524,18 +524,98 @@ function TopTabStrip({
   progressPercent: number;
   onNavigate: (tab: DataEngineeringTabSlug) => void;
 }) {
+  const railRef = useRef<HTMLDivElement | null>(null);
+  const [canScrollLeft, setCanScrollLeft] = useState(false);
+  const [canScrollRight, setCanScrollRight] = useState(false);
+
+  const syncRailButtons = useCallback(() => {
+    const rail = railRef.current;
+    if (!rail) return;
+    const maxScrollLeft = rail.scrollWidth - rail.clientWidth;
+    setCanScrollLeft(rail.scrollLeft > 8);
+    setCanScrollRight(rail.scrollLeft < maxScrollLeft - 8);
+  }, []);
+
+  useEffect(() => {
+    const rail = railRef.current;
+    if (!rail) return;
+
+    syncRailButtons();
+    const handleResize = () => syncRailButtons();
+    rail.addEventListener("scroll", syncRailButtons, { passive: true });
+    window.addEventListener("resize", handleResize);
+
+    return () => {
+      rail.removeEventListener("scroll", syncRailButtons);
+      window.removeEventListener("resize", handleResize);
+    };
+  }, [syncRailButtons]);
+
+  useEffect(() => {
+    const rail = railRef.current;
+    if (!rail) return;
+    const activeNode = rail.querySelector<HTMLElement>(`[data-tab-id="${activeTab}"]`);
+    activeNode?.scrollIntoView({ inline: "center", block: "nearest", behavior: "smooth" });
+    window.setTimeout(syncRailButtons, 180);
+  }, [activeTab, syncRailButtons]);
+
+  const nudgeRail = (direction: "left" | "right") => {
+    const rail = railRef.current;
+    if (!rail) return;
+    const delta = Math.max(320, Math.round(rail.clientWidth * 0.45));
+    rail.scrollBy({ left: direction === "right" ? delta : -delta, behavior: "smooth" });
+  };
+
   return (
     <div className="shrink-0 sticky top-0 z-20 border-b backdrop-blur-sm" style={{ borderColor: T.border, background: "color-mix(in srgb, var(--bg) 94%, transparent)" }}>
       <div className="h-1 overflow-hidden" style={{ background: T.card2 }}>
         <div className="h-full transition-all duration-300" style={{ width: `${progressPercent}%`, background: `linear-gradient(90deg, ${T.red}, ${T.amber}, ${T.blue})` }} />
       </div>
-      <div className="px-4 py-2 overflow-x-auto no-scrollbar">
-        <div className="flex gap-2 min-w-max items-stretch">
+      <div className="relative">
+        <div
+          className={cn(
+            "pointer-events-none absolute inset-y-0 left-0 w-16 z-10 hidden xl:block transition-opacity",
+            canScrollLeft ? "opacity-100" : "opacity-0"
+          )}
+          style={{ background: `linear-gradient(90deg, ${T.bg} 30%, transparent)` }}
+        />
+        <div
+          className={cn(
+            "pointer-events-none absolute inset-y-0 right-0 w-24 z-10 hidden xl:block transition-opacity",
+            canScrollRight ? "opacity-100" : "opacity-0"
+          )}
+          style={{ background: `linear-gradient(270deg, ${T.bg} 35%, transparent)` }}
+        />
+        <button
+          onClick={() => nudgeRail("left")}
+          className={cn(
+            "hidden xl:flex absolute left-4 top-1/2 -translate-y-1/2 z-20 w-9 h-9 rounded-full items-center justify-center transition-all",
+            canScrollLeft ? "opacity-100" : "opacity-0 pointer-events-none"
+          )}
+          style={{ background: T.card, color: T.text, border: `1px solid ${T.border}`, boxShadow: `0 10px 24px ${T.bg}` }}
+          aria-label="Scroll chapters left"
+        >
+          ←
+        </button>
+        <button
+          onClick={() => nudgeRail("right")}
+          className={cn(
+            "hidden xl:flex absolute right-4 top-1/2 -translate-y-1/2 z-20 w-9 h-9 rounded-full items-center justify-center transition-all",
+            canScrollRight ? "opacity-100" : "opacity-0 pointer-events-none"
+          )}
+          style={{ background: T.card, color: T.text, border: `1px solid ${T.border}`, boxShadow: `0 10px 24px ${T.bg}` }}
+          aria-label="Scroll chapters right"
+        >
+          →
+        </button>
+        <div ref={railRef} className="px-4 xl:px-16 py-2 overflow-x-auto no-scrollbar">
+          <div className="flex gap-2 min-w-max items-stretch">
           {DATA_ENGINEERING_TABS.map((tab, index) => {
             const active = tab.id === activeTab;
             return (
               <button
                 key={tab.id}
+                data-tab-id={tab.id}
                 onClick={() => onNavigate(tab.id)}
                 className="min-w-0 rounded-xl px-2.5 py-2 text-left cursor-pointer transition-all duration-200 hover:-translate-y-0.5"
                 style={{
@@ -560,6 +640,7 @@ function TopTabStrip({
               </button>
             );
           })}
+        </div>
         </div>
       </div>
     </div>
