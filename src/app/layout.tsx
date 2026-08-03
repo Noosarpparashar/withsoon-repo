@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
+import DesktopMaximizeOverlay from "@/components/layout/DesktopMaximizeOverlay";
 import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
 import ThemeProvider from "@/components/layout/ThemeProvider";
@@ -32,6 +33,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       <body className="min-h-full flex flex-col bg-[var(--bg)] text-[var(--text)]">
         <ThemeProvider>
           <Navbar />
+          <DesktopMaximizeOverlay />
           <main className="flex-1">{children}</main>
           <Footer />
         </ThemeProvider>
