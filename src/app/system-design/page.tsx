@@ -30,13 +30,13 @@ const COMPANIES = [
   },
   {
     slug: "uber",
-    name: "Uber",
+    name: "Uber Data Engineering",
     emoji: "🚗",
-    tagline: "Real-time ride matching & dispatch",
-    tabs: ["Architecture", "Location Ingestion", "Surge Pricing", "Failures"],
+    tagline: "Marketplace events, GPS streaming, lakehouse, and warehouse",
+    tabs: ["Start Here", "Requirements", "Kafka", "Streaming", "Lakehouse"],
     difficulty: "senior",
-    status: "coming-soon",
-    href: "#",
+    status: "live",
+    href: "/system-design/uber/start-here",
   },
   {
     slug: "youtube",

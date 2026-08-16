@@ -395,27 +395,6 @@ function StartHereTab({ onNavigateTab, role, onRoleChange }: {
         </button>
       </div>
 
-      <div
-        className="sticky bottom-3 z-10 rounded-2xl p-3 flex flex-col sm:flex-row items-center gap-3"
-        style={{ background: "color-mix(in srgb, var(--bg) 92%, transparent)", border: "1px solid var(--border)", backdropFilter: "blur(12px)" }}
-      >
-        <div className="min-w-0 flex-1">
-          <p className="text-[10px] font-bold uppercase tracking-wider" style={{ color: activeCard.color }}>
-            Recommended next
-          </p>
-          <p className="text-xs" style={{ color: "var(--text-muted)" }}>
-            Start with requirements next, then move into the {role === "Backend Engineer" ? "architecture walkthrough" : "data models deep dive"}.
-          </p>
-        </div>
-        <button
-          onClick={() => onNavigateTab(activeCard.ctaTab)}
-          className="w-full sm:w-auto px-4 py-2.5 rounded-xl text-sm font-bold transition-all"
-          style={{ background: activeCard.color, color: "#fff", border: "none", cursor: "pointer" }}
-        >
-          {activeCard.cta} →
-        </button>
-      </div>
-
     </div>
   );
 }

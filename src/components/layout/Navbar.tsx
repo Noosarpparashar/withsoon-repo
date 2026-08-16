@@ -22,6 +22,7 @@ export default function Navbar() {
   const [searchOpen, setSearchOpen] = useState(false);
   const [mounted, setMounted] = useState(false);
   const { resolvedTheme, setTheme } = useTheme();
+  const isDark = mounted ? resolvedTheme === "dark" : true;
 
   const applyTheme = (nextTheme: "dark" | "light") => {
     setTheme(nextTheme);
@@ -59,7 +60,39 @@ export default function Navbar() {
 
   return (
     <>
-      <header className="sticky top-0 z-50 border-b border-[var(--border)] bg-[var(--bg)]">
+      <header
+        className="sticky top-0 z-50 border-b"
+        style={{
+          borderColor: isDark
+            ? "rgba(103, 118, 148, 0.88)"
+            : "color-mix(in srgb, var(--border) 82%, rgba(255,255,255,0.08))",
+          background: isDark
+            ? "linear-gradient(180deg, rgba(35, 41, 53, 0.98) 0%, rgba(29, 35, 46, 0.98) 100%)"
+            : "color-mix(in srgb, var(--bg) 84%, rgba(255,255,255,0.84))",
+          backdropFilter: "blur(18px) saturate(145%)",
+          boxShadow: isDark
+            ? "0 18px 42px rgba(0,0,0,0.46), 0 1px 0 rgba(255,255,255,0.09) inset, 0 -1px 0 rgba(255,255,255,0.03) inset"
+            : "0 10px 30px rgba(15,23,42,0.12)",
+        }}
+      >
+        <div
+          aria-hidden="true"
+          className="pointer-events-none absolute inset-x-0 top-0 h-px"
+          style={{
+            background: isDark
+              ? "linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.18) 18%, rgba(255,255,255,0.08) 50%, rgba(255,255,255,0.18) 82%, transparent 100%)"
+              : "linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.65) 20%, rgba(255,255,255,0.18) 80%, transparent 100%)",
+          }}
+        />
+        <div
+          aria-hidden="true"
+          className="pointer-events-none absolute inset-x-0 bottom-0 h-[3px]"
+          style={{
+            background: isDark
+              ? "linear-gradient(90deg, rgba(59,130,246,0.2) 0%, rgba(59,130,246,0.56) 18%, rgba(124,58,237,0.46) 50%, rgba(16,185,129,0.38) 82%, rgba(16,185,129,0.16) 100%)"
+              : "linear-gradient(90deg, transparent 0%, rgba(59,130,246,0.22) 18%, rgba(124,58,237,0.2) 50%, rgba(16,185,129,0.18) 82%, transparent 100%)",
+          }}
+        />
         <div className="mx-auto max-w-7xl px-4 flex items-center justify-between h-14 gap-4">
 
           {/* Logo */}

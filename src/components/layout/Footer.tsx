@@ -22,7 +22,11 @@ const META_LINKS = [
 export default function Footer() {
   const pathname = usePathname();
 
-  if (pathname.startsWith("/system-design/netflix") || pathname.startsWith("/system-design/netflix-data-engineering")) {
+  if (
+    pathname.startsWith("/system-design/netflix") ||
+    pathname.startsWith("/system-design/netflix-data-engineering") ||
+    pathname.startsWith("/system-design/uber")
+  ) {
     return null;
   }
 

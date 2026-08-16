@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { useTheme } from "next-themes";
 import Image from "next/image";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 
 function hexToRgb(hex: string) {
@@ -12,8 +13,8 @@ function hexToRgb(hex: string) {
 // ─── Data ───────────────────────────────────────────────────
 
 const COMPANIES = [
-  { id: "netflix",    label: "Netflix",    emoji: "📺", logo: "/logo-netflix.webp",    tagline: "Streaming at 250M+ scale",             color: "#e50914" },
-  { id: "uber",       label: "Uber",       emoji: "🚗", logo: "/logo-uber.png",         tagline: "Real-time ride & delivery matching",    color: "#276EF1" },
+  { id: "netflix",    label: "Netflix",    emoji: "📺", logo: "/logo-netflix.webp",    tagline: "Streaming at 250M+ scale",             color: "#e50914", href: "/system-design/netflix" },
+  { id: "uber",       label: "Uber",       emoji: "🚗", logo: "/logo-uber.png",         tagline: "Real-time ride & delivery matching",    color: "#276EF1", href: "/system-design/uber/start-here" },
   { id: "youtube",    label: "YouTube",    emoji: "▶️", logo: "/logo-youtube.webp",    tagline: "Video at 2B+ users, 500h/min upload",  color: "#ff0000" },
   { id: "whatsapp",   label: "WhatsApp",   emoji: "💬", logo: "/logo-whatsapp.png",    tagline: "100B+ messages per day",               color: "#25D366" },
   { id: "swiggy",     label: "Swiggy",     emoji: "🍕", logo: "/logo-swiggy.png",      tagline: "Food delivery at milliseconds",        color: "#FC8019" },
@@ -38,7 +39,7 @@ const PIPELINE_STEPS = [
   { id: "serving",    label: "Serving",    emoji: "📊", tagline: "Warehouse · BI · APIs",   color: "#ef4444" },
 ];
 
-type Item = { id: string; label: string; emoji: string; logo?: string; tagline: string; color: string };
+type Item = { id: string; label: string; emoji: string; logo?: string; tagline: string; color: string; href?: string };
 
 // ─── Placeholder Modal ──────────────────────────────────────
 
@@ -126,32 +127,33 @@ function LibraryCard({ item, isDark, onClick }: {
   item: Item; isDark: boolean; onClick: () => void;
 }) {
   const rgb = hexToRgb(item.color);
-  return (
-    <button
-      onClick={onClick}
-      className="group w-full text-left rounded-xl p-4 transition-all duration-200"
-      style={{
-        background: isDark ? `rgba(${rgb},0.05)` : `rgba(${rgb},0.04)`,
-        border: `1px solid ${isDark ? `rgba(${rgb},0.14)` : `rgba(${rgb},0.18)`}`,
-        cursor: "pointer",
-        boxShadow: "none",
-        transform: "translateY(0)",
-      }}
-      onMouseEnter={e => {
-        const el = e.currentTarget as HTMLElement;
-        el.style.background = isDark ? `rgba(${rgb},0.1)` : `rgba(${rgb},0.08)`;
-        el.style.borderColor = `rgba(${rgb},0.4)`;
-        el.style.transform = "translateY(-2px)";
-        el.style.boxShadow = isDark ? `0 8px 24px rgba(${rgb},0.16)` : `0 4px 16px rgba(${rgb},0.12)`;
-      }}
-      onMouseLeave={e => {
-        const el = e.currentTarget as HTMLElement;
-        el.style.background = isDark ? `rgba(${rgb},0.05)` : `rgba(${rgb},0.04)`;
-        el.style.borderColor = isDark ? `rgba(${rgb},0.14)` : `rgba(${rgb},0.18)`;
-        el.style.transform = "translateY(0)";
-        el.style.boxShadow = "none";
-      }}
-    >
+  const sharedProps = {
+    className: "group block w-full text-left rounded-xl p-4 transition-all duration-200",
+    style: {
+      background: isDark ? `rgba(${rgb},0.05)` : `rgba(${rgb},0.04)`,
+      border: `1px solid ${isDark ? `rgba(${rgb},0.14)` : `rgba(${rgb},0.18)`}`,
+      cursor: "pointer",
+      boxShadow: "none",
+      transform: "translateY(0)",
+    } as React.CSSProperties,
+    onMouseEnter: (e: React.MouseEvent<HTMLElement>) => {
+      const el = e.currentTarget as HTMLElement;
+      el.style.background = isDark ? `rgba(${rgb},0.1)` : `rgba(${rgb},0.08)`;
+      el.style.borderColor = `rgba(${rgb},0.4)`;
+      el.style.transform = "translateY(-2px)";
+      el.style.boxShadow = isDark ? `0 8px 24px rgba(${rgb},0.16)` : `0 4px 16px rgba(${rgb},0.12)`;
+    },
+    onMouseLeave: (e: React.MouseEvent<HTMLElement>) => {
+      const el = e.currentTarget as HTMLElement;
+      el.style.background = isDark ? `rgba(${rgb},0.05)` : `rgba(${rgb},0.04)`;
+      el.style.borderColor = isDark ? `rgba(${rgb},0.14)` : `rgba(${rgb},0.18)`;
+      el.style.transform = "translateY(0)";
+      el.style.boxShadow = "none";
+    },
+  };
+
+  const content = (
+    <>
       <div className="flex items-start gap-3">
         <div className="w-9 h-9 shrink-0 rounded-lg overflow-hidden flex items-center justify-center text-lg"
           style={{ background: `rgba(${rgb},0.12)`, border: `1px solid rgba(${rgb},0.22)` }}>
@@ -170,6 +172,20 @@ function LibraryCard({ item, isDark, onClick }: {
       </div>
       <div className="mt-3 h-px w-0 group-hover:w-full transition-all duration-300 rounded-full"
         style={{ background: `linear-gradient(90deg,${item.color},transparent)` }} />
+    </>
+  );
+
+  if (item.href) {
+    return (
+      <Link href={item.href} {...sharedProps}>
+        {content}
+      </Link>
+    );
+  }
+
+  return (
+    <button onClick={onClick} {...sharedProps}>
+      {content}
     </button>
   );
 }
@@ -278,6 +294,8 @@ export default function BigDataLibraries() {
   const handleCardClick = (item: Item, section: string) => {
     if (item.id === "netflix") {
       router.push("/system-design/netflix");
+    } else if (item.id === "uber") {
+      router.push("/system-design/uber/start-here");
     } else {
       setActive({ item, section });
     }
