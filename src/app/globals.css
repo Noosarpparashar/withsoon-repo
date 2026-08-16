@@ -2,6 +2,52 @@
 @plugin "@tailwindcss/typography";
 @import "@xyflow/react/dist/style.css";
 
+/* Keep the Uber architecture inspector below the fixed chapter rail. */
+[data-testid="architecture-detail-panel"] {
+  position: sticky !important;
+  top: 140px !important;
+  max-height: calc(100dvh - 156px) !important;
+  transition: opacity 160ms ease, visibility 160ms ease;
+}
+
+/* The SVG zoom toolbar sits above the canvas instead of covering producer nodes. */
+[data-testid="uber-architecture-canvas"] {
+  margin-top: 44px;
+  overflow: visible !important;
+}
+
+[data-testid="uber-architecture-canvas"] > div:first-child {
+  top: -44px !important;
+}
+
+[data-testid="uber-architecture-svg"] {
+  overflow: hidden;
+}
+
+@media (min-width: 1280px) {
+  [data-testid="architecture-detail-panel"] {
+    position: fixed !important;
+    right: max(24px, calc((100vw - 1600px) / 2 + 48px));
+    top: 140px !important;
+    bottom: 16px;
+    width: 320px;
+    max-height: none !important;
+    z-index: 35;
+  }
+
+  #architecture-principle {
+    width: 70%;
+  }
+}
+
+#architecture-principle > div {
+  overflow: visible !important;
+}
+
+#architecture-principle [role="tooltip"] {
+  display: none !important;
+}
+
 /* ── Light mode (default) ─────────────────────────────── */
 :root {
   --bg:          #F8FAFC;
@@ -124,3 +170,42 @@ button:disabled {
 
 .no-scrollbar::-webkit-scrollbar { display: none; }
 .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+/* Uber chapter onboarding sits beside, rather than over, the page-anchor rail. */
+.uber-hover-hint {
+  left: 16px;
+  right: auto !important;
+}
+
+@media (min-width: 1280px) {
+  .uber-hover-hint {
+    left: max(248px, calc((100vw - 1600px) / 2 + 248px));
+  }
+}
+
+.uber-de-page [data-testid^="stage-nav-"] {
+  height: auto !important;
+  min-height: 54px;
+  padding-top: 10px;
+  padding-bottom: 10px;
+}
+
+@media (min-width: 1024px) {
+  #trip-reconciliation [role="tooltip"] {
+    position: static;
+    bottom: auto;
+    left: auto;
+    right: auto;
+    top: auto;
+    width: min(640px, 100%);
+    margin: 16px auto 0;
+    transform: none;
+  }
+
+  #trip-reconciliation > button > [role="tooltip"] {
+    display: none !important;
+  }
+
+  #trip-reconciliation > button:has(> div > div:first-child:hover) > [role="tooltip"] {
+    display: block !important;
+  }
+}

@@ -1,417 +1,191 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useMemo, useState } from "react";
-import {
-  normalizeUberDeTab,
-  type UberDeTabSlug,
-  UBER_DE_TABS,
-  UBER_DE_TAB_META,
-  UBER_START_HERE_SECTIONS,
-} from "./data";
+import { useEffect, useRef, useState } from "react";
+import { normalizeUberDeTab, type UberDeTabSlug, UBER_ARCHITECTURE_SECTIONS, UBER_DE_TABS, UBER_DE_TAB_META, UBER_EVENT_SOURCE_SECTIONS, UBER_REQUIREMENTS_SECTIONS, UBER_START_HERE_SECTIONS } from "./data";
 
-const T = {
-  bg: "#0f1318",
-  card: "#1b2028",
-  card2: "#232a35",
-  border: "#34404f",
-  text: "#f8fafc",
-  muted: "#aeb8c6",
-  faint: "#8592a6",
-  blue: "#276EF1",
-  cyan: "#38bdf8",
-  green: "#22c55e",
-  amber: "#f59e0b",
-  red: "#ef4444",
-  violet: "#8b5cf6",
+const C={bg:"var(--bg)",card:"var(--bg-card)",card2:"var(--bg-muted)",border:"var(--border)",text:"var(--text)",muted:"var(--text-muted)",faint:"var(--text-muted)",blue:"#276ef1",cyan:"#0891b2",green:"#16a34a",amber:"#d97706",red:"#dc2626",violet:"#7c3aed"};
+const href=(tab:UberDeTabSlug)=>`/system-design/uber/${tab}`;
+
+function Tabs({active}:{active:UberDeTabSlug}){
+ const row=useRef<HTMLDivElement>(null);
+ useEffect(()=>{row.current?.querySelector<HTMLElement>("[aria-current='page']")?.scrollIntoView({block:"nearest",inline:"center"})},[active]);
+ const move=(amount:number)=>row.current?.scrollBy({left:amount,behavior:"smooth"});
+ return <><div data-testid="chapter-rail" className="fixed inset-x-0 top-14 z-40 border-b shadow-sm" style={{borderColor:C.border,background:"color-mix(in srgb, var(--bg) 94%, transparent)",backdropFilter:"blur(16px)"}}><div className="flex h-[68px] items-center gap-2 px-3"><button aria-label="Previous chapters" onClick={()=>move(-420)} className="hidden h-10 w-10 shrink-0 items-center justify-center rounded-md border xl:flex" style={{borderColor:C.border,background:C.card}}>←</button><div ref={row} className="flex min-w-0 flex-1 items-center gap-2 overflow-x-auto no-scrollbar"><div className="hidden h-10 shrink-0 items-center gap-3 rounded-md border px-3 xl:flex" style={{borderColor:C.border,background:C.card}}><span className="h-6 w-6 rounded-full border-4" style={{borderColor:C.card2,borderTopColor:C.blue}}/><span className="text-[10px] font-bold uppercase tracking-[.18em]" style={{color:C.faint}}>13 chapters</span></div>{UBER_DE_TABS.map((tab,i)=>{const on=tab.id===active;return <Link aria-current={on?"page":undefined} key={tab.id} href={href(tab.id)} className="relative flex h-10 shrink-0 items-center gap-2 overflow-hidden rounded-md border px-3 text-xs font-semibold transition-all" style={{borderColor:on?C.blue:C.border,background:on?"color-mix(in srgb, #276ef1 14%, var(--bg-card))":C.card,color:on?C.text:C.muted,boxShadow:on?"0 0 0 1px rgba(39,110,241,.18), 0 6px 18px rgba(39,110,241,.14)":"none"}}>{on?<span className="absolute inset-x-0 top-0 h-0.5" style={{background:C.blue}}/>:null}<span className="text-[10px] font-bold" style={{color:on?C.blue:C.faint}}>{String(i+1).padStart(2,"0")}</span>{tab.label}{on?<span className="h-1.5 w-1.5 rounded-full" style={{background:C.green}}/>:null}</Link>})}</div><button aria-label="Next chapters" onClick={()=>move(420)} className="hidden h-10 w-10 shrink-0 items-center justify-center rounded-md border xl:flex" style={{borderColor:C.border,background:C.card}}>→</button></div></div><div className="h-[68px]" aria-hidden="true"/></>
+}
+
+function Outline({sections=UBER_START_HERE_SECTIONS,active,onGo}:{sections?:readonly {id:string;title:string}[];active:string;onGo:(id:string)=>void}){
+ return <aside className="hidden w-[232px] shrink-0 border-r xl:block" style={{borderColor:C.border}}><div data-testid="anchor-rail" className="fixed bottom-4 top-[140px] z-30 w-[200px] overflow-y-auto pr-1" style={{left:"max(16px, calc((100vw - 1600px) / 2 + 16px))"}}><p className="mb-3 text-[10px] font-bold uppercase tracking-[.2em]" style={{color:C.faint}}>Page anchors</p><div className="space-y-2">{sections.map((s,i)=>{const on=s.id===active;return <button aria-current={on?"location":undefined} data-testid={`stage-nav-${s.id}`} key={s.id} onClick={()=>onGo(s.id)} className="relative flex h-[54px] w-full items-center gap-3 overflow-hidden rounded-md border px-3 text-left text-sm font-semibold transition-all" style={{borderColor:on?C.blue:C.border,background:on?"color-mix(in srgb, #276ef1 13%, var(--bg-card))":C.card,color:on?C.text:C.muted,boxShadow:on?"0 6px 18px rgba(39,110,241,.12)":"none"}}>{on?<span className="absolute inset-y-0 left-0 w-1" style={{background:C.blue}}/>:null}<span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-[11px] font-bold" style={{background:on?C.blue:C.card2,color:on?"white":C.faint}}>{i+1}</span>{s.title}</button>})}</div></div></aside>
+}
+
+type VisualItem={icon:string;title:string;sub:string;detail:string};
+function Tip({text}:{text:string}){return <span role="tooltip" className="pointer-events-none absolute bottom-[calc(100%+8px)] left-1/2 z-50 hidden w-64 -translate-x-1/2 rounded-md border px-3 py-2 text-xs font-normal leading-5 shadow-xl group-hover:block group-focus-visible:block" style={{borderColor:C.border,background:C.card,color:C.text}}>{text}</span>}
+const producers:VisualItem[]=[
+ {icon:"🚘",title:"Driver app",sub:"GPS + availability",detail:"Publishes location pings, online/offline status, and trip state changes. GPS is the dominant stream by volume."},
+ {icon:"📱",title:"Rider app",sub:"Demand + conversion",detail:"Publishes fare estimates, trip requests, screen views, ratings, and the steps that explain marketplace demand."},
+ {icon:"🧭",title:"Dispatch + payments",sub:"Lifecycle + settlement",detail:"Publishes match, cancellation, ETA, payment, and refund events that complete the authoritative trip story."},
+];
+const consumers:VisualItem[]=[
+ {icon:"⚡",title:"Surge pricing",sub:"30–60 second updates",detail:"Consumes fresh supply and demand aggregates so prices react to a city cell without flapping on every GPS ping."},
+ {icon:"🗺️",title:"ETA features",sub:"Seconds-level freshness",detail:"Consumes recent driver position, route, traffic, and trip context for online model serving and routing decisions."},
+ {icon:"📊",title:"Finance + city ops",sub:"Trusted daily truth",detail:"Consumes reconciled Gold trip and settlement facts for official reporting, marketplace operations, and regulatory analysis."},
+ {icon:"🧪",title:"Analytics + ML",sub:"Historical datasets",detail:"Analysts, experiments, and training pipelines query durable, governed trip, rider, driver, and location history."},
+];
+function Endpoint({items,color,testId}:{items:VisualItem[];color:string;testId:string}){return <div data-testid={testId} className="grid gap-2">{items.map((item)=><button className="group relative flex min-h-[62px] items-center gap-3 rounded-xl border px-3 text-left transition-all hover:-translate-y-0.5 hover:shadow-md" style={{borderColor:`${color}44`,background:C.card2}} key={item.title}><span className="text-xl">{item.icon}</span><div className="min-w-0"><p className="text-sm font-semibold">{item.title}</p><p className="text-[11px]" style={{color:C.faint}}>{item.sub}</p></div><span className="ml-auto text-xs" style={{color}}>ⓘ</span><Tip text={item.detail}/></button>)}</div>}
+function Mission(){return <div data-testid="platform-mission-visual" className="mt-6 grid gap-4 rounded-md border p-5 lg:grid-cols-[220px_38px_minmax(300px,1fr)_38px_230px] lg:items-center" style={{borderColor:C.border,background:C.card}}><div><p className="mb-2 text-[10px] font-bold uppercase tracking-[.18em]" style={{color:C.blue}}>Event producers</p><Endpoint items={producers} color={C.blue} testId="hero-producers-grid"/></div><div data-testid="hero-arrow-left" className="hidden text-center lg:block" style={{color:C.blue}}>──→</div><button data-testid="hero-platform-card" className="group relative rounded-md border p-5 text-center transition-all hover:-translate-y-0.5 hover:shadow-md" style={{borderColor:"rgba(8,145,178,.3)",background:C.card2}}><div className="mx-auto flex h-12 w-12 items-center justify-center rounded-md text-2xl" style={{background:"rgba(39,110,241,.16)"}}>🏙️</div><h3 className="mt-4 text-xl font-semibold">Marketplace data platform</h3><p className="mt-2 text-sm leading-6" style={{color:C.muted}}>Fast marketplace state plus reconciled historical truth.</p><div className="mt-4 flex flex-wrap justify-center gap-2">{["Ingest","Stream","Lakehouse","Serve"].map(x=><span className="rounded-md border px-3 py-2 text-xs" style={{borderColor:C.border,background:C.card}} key={x}>{x}</span>)}</div><Tip text="Kafka accepts independent event streams; streaming produces live marketplace state; the lakehouse reconciles Bronze, Silver, and Gold truth; serving layers expose warehouse tables and model features."/></button><div data-testid="hero-arrow-right" className="hidden text-center lg:block" style={{color:C.green}}>──→</div><div><p className="mb-2 text-[10px] font-bold uppercase tracking-[.18em]" style={{color:C.green}}>Business outcomes</p><Endpoint items={consumers} color={C.green} testId="hero-consumers-grid"/></div></div>}
+
+function Section({id,kicker,title,sub,color,children}:{id:string;kicker:string;title:string;sub?:string;color:string;children:React.ReactNode}){return <section id={id} className="rounded-[24px] border p-5 md:p-6" style={{borderColor:`${color}38`,background:C.card,scrollMarginTop:140}}><p className="text-[10px] font-bold uppercase tracking-[.2em]" style={{color}}>{kicker}</p><h2 className="mt-2 text-2xl font-semibold">{title}</h2>{sub?<p className="mt-2 text-sm" style={{color:C.muted}}>{sub}</p>:null}{children}</section>}
+function StartHere(){
+ const req:VisualItem[]=[
+  {icon:"📥",title:"Ingest marketplace events",sub:"Trips, GPS, rider, payments, maps",detail:"Accept continuous events from independent mobile and backend producers through durable, versioned contracts."},
+  {icon:"⚡",title:"Serve fast + batch paths",sub:"One platform, different time horizons",detail:"Streaming feeds surge and ETA within seconds; batch processing publishes corrected official business tables."},
+  {icon:"🧹",title:"Validate, enrich, dedupe",sub:"Correct outcomes over raw delivery",detail:"Use event IDs, event time, schema checks, and reference joins so retries or late events do not corrupt business outcomes."},
+  {icon:"🗂️",title:"Keep durable history",sub:"Petabyte-scale geospatial storage",detail:"Retain raw Bronze truth and compacted analytical history so pipelines can replay, audit, and train models economically."},
+  {icon:"🔒",title:"Protect sensitive data",sub:"Deletion guarantees for rider PII",detail:"Tokenize identity, restrict address and payment fields, and propagate deletion requests through lakehouse and serving copies."},
+  {icon:"🔗",title:"Reconcile the trip",sub:"Five producers, one trusted record",detail:"Stitch rider, driver, dispatch, maps, and payment events into one canonical trip state despite late or out-of-order arrival."},
+ ];
+ const fresh=[
+  {label:"Driver GPS → supply map",value:"~4 seconds",width:"14%",color:C.cyan,detail:"Near-live position keeps the available-driver map useful for matching and marketplace supply calculations."},
+  {label:"ETA model features",value:"Seconds",width:"22%",color:C.blue,detail:"Fresh position, route, and traffic context directly affect rider expectations and driver routing."},
+  {label:"Surge recompute",value:"30–60 seconds",width:"42%",color:C.red,detail:"Fast enough to react to supply-demand imbalance, but intentionally slower than GPS to avoid price flapping."},
+  {label:"Official trip fact",value:"T+1 by 6 AM",width:"100%",color:C.amber,detail:"Finance and city operations prioritize reconciliation and correctness over instant publication."},
+ ];
+ return <div className="space-y-5"><Section id="platform-mission" kicker="Start here" title="Design the shared marketplace data platform" sub="Keep the opening crisp: what comes in, what the platform does, and who it serves." color={C.blue}><Mission/><div className="mt-4 rounded-md border px-5 py-4" style={{borderColor:"rgba(39,110,241,.35)",background:"color-mix(in srgb, #276ef1 8%, var(--bg-card))"}}><p className="text-[10px] font-bold uppercase tracking-[.18em]" style={{color:C.blue}}>Opening script</p><p className="mt-2 text-sm font-medium leading-7" style={{color:C.text}}>“I’ll design Uber’s shared data platform: events flow through streaming and batch pipelines into live surge and ETA signals, plus trusted historical data for finance, city operations, analytics, and ML.”</p></div></Section>
+ <Section id="requirements-snapshot" kicker="Requirements" title="Keep the requirements interview-ready" color={C.amber}><div className="mt-5 grid gap-3 md:grid-cols-2">{req.map(item=><button key={item.title} className="group relative flex min-h-[72px] items-center gap-3 rounded-md border px-4 text-left transition-all hover:-translate-y-0.5 hover:shadow-md" style={{borderColor:C.border,background:C.card2}}><span className="flex h-9 w-9 items-center justify-center rounded-md text-lg" style={{background:"rgba(217,119,6,.12)"}}>{item.icon}</span><div><p className="text-sm font-semibold">{item.title}</p><p className="mt-1 text-xs" style={{color:C.faint}}>{item.sub}</p></div><span className="ml-auto" style={{color:C.amber}}>ⓘ</span><Tip text={item.detail}/></button>)}</div></Section>
+ <Section id="scope-boundary" kicker="Scope" title="Draw the platform boundary" color={C.green}><div className="mt-5 rounded-md border p-4" style={{borderColor:C.border,background:C.card2}}><div className="grid gap-2 lg:grid-cols-[1fr_24px_1fr_24px_1fr_24px_1fr] lg:items-center">{[
+  ["Events in","Apps + services","Independent producers publish canonical events.",C.blue],
+  ["Kafka","Durable intake","Topics isolate GPS, trip, rider, and payment workloads.",C.amber],
+  ["Stream + batch","Shape truth","Flink serves live state while batch reconciles history.",C.cyan],
+  ["Lakehouse → serving","Products out","Gold tables, warehouse views, and features serve consumers.",C.green],
+ ].map((item,i)=><div className="contents" key={item[0]}><button className="group relative min-h-[104px] rounded-md border p-4 text-left transition-all hover:-translate-y-0.5 hover:shadow-md" style={{borderColor:`${item[3]}66`,background:C.card}}><span className="text-[10px] font-bold uppercase tracking-[.16em]" style={{color:item[3]}}>{String(i+1).padStart(2,"0")}</span><p className="mt-2 text-sm font-semibold">{item[0]}</p><p className="mt-1 text-xs" style={{color:C.faint}}>{item[1]}</p><Tip text={item[2]}/></button>{i<3?<span className="hidden text-center lg:block" style={{color:C.green}}>→</span>:null}</div>)}</div></div><div className="mt-3 flex flex-wrap gap-2"><span className="rounded-md border px-3 py-2 text-xs" style={{borderColor:`${C.red}55`,color:C.muted}}>Outside: dispatch algorithm</span><span className="rounded-md border px-3 py-2 text-xs" style={{borderColor:`${C.red}55`,color:C.muted}}>Outside: mobile UI</span><span className="rounded-md border px-3 py-2 text-xs" style={{borderColor:`${C.red}55`,color:C.muted}}>Outside: OLTP internals</span></div></Section>
+ <Section id="freshness-map" kicker="Freshness" title="Compare the serving clocks" sub="The platform supports several definitions of real time." color={C.amber}><div className="mt-5 rounded-md border p-4 md:p-5" style={{borderColor:C.border,background:C.card2}}><div className="mb-3 hidden grid-cols-[190px_1fr_140px] gap-4 text-[10px] font-bold uppercase tracking-[.16em] md:grid" style={{color:C.faint}}><span>Data product</span><span>Relative time horizon</span><span className="text-right">Freshness target</span></div>{fresh.map(item=><button className="group relative grid w-full grid-cols-[1fr_auto] items-center gap-3 border-t py-3 text-left first:border-t-0 md:grid-cols-[190px_1fr_140px] md:gap-4" style={{borderColor:C.border}} key={item.label}><span className="text-sm font-semibold">{item.label}</span><span className="order-3 col-span-2 h-3 overflow-hidden rounded-full md:order-none md:col-span-1" style={{background:C.border}}><span className="block h-full rounded-full transition-all group-hover:brightness-125" style={{width:item.width,background:item.color}}/></span><strong className="rounded-md px-3 py-2 text-right text-sm" style={{background:`color-mix(in srgb, ${item.color} 14%, var(--bg-card))`,color:item.color,border:`1px solid ${item.color}55`}}>{item.value}</strong><Tip text={item.detail}/></button>)}</div></Section>
+ <nav aria-label="Chapter navigation" className="flex items-center justify-end border-t pt-4" style={{borderColor:C.border}}><Link href={href("requirements")} className="inline-flex items-center gap-3 rounded-md border px-4 py-3 text-sm font-semibold transition-colors hover:border-[#276ef1]" style={{borderColor:C.border,background:C.card,color:C.text}}><span><span className="block text-[9px] font-bold uppercase tracking-[.16em]" style={{color:C.faint}}>Next chapter</span><span className="mt-1 block">Requirements + capacity</span></span><span aria-hidden style={{color:C.blue}}>→</span></Link></nav></div>
+}
+function RequirementsTab(){
+ const [copied,setCopied]=useState<string|null>(null);
+ const [requirementsActive,setRequirementsActive]=useState<string>(UBER_REQUIREMENTS_SECTIONS[0].id);
+ useEffect(()=>{const sync=()=>{const items=UBER_REQUIREMENTS_SECTIONS.map(section=>{const node=document.getElementById(section.id);return node?{id:section.id,top:node.getBoundingClientRect().top}:null}).filter((item):item is NonNullable<typeof item>=>item!==null);if(items.length)setRequirementsActive(items.reduce((closest,item)=>Math.abs(item.top-180)<Math.abs(closest.top-180)?item:closest).id)};sync();addEventListener("scroll",sync,{passive:true});return()=>removeEventListener("scroll",sync)},[]);
+ const goToRequirement=(id:string)=>{const node=document.getElementById(id);if(!node)return;history.replaceState(null,"",`${href("requirements")}#${id}`);scrollTo({top:node.getBoundingClientRect().top+scrollY-140,behavior:"smooth"});setRequirementsActive(id)};
+ const assumptions:VisualItem[]=[
+  {icon:"👥",title:"25M–40M DAU",sub:"≈20%–30% of 130M MAU",detail:"Use round interview numbers: 25M daily riders is roughly 20% of 130M monthly riders; 40M is roughly 30%."},
+  {icon:"🚘",title:"1M–2M online",sub:"from ~6M active drivers",detail:"Use 2M concurrent drivers for the global peak calculation. Idle drivers also continue sending background pings."},
+  {icon:"🧭",title:"30M trips/day",sub:"× 6 lifecycle events per trip",detail:"Count 6 clear milestones: request, match, arrival, start, completion, and payment. Then test peak traffic at 10× the daily average."},
+  {icon:"📍",title:"1 ping / 4 sec",sub:"15 min trip → 225 pings",detail:"A 900-second trip divided by a 4-second interval produces 225 in-trip location pings, before idle-driver updates."},
+ ];
+ const loads=[
+  {label:"Driver GPS",value:"2M × 1/4s = 500K/sec",width:"100%",color:C.blue,detail:"At peak, 2M drivers each send 1 ping every 4 seconds. The calculation is 2M ÷ 4 = 500K GPS events per second."},
+  {label:"Rider activity",value:"assume 50K–100K/sec",width:"20%",color:C.cyan,detail:"Searches, screen views, and fare-estimate requests are much larger than trip state events."},
+  {label:"Trip lifecycle",value:"30M × 6 ÷ 86,400 = 2.1K/sec",width:"4%",color:C.amber,detail:"Each trip contributes 6 lifecycle events: request, match, arrival, start, completion, and payment. So 30M trips/day × 6 events = 180M events/day; 180M ÷ 86,400 seconds = about 2.1K events/sec on average."},
+ ];
+ const formulas=[
+  ["Peak event rate","online_drivers × (1 event / ping_interval_sec)","2M drivers × 1 event per driver / 4 sec = 500K events/sec","Each of the 2M online drivers sends 1 location event every 4 seconds. Use peak concurrent drivers and their ping frequency, not monthly totals."],
+  ["Kafka partitions","peak_throughput_MBps / ~10 MBps", "100 MB/s ÷ 10 MB/s = 10; provision 20+", "The 100 MB/s comes from 500K GPS events/sec × 200 bytes each. Assuming one partition handles roughly 10 MB/s gives 10 partitions; provision 20+ for bursts, replication work, and skew."],
+  ["Storage per day","events/sec × avg_event_size × 86,400", "500K × 200 B × 86,400 = 8.6 TB/day", "Calculate raw volume before compression, replication, indexes, or derived tables."],
+  ["Retention storage","storage/day × retention_days", "8.6 TB/day × 7 days = 60.2 TB raw", "Separate short hot replay retention from cheap historical retention."],
+ ];
+ const copyFormula=(formula:string)=>{navigator.clipboard?.writeText(formula).catch(()=>{});setCopied(formula);window.setTimeout(()=>setCopied(null),1200)};
+ return <><Outline sections={UBER_REQUIREMENTS_SECTIONS} active={requirementsActive} onGo={goToRequirement}/><div className="space-y-5 xl:pl-[232px]">
+  <Section id="scale-assumptions" kicker="01 · Assumptions" title="State the scale before drawing boxes" sub="Four explicit assumptions make every downstream number defensible." color={C.blue}><div className="mt-5 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">{assumptions.map(item=><button key={item.title} className="group relative min-h-[126px] border p-4 text-left transition-all hover:-translate-y-0.5 hover:shadow-md" style={{borderColor:C.border,background:C.card2}}><span className="text-xl">{item.icon}</span><strong className="mt-3 block text-xl" style={{color:C.blue}}>{item.title}</strong><span className="mt-1 block text-xs" style={{color:C.muted}}>{item.sub}</span><Tip text={item.detail}/></button>)}</div></Section>
+  <Section id="event-load" kicker="02 · Derived load" title="GPS dominates the event mix" sub="The total peak lands near 600K–700K events per second." color={C.cyan}><div className="mt-5 rounded-2xl border p-4 md:p-5" style={{borderColor:C.border,background:C.card2}}>{loads.map(item=><button key={item.label} className="group relative grid w-full grid-cols-[112px_1fr] items-center gap-3 border-t py-4 text-left first:border-t-0 md:grid-cols-[150px_1fr_270px]" style={{borderColor:C.border}}><span className="text-sm font-semibold">{item.label}</span><span className="h-4 overflow-hidden rounded-full" style={{background:C.border}}><span className="block h-full min-w-2 rounded-full" style={{width:item.width,background:item.color}}/></span><strong className="col-span-2 text-right text-xs md:col-span-1 md:text-sm" style={{color:item.color}}>{item.value}</strong><Tip text={item.detail}/></button>)}</div><div className="mt-3 flex items-center gap-3 rounded-xl border px-4 py-3" style={{borderColor:"rgba(39,110,241,.35)",background:"color-mix(in srgb, #276ef1 8%, var(--bg-card))"}}><strong className="text-2xl" style={{color:C.blue}}>~100×</strong><p className="text-sm" style={{color:C.muted}}>GPS event rate versus average trip-lifecycle rate.</p></div></Section>
+  <Section id="storage-math" kicker="03 · Storage" title="Translate velocity into daily weight" sub="Raw location history is the capacity problem; trip facts are the correctness problem." color={C.amber}><div className="mt-5 grid gap-3 lg:grid-cols-[1.25fr_.75fr]"><button className="group relative rounded-2xl border p-5 text-left" style={{borderColor:"rgba(217,119,6,.35)",background:C.card2}}><p className="text-xs font-bold uppercase tracking-[.16em]" style={{color:C.amber}}>Location stream</p><div className="mt-4 flex flex-wrap items-baseline gap-2"><strong className="text-3xl">500K</strong><span style={{color:C.muted}}>pings/sec</span><span style={{color:C.faint}}>×</span><strong>200 bytes</strong></div><div className="my-5 h-px" style={{background:C.border}}/><div className="grid grid-cols-2 gap-3"><div><strong className="text-2xl" style={{color:C.amber}}>100 MB/s</strong><p className="mt-1 text-xs" style={{color:C.muted}}>raw throughput</p></div><div><strong className="text-2xl" style={{color:C.amber}}>8.6 TB/day</strong><p className="mt-1 text-xs" style={{color:C.muted}}>raw GPS history</p></div></div><Tip text="The 200-byte estimate covers latitude, longitude, driver_id, trip_id, event timestamp, heading, speed, accuracy, and small serialization overhead. Therefore 500K pings/sec × 200 bytes = 100 MB/sec, or about 8.6 TB/day raw."/></button><button className="group relative rounded-2xl border p-5 text-left" style={{borderColor:C.border,background:C.card2}}><p className="text-xs font-bold uppercase tracking-[.16em]" style={{color:C.green}}>Trip facts</p><strong className="mt-4 block text-3xl">60 GB/day</strong><p className="mt-2 text-sm leading-6" style={{color:C.muted}}>30M trips × roughly 2 KB</p><Tip text="Small by volume, but financially critical and frequently joined with enormous location history for ETA and routing ML."/></button></div></Section>
+  <Section id="board-formulas" kicker="04 · Whiteboard" title="Keep only four formulas" sub="Each formula includes the worked interview number. Click to copy." color={C.violet}><div className="mt-5 grid gap-3 md:grid-cols-2">{formulas.map(([label,formula,example,detail])=><button onClick={()=>copyFormula(`${formula} = ${example}`)} key={label} className="group relative border p-4 text-left" style={{borderColor:copied===`${formula} = ${example}`?C.green:C.border,background:C.card2}}><span className="text-[10px] font-bold uppercase tracking-[.16em]" style={{color:C.violet}}>{copied===`${formula} = ${example}`?"Copied":label}</span><code className="mt-2 block overflow-x-auto text-xs leading-6" style={{color:C.text}}>{formula}</code><div className="mt-3 rounded-lg border px-3 py-2 text-xs font-semibold" style={{borderColor:"rgba(124,58,237,.35)",background:C.card,color:C.violet}}>{example}</div><Tip text={detail}/></button>)}</div></Section>
+  <Section id="design-implication" kicker="05 · Decision" title="Treat location streaming as first-class" sub="GPS volume is 100× trip events, so it must be separately partitioned and separately tiered." color={C.green}><div className="mt-5 rounded-2xl border p-4 md:p-5" style={{borderColor:C.border,background:C.card2}}><div className="grid gap-3 lg:grid-cols-[190px_34px_220px_34px_1fr] lg:items-center"><button className="group relative border p-4 text-left" style={{borderColor:"rgba(39,110,241,.4)",background:C.card}}><span className="text-[10px] font-bold uppercase tracking-[.16em]" style={{color:C.blue}}>Separate workload</span><p className="mt-2 font-semibold">Location topics</p><p className="mt-1 text-xs" style={{color:C.muted}}>not trip-events</p><Tip text="Do not bolt 500K GPS events/sec onto the much smaller trip-events topic. Give location its own topic family, limits, retention, and scaling policy."/></button><span className="hidden text-center lg:block" style={{color:C.green}}>→</span><button className="group relative border p-4 text-left" style={{borderColor:"rgba(217,119,6,.45)",background:C.card}}><span className="text-[10px] font-bold uppercase tracking-[.16em]" style={{color:C.amber}}>Partition strategy</span><p className="mt-2 font-semibold">Key by geohash</p><p className="mt-1 text-xs" style={{color:C.muted}}>not driver_id</p><Tip text="Partition by geohash so nearby pings land together for city-cell supply and surge computation. Partitioning by driver_id scatters the geographic workload."/></button><span className="hidden text-center lg:block" style={{color:C.green}}>→</span><div className="grid gap-3 sm:grid-cols-2"><button className="group relative border p-4 text-left" style={{borderColor:"rgba(8,145,178,.4)",background:C.card}}><span className="text-[10px] font-bold uppercase tracking-[.16em]" style={{color:C.cyan}}>Low-latency path</span><p className="mt-2 font-semibold">Bypass lakehouse</p><p className="mt-1 text-xs" style={{color:C.muted}}>live marketplace state</p><Tip text="Send the live location branch straight to low-latency marketplace serving. It should not wait for the lakehouse path used for historical truth."/></button><button className="group relative border p-4 text-left" style={{borderColor:"rgba(22,163,74,.4)",background:C.card}}><span className="text-[10px] font-bold uppercase tracking-[.16em]" style={{color:C.green}}>Historical tier</span><p className="mt-2 font-semibold">Downsample + compact</p><p className="mt-1 text-xs" style={{color:C.muted}}>aggressive cost control</p><Tip text="Keep raw detail for a short replay window, then aggressively downsample location history and compact files for long-term ETA and routing ML."/></button></div></div></div></Section>
+  <nav aria-label="Chapter navigation" className="flex items-center justify-between border-t pt-4" style={{borderColor:C.border}}><Link href={href("start-here")} className="rounded-md border px-4 py-3 text-sm font-semibold" style={{borderColor:C.border,background:C.card}}>← Start Here</Link><Link href={href("event-sources")} className="rounded-md border px-4 py-3 text-right text-sm font-semibold" style={{borderColor:C.border,background:C.card}}><small className="block text-[9px] uppercase tracking-[.16em]" style={{color:C.faint}}>Next chapter</small><span className="mt-1 block">Event Sources →</span></Link></nav>
+ </div></>
+}
+
+function EventSourcesTab(){
+ const [sourceActive,setSourceActive]=useState<string>(UBER_EVENT_SOURCE_SECTIONS[0].id);
+ useEffect(()=>{const sync=()=>{const items=UBER_EVENT_SOURCE_SECTIONS.map(section=>{const node=document.getElementById(section.id);return node?{id:section.id,top:node.getBoundingClientRect().top}:null}).filter((item):item is NonNullable<typeof item>=>item!==null);if(items.length)setSourceActive(items.reduce((closest,item)=>Math.abs(item.top-180)<Math.abs(closest.top-180)?item:closest).id)};sync();addEventListener("scroll",sync,{passive:true});return()=>removeEventListener("scroll",sync)},[]);
+ useEffect(()=>{const producerList=document.querySelector<HTMLElement>("#trip-reconciliation > button > div > div:first-child");const tooltip=document.querySelector<HTMLElement>('#trip-reconciliation > button > [role="tooltip"]');if(!producerList||!tooltip)return;const show=()=>tooltip.style.setProperty("display","block","important");const hide=()=>tooltip.style.setProperty("display","none","important");hide();producerList.addEventListener("mouseenter",show);producerList.addEventListener("mouseleave",hide);return()=>{producerList.removeEventListener("mouseenter",show);producerList.removeEventListener("mouseleave",hide);tooltip.style.removeProperty("display")}},[]);
+ const goToSource=(id:string)=>{const node=document.getElementById(id);if(!node)return;history.replaceState(null,"",`${href("event-sources")}#${id}`);scrollTo({top:node.getBoundingClientRect().top+scrollY-140,behavior:"smooth"});setSourceActive(id)};
+ const sources=[
+  {icon:"🚘",name:"Driver app",tier:"Highest",color:C.blue,events:"location_ping · driver_online · driver_offline · trip_status_change",detail:"The dominant producer. Location pings drive the 500K/sec peak; status changes describe availability and trip progress."},
+  {icon:"📱",name:"Rider app",tier:"High",color:C.cyan,events:"fare_estimate_requested · trip_requested · app_screen_view · rating_submitted",detail:"Captures demand intent, conversion funnels, experimentation exposure, and rider feedback."},
+  {icon:"🧭",name:"Dispatch service",tier:"Medium",color:C.violet,events:"trip_matched · trip_cancelled · eta_recalculated",detail:"Publishes marketplace decisions that connect rider intent with a driver and update the trip state."},
+  {icon:"💳",name:"Payments service",tier:"Critical",color:C.amber,events:"payment_authorized · payment_captured · refund_issued",detail:"Moderate volume but financially critical. Event IDs and effectively-once business outcomes matter more than raw throughput."},
+  {icon:"🗺️",name:"Maps + routing",tier:"Medium",color:C.green,events:"route_computed · traffic_signal_update",detail:"Provides route and traffic context used to interpret location history and build ETA features."},
+  {icon:"🆘",name:"Support + safety",tier:"Priority",color:C.red,events:"sos_triggered · support_ticket_created",detail:"Low volume and highest urgency. These events need priority handling, strict access, and reliable alert delivery."},
+ ];
+ const fields=[
+  ["event_id","Idempotency","A globally unique ID lets consumers recognize retries and avoid applying the same business event twice."],
+  ["event_time","When it happened","Use device or producer time for windows, ordering, and late-event handling."],
+  ["ingestion_time","When Kafka received it","The difference from event_time measures platform delay and producer/network lag."],
+  ["trip / driver / rider IDs","Join keys","Nullable entity identifiers connect independent producer streams into one trip record."],
+  ["event_version","Schema evolution","Consumers can interpret older and newer payload shapes during a controlled migration."],
+  ["geohash","Location partition key","Location-bearing events carry a geographic cell used for partitioning and local aggregation."],
+ ];
+ const stages=[
+  {label:"Raw device events",sub:"source-shaped input",color:C.blue,detail:"Driver, rider, dispatch, payment, and maps systems publish their original payloads inside the shared event envelope."},
+  {label:"Kafka",sub:"replayable Bronze truth",color:C.amber,detail:"Durable source topics preserve the original accepted events before enrichment or business corrections."},
+  {label:"Flink enrichment",sub:"join city · driver tier · vehicle",color:C.cyan,detail:"Real-time jobs validate and dedupe events, then add static reference context such as city, driver tier, and vehicle type."},
+  {label:"Conformed Silver",sub:"consistent events",color:C.violet,detail:"Schemas, entity keys, timestamps, and quality rules are standardized across every producer."},
+  {label:"Aggregated Gold",sub:"trip_fact · driver_shift_fact · city_day_fact",color:C.green,detail:"Trusted business facts serve finance, city operations, analytics, experimentation, and ML."},
+ ];
+ return <><Outline sections={UBER_EVENT_SOURCE_SECTIONS} active={sourceActive} onGo={goToSource}/><div className="space-y-5 xl:pl-[232px]">
+  <Section id="producer-map" kicker="01 · Sources" title="Map the event producers" sub="Six systems describe different parts of the marketplace." color={C.blue}><div className="mt-5 grid gap-3 md:grid-cols-2 xl:grid-cols-3">{sources.map(source=><button key={source.name} className="group relative min-h-[142px] border p-4 text-left transition-all hover:-translate-y-0.5 hover:shadow-md" style={{borderColor:`${source.color}55`,background:C.card2}}><div className="flex items-center justify-between gap-3"><span className="text-xl">{source.icon}</span><span className="rounded-full border px-2.5 py-1 text-xs font-bold uppercase" style={{borderColor:`${source.color}55`,color:source.color}}>{source.tier}</span></div><p className="mt-3 font-semibold">{source.name}</p><code className="mt-2 block text-xs leading-6 md:text-[13px]" style={{color:C.muted}}>{source.events}</code><Tip text={source.detail}/></button>)}</div></Section>
+  <Section id="event-envelope" kicker="02 · Contract" title="Standardize every event with shared metadata" sub="An envelope is a common outer structure around each source-specific payload." color={C.violet}><div className="mt-5 grid gap-4 lg:grid-cols-[330px_1fr]"><div className="rounded-2xl border p-5" style={{borderColor:"rgba(124,58,237,.45)",background:C.card2}}><p className="text-[10px] font-bold uppercase tracking-[.16em]" style={{color:C.violet}}>Shared envelope · same for every source</p><div className="mt-3 flex flex-wrap gap-2">{["event_id","event_time","ingestion_time","entity IDs","event_version","geohash"].map(field=><span key={field} className="rounded-lg border px-2 py-1 text-xs" style={{borderColor:"rgba(124,58,237,.35)",background:C.card}}>{field}</span>)}</div><div className="mt-4 rounded-xl border p-4" style={{borderColor:C.border,background:C.card}}><p className="text-[10px] font-bold uppercase tracking-[.14em]" style={{color:C.faint}}>Source-specific payload</p><code className="mt-2 block text-xs leading-6" style={{color:C.text}}>location_ping | trip_matched | payment_captured | ...</code></div></div><div><p className="text-sm font-semibold">Why the shared envelope is necessary</p><div className="mt-3 grid gap-3 sm:grid-cols-2 xl:grid-cols-3">{fields.map(([name,purpose,detail])=><button key={name} className="group relative min-h-[96px] border p-4 text-left" style={{borderColor:C.border,background:C.card2}}><code className="text-[13px] font-bold" style={{color:C.violet}}>{name}</code><p className="mt-2 text-sm" style={{color:C.muted}}>{purpose}</p><Tip text={detail}/></button>)}</div></div></div><div className="mt-4 grid gap-2 sm:grid-cols-3"><div className="rounded-xl border p-3 text-sm" style={{borderColor:C.border,background:C.card2}}><strong>Dedupe + order</strong><span className="mt-1 block text-xs" style={{color:C.muted}}>same rules for every producer</span></div><div className="rounded-xl border p-3 text-sm" style={{borderColor:C.border,background:C.card2}}><strong>Measure delay</strong><span className="mt-1 block text-xs" style={{color:C.muted}}>event time vs ingestion time</span></div><div className="rounded-xl border p-3 text-sm" style={{borderColor:C.border,background:C.card2}}><strong>Join + evolve</strong><span className="mt-1 block text-xs" style={{color:C.muted}}>stable keys and versions</span></div></div></Section>
+  <Section id="source-priority" kicker="03 · Operating model" title="Volume and priority are different axes" sub="A small stream can demand stronger handling than a large one." color={C.amber}><div className="mt-5 overflow-hidden rounded-2xl border" style={{borderColor:C.border,background:C.card2}}><div className="grid grid-cols-[120px_1fr_1fr_1fr] border-b text-center text-xs font-bold uppercase tracking-[.1em] md:grid-cols-[150px_1fr_1fr_1fr] md:text-sm" style={{borderColor:C.border,color:C.faint}}><span className="p-3 text-left">Priority ↓ / Volume →</span><span className="p-3">Low</span><span className="p-3">Medium</span><span className="p-3">High</span></div>{[["Highest",["Support + safety","Payments","Driver GPS"]],["Standard",["—","Maps + dispatch","Rider activity"]]].map(([row,cells])=><div key={row as string} className="grid grid-cols-[120px_1fr_1fr_1fr] border-b last:border-b-0 md:grid-cols-[150px_1fr_1fr_1fr]" style={{borderColor:C.border}}><strong className="p-3 text-sm md:text-base">{row as string}</strong>{(cells as string[]).map(cell=><div key={cell} className="border-l p-3 text-center text-sm md:text-base" style={{borderColor:C.border,color:cell==="—"?C.faint:C.text}}>{cell}</div>)}</div>)}</div></Section>
+  <Section id="population-flow" kicker="04 · Population" title="Populate Bronze, Silver, and Gold" sub="Raw device events enter Kafka, Flink enriches them, and trusted facts emerge in stages." color={C.cyan}><div className="mt-5 grid gap-3 lg:grid-cols-[1fr_24px_1fr_24px_1fr_24px_1fr_24px_1fr] lg:items-center">{stages.map((stage,i)=><div className="contents" key={stage.label}><button className="group relative min-h-[126px] border p-4 text-left" style={{borderColor:`${stage.color}55`,background:C.card2}}><span className="text-xs font-bold" style={{color:stage.color}}>0{i+1}</span><p className="mt-3 text-sm font-semibold">{stage.label}</p><p className="mt-2 text-xs leading-5" style={{color:C.muted}}>{stage.sub}</p><Tip text={stage.detail}/></button>{i<stages.length-1?<span className="hidden text-center lg:block" style={{color:C.cyan}}>→</span>:null}</div>)}</div></Section>
+  <Section id="trip-reconciliation" kicker="05 · Interview insight" title="Build one trustworthy trip from 5 producers" sub="The same trip is described independently, and events can be late, duplicated, or out of order." color={C.green}><button className="group relative mt-5 w-full border p-4 text-left md:p-5" style={{borderColor:"rgba(22,163,74,.35)",background:C.card2}}><div className="grid gap-4 lg:grid-cols-[1fr_260px_1fr] lg:items-center"><div className="grid gap-2">{[["Rider app","trip_requested"],["Driver app","trip_status_change"],["Dispatch","trip_matched"],["Payments","payment_captured"],["Maps","route_computed"]].map(([source,event])=><div key={source} className="flex items-center justify-between rounded-xl border px-3 py-3" style={{borderColor:C.border,background:C.card}}><span className="text-sm font-semibold">{source}</span><code className="text-xs" style={{color:C.muted}}>{event}</code></div>)}</div><div className="rounded-2xl border p-5 text-center" style={{borderColor:"rgba(22,163,74,.45)",background:C.card}}><p className="text-[10px] font-bold uppercase tracking-[.16em]" style={{color:C.green}}>Reconciliation</p><strong className="mt-3 block text-xl">Join on trip_id</strong><div className="mt-4 flex flex-wrap justify-center gap-2">{["dedupe","order by event_time","complete state"].map(step=><span key={step} className="rounded-lg border px-2 py-1 text-xs" style={{borderColor:C.border,background:C.card2}}>{step}</span>)}</div></div><div className="rounded-2xl border p-5" style={{borderColor:"rgba(22,163,74,.35)",background:C.card}}><p className="text-[10px] font-bold uppercase tracking-[.16em]" style={{color:C.green}}>Trusted output</p><p className="mt-3 font-semibold">One canonical trip record</p><div className="mt-3 grid grid-cols-2 gap-2 text-xs" style={{color:C.muted}}><span>✓ lifecycle</span><span>✓ payment</span><span>✓ route</span><span>✓ timestamps</span></div></div></div><Tip text="Rider, driver, dispatch, payment, and maps systems publish independently for the same trip. Their events can arrive late, be retried, or appear out of order. The pipeline joins them by trip_id, deduplicates by event_id, orders them by event_time, and completes one trustworthy trip record."/></button></Section>
+  <nav aria-label="Chapter navigation" className="flex items-center justify-between border-t pt-4" style={{borderColor:C.border}}><Link href={href("requirements")} className="rounded-md border px-4 py-3 text-sm font-semibold" style={{borderColor:C.border,background:C.card}}>← Requirements</Link><Link href={href("architecture")} className="rounded-md border px-4 py-3 text-right text-sm font-semibold" style={{borderColor:C.border,background:C.card}}><small className="block text-[9px] uppercase tracking-[.16em]" style={{color:C.faint}}>Next chapter</small><span className="mt-1 block">Architecture →</span></Link></nav>
+ </div></>
+}
+
+type ArchitectureNodeData={label:string;layer:string;summary:string;why:string;input:string;output:string;accent:string;chips:string[];active?:boolean};
+const architectureDetails:Record<string,ArchitectureNodeData>={
+ "driver-app":{label:"Driver app",layer:"Producer",summary:"Sends each online driver's GPS, availability, and trip milestones.",why:"At Uber's assumed peak, 2M online drivers send 1 ping every 4 seconds, creating about 500K location events/sec. These pings determine which H3 cells have available supply; driver status events distinguish idle, offered, en route, and on-trip time.",input:"Phone GPS, online/offline actions, accept/arrive/start/complete actions",output:"geo.location_pings keyed by geohash + trip.lifecycle keyed by trip_id",accent:C.blue,chips:["500K GPS/sec","1 ping / 4 sec"]},
+ "rider-app":{label:"Rider app",layer:"Producer",summary:"Records where Uber demand forms and whether it converts into a trip.",why:"Fare estimates, searches, service-option views, and trip requests measure demand before a trip exists. Keeping unsuccessful requests is essential for city-cell supply/demand ratios, conversion analysis, and cancellation funnels.",input:"Pickup/drop-off search, fare estimate, service selection, trip request",output:"rider.app_events + trip_requested with rider_id, city_id, and pickup H3",accent:C.violet,chips:["demand intent","request funnel"]},
+ dispatch:{label:"Dispatch",layer:"Producer",summary:"Records Uber's driver offers, matches, cancellations, and ETA changes.",why:"Dispatch is the authoritative producer for which candidate driver received an offer and which driver matched a rider. Its events are joined with independent rider and driver events on trip_id to reconstruct the actual marketplace outcome.",input:"Ride request + nearby available drivers + pickup ETA scores",output:"trip_matched, trip_cancelled, eta_recalculated, and match-attempt events",accent:C.cyan,chips:["trip_id","match outcome"]},
+ payments:{label:"Payments",layer:"Producer",summary:"Records every financial movement attached to an Uber trip.",why:"A completed trip can create authorization, capture, tip, adjustment, refund, chargeback, and driver payout events. Client event_id and processor references make those movements idempotent, while nightly reconciliation checks them against settlement records.",input:"Completed trip fare, rider payment token, driver earning components",output:"payments.events for capture, refund, adjustment, tip, and settlement",accent:C.green,chips:["idempotent money","nightly reconcile"]},
+ maps:{label:"Maps",layer:"Producer",summary:"Adds Uber route, traffic, distance, and ETA evidence to each trip.",why:"Map-matched driver positions and traffic-aware routes feed pickup ETA during the trip. Historical estimated versus actual distance and duration then train and evaluate Uber's ETA models without treating raw GPS as a clean route.",input:"Driver/rider coordinates, road graph, live traffic, destination",output:"route_computed, map-matched segments, distance, duration, and ETA observations",accent:C.amber,chips:["map matching","ETA error"]},
+ kafka:{label:"Kafka",layer:"Durable backbone",summary:"Isolates Uber's GPS, trip, rider, and payment workloads in replayable topics.",why:"Uber's location stream is spatial while trip and payment streams are transactional. geo.location_pings is partitioned for H3/geohash locality; trip.lifecycle and payments.events preserve per-trip ordering with trip_id. Flink and the lakehouse read the same retained offsets, avoiding two sources of truth.",input:"geo.location_pings, trip.lifecycle, rider.app_events, payments.events",output:"Regionally durable topic partitions consumed by Flink and Bronze ingestion",accent:C.amber,chips:["geohash + trip_id","shared offsets"]},
+ flink:{label:"Flink streaming",layer:"Seconds path",summary:"Turns Uber events into live supply, surge inputs, ETA features, and trip sessions.",why:"Separate Flink jobs maintain rolling H3 supply/demand windows, keyed driver state, and trip_id sessions, then join city, vehicle, and driver-tier reference data. Event-time watermarks keep Uber's live signals usable even when mobile events arrive late or out of order.",input:"Kafka topics + city, H3 zone, driver tier, and vehicle reference data",output:"Live driver map, smoothed surge aggregates, ETA features, and active trip sessions",accent:C.cyan,chips:["H3 windows","event time"]},
+ "batch-orchestration":{label:"Spark + Airflow",layer:"Trusted-history path",summary:"Rebuilds Uber's corrected trip, driver-shift, and settlement history.",why:"Airflow schedules Spark transformations from Bronze to conformed Silver events and reconciled Gold facts. Publishes are gated by Kafka-offset coverage, duplicate checks, lifecycle completeness, and payment totals so finance does not trust a table merely because a job succeeded.",input:"Bronze Kafka archive, late events, city/driver/vehicle dimensions",output:"trip_fact, driver_shift_fact, city_day facts, and finance settlement tables",accent:C.violet,chips:["offset checks","audited backfill"]},
+ "low-latency-store":{label:"Redis / Cassandra",layer:"Online serving",summary:"Serves Uber's latest H3 supply, surge, and ETA state by key.",why:"Dispatch and pricing need millisecond lookups for nearby available-driver counts, current surge multipliers, and fresh ETA features. Those live decisions must not query Snowflake, BigQuery, or scan the lakehouse because warehouse latency and failures would enter the trip-request path.",input:"Flink outputs keyed by city, H3 cell, service type, driver, or trip",output:"Millisecond reads for dispatch, pricing, and ETA inference",accent:C.red,chips:["H3 keyed state","not warehouse"]},
+ lakehouse:{label:"Lakehouse",layer:"Durable storage",summary:"Stores Uber Bronze, Silver, and Gold history on S3 with Iceberg or Delta.",why:"Bronze retains replayable source events; Silver deduplicates and conforms trip, driver, rider, payment, and map entities; Gold publishes business facts. Full-resolution GPS gets stricter access and shorter retention, while downsampled location history supports analysis at lower cost.",input:"Kafka offsets, raw payloads, late events, and Spark reconciliation outputs",output:"trip_fact, fact_location_ping, driver_shift_fact, city_day, and settlement facts",accent:C.blue,chips:["Iceberg snapshots","GPS retention"]},
+ "live-marketplace":{label:"Live marketplace",layer:"Operational consumer",summary:"Feeds Uber's fresh data back into dispatch, pricing, and ETA decisions.",why:"This closes Uber's marketplace loop: driver pings update available supply, rider requests update demand, the surge signal changes prices, and ETA features rank pickup options. The path targets seconds or milliseconds because stale state can mismatch riders and drivers.",input:"Latest H3 supply/demand, driver state, surge value, and ETA features",output:"Driver candidate ranking, rider quote, pickup ETA, and active-trip updates",accent:C.red,chips:["marketplace loop","seconds"]},
+ "warehouse-features":{label:"Warehouse + features",layer:"Serving layer",summary:"Separates Uber's governed SQL marts from point-in-time ML features.",why:"Snowflake or BigQuery serves certified Gold metrics such as completed trips, gross bookings, cancellation rate, and driver utilization. Offline Iceberg features build leakage-safe ETA and pricing training sets; equivalent online features are refreshed for live inference.",input:"Certified Gold facts, conformed dimensions, and time-correct feature joins",output:"City/finance marts + offline and online ETA, pricing, and matching features",accent:C.green,chips:["point-in-time","certified metrics"]},
+ "business-consumers":{label:"BI, Ops, ML + Finance",layer:"Historical consumers",summary:"Turns Uber's reconciled history into city operations, money, models, and experiments.",why:"City Ops reads supply, demand, ETA, and cancellation dashboards; Finance closes bookings, refunds, tax, and driver payouts; ML trains ETA, pricing, and matching models; experimentation analyzes assignments at city or H3-cell level to account for marketplace spillovers.",input:"Gold warehouse marts + point-in-time feature datasets",output:"City dashboards, settlement reports, trained models, and geo-level experiment results",accent:C.green,chips:["city + H3","finance + ML"]},
 };
-
-function tabHref(tab: UberDeTabSlug) {
-  return `/system-design/uber/${tab}`;
+const architecturePositions:Record<string,{x:number;y:number}>={"driver-app":{x:12,y:24},"rider-app":{x:160,y:24},dispatch:{x:308,y:24},payments:{x:456,y:24},maps:{x:604,y:24},kafka:{x:290,y:144},flink:{x:90,y:269},"batch-orchestration":{x:490,y:269},"low-latency-store":{x:90,y:394},lakehouse:{x:490,y:394},"live-marketplace":{x:90,y:519},"warehouse-features":{x:490,y:519},"business-consumers":{x:490,y:644}};
+const architectureEdges:Array<{id:string;source:string;target:string;label?:string}>=[...(["driver-app","rider-app","dispatch","payments","maps"].map(id=>({id:`${id}-kafka`,source:id,target:"kafka"}))),
+ {id:"kafka-flink",source:"kafka",target:"flink",label:"seconds"},{id:"kafka-batch",source:"kafka",target:"batch-orchestration",label:"replay + batch"},{id:"flink-online",source:"flink",target:"low-latency-store"},{id:"online-live",source:"low-latency-store",target:"live-marketplace"},{id:"batch-lake",source:"batch-orchestration",target:"lakehouse"},{id:"lake-serving",source:"lakehouse",target:"warehouse-features"},{id:"serving-consumers",source:"warehouse-features",target:"business-consumers"}
+];
+const architectureNodeHeight=88;
+const architectureProducerIds=new Set(["driver-app","rider-app","dispatch","payments","maps"]);
+const architectureNodeWidth=(id:string)=>architectureProducerIds.has(id)?140:164;
+const architectureDiagramLabels:Record<string,string>={"driver-app":"GPS + availability","rider-app":"Demand + trip requests",dispatch:"Match + trip state",payments:"Payment + settlement",maps:"Routes + traffic",kafka:"Durable event backbone",flink:"Live marketplace updates","batch-orchestration":"Reconcile + backfill","low-latency-store":"Latest keyed state",lakehouse:"Bronze to Silver to Gold","live-marketplace":"Surge + ETA + dispatch","warehouse-features":"SQL + model features","business-consumers":"Reporting + Ops + ML"};
+function ArchitectureSvg({focused,onFocus,zoom}:{focused:string;onFocus:(id:string)=>void;zoom:number}){return <svg data-testid="uber-architecture-svg" viewBox="0 0 760 750" className="h-full w-full" role="img" aria-label="Uber data platform architecture"><defs><marker id="uber-architecture-arrow" markerWidth="7" markerHeight="7" refX="6" refY="3.5" orient="auto"><path d="M0 0L7 3.5L0 7Z" fill="var(--text-muted)"/></marker></defs><g transform={`translate(${380-380*zoom} ${24-24*zoom}) scale(${zoom})`}>
+ {[["SOURCES",18],["KAFKA",161],["PROCESSING",286],["SERVING",411],["PRODUCTS",536]].map(([label,y])=><text key={label} x="10" y={Number(y)} fill="var(--text-muted)" fontSize="12" fontWeight="800" letterSpacing="1">{label}</text>)}
+ {architectureEdges.map(edge=>{const from=architecturePositions[edge.source],to=architecturePositions[edge.target];const x1=from.x+architectureNodeWidth(edge.source)/2,y1=from.y+architectureNodeHeight,x2=to.x+architectureNodeWidth(edge.target)/2,y2=to.y;const active=edge.source===focused||edge.target===focused;const mid=(y1+y2)/2;return <g key={edge.id} opacity={active?1:.52}><path d={`M ${x1} ${y1} C ${x1} ${mid}, ${x2} ${mid}, ${x2} ${y2-5}`} fill="none" stroke={active?architectureDetails[focused].accent:"var(--text-muted)"} strokeWidth={active?2:1.1} markerEnd="url(#uber-architecture-arrow)"/>{edge.label?<><rect x={(x1+x2)/2-30} y={mid-8} width="60" height="15" rx="4" fill="var(--bg-card)" stroke="var(--border)"/><text x={(x1+x2)/2} y={mid+3} fill="var(--text-muted)" fontSize="8" fontWeight="700" textAnchor="middle">{edge.label}</text></>:null}</g>})}
+ {Object.entries(architectureDetails).map(([id,data])=>{const pos=architecturePositions[id],active=id===focused,width=architectureNodeWidth(id);return <g key={id} data-testid={`architecture-node-${data.label.toLowerCase().replace(/[^a-z0-9]+/g,"-")}`} role="button" tabIndex={0} aria-label={`${data.label}: ${data.summary}`} onMouseDown={event=>event.preventDefault()} onMouseEnter={()=>onFocus(id)} onClick={()=>onFocus(id)} onFocus={()=>onFocus(id)} className="cursor-pointer outline-none"><rect x={pos.x} y={pos.y} width={width} height={architectureNodeHeight} rx="10" fill={active?`color-mix(in srgb, ${data.accent} 13%, var(--bg-card))`:"var(--bg-card)"} stroke={data.accent} strokeOpacity={active?1:.55} strokeWidth={active?2:1}/><rect x={pos.x} y={pos.y} width="4" height={architectureNodeHeight} rx="2" fill={data.accent}/><text x={pos.x+12} y={pos.y+20} fill={data.accent} fontSize="9" fontWeight="700" letterSpacing="1.1">{data.layer.toUpperCase()}</text><text x={pos.x+12} y={pos.y+43} fill="var(--text)" fontSize="13" fontWeight="700">{data.label}</text><text x={pos.x+12} y={pos.y+66} fill="var(--text-muted)" fontSize={architectureProducerIds.has(id)?9:10}>{architectureDiagramLabels[id]}</text>{active?<circle cx={pos.x+width-13} cy={pos.y+14} r="4" fill={data.accent}/>:null}</g>})}
+ </g></svg>}
+function ArchitectureTab(){
+ const [architectureActive,setArchitectureActive]=useState<string>(UBER_ARCHITECTURE_SECTIONS[0].id);const [focused,setFocused]=useState("kafka");const [zoom,setZoom]=useState(1);
+ useEffect(()=>{const sync=()=>{const items=UBER_ARCHITECTURE_SECTIONS.map(section=>{const node=document.getElementById(section.id);return node?{id:section.id,top:node.getBoundingClientRect().top}:null}).filter((item):item is NonNullable<typeof item>=>item!==null);if(items.length)setArchitectureActive(items.reduce((a,b)=>Math.abs(b.top-180)<Math.abs(a.top-180)?b:a).id)};sync();addEventListener("scroll",sync,{passive:true});return()=>removeEventListener("scroll",sync)},[]);
+ useEffect(()=>{document.querySelector<HTMLElement>('[data-testid="architecture-detail-panel"]')?.scrollTo({top:0})},[focused]);
+ useEffect(()=>{document.querySelectorAll<HTMLElement>('#architecture-principle [role="tooltip"]').forEach(tooltip=>tooltip.style.setProperty("display","none","important"))},[]);
+ const goToArchitecture=(id:string)=>{const node=document.getElementById(id);if(!node)return;history.replaceState(null,"",`${href("architecture")}#${id}`);scrollTo({top:node.getBoundingClientRect().top+scrollY-140,behavior:"smooth"});setArchitectureActive(id)};
+ const selected=architectureDetails[focused];
+ return <><Outline sections={UBER_ARCHITECTURE_SECTIONS} active={architectureActive} onGo={goToArchitecture}/><div className="space-y-5 xl:pl-[232px]">
+  <Section id="architecture-map" kicker="04 · Architecture" title="One event backbone, two processing paths" sub="Explore the complete Uber data flow from marketplace producers to live decisions and trusted historical products." color={C.cyan}><div className="mt-5 grid gap-4 xl:grid-cols-[minmax(0,1fr)_320px]">
+   <div data-testid="uber-architecture-canvas" className="relative h-[650px] overflow-hidden rounded-2xl border" style={{borderColor:C.border,background:C.card2}}><div className="absolute right-3 top-3 z-10 flex items-center overflow-hidden rounded-lg border shadow-sm" style={{borderColor:C.border,background:C.card}}><button aria-label="Zoom out" onClick={()=>setZoom(value=>Math.max(.8,Number((value-.1).toFixed(1))))} className="flex h-9 w-9 items-center justify-center text-lg" style={{color:C.text}}>−</button><button aria-label="Reset zoom" onClick={()=>setZoom(1)} className="h-9 min-w-14 border-x px-2 text-xs font-semibold" style={{borderColor:C.border,color:C.muted}}>{Math.round(zoom*100)}%</button><button aria-label="Zoom in" onClick={()=>setZoom(value=>Math.min(1.5,Number((value+.1).toFixed(1))))} className="flex h-9 w-9 items-center justify-center text-lg" style={{color:C.text}}>+</button></div><ArchitectureSvg focused={focused} onFocus={setFocused} zoom={zoom}/></div>
+   <aside data-testid="architecture-detail-panel" aria-live="polite" className="max-h-[calc(100dvh-156px)] self-start overflow-y-auto rounded-2xl border xl:sticky xl:top-[140px]" style={{borderColor:`${selected.accent}55`,background:`color-mix(in srgb, ${selected.accent} 7%, var(--bg-card))`}}><div className="sticky top-0 z-10 border-b p-5 pb-4" style={{borderColor:C.border,background:`color-mix(in srgb, ${selected.accent} 7%, var(--bg-card))`}}><p className="text-[10px] font-bold uppercase tracking-[.18em]" style={{color:selected.accent}}>{selected.layer}</p><h3 className="mt-2 text-xl font-semibold">{selected.label}</h3><p className="mt-3 text-sm leading-6" style={{color:C.muted}}>{selected.summary}</p></div><div className="p-5"><p className="text-[10px] font-bold uppercase tracking-[.16em]" style={{color:C.faint}}>Why it exists</p><p className="mt-2 text-sm leading-6">{selected.why}</p><div className="mt-4 space-y-3"><div className="rounded-xl border p-3" style={{borderColor:C.border,background:C.card}}><p className="text-[9px] font-bold uppercase tracking-[.14em]" style={{color:C.faint}}>Receives</p><p className="mt-1.5 text-xs leading-5">{selected.input}</p></div><div className="rounded-xl border p-3" style={{borderColor:C.border,background:C.card}}><p className="text-[9px] font-bold uppercase tracking-[.14em]" style={{color:C.faint}}>Produces</p><p className="mt-1.5 text-xs leading-5">{selected.output}</p></div></div><div className="mt-4 flex flex-wrap gap-2">{selected.chips.map(chip=><span key={chip} className="rounded-lg border px-2.5 py-1.5 text-[11px] font-semibold" style={{borderColor:`${selected.accent}44`,color:selected.accent,background:C.card}}>{chip}</span>)}</div></div></aside>
+  </div></Section>
+  <Section id="architecture-principle" kicker="Architecture decision" title="Why the pipeline splits after Kafka" color={C.amber}><div className="mt-5 overflow-hidden rounded-2xl border" style={{borderColor:C.border,background:C.card2}}><div className="border-b px-5 py-4 text-center" style={{borderColor:C.border}}><span className="rounded-lg border px-4 py-2 text-sm font-bold" style={{borderColor:`${C.amber}66`,color:C.amber,background:C.card}}>Same durable Kafka topics</span><div className="mx-auto mt-2 h-6 w-px" style={{background:C.amber}}/><div className="mx-auto h-px w-1/2" style={{background:C.amber}}/></div><div className="grid md:grid-cols-2"><button onMouseEnter={()=>setFocused("flink")} onFocus={()=>setFocused("flink")} className="group relative min-h-[150px] border-b p-5 text-left md:border-b-0 md:border-r" style={{borderColor:C.border,background:"transparent"}}><p className="text-[10px] font-bold uppercase tracking-[.16em]" style={{color:C.cyan}}>Flink · seconds</p><p className="mt-2 text-lg font-semibold">Continuously update live state</p><p className="mt-2 text-sm leading-6" style={{color:C.muted}}>Rolling supply cells, surge inputs, ETA features, and current trip sessions feed operational services.</p><Tip text={architectureDetails.flink.why}/></button><button onMouseEnter={()=>setFocused("batch-orchestration")} onFocus={()=>setFocused("batch-orchestration")} className="group relative min-h-[150px] p-5 text-left" style={{background:"transparent"}}><p className="text-[10px] font-bold uppercase tracking-[.16em]" style={{color:C.violet}}>Spark + Airflow · scheduled</p><p className="mt-2 text-lg font-semibold">Reconcile historical truth</p><p className="mt-2 text-sm leading-6" style={{color:C.muted}}>Late and duplicate events are corrected into auditable trip, shift, and settlement facts.</p><Tip text={architectureDetails["batch-orchestration"].why}/></button></div><div className="border-t px-5 py-4 text-center text-sm font-medium" style={{borderColor:C.border,color:C.text}}>One event record, two freshness guarantees, no competing source of truth.</div></div></Section>
+  <nav aria-label="Chapter navigation" className="flex items-center justify-between border-t pt-4" style={{borderColor:C.border}}><Link href={href("event-sources")} className="rounded-md border px-4 py-3 text-sm font-semibold" style={{borderColor:C.border,background:C.card}}>← Event Sources</Link><Link href={href("ingestion-kafka")} className="rounded-md border px-4 py-3 text-right text-sm font-semibold" style={{borderColor:C.border,background:C.card}}><small className="block text-[9px] uppercase tracking-[.16em]" style={{color:C.faint}}>Next chapter</small><span className="mt-1 block">Ingestion / Kafka →</span></Link></nav>
+ </div></>
 }
 
-function OutlineCard({
-  activeId,
-  onNavigate,
-}: {
-  activeId: string;
-  onNavigate: (id: (typeof UBER_START_HERE_SECTIONS)[number]["id"]) => void;
-}) {
-  return (
-    <aside className="hidden xl:block w-[250px] shrink-0 px-4 pt-6">
-      <div className="sticky top-[124px]">
-        <p className="text-[11px] font-bold uppercase tracking-[0.24em]" style={{ color: T.faint }}>
-          Page anchors
-        </p>
-        <div className="mt-4 space-y-3">
-          {UBER_START_HERE_SECTIONS.map((section, index) => {
-            const active = section.id === activeId;
-            return (
-              <button
-                key={section.id}
-                type="button"
-                onClick={() => onNavigate(section.id)}
-                className="w-full rounded-[22px] px-4 py-4 text-left transition-colors"
-                style={{
-                  background: active ? "rgba(39,110,241,0.14)" : T.card,
-                  border: `1px solid ${active ? "rgba(39,110,241,0.4)" : T.border}`,
-                  color: active ? T.text : T.muted,
-                }}
-              >
-                <div className="flex items-center gap-4">
-                  <span
-                    className="flex h-10 w-10 items-center justify-center rounded-full text-sm font-bold"
-                    style={{ background: active ? "rgba(39,110,241,0.18)" : "#202733", color: active ? "#8ec1ff" : T.faint }}
-                  >
-                    {index + 1}
-                  </span>
-                  <span className="text-[0.98rem] font-semibold">{section.title}</span>
-                </div>
-              </button>
-            );
-          })}
-        </div>
-      </div>
-    </aside>
-  );
-}
+function Placeholder({tab}:{tab:UberDeTabSlug}){if(tab==="requirements")return <RequirementsTab/>;if(tab==="event-sources")return <EventSourcesTab/>;if(tab==="architecture")return <ArchitectureTab/>;const meta=UBER_DE_TAB_META[tab];return <div className="rounded-md border p-8" style={{borderColor:C.border,background:C.card}}><p className="text-xs font-bold uppercase" style={{color:C.blue}}>Next tab</p><h1 className="mt-3 text-3xl font-semibold">{meta.title.replace(" | withsoon.com","")}</h1><p className="mt-4" style={{color:C.muted}}>{meta.description}</p></div>}
 
-function TopTabs({ activeTab }: { activeTab: UberDeTabSlug }) {
-  return (
-    <div className="sticky top-14 z-30 border-b" style={{ borderColor: T.border, background: "rgba(15,19,24,0.96)", backdropFilter: "blur(16px)" }}>
-      <div className="flex items-center gap-3 overflow-x-auto px-6 py-4 no-scrollbar">
-        {UBER_DE_TABS.map((tab, index) => {
-          const active = tab.id === activeTab;
-          return (
-            <Link
-              key={tab.id}
-              href={tabHref(tab.id)}
-              className="shrink-0 rounded-[20px] px-5 py-3 transition-colors"
-              style={{
-                background: active ? "rgba(39,110,241,0.14)" : T.card,
-                border: `1px solid ${active ? "rgba(39,110,241,0.4)" : T.border}`,
-                color: active ? T.text : T.muted,
-              }}
-            >
-              <div className="flex items-center gap-3">
-                <span className="text-sm font-bold" style={{ color: active ? "#59a4ff" : T.faint }}>
-                  {String(index + 1).padStart(2, "0")}
-                </span>
-                <span className="text-[1.02rem] font-semibold whitespace-nowrap">{tab.label}</span>
-              </div>
-            </Link>
-          );
-        })}
-      </div>
-    </div>
-  );
-}
-
-function PlaceholderTab({ tab }: { tab: UberDeTabSlug }) {
-  const meta = UBER_DE_TAB_META[tab];
-  return (
-    <div className="rounded-[30px] p-8 md:p-10" style={{ background: T.card, border: `1px solid ${T.border}` }}>
-      <p className="text-[11px] font-bold uppercase tracking-[0.22em]" style={{ color: T.blue }}>
-        Next tab
-      </p>
-      <h2 className="mt-3 text-4xl font-semibold tracking-[-0.04em]" style={{ color: T.text }}>
-        {meta.title.replace(" | withsoon.com", "")}
-      </h2>
-      <p className="mt-4 max-w-3xl text-lg leading-8" style={{ color: T.muted }}>
-        {meta.description}
-      </p>
-      <div className="mt-8 rounded-[24px] p-6" style={{ background: T.card2, border: `1px solid ${T.border}` }}>
-        <p className="text-[11px] font-bold uppercase tracking-[0.22em]" style={{ color: T.amber }}>
-          In progress
-        </p>
-        <p className="mt-3 text-base leading-8" style={{ color: T.muted }}>
-          This tab will follow the same Netflix-style interaction model, but I&apos;m completing Uber one tab at a time so each section is verified before we move on.
-        </p>
-      </div>
-    </div>
-  );
-}
-
-function StartHereTab() {
-  return (
-    <div className="space-y-6">
-      <section id="platform-mission" className="rounded-[30px] p-8 md:p-10" style={{ background: T.card, border: `1px solid rgba(39,110,241,0.28)` }}>
-        <p className="text-[11px] font-bold uppercase tracking-[0.24em]" style={{ color: T.blue }}>
-          Start Here
-        </p>
-        <h1 className="mt-3 max-w-4xl text-[2.8rem] font-semibold tracking-[-0.05em] leading-[0.96]" style={{ color: T.text }}>
-          Frame Uber as the shared marketplace data platform, not the dispatch service.
-        </h1>
-        <p className="mt-5 max-w-4xl text-lg leading-8" style={{ color: T.muted }}>
-          Start by drawing the line clearly: this answer covers the event pipeline, streaming layer, lakehouse, warehouse, feature store, and marketplace analytics workloads that power surge, ETA, fraud, finance, and city operations.
-        </p>
-
-        <div className="mt-8 grid gap-6 xl:grid-cols-[1.1fr_0.9fr]">
-          <div className="rounded-[26px] p-6" style={{ background: "#1f2630", border: `1px solid ${T.border}` }}>
-            <p className="text-[11px] font-bold uppercase tracking-[0.22em]" style={{ color: T.red }}>
-              Platform mission
-            </p>
-            <div className="mt-5 grid gap-4">
-              {[
-                {
-                  title: "Trip lifecycle events",
-                  detail: "Trip requested, matched, arrived, started, completed, cancelled, and payment status changes become the transactional spine.",
-                },
-                {
-                  title: "Driver GPS pings",
-                  detail: "The largest stream by far. These power live supply visibility, surge recomputation, route quality, ETA features, and fraud detection.",
-                },
-                {
-                  title: "Rider app events",
-                  detail: "Fare estimates, search flows, screen views, and conversion steps explain demand shape and experimentation outcomes.",
-                },
-              ].map((item, index) => (
-                <div key={item.title} className="rounded-[22px] p-5" style={{ background: T.card, border: `1px solid ${T.border}` }}>
-                  <div className="flex items-start gap-4">
-                    <span className="mt-1 flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-sm font-bold" style={{ background: "rgba(39,110,241,0.16)", color: "#8ec1ff" }}>
-                      {index + 1}
-                    </span>
-                    <div>
-                      <p className="text-xl font-semibold" style={{ color: T.text }}>{item.title}</p>
-                      <p className="mt-2 text-[0.98rem] leading-7" style={{ color: T.muted }}>{item.detail}</p>
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-
-          <div className="rounded-[26px] p-6" style={{ background: T.card2, border: `1px solid rgba(56,189,248,0.24)` }}>
-            <p className="text-[11px] font-bold uppercase tracking-[0.22em]" style={{ color: T.cyan }}>
-              What I would say
-            </p>
-            <p className="mt-4 text-lg leading-9" style={{ color: T.text }}>
-              I&apos;ll scope this as Uber&apos;s <span style={{ color: "#8ec1ff" }}>data platform</span>:
-              the batch plus stream backbone that turns trip, location, and rider events into live marketplace signals and trusted historical truth.
-            </p>
-            <div className="mt-6 rounded-[22px] p-5" style={{ background: T.card, border: `1px solid ${T.border}` }}>
-              <p className="text-[11px] font-bold uppercase tracking-[0.22em]" style={{ color: T.green }}>
-                Boundary line
-              </p>
-              <p className="mt-3 text-[0.98rem] leading-7" style={{ color: T.muted }}>
-                I am not designing dispatch or the rider mobile client itself. Those systems emit events into this platform. My boundary is events in, Kafka, stream + batch processing, lakehouse, warehouse, feature store, and downstream consumers.
-              </p>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      <section id="requirements-snapshot" className="rounded-[28px] p-7" style={{ background: T.card, border: `1px solid ${T.border}` }}>
-        <p className="text-[11px] font-bold uppercase tracking-[0.22em]" style={{ color: T.amber }}>
-          Requirements snapshot
-        </p>
-        <div className="mt-5 grid gap-4 xl:grid-cols-2">
-          {[
-            {
-              title: "Functional",
-              items: [
-                "Ingest trip, location, rider, payments, and routing events continuously.",
-                "Validate, enrich, and dedupe before those signals feed surge, ETA, and fraud workflows.",
-                "Persist trusted historical trip, driver, city, and settlement tables for finance and operations.",
-              ],
-              color: T.blue,
-            },
-            {
-              title: "Non-functional",
-              items: [
-                "Seconds-level freshness for surge and ETA features, with sub-second reads where model serving needs it.",
-                "Effectively-once business outcomes for financially critical trip completion and payments events.",
-                "Petabyte-scale geospatial history with deletion guarantees for PII such as rider addresses and payment-linked identity.",
-              ],
-              color: T.green,
-            },
-          ].map((group) => (
-            <div key={group.title} className="rounded-[24px] p-5" style={{ background: T.card2, border: `1px solid ${group.color}28` }}>
-              <p className="text-[11px] font-bold uppercase tracking-[0.22em]" style={{ color: group.color }}>
-                {group.title}
-              </p>
-              <div className="mt-4 space-y-3">
-                {group.items.map((item) => (
-                  <div key={item} className="rounded-[18px] px-4 py-3" style={{ background: T.card, border: `1px solid ${T.border}` }}>
-                    <p className="text-[0.96rem] leading-7" style={{ color: T.muted }}>{item}</p>
-                  </div>
-                ))}
-              </div>
-            </div>
-          ))}
-        </div>
-      </section>
-
-      <section id="scope-boundary" className="rounded-[28px] p-7" style={{ background: T.card, border: `1px solid ${T.border}` }}>
-        <p className="text-[11px] font-bold uppercase tracking-[0.22em]" style={{ color: T.red }}>
-          Scope boundary
-        </p>
-        <div className="mt-5 grid gap-4 lg:grid-cols-[1.05fr_0.95fr]">
-          <div className="rounded-[24px] p-5" style={{ background: "rgba(39,110,241,0.08)", border: `1px solid rgba(39,110,241,0.26)` }}>
-            <p className="text-lg font-semibold" style={{ color: T.text }}>
-              In scope
-            </p>
-            <div className="mt-4 space-y-3">
-              {[
-                "Events in -> Kafka -> stream + batch processing -> lakehouse -> warehouse + feature store -> consumers",
-                "Marketplace analytics for surge pricing, ETA features, fraud scoring, finance, city ops, and experimentation",
-                "Reconciliation between the fast streaming view and the trusted daily business record",
-              ].map((item) => (
-                <div key={item} className="rounded-[18px] px-4 py-3" style={{ background: T.card, border: `1px solid ${T.border}` }}>
-                  <p className="text-[0.96rem] leading-7" style={{ color: T.muted }}>{item}</p>
-                </div>
-              ))}
-            </div>
-          </div>
-          <div className="rounded-[24px] p-5" style={{ background: "rgba(239,68,68,0.08)", border: `1px solid rgba(239,68,68,0.22)` }}>
-            <p className="text-lg font-semibold" style={{ color: T.text }}>
-              Not in scope
-            </p>
-            <div className="mt-4 space-y-3">
-              {[
-                "Dispatch and matching algorithm internals",
-                "The mobile client or map UI itself",
-                "Low-latency OLTP service design beyond the point where those services publish events into the platform",
-              ].map((item) => (
-                <div key={item} className="rounded-[18px] px-4 py-3" style={{ background: T.card, border: `1px solid ${T.border}` }}>
-                  <p className="text-[0.96rem] leading-7" style={{ color: T.muted }}>{item}</p>
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
-      </section>
-
-      <section id="freshness-map" className="rounded-[28px] p-7" style={{ background: T.card, border: `1px solid ${T.border}` }}>
-        <p className="text-[11px] font-bold uppercase tracking-[0.22em]" style={{ color: T.green }}>
-          Freshness map
-        </p>
-        <div className="mt-5 grid gap-4 md:grid-cols-2 xl:grid-cols-5">
-          {[
-            { signal: "Driver GPS -> dispatch map", freshness: "~4s", why: "Near-live driver position is the supply view the marketplace reacts to.", color: T.cyan },
-            { signal: "Surge recompute", freshness: "30–60s", why: "Fast enough to respond without creating price flapping.", color: T.red },
-            { signal: "ETA features", freshness: "Seconds", why: "ETA quality directly changes rider UX and driver routing expectations.", color: T.blue },
-            { signal: "Trip fact", freshness: "T+1 by 6 AM", why: "Official finance and city operations numbers care more about correctness than instant publish.", color: T.amber },
-            { signal: "Fraud / risk score", freshness: "Sub-second to minutes", why: "Blocking paths need speed, deeper review can run on a slower correction lane.", color: T.violet },
-          ].map((item) => (
-            <div key={item.signal} className="rounded-[24px] p-5" style={{ background: T.card2, border: `1px solid ${item.color}26` }}>
-              <p className="text-[10px] font-bold uppercase tracking-[0.22em]" style={{ color: item.color }}>
-                {item.freshness}
-              </p>
-              <p className="mt-3 text-lg font-semibold leading-7" style={{ color: T.text }}>
-                {item.signal}
-              </p>
-              <p className="mt-3 text-sm leading-7" style={{ color: T.muted }}>
-                {item.why}
-              </p>
-            </div>
-          ))}
-        </div>
-      </section>
-
-      <section id="handoff" className="rounded-[28px] p-7" style={{ background: T.card, border: `1px solid ${T.border}` }}>
-        <p className="text-[11px] font-bold uppercase tracking-[0.22em]" style={{ color: T.blue }}>
-          Handoff
-        </p>
-        <div className="mt-5 grid gap-4 xl:grid-cols-[1fr_320px]">
-          <div className="rounded-[24px] p-5" style={{ background: T.card2, border: `1px solid ${T.border}` }}>
-            <p className="text-[1.02rem] leading-8" style={{ color: T.text }}>
-              Before estimating capacity, I want the requirements story locked so the numbers justify the architecture decisions. The next tab turns these freshness targets and business consumers into concrete scale math for Kafka, storage, and retention.
-            </p>
-          </div>
-          <div className="rounded-[24px] p-5" style={{ background: "rgba(39,110,241,0.12)", border: `1px solid rgba(39,110,241,0.28)` }}>
-            <p className="text-[10px] font-bold uppercase tracking-[0.22em]" style={{ color: "#8ec1ff" }}>
-              Next up
-            </p>
-            <p className="mt-3 text-xl font-semibold" style={{ color: T.text }}>
-              Requirements & capacity
-            </p>
-            <p className="mt-3 text-sm leading-7" style={{ color: T.muted }}>
-              We derive peak GPS event load, explain why geospatial pings dominate every other topic, and use that math to justify partition strategy and tiered storage.
-            </p>
-            <Link
-              href={tabHref("requirements")}
-              className="mt-5 inline-flex rounded-[16px] px-4 py-2.5 text-sm font-semibold"
-              style={{ background: T.blue, color: "#fff" }}
-            >
-              Open tab 2 →
-            </Link>
-          </div>
-        </div>
-      </section>
-    </div>
-  );
-}
-
-export default function UberDataEngineeringPage({ initialTab }: { initialTab?: string }) {
-  const initial = normalizeUberDeTab(initialTab) ?? "start-here";
-  const [activeSection, setActiveSection] = useState<(typeof UBER_START_HERE_SECTIONS)[number]["id"]>(UBER_START_HERE_SECTIONS[0].id);
-  const activeTab = initial;
-
-  useEffect(() => {
-    if (activeTab !== "start-here") return;
-    const sync = () => {
-      const sections = UBER_START_HERE_SECTIONS
-        .map((section) => {
-          const node = document.getElementById(section.id);
-          if (!node) return null;
-          return { id: section.id, top: node.getBoundingClientRect().top };
-        })
-        .filter((item): item is { id: (typeof UBER_START_HERE_SECTIONS)[number]["id"]; top: number } => item !== null);
-
-      if (sections.length === 0) return;
-      const threshold = 180;
-      const current = sections.reduce((closest, section) => {
-        if (!closest) return section;
-        return Math.abs(section.top - threshold) < Math.abs(closest.top - threshold) ? section : closest;
-      }, sections[0]);
-      setActiveSection(current.id);
-    };
-
-    sync();
-    window.addEventListener("scroll", sync, { passive: true });
-    window.addEventListener("resize", sync);
-    return () => {
-      window.removeEventListener("scroll", sync);
-      window.removeEventListener("resize", sync);
-    };
-  }, [activeTab]);
-
-  const activeMeta = useMemo(() => UBER_DE_TAB_META[activeTab], [activeTab]);
-
-  useEffect(() => {
-    document.title = activeMeta.title;
-  }, [activeMeta.title]);
-
-  const navigateSection = (id: (typeof UBER_START_HERE_SECTIONS)[number]["id"]) => {
-    const node = document.getElementById(id);
-    if (!node) return;
-    const absoluteTop = node.getBoundingClientRect().top + window.scrollY - 96;
-    window.scrollTo({ top: Math.max(0, absoluteTop), behavior: "smooth" });
-    setActiveSection(id);
-  };
-
-  return (
-    <div className="min-h-[calc(100dvh-56px)]" style={{ background: T.bg, color: T.text }}>
-      <TopTabs activeTab={activeTab} />
-      <div className="mx-auto flex max-w-[1700px]">
-        {activeTab === "start-here" ? <OutlineCard activeId={activeSection} onNavigate={navigateSection} /> : null}
-        <main className="min-w-0 flex-1 px-5 pb-12 pt-6 md:px-8 xl:px-10">
-          <div className="mb-6 rounded-[28px] p-6 md:p-8" style={{ background: T.card, border: `1px solid ${T.border}` }}>
-            <p className="text-[11px] font-bold uppercase tracking-[0.22em]" style={{ color: T.blue }}>
-              Uber Data Engineering
-            </p>
-            <h2 className="mt-3 text-[2.2rem] font-semibold tracking-[-0.05em]" style={{ color: T.text }}>
-              {activeMeta.title.replace(" | withsoon.com", "")}
-            </h2>
-            <p className="mt-4 max-w-4xl text-lg leading-8" style={{ color: T.muted }}>
-              {activeMeta.description}
-            </p>
-          </div>
-
-          {activeTab === "start-here" ? <StartHereTab /> : <PlaceholderTab tab={activeTab} />}
-        </main>
-      </div>
-    </div>
-  );
+export default function UberDataEngineeringPage({initialTab}:{initialTab?:string}){
+ const tab=normalizeUberDeTab(initialTab)??"start-here";const [active,setActive]=useState<(typeof UBER_START_HERE_SECTIONS)[number]["id"]>("platform-mission");const [hintOpen,setHintOpen]=useState(false);
+ useEffect(()=>{document.title=UBER_DE_TAB_META[tab].title},[tab]);
+ useEffect(()=>{const frame=requestAnimationFrame(()=>{try{setHintOpen(localStorage.getItem(`uber-de-hover-hint:${tab}`)!=="dismissed")}catch{setHintOpen(true)}});return()=>cancelAnimationFrame(frame)},[tab]);
+ useEffect(()=>{if(tab!=="start-here")return;const sync=()=>{const xs=UBER_START_HERE_SECTIONS.map(s=>{const n=document.getElementById(s.id);return n?{id:s.id,top:n.getBoundingClientRect().top}:null}).filter((x):x is {id:(typeof UBER_START_HERE_SECTIONS)[number]["id"],top:number}=>!!x);if(xs.length)setActive(xs.reduce((a,b)=>Math.abs(b.top-180)<Math.abs(a.top-180)?b:a).id)};sync();addEventListener("scroll",sync,{passive:true});return()=>removeEventListener("scroll",sync)},[tab]);
+ const go=(id:string)=>{const n=document.getElementById(id);if(!n)return;history.replaceState(null,"",`${href(tab)}#${id}`);scrollTo({top:n.getBoundingClientRect().top+scrollY-96,behavior:"smooth"});setActive(id as (typeof UBER_START_HERE_SECTIONS)[number]["id"])};
+ const dismissHint=()=>{setHintOpen(false);try{localStorage.setItem(`uber-de-hover-hint:${tab}`,"dismissed")}catch{}};
+ return <div className="uber-de-page min-h-[calc(100dvh-56px)]" style={{background:C.bg,color:C.text}}><Tabs active={tab}/><div className="mx-auto flex max-w-[1600px]">{tab==="start-here"?<Outline active={active} onGo={go}/>:null}<main className="min-w-0 flex-1 px-4 pb-12 pt-5 md:px-8 xl:px-12">{tab==="start-here"?<StartHere/>:<Placeholder tab={tab}/>}</main></div>{hintOpen?<aside role="dialog" aria-label="Card details hint" className="uber-hover-hint fixed right-4 top-[140px] z-50 w-[370px] max-w-[calc(100vw-32px)] rounded-2xl border p-4 shadow-2xl md:right-6" style={{borderColor:"rgba(255,255,255,.55)",background:C.blue,color:"#fff",boxShadow:"0 18px 45px rgba(39,110,241,.38), 0 0 0 4px rgba(39,110,241,.14)"}}><button onClick={dismissHint} aria-label="Dismiss card details hint" className="absolute right-3 top-3 flex h-8 w-8 items-center justify-center rounded-lg border text-lg leading-none" style={{borderColor:"rgba(255,255,255,.5)",background:"rgba(0,0,0,.14)",color:"#fff"}}>×</button><div className="flex gap-3 pr-9"><span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border text-lg" style={{borderColor:"rgba(255,255,255,.35)",background:"rgba(255,255,255,.18)",color:"#fff"}}>ⓘ</span><div><p className="font-bold">Hover cards for more detail</p><p className="mt-1 text-sm leading-6" style={{color:"rgba(255,255,255,.9)"}}>Move over any card to reveal its full explanation. Keyboard focus works too.</p></div></div></aside>:null}<style>{`.uber-de-page main section button { border-radius: 14px; } .uber-de-page [data-testid="platform-mission-visual"] { border-radius: 20px; } .uber-de-page main section > div { border-radius: 16px; } .uber-architecture-canvas .react-flow__controls-button { background: var(--bg-card); color: var(--text); border-color: var(--border); } .uber-architecture-canvas .react-flow__controls-button:hover { background: var(--bg-muted); } .uber-architecture-canvas .react-flow__controls-button svg { fill: currentColor; } .uber-hover-hint { animation: uberHintIn .28s ease-out both; } @keyframes uberHintIn { from { opacity: 0; transform: translateY(-10px) scale(.98); } to { opacity: 1; transform: translateY(0) scale(1); } }`}</style></div>
 }

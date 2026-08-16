@@ -26,22 +26,9 @@ export default function Navbar() {
 
   const applyTheme = (nextTheme: "dark" | "light") => {
     setTheme(nextTheme);
-    document.documentElement.classList.toggle("dark", nextTheme === "dark");
-    document.documentElement.style.colorScheme = nextTheme;
-    try {
-      localStorage.setItem("theme", nextTheme);
-    } catch {
-      // ignore localStorage failures
-    }
   };
 
   useEffect(() => { setMounted(true); }, []);
-
-  useEffect(() => {
-    if (!mounted || !resolvedTheme) return;
-    document.documentElement.classList.toggle("dark", resolvedTheme === "dark");
-    document.documentElement.style.colorScheme = resolvedTheme;
-  }, [mounted, resolvedTheme]);
 
   // ⌘K / Ctrl+K opens search
   useEffect(() => {
