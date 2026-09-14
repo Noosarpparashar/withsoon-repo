@@ -691,7 +691,7 @@ export default function BatchLakehouseTab() {
     const node = document.getElementById(id);
     if (!node) return;
     if (lock.current) clearTimeout(lock.current);
-    history.replaceState(null, "", `/system-design/uber/batch-pipelines#${id}`);
+    history.replaceState(null, "", `/data-engineering/uber/batch-pipelines#${id}`);
     setActive(id);
     scrollTo({
       top: node.getBoundingClientRect().top + scrollY - 140,
@@ -744,14 +744,14 @@ export default function BatchLakehouseTab() {
           style={{ borderColor: C.border }}
         >
           <Link
-            href="/system-design/uber/ingestion-kafka"
+            href="/data-engineering/uber/ingestion-kafka"
             className="rounded-md border px-4 py-3 text-sm font-semibold"
             style={{ borderColor: C.border, background: C.card }}
           >
             ← Ingestion / Kafka
           </Link>
           <Link
-            href="/system-design/uber/data-modeling"
+            href="/data-engineering/uber/data-modeling"
             className="rounded-md border px-4 py-3 text-right text-sm font-semibold"
             style={{ borderColor: C.border, background: C.card }}
           >

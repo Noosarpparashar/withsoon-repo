@@ -1,330 +1,41 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
-import { useEffect, useState, useSyncExternalStore } from "react";
 import { useTheme } from "next-themes";
-import SearchModal from "@/components/ui/SearchModal";
-
-const NAV = [
-  {
-    href: "/tech-news",
-    label: "Tech News",
-    emoji: "📰",
-    desc: "Latest AI & Data news",
-  },
-  {
-    href: "/big-data",
-    label: "Big Data",
-    emoji: "🗄️",
-    desc: "Kafka, Spark, Flink, Lakehouse",
-  },
-  {
-    href: "/ai",
-    label: "AI & LLMs",
-    emoji: "🤖",
-    desc: "RAG, Agents, Providers, Setups",
-  },
-  {
-    href: "/",
-    label: "Library",
-    emoji: "▦",
-    desc: "Big Data & AI projects, designs, templates",
-  },
-  {
-    href: "/interview",
-    label: "Interview",
-    emoji: "🎯",
-    desc: "Data architecture, Kafka, SQL, Behavioral",
-  },
-  {
-    href: "/cheatsheets",
-    label: "Cheatsheets",
-    emoji: "📋",
-    desc: "SQL, Kafka, Spark, Cloud — quick ref",
-  },
-  {
-    href: "/roadmap",
-    label: "Roadmap",
-    emoji: "🗺️",
-    desc: "6-week structured DE interview path",
-  },
-];
+import { useSyncExternalStore } from "react";
 
 export default function Navbar() {
-  const pathname = usePathname();
-  const [open, setOpen] = useState(false);
-  const [searchOpen, setSearchOpen] = useState(false);
-  const mounted = useSyncExternalStore(
-    () => () => {},
-    () => true,
-    () => false,
-  );
+  const mounted = useSyncExternalStore(() => () => {}, () => true, () => false);
   const { resolvedTheme, setTheme } = useTheme();
-  const isDark = mounted ? resolvedTheme === "dark" : true;
-
-  const isNavActive = (href: string) => {
-    if (href === "/") {
-      return (
-        pathname === "/" ||
-        pathname.startsWith("/system-design/netflix-data-engineering") ||
-        pathname.startsWith("/system-design/uber") ||
-        pathname.startsWith("/system-design/youtube")
-      );
-    }
-    return pathname === href || pathname.startsWith(href + "/");
-  };
-
-  const applyTheme = (nextTheme: "dark" | "light") => {
-    setTheme(nextTheme);
-  };
-
-  // ⌘K / Ctrl+K opens search
-  useEffect(() => {
-    const handler = (e: KeyboardEvent) => {
-      if ((e.metaKey || e.ctrlKey) && e.key === "k") {
-        e.preventDefault();
-        setSearchOpen(true);
-      }
-    };
-    window.addEventListener("keydown", handler);
-    return () => window.removeEventListener("keydown", handler);
-  }, []);
 
   return (
-    <>
-      <header
-        className="sticky top-0 z-50 border-b"
-        style={{
-          borderColor: isDark
-            ? "rgba(103, 118, 148, 0.88)"
-            : "color-mix(in srgb, var(--border) 82%, rgba(255,255,255,0.08))",
-          background: isDark
-            ? "linear-gradient(180deg, rgba(35, 41, 53, 0.98) 0%, rgba(29, 35, 46, 0.98) 100%)"
-            : "color-mix(in srgb, var(--bg) 84%, rgba(255,255,255,0.84))",
-          backdropFilter: "blur(18px) saturate(145%)",
-          boxShadow: isDark
-            ? "0 18px 42px rgba(0,0,0,0.46), 0 1px 0 rgba(255,255,255,0.09) inset, 0 -1px 0 rgba(255,255,255,0.03) inset"
-            : "0 10px 30px rgba(15,23,42,0.12)",
-        }}
-      >
-        <div
-          aria-hidden="true"
-          className="pointer-events-none absolute inset-x-0 top-0 h-px"
-          style={{
-            background: isDark
-              ? "linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.18) 18%, rgba(255,255,255,0.08) 50%, rgba(255,255,255,0.18) 82%, transparent 100%)"
-              : "linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.65) 20%, rgba(255,255,255,0.18) 80%, transparent 100%)",
-          }}
-        />
-        <div
-          aria-hidden="true"
-          className="pointer-events-none absolute inset-x-0 bottom-0 h-[3px]"
-          style={{
-            background: isDark
-              ? "linear-gradient(90deg, rgba(59,130,246,0.2) 0%, rgba(59,130,246,0.56) 18%, rgba(124,58,237,0.46) 50%, rgba(16,185,129,0.38) 82%, rgba(16,185,129,0.16) 100%)"
-              : "linear-gradient(90deg, transparent 0%, rgba(59,130,246,0.22) 18%, rgba(124,58,237,0.2) 50%, rgba(16,185,129,0.18) 82%, transparent 100%)",
-          }}
-        />
-        <div className="mx-auto max-w-7xl px-4 flex items-center justify-between h-14 gap-4">
-          {/* Logo */}
-          <Link
-            href="/"
-            onClick={() => setOpen(false)}
-            className="shrink-0 flex items-center gap-1.5 group"
-          >
-            <span className="flex items-center justify-center w-7 h-7 rounded-lg bg-gradient-to-br from-[var(--accent)] to-[var(--blue)] shadow-sm group-hover:shadow-[0_0_12px_var(--accent)] transition-shadow">
-              <svg
-                className="w-4 h-4 text-white"
-                fill="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z" />
-              </svg>
-            </span>
-            <span className="font-black text-xl tracking-tight">
-              <span className="text-transparent bg-clip-text bg-gradient-to-r from-[var(--accent)] to-[var(--blue)]">
-                with
-              </span>
-              <span className="text-[var(--text)]">soon</span>
-            </span>
+    <header className="sticky top-0 z-50 border-b border-[var(--border)] bg-[color-mix(in_srgb,var(--bg)_90%,transparent)] backdrop-blur-xl">
+      <div className="mx-auto flex h-14 max-w-[1500px] items-center justify-between px-4 sm:px-7">
+        <Link href="/" className="group flex items-center gap-2" aria-label="withsoon home">
+          <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-[var(--text)] text-[var(--bg)] transition-transform group-hover:-rotate-3">
+            <svg className="h-4 w-4" fill="currentColor" viewBox="0 0 24 24" aria-hidden><path d="M13 2 3 14h9l-1 8 10-12h-9l1-8Z" /></svg>
+          </span>
+          <span className="text-lg font-black tracking-[-.04em] text-[var(--text)]">withsoon</span>
+        </Link>
+
+        <div className="flex items-center gap-2">
+          <Link href="/#data-engineering-designs" className="rounded-lg px-3 py-2 text-xs font-semibold text-[var(--text-muted)] transition hover:bg-[var(--bg-muted)] hover:text-[var(--text)]">
+            Data Engineering Designs
           </Link>
-
-          {/* Desktop nav */}
-          <nav className="hidden lg:flex items-center gap-0.5 text-sm">
-            {NAV.map(({ href, label, emoji }) => {
-              const active = isNavActive(href);
-              return (
-                <Link
-                  key={href}
-                  href={href}
-                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg transition-colors font-medium ${
-                    active
-                      ? "bg-[var(--accent-soft)] text-[var(--accent-text)]"
-                      : "text-[var(--text-muted)] hover:text-[var(--text)] hover:bg-[var(--bg-muted)]"
-                  }`}
-                >
-                  <span>{emoji}</span>
-                  {label}
-                </Link>
-              );
-            })}
-          </nav>
-
-          {/* Right: search + theme + hamburger */}
-          <div className="flex items-center gap-2">
-            {/* Search button */}
-            <button
-              onClick={() => setSearchOpen(true)}
-              className="flex items-center gap-2 px-3 py-1.5 rounded-lg border border-[var(--border)] text-[var(--text-muted)] hover:text-[var(--text)] hover:border-[var(--accent)]/50 transition-colors text-sm bg-[var(--bg-card)]"
-            >
-              <svg
-                className="w-4 h-4"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth={2}
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
-                />
-              </svg>
-              <span className="hidden sm:inline">Search</span>
-              <kbd className="hidden sm:inline text-[10px] px-1.5 py-0.5 rounded bg-[var(--bg-muted)] border border-[var(--border)] font-sans">
-                ⌘K
-              </kbd>
-            </button>
-
-            {/* Dark mode toggle */}
-            <button
-              onClick={() => {
-                if (!mounted) return;
-                applyTheme(resolvedTheme === "dark" ? "light" : "dark");
-              }}
-              className="p-2 rounded-lg border border-[var(--border)] text-[var(--text-muted)] hover:text-[var(--text)] hover:bg-[var(--bg-muted)] transition-colors"
-              aria-label="Toggle theme"
-            >
-              {!mounted ? (
-                <span className="w-4 h-4 block" />
-              ) : resolvedTheme === "dark" ? (
-                <svg
-                  className="w-4 h-4"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth={2}
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364-6.364l-.707.707M6.343 17.657l-.707.707M18.364 17.657l-.707-.707M6.343 6.343l-.707-.707M12 7a5 5 0 100 10A5 5 0 0012 7z"
-                  />
-                </svg>
-              ) : (
-                <svg
-                  className="w-4 h-4"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth={2}
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"
-                  />
-                </svg>
-              )}
-            </button>
-
-            {/* Mobile hamburger */}
-            <button
-              className="lg:hidden p-2 rounded-lg border border-[var(--border)] text-[var(--text-muted)] hover:bg-[var(--bg-muted)] transition-colors"
-              onClick={() => setOpen((v) => !v)}
-              aria-label="Toggle menu"
-            >
-              <svg
-                className="w-5 h-5"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth={2}
-                viewBox="0 0 24 24"
-              >
-                {open ? (
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    d="M6 18L18 6M6 6l12 12"
-                  />
-                ) : (
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    d="M4 6h16M4 12h16M4 18h16"
-                  />
-                )}
-              </svg>
-            </button>
-          </div>
+          <button
+            type="button"
+            onClick={() => mounted && setTheme(resolvedTheme === "dark" ? "light" : "dark")}
+            className="flex h-9 w-9 items-center justify-center rounded-lg border border-[var(--border)] text-[var(--text-muted)] transition hover:bg-[var(--bg-muted)] hover:text-[var(--text)]"
+            aria-label="Toggle color theme"
+          >
+            {!mounted ? null : resolvedTheme === "dark" ? (
+              <svg className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24" aria-hidden><circle cx="12" cy="12" r="4" /><path d="M12 2v2m0 16v2M4.93 4.93l1.42 1.42m11.3 11.3 1.42 1.42M2 12h2m16 0h2M4.93 19.07l1.42-1.42m11.3-11.3 1.42-1.42" /></svg>
+            ) : (
+              <svg className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24" aria-hidden><path d="M20.5 14.2A8.5 8.5 0 0 1 9.8 3.5 8.5 8.5 0 1 0 20.5 14.2Z" /></svg>
+            )}
+          </button>
         </div>
-
-        {/* Mobile menu */}
-        {open && (
-          <nav className="lg:hidden border-t border-[var(--border)] bg-[var(--bg-card)] px-4 py-3 grid grid-cols-2 gap-2">
-            {/* Mobile search */}
-            <button
-              onClick={() => {
-                setOpen(false);
-                setSearchOpen(true);
-              }}
-              className="col-span-2 flex items-center gap-2 p-3 rounded-xl border border-[var(--border)] text-[var(--text-muted)] bg-[var(--bg-muted)] mb-1"
-            >
-              <svg
-                className="w-4 h-4"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth={2}
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
-                />
-              </svg>
-              <span className="text-sm">Search everything...</span>
-            </button>
-            {NAV.map(({ href, label, emoji, desc }) => {
-              const active = isNavActive(href);
-              return (
-                <Link
-                  key={href}
-                  href={href}
-                  onClick={() => setOpen(false)}
-                  className={`flex items-start gap-2 p-3 rounded-xl transition-colors ${
-                    active
-                      ? "bg-[var(--accent-soft)] text-[var(--accent-text)]"
-                      : "text-[var(--text)] hover:bg-[var(--bg-muted)]"
-                  }`}
-                >
-                  <span className="text-xl mt-0.5">{emoji}</span>
-                  <div>
-                    <div className="font-semibold text-sm">{label}</div>
-                    <div className="text-xs text-[var(--text-muted)]">
-                      {desc}
-                    </div>
-                  </div>
-                </Link>
-              );
-            })}
-          </nav>
-        )}
-      </header>
-
-      {/* Search modal */}
-      {searchOpen && <SearchModal onClose={() => setSearchOpen(false)} />}
-    </>
+      </div>
+    </header>
   );
 }

@@ -2,7 +2,7 @@ import { expect, test } from "@playwright/test";
 
 test.describe("Uber Data Engineering - Interview Q&A", () => {
   test("renders the complete interview chapter", async ({ page }) => {
-    await page.goto("/system-design/uber/quiz");
+    await page.goto("/data-engineering/uber/quiz");
     await expect(
       page.getByRole("heading", {
         name: "Uber Data Engineering Interview Q&A",
@@ -21,7 +21,7 @@ test.describe("Uber Data Engineering - Interview Q&A", () => {
   test("answers the regional architecture boundary clearly", async ({
     page,
   }) => {
-    await page.goto("/system-design/uber/quiz");
+    await page.goto("/data-engineering/uber/quiz");
 
     await page
       .getByRole("button", { name: /regional and global data architecture/i })
@@ -40,7 +40,7 @@ test.describe("Uber Data Engineering - Interview Q&A", () => {
   test("switches categories and reveals Uber-specific answers", async ({
     page,
   }) => {
-    await page.goto("/system-design/uber/quiz");
+    await page.goto("/data-engineering/uber/quiz");
 
     await page.getByRole("button", { name: /Kafka \+ Flink/ }).click();
     await page
@@ -66,7 +66,7 @@ test.describe("Uber Data Engineering - Interview Q&A", () => {
   test("includes the expanded design interview question set", async ({
     page,
   }) => {
-    await page.goto("/system-design/uber/quiz");
+    await page.goto("/data-engineering/uber/quiz");
     await expect(
       page.getByRole("button", { name: /end-to-end pipeline/i }),
     ).toBeVisible();
@@ -86,7 +86,7 @@ test.describe("Uber Data Engineering - Interview Q&A", () => {
   test("provides a reviewed design, trade-off, and validation for all 39 questions", async ({
     page,
   }) => {
-    await page.goto("/system-design/uber/quiz");
+    await page.goto("/data-engineering/uber/quiz");
     let reviewed = 0;
     for (const category of [
       /Architecture/,
@@ -114,7 +114,7 @@ test.describe("Uber Data Engineering - Interview Q&A", () => {
   test("shows the whiteboard sequence as five connected phases", async ({
     page,
   }) => {
-    await page.goto("/system-design/uber/quiz");
+    await page.goto("/data-engineering/uber/quiz");
     for (const phase of ["Frame", "Size", "Draw", "Deep dive", "Close"]) {
       await expect(page.getByRole("heading", { name: phase })).toBeVisible();
     }
@@ -123,7 +123,7 @@ test.describe("Uber Data Engineering - Interview Q&A", () => {
   });
 
   test("anchors navigate and mobile does not overflow", async ({ page }) => {
-    await page.goto("/system-design/uber/quiz");
+    await page.goto("/data-engineering/uber/quiz");
     await page.getByTestId("stage-nav-whiteboard-order").click();
     await expect(page).toHaveURL(/#whiteboard-order$/);
 
@@ -141,19 +141,19 @@ test.describe("Uber Data Engineering - Interview Q&A", () => {
   test("is the final chapter and replaces the removed cheat sheet", async ({
     page,
   }) => {
-    await page.goto("/system-design/uber/quiz");
+    await page.goto("/data-engineering/uber/quiz");
     await expect(page.getByRole("link", { name: /Cheat Sheet/i })).toHaveCount(
       0,
     );
     await expect(page.getByTestId("chapter-rail")).toContainText("9 chapters");
 
-    await page.goto("/system-design/uber/cheat-sheet");
-    await expect(page).toHaveURL(/\/system-design\/uber\/quiz$/);
+    await page.goto("/data-engineering/uber/cheat-sheet");
+    await expect(page).toHaveURL(/\/data-engineering\/uber\/quiz$/);
   });
 
   test("distributes all nine desktop chapter tabs evenly", async ({ page }) => {
     await page.setViewportSize({ width: 1600, height: 900 });
-    await page.goto("/system-design/uber/quiz");
+    await page.goto("/data-engineering/uber/quiz");
     const tabs = page.getByTestId("chapter-rail").getByRole("link");
     await expect(tabs).toHaveCount(9);
     const widths = await tabs.evaluateAll((links) =>

@@ -15,7 +15,7 @@ import {
 } from "@xyflow/react";
 import { AnimatePresence, motion, useReducedMotion } from "motion/react";
 import Image from "next/image";
-import { copyTextToClipboard } from "../netflix-tabs/clipboard";
+import { copyTextToClipboard } from "../data-design/clipboard";
 import CompanyChapterRail from "../data-design/CompanyChapterRail";
 import StartHereDesktopExperience from "./StartHereDesktopExperience";
 import {
@@ -115,7 +115,7 @@ const PRODUCT_TAB_SECTIONS: Record<DataEngineeringTabSlug, OutlineItem[]> = {
     { id: "req-scale", title: "Safe baseline", note: "Use one interview-safe model." },
     { id: "req-domains", title: "Derived numbers", note: "Translate assumptions into scale." },
     { id: "req-nfr", title: "Board formulas", note: "Write only the formulas that matter." },
-    { id: "req-say", title: "Punchline", note: "Close with the system-design implication." },
+    { id: "req-say", title: "Punchline", note: "Close with the architecture implication." },
   ],
   "event-sources": [
     { id: "sources-map", title: "Source map", note: "Producers and key event families." },
@@ -2158,7 +2158,7 @@ function TopTabStrip({
       company="netflix"
       chapters={VISIBLE_DATA_ENGINEERING_TABS}
       activeId={activeTab}
-      hrefFor={(id) => `/system-design/netflix-data-engineering/${id}`}
+      hrefFor={(id) => `/data-engineering/netflix/${id}`}
       onNavigate={(id) => onNavigate(id as DataEngineeringTabSlug)}
     />
   );
@@ -8804,7 +8804,7 @@ export default function DataEngineeringPage({ initialTab }: { initialTab?: strin
     setVisitedTabs((prev) => new Set([...prev, activeTab, tab]));
     setActiveTab(tab);
     setActiveSectionId(nextSection);
-    window.history.pushState(null, "", `/system-design/netflix-data-engineering/${tab}${nextSection ? `#${nextSection}` : ""}`);
+    window.history.pushState(null, "", `/data-engineering/netflix/${tab}${nextSection ? `#${nextSection}` : ""}`);
     window.setTimeout(() => window.scrollTo({ top: 0, behavior: "smooth" }), 0);
   }, [activeTab]);
 
@@ -8815,7 +8815,7 @@ export default function DataEngineeringPage({ initialTab }: { initialTab?: strin
   }, [activeMeta.title]);
 
   const handleShare = () => {
-    copyTextToClipboard(`${window.location.origin}/system-design/netflix-data-engineering/${activeTab}`).catch(() => {});
+    copyTextToClipboard(`${window.location.origin}/data-engineering/netflix/${activeTab}`).catch(() => {});
   };
 
   const navigateSection = useCallback((sectionId: string) => {
@@ -8823,7 +8823,7 @@ export default function DataEngineeringPage({ initialTab }: { initialTab?: strin
     if (!node) return;
     sectionNavLockRef.current = Date.now() + 500;
     setActiveSectionId(sectionId);
-    window.history.replaceState(null, "", `/system-design/netflix-data-engineering/${activeTab}#${sectionId}`);
+    window.history.replaceState(null, "", `/data-engineering/netflix/${activeTab}#${sectionId}`);
     window.requestAnimationFrame(() => {
       const latestNode = document.getElementById(sectionId);
       if (!latestNode) return;

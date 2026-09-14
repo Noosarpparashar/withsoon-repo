@@ -2,7 +2,7 @@ import { expect, test } from "@playwright/test";
 
 test.describe("Uber Data Engineering - Batch and Lakehouse", () => {
   test("renders the complete batch chapter and SVG flow", async ({ page }) => {
-    await page.goto("/system-design/uber/batch-pipelines");
+    await page.goto("/data-engineering/uber/batch-pipelines");
     await expect(
       page.getByRole("heading", { name: "Uber lakehouse flow" }),
     ).toBeVisible();
@@ -24,7 +24,7 @@ test.describe("Uber Data Engineering - Batch and Lakehouse", () => {
   test("shows an Uber-specific description for every flow block", async ({
     page,
   }) => {
-    await page.goto("/system-design/uber/batch-pipelines");
+    await page.goto("/data-engineering/uber/batch-pipelines");
     await page.getByRole("button", { name: /Gold: Reconciled facts/i }).hover();
     await expect(page.getByTestId("batch-node-inspector")).toContainText(
       "rider request, dispatch match, driver lifecycle",
@@ -40,7 +40,7 @@ test.describe("Uber Data Engineering - Batch and Lakehouse", () => {
   test("shows all contracts below compact separated layer tabs", async ({
     page,
   }) => {
-    await page.goto("/system-design/uber/batch-pipelines");
+    await page.goto("/data-engineering/uber/batch-pipelines");
     const bronze = page.getByTestId("layer-heading-bronze");
     const silver = page.getByTestId("layer-heading-silver");
     const gold = page.getByTestId("layer-heading-gold");
@@ -67,7 +67,7 @@ test.describe("Uber Data Engineering - Batch and Lakehouse", () => {
   test("anchors navigate and mobile layout does not overflow", async ({
     page,
   }) => {
-    await page.goto("/system-design/uber/batch-pipelines");
+    await page.goto("/data-engineering/uber/batch-pipelines");
     await page.getByTestId("stage-nav-audited-backfill").click();
     await expect(page).toHaveURL(/#audited-backfill$/);
     await expect(

@@ -1265,7 +1265,7 @@ export default function DataModelingTab() {
     const n = document.getElementById(id);
     if (!n) return;
     if (lock.current) clearTimeout(lock.current);
-    history.replaceState(null, "", `/system-design/uber/data-modeling#${id}`);
+    history.replaceState(null, "", `/data-engineering/uber/data-modeling#${id}`);
     setActive(id);
     scrollTo({
       top: n.getBoundingClientRect().top + scrollY - 140,
@@ -1334,14 +1334,14 @@ export default function DataModelingTab() {
             style={{ borderColor: C.border }}
           >
             <Link
-              href="/system-design/uber/batch-pipelines"
+              href="/data-engineering/uber/batch-pipelines"
               className="rounded-md border px-4 py-3 text-sm font-semibold"
               style={{ borderColor: C.border, background: C.card }}
             >
               ← Batch + Lakehouse
             </Link>
             <Link
-              href="/system-design/uber/governance-quality"
+              href="/data-engineering/uber/governance-quality"
               className="rounded-md border px-4 py-3 text-right text-sm font-semibold"
               style={{ borderColor: C.border, background: C.card }}
             >

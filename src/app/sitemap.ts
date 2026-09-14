@@ -1,84 +1,20 @@
 import type { MetadataRoute } from "next";
-import { getAllContent } from "@/lib/content";
+import { DATA_ENGINEERING_TAB_SLUGS } from "@/components/ui/netflix-data-engineering/data";
+import { UBER_DE_TAB_SLUGS } from "@/components/ui/uber-data-engineering/data";
+import { YOUTUBE_READY_TABS } from "@/components/ui/youtube-data-engineering/data";
 
 const BASE = "https://withsoon.com";
 
-const NETFLIX_TABS = [
-  "start-here", "requirements", "architecture", "playback",
-  "cdn", "encoding", "security",
-  "models", "tradeoffs", "capacity", "failures",
-  "quiz", "mock-interview", "cheat-sheet",
-];
-
-const NETFLIX_DATA_ENGINEERING_TABS = [
-  "start-here", "requirements", "architecture", "ingestion",
-  "streaming", "batch", "lakehouse", "modeling", "reliability",
-  "ml-serving", "stack", "governance", "performance-cost", "capacity",
-  "interview-qa", "quiz", "mock-interview", "cheat-sheet",
-];
-
-const YOUTUBE_DATA_ENGINEERING_TABS = [
-  "start-here",
-  "requirements",
-  "event-sources",
-  "architecture",
-  "ingestion-kafka",
-  "real-time-streaming",
-  "data-modeling",
-  "batch-lakehouse",
-  "governance-quality",
-];
-
-const STATIC_ROUTES = [
-  { url: BASE,                      priority: 1.0, changeFrequency: "weekly" as const },
-  { url: `${BASE}/big-data`,        priority: 0.9, changeFrequency: "weekly" as const },
-  { url: `${BASE}/ai`,              priority: 0.9, changeFrequency: "weekly" as const },
-  { url: `${BASE}/interview`,       priority: 0.9, changeFrequency: "weekly" as const },
-  { url: `${BASE}/system-design`,   priority: 0.9, changeFrequency: "weekly" as const },
-  { url: `${BASE}/cheatsheets`,     priority: 0.8, changeFrequency: "weekly" as const },
-  { url: `${BASE}/roadmap`,         priority: 0.8, changeFrequency: "monthly" as const },
-  { url: `${BASE}/tech-news`,       priority: 0.7, changeFrequency: "daily" as const },
-  { url: `${BASE}/about`,           priority: 0.5, changeFrequency: "monthly" as const },
-  { url: `${BASE}/changelog`,       priority: 0.4, changeFrequency: "weekly" as const },
-];
-
 export default function sitemap(): MetadataRoute.Sitemap {
-  const allContent = getAllContent();
-  const now = new Date().toISOString();
-
-  const contentUrls: MetadataRoute.Sitemap = allContent.map((item) => ({
-    url: `${BASE}/${item.section}/${item.slug}`,
-    lastModified: item.date ? new Date(item.date).toISOString() : now,
-    changeFrequency: "monthly" as const,
-    priority: item.featured ? 0.8 : 0.6,
-  }));
-
-  const netflixUrls: MetadataRoute.Sitemap = NETFLIX_TABS.map((tab) => ({
-    url: `${BASE}/system-design/netflix/${tab}`,
-    lastModified: now,
-    changeFrequency: "weekly" as const,
-    priority: 0.85,
-  }));
-
-  const netflixDataUrls: MetadataRoute.Sitemap = NETFLIX_DATA_ENGINEERING_TABS.map((tab) => ({
-    url: `${BASE}/system-design/netflix-data-engineering/${tab}`,
-    lastModified: now,
-    changeFrequency: "weekly" as const,
-    priority: 0.85,
-  }));
-
-  const youtubeDataUrls: MetadataRoute.Sitemap = YOUTUBE_DATA_ENGINEERING_TABS.map((tab) => ({
-    url: `${BASE}/system-design/youtube/${tab}`,
-    lastModified: now,
-    changeFrequency: "weekly" as const,
-    priority: 0.85,
-  }));
+  const lastModified = new Date();
+  const tracks = [
+    ...DATA_ENGINEERING_TAB_SLUGS.map((tab) => `/data-engineering/netflix/${tab}`),
+    ...UBER_DE_TAB_SLUGS.map((tab) => `/data-engineering/uber/${tab}`),
+    ...YOUTUBE_READY_TABS.map((tab) => `/data-engineering/youtube/${tab}`),
+  ];
 
   return [
-    ...STATIC_ROUTES,
-    ...netflixUrls,
-    ...netflixDataUrls,
-    ...youtubeDataUrls,
-    ...contentUrls,
+    { url: BASE, lastModified, changeFrequency: "weekly", priority: 1 },
+    ...tracks.map((path) => ({ url: `${BASE}${path}`, lastModified, changeFrequency: "weekly" as const, priority: 0.85 })),
   ];
 }

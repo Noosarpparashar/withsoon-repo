@@ -2,7 +2,7 @@ import { expect, test } from "@playwright/test";
 
 test.describe("Uber Data Engineering - Data Modeling", () => {
   test("renders the three modeling sections", async ({ page }) => {
-    await page.goto("/system-design/uber/data-modeling");
+    await page.goto("/data-engineering/uber/data-modeling");
     await expect(page.getByTestId("uber-model-erd")).toBeVisible();
     await expect(
       page.getByRole("heading", { name: "Fact grains" }),
@@ -19,13 +19,13 @@ test.describe("Uber Data Engineering - Data Modeling", () => {
       page.getByRole("link", {
         name: /Next chapter Failures \+ Data Quality/i,
       }),
-    ).toHaveAttribute("href", "/system-design/uber/governance-quality");
+    ).toHaveAttribute("href", "/data-engineering/uber/governance-quality");
   });
 
   test("shows complete fact and dimension details on hover", async ({
     page,
   }) => {
-    await page.goto("/system-design/uber/data-modeling");
+    await page.goto("/data-engineering/uber/data-modeling");
     await page
       .getByRole("button", { name: "Inspect fact_location_ping" })
       .hover();
@@ -58,7 +58,7 @@ test.describe("Uber Data Engineering - Data Modeling", () => {
   test("switches ERD domains and inspects keys and columns", async ({
     page,
   }) => {
-    await page.goto("/system-design/uber/data-modeling");
+    await page.goto("/data-engineering/uber/data-modeling");
     const erd = page.getByTestId("uber-model-erd");
     await expect(erd).toHaveAttribute("data-view", "trip");
     const tripAccent = await erd.getAttribute("data-accent");
@@ -84,7 +84,7 @@ test.describe("Uber Data Engineering - Data Modeling", () => {
   });
 
   test("anchors work and mobile page does not overflow", async ({ page }) => {
-    await page.goto("/system-design/uber/data-modeling");
+    await page.goto("/data-engineering/uber/data-modeling");
     await page.getByTestId("stage-nav-model-dimensions").click();
     await expect(page).toHaveURL(/#model-dimensions$/);
     await page.setViewportSize({ width: 390, height: 844 });
@@ -101,7 +101,7 @@ test.describe("Uber Data Engineering - Data Modeling", () => {
   test("merges the former Failures chapter into Data Quality", async ({
     page,
   }) => {
-    await page.goto("/system-design/uber/data-modeling");
+    await page.goto("/data-engineering/uber/data-modeling");
     await expect(
       page.getByRole("link", { name: /08 Failures \+ Data Quality/i }),
     ).toBeVisible();
@@ -109,8 +109,8 @@ test.describe("Uber Data Engineering - Data Modeling", () => {
       page.getByRole("link", { name: /^09 Failures$/i }),
     ).toHaveCount(0);
 
-    await page.goto("/system-design/uber/failures");
-    await expect(page).toHaveURL(/\/system-design\/uber\/governance-quality$/);
+    await page.goto("/data-engineering/uber/failures");
+    await expect(page).toHaveURL(/\/data-engineering\/uber\/governance-quality$/);
     await expect(
       page.getByRole("heading", { name: /Failures \+ Data Quality/i }),
     ).toBeVisible();

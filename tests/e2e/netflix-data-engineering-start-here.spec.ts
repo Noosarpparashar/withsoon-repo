@@ -4,17 +4,17 @@ test.describe("Netflix Data Engineering — Start Here desktop rebuild", () => {
   test.use({ viewport: { width: 1600, height: 1200 } });
 
   test("loads the section-1.2 desktop experience", async ({ page }) => {
-    const res = await page.goto("/system-design/netflix-data-engineering/start-here#platform-mission");
+    const res = await page.goto("/data-engineering/netflix/start-here#platform-mission");
     expect(res?.status()).toBeLessThan(400);
 
-    await expect(page).toHaveURL(/\/system-design\/netflix-data-engineering\/start-here#platform-mission/);
+    await expect(page).toHaveURL(/\/data-engineering\/netflix\/start-here#platform-mission/);
     await expect(page.getByTestId("platform-mission-visual")).toBeVisible();
     await expect(page.getByTestId("stage-nav-platform-mission")).toBeVisible();
     await expect(page.getByRole("heading", { name: /Design the shared data platform/i })).toBeVisible();
   });
 
   test("stage navigation jumps to the freshness section", async ({ page }) => {
-    await page.goto("/system-design/netflix-data-engineering/start-here");
+    await page.goto("/data-engineering/netflix/start-here");
     await page.getByTestId("stage-nav-freshness-map").click();
 
     await expect(page).toHaveURL(/#freshness-map/);
@@ -22,14 +22,14 @@ test.describe("Netflix Data Engineering — Start Here desktop rebuild", () => {
   });
 
   test("scope section stays reachable from anchor navigation", async ({ page }) => {
-    await page.goto("/system-design/netflix-data-engineering/start-here#scope-boundary");
+    await page.goto("/data-engineering/netflix/start-here#scope-boundary");
 
     await expect(page.getByTestId("stage-nav-scope-boundary")).toBeVisible();
     await expect(page.getByRole("heading", { name: /Go deep on one clean slice/i })).toBeVisible();
   });
 
   test("producer chips do not overlap", async ({ page }) => {
-    await page.goto("/system-design/netflix-data-engineering/start-here#platform-mission");
+    await page.goto("/data-engineering/netflix/start-here#platform-mission");
 
     const overlapCheck = async (testId: string) =>
       page.getByTestId(testId).locator(".group").evaluateAll((nodes) => {
@@ -50,7 +50,7 @@ test.describe("Netflix Data Engineering — Start Here desktop rebuild", () => {
   });
 
   test("hero layout stays inside the mission visual bounds", async ({ page }) => {
-    await page.goto("/system-design/netflix-data-engineering/start-here#platform-mission");
+    await page.goto("/data-engineering/netflix/start-here#platform-mission");
 
     const staysInside = await page.getByTestId("platform-mission-visual").evaluate((node) => {
       const container = node.getBoundingClientRect();

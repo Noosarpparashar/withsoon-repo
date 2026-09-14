@@ -2,7 +2,7 @@ import { expect, test } from "@playwright/test";
 
 test.describe("Uber Data Engineering - Failures and Data Quality", () => {
   test("renders the complete combined chapter", async ({ page }) => {
-    await page.goto("/system-design/uber/governance-quality");
+    await page.goto("/data-engineering/uber/governance-quality");
     await expect(
       page.getByRole("heading", { name: "Failures + Data Quality" }),
     ).toBeVisible();
@@ -17,7 +17,7 @@ test.describe("Uber Data Engineering - Failures and Data Quality", () => {
   });
 
   test("explains Uber-specific incidents on hover", async ({ page }) => {
-    await page.goto("/system-design/uber/governance-quality");
+    await page.goto("/data-engineering/uber/governance-quality");
     await page.getByRole("button", { name: /Kafka region outage/i }).hover();
     await expect(page.getByText(/paired regional cluster/i)).toBeVisible();
     await expect(page.getByText(/retained offsets/i)).toBeVisible();
@@ -28,7 +28,7 @@ test.describe("Uber Data Engineering - Failures and Data Quality", () => {
   });
 
   test("switches quality gates and recovery runbooks", async ({ page }) => {
-    await page.goto("/system-design/uber/governance-quality");
+    await page.goto("/data-engineering/uber/governance-quality");
     await page.getByRole("button", { name: /Before publish Gold/i }).hover();
     await expect(page.getByText(/last-good snapshot/i)).toBeVisible();
     await expect(page.getByText(/candidate snapshot/i)).toBeVisible();
@@ -41,7 +41,7 @@ test.describe("Uber Data Engineering - Failures and Data Quality", () => {
   });
 
   test("anchors navigate and mobile does not overflow", async ({ page }) => {
-    await page.goto("/system-design/uber/governance-quality");
+    await page.goto("/data-engineering/uber/governance-quality");
     await page.getByTestId("stage-nav-replay-recovery").click();
     await expect(page).toHaveURL(/#replay-recovery$/);
 

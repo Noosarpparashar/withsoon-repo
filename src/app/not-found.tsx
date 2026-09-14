@@ -2,26 +2,11 @@ import Link from "next/link";
 
 export default function NotFound() {
   return (
-    <div className="mx-auto max-w-2xl px-4 py-24 text-center">
-      <p className="text-6xl mb-6" style={{ opacity: 0.3 }}>404</p>
-      <h1 className="text-2xl font-bold mb-3 text-[var(--text)]">Page not found</h1>
-      <p className="text-[var(--text-muted)] mb-10">
-        The page you&apos;re looking for doesn&apos;t exist or has moved.
-      </p>
-      <div className="flex flex-wrap gap-3 justify-center">
-        <Link href="/" className="px-5 py-2.5 rounded-xl bg-[var(--accent)] hover:opacity-90 text-white font-semibold transition-opacity text-sm">
-          ← Home
-        </Link>
-        <Link href="/system-design/netflix/architecture" className="px-5 py-2.5 rounded-xl border border-[var(--border)] bg-[var(--bg-card)] text-[var(--text)] hover:border-[var(--accent)] font-semibold transition-colors text-sm">
-          🏗️ Netflix System Design
-        </Link>
-        <Link href="/big-data" className="px-5 py-2.5 rounded-xl border border-[var(--border)] bg-[var(--bg-card)] text-[var(--text)] hover:border-[var(--accent)] font-semibold transition-colors text-sm">
-          🗄️ Big Data
-        </Link>
-        <Link href="/interview" className="px-5 py-2.5 rounded-xl border border-[var(--border)] bg-[var(--bg-card)] text-[var(--text)] hover:border-[var(--accent)] font-semibold transition-colors text-sm">
-          🎯 Interview Prep
-        </Link>
-      </div>
-    </div>
+    <main className="mx-auto flex min-h-[70vh] max-w-xl flex-col items-center justify-center px-4 text-center">
+      <p className="text-xs font-bold uppercase tracking-[.2em] text-[var(--text-faint)]">404</p>
+      <h1 className="mt-4 text-3xl font-bold text-[var(--text)]">Page not found</h1>
+      <p className="mt-3 text-sm text-[var(--text-muted)]">Return to the data engineering design library and choose a company track.</p>
+      <Link href="/" className="mt-7 rounded-xl bg-[var(--text)] px-5 py-3 text-sm font-bold text-[var(--bg)]">Open the library</Link>
+    </main>
   );
 }

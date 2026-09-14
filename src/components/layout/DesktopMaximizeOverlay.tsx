@@ -1,11 +1,13 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { usePathname } from "next/navigation";
 
 const OVERLAY_BREAKPOINT = 1280;
 const WINDOW_GAP_THRESHOLD = 140;
 
 export default function DesktopMaximizeOverlay() {
+  const pathname = usePathname();
   const [visible, setVisible] = useState(false);
 
   useEffect(() => {
@@ -47,7 +49,7 @@ export default function DesktopMaximizeOverlay() {
     };
   }, []);
 
-  if (!visible) return null;
+  if (!pathname.startsWith("/data-engineering/") || !visible) return null;
 
   return (
     <div

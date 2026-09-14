@@ -127,7 +127,7 @@ function ChapterRail({
       company="youtube"
       chapters={YOUTUBE_TABS}
       activeId={activeTab}
-      hrefFor={(id) => `/system-design/youtube/${id}`}
+      hrefFor={(id) => `/data-engineering/youtube/${id}`}
     />
   );
 }

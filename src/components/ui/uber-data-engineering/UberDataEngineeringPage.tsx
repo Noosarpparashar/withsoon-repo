@@ -35,7 +35,7 @@ const C = {
   red: "#62595d",
   violet: "#6d6774",
 };
-const href = (tab: UberDeTabSlug) => `/system-design/uber/${tab}`;
+const href = (tab: UberDeTabSlug) => `/data-engineering/uber/${tab}`;
 
 function Tabs({ active }: { active: UberDeTabSlug }) {
   return (
@@ -43,7 +43,7 @@ function Tabs({ active }: { active: UberDeTabSlug }) {
       company="uber"
       chapters={UBER_DE_TABS}
       activeId={active}
-      hrefFor={(id) => `/system-design/uber/${id}`}
+      hrefFor={(id) => `/data-engineering/uber/${id}`}
     />
   );
 }

@@ -4,7 +4,7 @@ test.describe("Netflix Data Engineering — section 6 modeling", () => {
   test.use({ viewport: { width: 1600, height: 1200 } });
 
   test("ER diagram updates the inspector when tables and columns are hovered", async ({ page }) => {
-    await page.goto("/system-design/netflix-data-engineering/data-modeling#model-erd");
+    await page.goto("/data-engineering/netflix/data-modeling#model-erd");
 
     await expect(page.getByRole("heading", { name: /See the trusted tables, columns, and joins in one schema canvas/i })).toBeVisible();
 

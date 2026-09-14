@@ -3,7 +3,7 @@ import { expect, test } from "@playwright/test";
 test.describe("Uber Data Engineering - Architecture", () => {
   test("renders the zoomable architecture and updates the inspector on hover", async ({ page }) => {
     await page.setViewportSize({ width: 1600, height: 900 });
-    await page.goto("/system-design/uber/architecture");
+    await page.goto("/data-engineering/uber/architecture");
 
     await expect(page.getByRole("heading", { name: "One event backbone, two processing paths" })).toBeVisible();
     await expect(page.getByTestId("uber-architecture-svg")).toBeVisible();
@@ -22,7 +22,7 @@ test.describe("Uber Data Engineering - Architecture", () => {
 
   test("bottom nodes keep the inspector visible and decisions use the inspector", async ({ page }) => {
     await page.setViewportSize({ width: 1600, height: 900 });
-    await page.goto("/system-design/uber/architecture");
+    await page.goto("/data-engineering/uber/architecture");
     const panel = page.getByTestId("architecture-detail-panel");
     await panel.evaluate((element) => { element.scrollTop = element.scrollHeight; });
     await page.getByTestId("architecture-node-bi-ops-ml-finance").click();
@@ -51,7 +51,7 @@ test.describe("Uber Data Engineering - Architecture", () => {
 
   test("architecture anchors navigate and highlight", async ({ page }) => {
     await page.setViewportSize({ width: 1600, height: 900 });
-    await page.goto("/system-design/uber/architecture");
+    await page.goto("/data-engineering/uber/architecture");
     await page.getByTestId("stage-nav-architecture-principle").click();
     await expect(page).toHaveURL(/#architecture-principle$/);
     await expect(page.getByTestId("stage-nav-architecture-principle")).toHaveAttribute("aria-current", "location");
@@ -59,7 +59,7 @@ test.describe("Uber Data Engineering - Architecture", () => {
 
   test("mobile architecture has no horizontal overflow", async ({ page }) => {
     await page.setViewportSize({ width: 390, height: 844 });
-    await page.goto("/system-design/uber/architecture");
+    await page.goto("/data-engineering/uber/architecture");
     expect(await page.evaluate(() => document.documentElement.scrollWidth > document.documentElement.clientWidth)).toBe(false);
   });
 });

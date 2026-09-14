@@ -987,7 +987,7 @@ export default function InterviewQATab() {
     const node = document.getElementById(id);
     if (!node) return;
     if (lock.current) clearTimeout(lock.current);
-    history.replaceState(null, "", `/system-design/uber/quiz#${id}`);
+    history.replaceState(null, "", `/data-engineering/uber/quiz#${id}`);
     setActive(id);
     scrollTo({
       top: node.getBoundingClientRect().top + scrollY - 140,
@@ -1036,7 +1036,7 @@ export default function InterviewQATab() {
           style={{ borderColor: C.border }}
         >
           <Link
-            href="/system-design/uber/governance-quality"
+            href="/data-engineering/uber/governance-quality"
             className="rounded-md border px-4 py-3 text-sm font-semibold"
             style={{ borderColor: C.border, background: C.card }}
           >

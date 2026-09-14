@@ -674,7 +674,7 @@ export default function FailuresDataQualityTab() {
     history.replaceState(
       null,
       "",
-      `/system-design/uber/governance-quality#${id}`,
+      `/data-engineering/uber/governance-quality#${id}`,
     );
     setActive(id);
     scrollTo({
@@ -738,14 +738,14 @@ export default function FailuresDataQualityTab() {
           style={{ borderColor: C.border }}
         >
           <Link
-            href="/system-design/uber/data-modeling"
+            href="/data-engineering/uber/data-modeling"
             className="rounded-md border px-4 py-3 text-sm font-semibold"
             style={{ borderColor: C.border, background: C.card }}
           >
             ← Data Modeling
           </Link>
           <Link
-            href="/system-design/uber/quiz"
+            href="/data-engineering/uber/quiz"
             className="rounded-md border px-4 py-3 text-right text-sm font-semibold"
             style={{ borderColor: C.border, background: C.card }}
           >
