@@ -34,7 +34,8 @@ yarn-error.log*
 /dev-server.*.log
 
 # local development artifacts
-/.codex/
+/.codex/*
+!/.codex/config.toml
 /.codex-temp/
 
 # env files (can opt-in for committing if needed)

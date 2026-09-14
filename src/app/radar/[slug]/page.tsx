@@ -1,21 +1,10 @@
-import { notFound } from "next/navigation";
-import { getContentBySection, getContent } from "@/lib/content";
-import ArticlePage from "@/components/ui/ArticlePage";
+import { permanentRedirect } from "next/navigation";
 
-export async function generateStaticParams() {
-  return getContentBySection("radar").map((p) => ({ slug: p.slug }));
-}
-
-export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }) {
+export default async function RadarArticleRedirect({
+  params,
+}: {
+  params: Promise<{ slug: string }>;
+}) {
   const { slug } = await params;
-  const post = getContent("radar", slug);
-  if (!post) return {};
-  return { title: `${post.title} — withsoon`, description: post.summary };
-}
-
-export default async function Page({ params }: { params: Promise<{ slug: string }> }) {
-  const { slug } = await params;
-  const post = getContent("radar", slug);
-  if (!post) notFound();
-  return <ArticlePage post={post} />;
+  permanentRedirect(`/tech-news/${slug}`);
 }
