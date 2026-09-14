@@ -92,7 +92,7 @@ export const DATA_ENGINEERING_TABS: DataEngineeringTab[] = [
     label: "Start Here",
     group: "FOUNDATION",
     mins: 5,
-    accent: "#e50914",
+    accent: "#5f565a",
     summary: "Open the round like a dedicated Netflix data-platform interview.",
     description: "Clarify scope, show the end-to-end journey, and position the data-engineering boundary before any deep dive.",
   },
@@ -101,7 +101,7 @@ export const DATA_ENGINEERING_TABS: DataEngineeringTab[] = [
     label: "Requirements",
     group: "FOUNDATION",
     mins: 8,
-    accent: "#f59e0b",
+    accent: "#827a70",
     summary: "Turn business questions into freshness, correctness, and SLA contracts.",
     description: "Group requirements by domain, show scale anchors, and separate real-time, batch, and governance expectations.",
   },
@@ -110,7 +110,7 @@ export const DATA_ENGINEERING_TABS: DataEngineeringTab[] = [
     label: "Architecture",
     group: "FOUNDATION",
     mins: 10,
-    accent: "#38bdf8",
+    accent: "#6f879a",
     summary: "Show the full Netflix data journey as one layered system map.",
     description: "Walk from event emitters to validation, Kafka, streaming, Bronze/Silver/Gold, warehouse, features, replay, and governance.",
   },
@@ -119,7 +119,7 @@ export const DATA_ENGINEERING_TABS: DataEngineeringTab[] = [
     label: "Event Contracts",
     group: "PIPELINES",
     mins: 9,
-    accent: "#f59e0b",
+    accent: "#827a70",
     summary: "Make canonical events, Kafka ordering, and data trust easy to explain.",
     description: "Cover canonical event envelopes, topic keys and partition math, late data handling, SCD2 joins, quality gates, and cost-aware controls.",
   },
@@ -128,7 +128,7 @@ export const DATA_ENGINEERING_TABS: DataEngineeringTab[] = [
     label: "Real-Time Streaming",
     group: "PIPELINES",
     mins: 10,
-    accent: "#38bdf8",
+    accent: "#6f879a",
     summary: "Explain how raw events become trusted real-time metrics and features.",
     description: "Cover Flink jobs, watch-time logic, sessionization, watermarks, late data handling, and exactly-once style guarantees.",
   },
@@ -137,7 +137,7 @@ export const DATA_ENGINEERING_TABS: DataEngineeringTab[] = [
     label: "Data Modeling",
     group: "MODELING",
     mins: 9,
-    accent: "#8b5cf6",
+    accent: "#716b78",
     summary: "Connect ERD, star schema, lineage, and table semantics in one place.",
     description: "Explain grain, partitions, facts, dimensions, marts, lineage, and why each table exists for analytics or ML use cases.",
   },
@@ -146,7 +146,7 @@ export const DATA_ENGINEERING_TABS: DataEngineeringTab[] = [
     label: "Batch + Lakehouse",
     group: "PIPELINES",
     mins: 10,
-    accent: "#fbbf24",
+    accent: "#8b8377",
     summary: "Show how trusted batch truth and the lakehouse operating model work together.",
     description: "Combine DAG visuals, Bronze/Silver/Gold responsibilities, Iceberg layout, DQ gates, replayability, and official publish flows in one section.",
   },
@@ -155,7 +155,7 @@ export const DATA_ENGINEERING_TABS: DataEngineeringTab[] = [
     label: "Governance / Quality",
     group: "PRODUCTION",
     mins: 8,
-    accent: "#22c55e",
+    accent: "#6e8178",
     summary: "Treat schema, privacy, freshness, and trust as first-class product surfaces.",
     description: "Cover data contracts, DQ dashboards, PII policy, deletions, lineage, audits, and severity-driven response paths.",
   },
@@ -164,7 +164,7 @@ export const DATA_ENGINEERING_TABS: DataEngineeringTab[] = [
     label: "Capacity / Cost",
     group: "PRODUCTION",
     mins: 7,
-    accent: "#fbbf24",
+    accent: "#8b8377",
     summary: "Make scale math, tool choices, and cost controls explicit and defensible.",
     description: "Derive event rates, partitions, retention, storage, and compute costs from one consistent workload model.",
   },
@@ -173,7 +173,7 @@ export const DATA_ENGINEERING_TABS: DataEngineeringTab[] = [
     label: "Failures",
     group: "PRODUCTION",
     mins: 9,
-    accent: "#ef4444",
+    accent: "#675d62",
     summary: "Turn incidents into a visible failure playbook with recovery steps.",
     description: "Simulate data outages, skew, schema breaks, and stale Gold tables with detection, mitigation, recovery, and prevention guidance.",
   },
@@ -182,7 +182,7 @@ export const DATA_ENGINEERING_TABS: DataEngineeringTab[] = [
     label: "Interview Q&A",
     group: "PRACTICE",
     mins: 9,
-    accent: "#38bdf8",
+    accent: "#6f879a",
     summary: "Merge follow-up answers and Netflix tech name-drops into one light interview section.",
     description: "Use compact Q&A, a technology map, and simple draw-if-asked visuals so you can explain the platform crisply in an interview.",
   },
@@ -191,7 +191,7 @@ export const DATA_ENGINEERING_TABS: DataEngineeringTab[] = [
     label: "Cheat Sheet",
     group: "PRACTICE",
     mins: 6,
-    accent: "#e50914",
+    accent: "#5f565a",
     summary: "Revise the whole story with fast answer versions, formulas, and mistakes to avoid.",
     description: "Use print-ready and copy-ready revision blocks for the 30-second, 2-minute, and 5-minute interview versions.",
   },
@@ -236,12 +236,12 @@ export const DATA_ENGINEERING_TAB_META: Record<
 }>;
 
 export const DATA_TRACK_NUMBERS = [
-  { label: "Monthly users", value: "200M-250M", note: "Docs use both 200M+ and 250M assumptions", color: "#38bdf8" },
-  { label: "Daily active users", value: "80M", note: "Used for heartbeat and Kafka math", color: "#22c55e" },
-  { label: "Peak concurrency", value: "15M", note: "Useful for QoE and live ops workloads", color: "#f59e0b" },
-  { label: "Heartbeat events/day", value: "19.2B", note: "80M DAU x 2h x heartbeat every 30s", color: "#e50914" },
-  { label: "Peak ingest", value: "1M-2M events/s", note: "Peak multiplier applied to total events/sec", color: "#8b5cf6" },
-  { label: "Raw data/day", value: "50-100 TB", note: "Playback, browse, search, errors, CDN, billing, CDC", color: "#06b6d4" },
+  { label: "Monthly users", value: "200M-250M", note: "Docs use both 200M+ and 250M assumptions", color: "#6f879a" },
+  { label: "Daily active users", value: "80M", note: "Used for heartbeat and Kafka math", color: "#6e8178" },
+  { label: "Peak concurrency", value: "15M", note: "Useful for QoE and live ops workloads", color: "#827a70" },
+  { label: "Heartbeat events/day", value: "19.2B", note: "80M DAU x 2h x heartbeat every 30s", color: "#5f565a" },
+  { label: "Peak ingest", value: "1M-2M events/s", note: "Peak multiplier applied to total events/sec", color: "#716b78" },
+  { label: "Raw data/day", value: "50-100 TB", note: "Playback, browse, search, errors, CDN, billing, CDC", color: "#6b8495" },
 ];
 
 export const START_HERE_SCOPE = {
@@ -291,7 +291,7 @@ export const REQUIREMENT_DOMAINS = [
   {
     id: "engagement",
     title: "User Engagement Analytics",
-    color: "#38bdf8",
+    color: "#6f879a",
     rows: [
       {
         requirement: "How many hours were streamed per title?",
@@ -314,7 +314,7 @@ export const REQUIREMENT_DOMAINS = [
   {
     id: "content",
     title: "Content Performance Analytics",
-    color: "#22c55e",
+    color: "#6e8178",
     rows: [
       {
         requirement: "Which content has high impressions but low clicks?",
@@ -337,7 +337,7 @@ export const REQUIREMENT_DOMAINS = [
   {
     id: "qoe",
     title: "Playback Quality Analytics",
-    color: "#f59e0b",
+    color: "#827a70",
     rows: [
       {
         requirement: "Buffering ratio by ISP, device, and region",
@@ -360,7 +360,7 @@ export const REQUIREMENT_DOMAINS = [
   {
     id: "recsys",
     title: "Recommendation Features",
-    color: "#a855f7",
+    color: "#77707e",
     rows: [
       {
         requirement: "User genre affinity and binge score",
@@ -383,7 +383,7 @@ export const REQUIREMENT_DOMAINS = [
   {
     id: "business",
     title: "Business + Revenue Analytics",
-    color: "#fbbf24",
+    color: "#8b8377",
     rows: [
       {
         requirement: "Regional revenue and cohort retention",
@@ -406,7 +406,7 @@ export const REQUIREMENT_DOMAINS = [
   {
     id: "ops",
     title: "Operational Reliability",
-    color: "#ef4444",
+    color: "#675d62",
     rows: [
       {
         requirement: "Detect missing data and SLA misses quickly",
@@ -429,7 +429,7 @@ export const REQUIREMENT_DOMAINS = [
   {
     id: "security",
     title: "Security + Governance",
-    color: "#22c55e",
+    color: "#6e8178",
     rows: [
       {
         requirement: "PII-safe access to watch and search history",
@@ -485,7 +485,7 @@ export const EVENT_FAMILIES = [
   {
     id: "playback",
     title: "Playback Events",
-    color: "#38bdf8",
+    color: "#6f879a",
     events: [
       {
         id: "video-heartbeat",
@@ -541,7 +541,7 @@ export const EVENT_FAMILIES = [
   {
     id: "browse",
     title: "Browse Events",
-    color: "#f59e0b",
+    color: "#827a70",
     events: [
       {
         id: "browse-title-impression",
@@ -573,7 +573,7 @@ export const EVENT_FAMILIES = [
   {
     id: "search",
     title: "Search Events",
-    color: "#8b5cf6",
+    color: "#716b78",
     events: [
       {
         id: "search-query",
@@ -605,7 +605,7 @@ export const EVENT_FAMILIES = [
   {
     id: "recommendation",
     title: "Recommendation Events",
-    color: "#a855f7",
+    color: "#77707e",
     events: [
       {
         id: "recommendation-served",
@@ -638,7 +638,7 @@ export const EVENT_FAMILIES = [
   {
     id: "operational",
     title: "Operational Events",
-    color: "#ef4444",
+    color: "#675d62",
     events: [
       {
         id: "service-error",
@@ -671,7 +671,7 @@ export const EVENT_FAMILIES = [
   {
     id: "billing-cdc",
     title: "Billing / CDC Events",
-    color: "#22c55e",
+    color: "#6e8178",
     events: [
       {
         id: "subscription-change",
@@ -719,7 +719,7 @@ export const ARCHITECTURE_NODES = [
   {
     id: "clients",
     label: "Client Apps",
-    color: "#38bdf8",
+    color: "#6f879a",
     reveal: "base",
     x: 6,
     y: 34,
@@ -734,7 +734,7 @@ export const ARCHITECTURE_NODES = [
   {
     id: "event-gateway",
     label: "Event Gateway",
-    color: "#f59e0b",
+    color: "#827a70",
     reveal: "base",
     x: 22,
     y: 34,
@@ -749,7 +749,7 @@ export const ARCHITECTURE_NODES = [
   {
     id: "kafka",
     label: "Kafka / MSK",
-    color: "#f59e0b",
+    color: "#827a70",
     reveal: "base",
     x: 38,
     y: 34,
@@ -764,7 +764,7 @@ export const ARCHITECTURE_NODES = [
   {
     id: "flink",
     label: "Flink Streaming",
-    color: "#38bdf8",
+    color: "#6f879a",
     reveal: "base",
     x: 54,
     y: 34,
@@ -779,7 +779,7 @@ export const ARCHITECTURE_NODES = [
   {
     id: "bronze",
     label: "Bronze Lake",
-    color: "#8b5cf6",
+    color: "#716b78",
     reveal: "base",
     x: 70,
     y: 34,
@@ -794,7 +794,7 @@ export const ARCHITECTURE_NODES = [
   {
     id: "silver",
     label: "Silver Iceberg",
-    color: "#8b5cf6",
+    color: "#716b78",
     reveal: "medallion",
     x: 86,
     y: 34,
@@ -809,7 +809,7 @@ export const ARCHITECTURE_NODES = [
   {
     id: "gold",
     label: "Gold Metrics",
-    color: "#fbbf24",
+    color: "#8b8377",
     reveal: "medallion",
     x: 86,
     y: 56,
@@ -824,7 +824,7 @@ export const ARCHITECTURE_NODES = [
   {
     id: "feature-store",
     label: "Feature Store",
-    color: "#a855f7",
+    color: "#77707e",
     reveal: "features",
     x: 70,
     y: 56,
@@ -839,7 +839,7 @@ export const ARCHITECTURE_NODES = [
   {
     id: "quality",
     label: "Quality + Observability",
-    color: "#ef4444",
+    color: "#675d62",
     reveal: "quality",
     x: 54,
     y: 56,
@@ -854,7 +854,7 @@ export const ARCHITECTURE_NODES = [
   {
     id: "governance",
     label: "Governance + Security",
-    color: "#22c55e",
+    color: "#6e8178",
     reveal: "governance",
     x: 38,
     y: 56,
@@ -869,7 +869,7 @@ export const ARCHITECTURE_NODES = [
   {
     id: "replay",
     label: "Replay + Backfill",
-    color: "#ef4444",
+    color: "#675d62",
     reveal: "replay",
     x: 22,
     y: 56,
@@ -884,7 +884,7 @@ export const ARCHITECTURE_NODES = [
   {
     id: "bi-ml",
     label: "BI + ML Consumers",
-    color: "#fbbf24",
+    color: "#8b8377",
     reveal: "base",
     x: 94,
     y: 78,
@@ -902,7 +902,7 @@ export const INGESTION_LANES = [
   {
     id: "client-events",
     title: "Client Events",
-    color: "#38bdf8",
+    color: "#6f879a",
     flow: ["Mobile / Web / TV", "Event Gateway", "Schema validation", "Kafka playback/browse/search topics"],
     details: [
       "Clients batch events every few seconds instead of sending a network request for every click or heartbeat.",
@@ -913,7 +913,7 @@ export const INGESTION_LANES = [
   {
     id: "cdc",
     title: "CDC",
-    color: "#22c55e",
+    color: "#6e8178",
     flow: ["Postgres / MySQL / DynamoDB", "Debezium / DMS", "Kafka CDC topics or S3 landing", "Dimension merges / finance pipelines"],
     details: [
       "User profile changes, subscription plan changes, billing records, and content catalog updates should be captured without hammering production OLTP systems.",
@@ -924,7 +924,7 @@ export const INGESTION_LANES = [
   {
     id: "external-batch",
     title: "Batch / External",
-    color: "#fbbf24",
+    color: "#8b8377",
     flow: ["SFTP / partners / logs", "S3 Bronze landing", "Glue / Spark normalization", "Curated lake tables"],
     details: [
       "Partner metadata, licensing feeds, app store reviews, campaign files, and historical log dumps usually land as batch assets.",
@@ -1040,7 +1040,7 @@ export const FLINK_JOBS = [
   {
     id: "playback-sessionizer",
     title: "Playback Sessionizer",
-    color: "#38bdf8",
+    color: "#6f879a",
     inputTopics: ["playback.heartbeat.raw", "video.buffer.*", "video.pause", "video.seek"],
     keyBy: "user_id + profile_id + content_id + device_id",
     state: "active session, seen event_ids, watched_segments, pause_count, buffering_seconds",
@@ -1054,7 +1054,7 @@ export const FLINK_JOBS = [
   {
     id: "watchtime-aggregator",
     title: "Watch-Time Aggregator",
-    color: "#38bdf8",
+    color: "#6f879a",
     inputTopics: ["playback.heartbeat.raw"],
     keyBy: "session_id",
     state: "watch_seconds, unique_segments, avg_bitrate, buffering_ratio",
@@ -1068,7 +1068,7 @@ export const FLINK_JOBS = [
   {
     id: "trending-detector",
     title: "Trending Content Detector",
-    color: "#f59e0b",
+    color: "#827a70",
     inputTopics: ["browse.impression.raw", "browse.title_click", "playback.start"],
     keyBy: "content_id + region",
     state: "rolling counts, CTR, play velocity",
@@ -1082,7 +1082,7 @@ export const FLINK_JOBS = [
   {
     id: "qoe-monitor",
     title: "Playback Quality Monitor",
-    color: "#ef4444",
+    color: "#675d62",
     inputTopics: ["video.buffer.start", "video.buffer.end", "video.quality.raw", "cdn.edge.log"],
     keyBy: "session_id or device/region bucket",
     state: "buffering events, quality changes, bitrate trend",
@@ -1096,7 +1096,7 @@ export const FLINK_JOBS = [
   {
     id: "fraud-anomaly",
     title: "Fraud / Anomaly Detector",
-    color: "#ef4444",
+    color: "#675d62",
     inputTopics: ["auth.login", "billing.events.raw", "service.error"],
     keyBy: "user_id or fraud pattern key",
     state: "login country sequence, payment attempts, risk counters",
@@ -1110,7 +1110,7 @@ export const FLINK_JOBS = [
   {
     id: "realtime-features",
     title: "Real-Time Feature Generator",
-    color: "#a855f7",
+    color: "#77707e",
     inputTopics: ["playback.heartbeat.raw", "search.query.raw", "recommendation.clicked"],
     keyBy: "user_id / profile_id",
     state: "recently watched, session context, popularity counters",
@@ -1231,7 +1231,7 @@ export const LAKEHOUSE_LAYERS = [
   {
     id: "bronze",
     title: "Bronze",
-    color: "#8b5cf6",
+    color: "#716b78",
     summary: "Raw, immutable, append-only landing zone.",
     inputs: ["Raw JSON / Avro events", "CDC envelopes", "Partner files", "CDN / service logs"],
     rules: [
@@ -1244,7 +1244,7 @@ export const LAKEHOUSE_LAYERS = [
   {
     id: "silver",
     title: "Silver",
-    color: "#8b5cf6",
+    color: "#716b78",
     summary: "Cleaned, deduplicated, schema-enforced, PII-safe trusted data.",
     inputs: ["Bronze events", "Dimension joins", "Normalization logic", "DQ checks"],
     rules: [
@@ -1257,7 +1257,7 @@ export const LAKEHOUSE_LAYERS = [
   {
     id: "gold",
     title: "Gold",
-    color: "#fbbf24",
+    color: "#8b8377",
     summary: "Business-ready metrics, official reporting tables, and curated features.",
     inputs: ["Silver facts", "Dimension tables", "Batch aggregations", "Reconciliation checks"],
     rules: [
@@ -1577,19 +1577,19 @@ export const BATCH_DAG_STEPS = [
 ] as const;
 
 export const DQ_METRICS = [
-  { label: "Freshness", value: "3m", color: "#38bdf8", note: "Minutes behind SLA for critical live metrics" },
-  { label: "Duplicate rate", value: "0.03%", color: "#ef4444", note: "Spike means dedupe or producer retry issue" },
-  { label: "Late event %", value: "1.8%", color: "#f59e0b", note: "Tracks watermark stress and correction demand" },
-  { label: "DLQ count", value: "1.2K", color: "#ef4444", note: "Needs owner + replay plan, not silent storage" },
-  { label: "SLA misses", value: "2", color: "#ef4444", note: "Critical failures page on-call and stakeholders" },
-  { label: "Backfill status", value: "Running", color: "#8b5cf6", note: "Track blast radius and audit state" },
+  { label: "Freshness", value: "3m", color: "#6f879a", note: "Minutes behind SLA for critical live metrics" },
+  { label: "Duplicate rate", value: "0.03%", color: "#675d62", note: "Spike means dedupe or producer retry issue" },
+  { label: "Late event %", value: "1.8%", color: "#827a70", note: "Tracks watermark stress and correction demand" },
+  { label: "DLQ count", value: "1.2K", color: "#675d62", note: "Needs owner + replay plan, not silent storage" },
+  { label: "SLA misses", value: "2", color: "#675d62", note: "Critical failures page on-call and stakeholders" },
+  { label: "Backfill status", value: "Running", color: "#716b78", note: "Track blast radius and audit state" },
 ] as const;
 
 export const DQ_SEVERITIES = [
-  { level: "P0", color: "#ef4444", rule: "Gold table missing or official metric broken", action: "PagerDuty + incident commander" },
-  { level: "P1", color: "#f97316", rule: "Watch hours dropped 40% or freshness breach", action: "Slack + PagerDuty" },
-  { level: "P2", color: "#f59e0b", rule: "Null rate increased or late events spiked", action: "Slack + Jira" },
-  { level: "P3", color: "#22c55e", rule: "Non-critical metadata missing", action: "Backlog / Jira only" },
+  { level: "P0", color: "#675d62", rule: "Gold table missing or official metric broken", action: "PagerDuty + incident commander" },
+  { level: "P1", color: "#80756c", rule: "Watch hours dropped 40% or freshness breach", action: "Slack + PagerDuty" },
+  { level: "P2", color: "#827a70", rule: "Null rate increased or late events spiked", action: "Slack + Jira" },
+  { level: "P3", color: "#6e8178", rule: "Non-critical metadata missing", action: "Backlog / Jira only" },
 ] as const;
 
 export const DQ_INVESTIGATION_PATH = [
@@ -1652,7 +1652,7 @@ export const GOVERNANCE_CHECKLIST = [
 export const FEATURE_STORE_CONTENT = {
   offline: {
     title: "Offline Feature Store",
-    color: "#8b5cf6",
+    color: "#716b78",
     summary: "S3 + Iceberg feature tables used for reproducible training and backtesting.",
     bullets: [
       "Stores historical training features with point-in-time aligned snapshots",
@@ -1662,7 +1662,7 @@ export const FEATURE_STORE_CONTENT = {
   },
   online: {
     title: "Online Feature Store",
-    color: "#22c55e",
+    color: "#6e8178",
     summary: "Redis or DynamoDB for low-latency serving features.",
     bullets: [
       "Stores recently watched, session context, device-time context, and hot popularity counters",

@@ -4,12 +4,12 @@ import type { ReactNode } from "react";
 import { motion, useReducedMotion } from "motion/react";
 
 const C = {
-  red: "#e50914",
-  amber: "#f59e0b",
-  gold: "#fbbf24",
-  blue: "#38bdf8",
-  green: "#22c55e",
-  violet: "#8b5cf6",
+  red: "#5f565a",
+  amber: "#827a70",
+  gold: "#8b8377",
+  blue: "#6f879a",
+  green: "#6e8178",
+  violet: "#716b78",
   text: "var(--text)",
   muted: "var(--text-muted)",
   faint: "var(--text-faint)",
@@ -540,7 +540,7 @@ export default function StartHereDesktopExperience() {
                 className="rounded-[24px] p-6"
                 style={{
                   background:
-                    "radial-gradient(circle at top, rgba(56,189,248,0.08), transparent 34%), linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0))",
+                    "radial-gradient(circle at top, rgba(111,135,154,0.08), transparent 34%), linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0))",
                   border: `1px solid ${C.border}`,
                 }}
               >

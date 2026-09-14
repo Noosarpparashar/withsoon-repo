@@ -17,6 +17,18 @@ const NETFLIX_DATA_ENGINEERING_TABS = [
   "interview-qa", "quiz", "mock-interview", "cheat-sheet",
 ];
 
+const YOUTUBE_DATA_ENGINEERING_TABS = [
+  "start-here",
+  "requirements",
+  "event-sources",
+  "architecture",
+  "ingestion-kafka",
+  "real-time-streaming",
+  "data-modeling",
+  "batch-lakehouse",
+  "governance-quality",
+];
+
 const STATIC_ROUTES = [
   { url: BASE,                      priority: 1.0, changeFrequency: "weekly" as const },
   { url: `${BASE}/big-data`,        priority: 0.9, changeFrequency: "weekly" as const },
@@ -55,5 +67,18 @@ export default function sitemap(): MetadataRoute.Sitemap {
     priority: 0.85,
   }));
 
-  return [...STATIC_ROUTES, ...netflixUrls, ...netflixDataUrls, ...contentUrls];
+  const youtubeDataUrls: MetadataRoute.Sitemap = YOUTUBE_DATA_ENGINEERING_TABS.map((tab) => ({
+    url: `${BASE}/system-design/youtube/${tab}`,
+    lastModified: now,
+    changeFrequency: "weekly" as const,
+    priority: 0.85,
+  }));
+
+  return [
+    ...STATIC_ROUTES,
+    ...netflixUrls,
+    ...netflixDataUrls,
+    ...youtubeDataUrls,
+    ...contentUrls,
+  ];
 }

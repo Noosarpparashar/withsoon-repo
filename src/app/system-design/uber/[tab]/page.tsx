@@ -8,7 +8,11 @@ import {
   type UberDeTabSlug,
 } from "@/components/ui/uber-data-engineering/data";
 
-export async function generateMetadata({ params }: { params: Promise<{ tab: string }> }): Promise<Metadata> {
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ tab: string }>;
+}): Promise<Metadata> {
   const { tab } = await params;
   const canonicalTab = normalizeUberDeTab(tab) ?? tab;
   const meta = UBER_DE_TAB_META[canonicalTab as UberDeTabSlug] ?? {
@@ -25,8 +29,18 @@ export async function generateMetadata({ params }: { params: Promise<{ tab: stri
   };
 }
 
-export default async function TabPage({ params }: { params: Promise<{ tab: string }> }) {
+export default async function TabPage({
+  params,
+}: {
+  params: Promise<{ tab: string }>;
+}) {
   const { tab } = await params;
+  if (tab === "failures") {
+    redirect("/system-design/uber/governance-quality");
+  }
+  if (tab === "cheat-sheet") {
+    redirect("/system-design/uber/quiz");
+  }
   const normalizedTab = normalizeUberDeTab(tab);
 
   if (normalizedTab && normalizedTab !== tab) {

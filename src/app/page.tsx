@@ -1,354 +1,287 @@
+import type { Metadata } from "next";
+import Image from "next/image";
 import Link from "next/link";
-import { getFeatured, getAllContent, getContentBySection, getSetupGuides } from "@/lib/content";
-import ContentCard from "@/components/ui/ContentCard";
-import { LLMBenchmarkButton } from "@/components/ui/LLMCharts";
-import SubscribeForm from "@/components/ui/SubscribeForm";
-import DailyTip from "@/components/ui/DailyTip";
 
-const SECTIONS = [
+export const metadata: Metadata = {
+  title: "Big Data & AI Engineering Library — withsoon",
+  description:
+    "Practical Big Data and AI projects, reusable templates, focused builds, and company-scale data engineering designs.",
+  alternates: { canonical: "https://withsoon.com" },
+};
+
+const COMPANIES = [
   {
-    href: "/big-data",
-    emoji: "🗄️",
-    label: "Big Data",
-    tagline: "For the data engineer",
-    desc: "System Design · Kafka · Spark · Flink · Airflow · dbt",
-    detail: "Setup guides, deep dives, cheatsheets, and interview Q&A for every major Big Data tool.",
-    borderClass: "hover:border-[var(--blue-text)]/60",
-    badgeClass: "bg-[var(--blue-soft)] text-[var(--blue-text)]",
-    highlights: ["System Design", "Kafka", "Spark", "Setup Guides"],
+    name: "Netflix",
+    logo: "/logo-netflix.webp",
+    tagline: "Streaming analytics at global scale",
+    detail: "Playback · QoE · Lakehouse",
+    href: "/system-design/netflix-data-engineering/start-here",
+    chapters: 10,
   },
   {
-    href: "/system-design",
-    emoji: "🏗️",
-    label: "System Design",
-    tagline: "Ace the design round",
-    desc: "Netflix · Uber · YouTube · WhatsApp · BookMyShow",
-    detail: "Interactive architecture diagrams, trade-offs, capacity estimates, and mock interviews. Built for senior engineering roles.",
-    borderClass: "hover:border-[var(--green-text)]/60",
-    badgeClass: "bg-[var(--green-soft)] text-[var(--green-text)]",
-    highlights: ["Netflix", "Architecture Maps", "Mock Interview", "Capacity Math"],
+    name: "Uber",
+    logo: "/logo-uber.png",
+    tagline: "Real-time marketplace data",
+    detail: "Trips · Streaming · Reconciliation",
+    href: "/system-design/uber/start-here",
+    chapters: 9,
   },
   {
-    href: "/ai",
-    emoji: "🤖",
-    label: "AI & LLMs",
-    tagline: "For the AI builder",
-    desc: "RAG · Agents · OpenAI · Claude · Gemini · Llama",
-    detail: "Build production AI systems — RAG pipelines, agents, chatbots, fine-tuning, and model comparisons.",
-    borderClass: "hover:border-[var(--purple-text)]/60",
-    badgeClass: "bg-[var(--purple-soft)] text-[var(--purple-text)]",
-    highlights: ["RAG Pipeline", "AI Agents", "Model Compare", "Setup Guides"],
+    name: "YouTube",
+    logo: "/logo-youtube.webp",
+    tagline: "Video analytics and data platform",
+    detail: "Watch time · Creators · Quality",
+    href: "/system-design/youtube/start-here",
+    chapters: 9,
   },
   {
-    href: "/interview",
-    emoji: "🎯",
-    label: "Interview Prep",
-    tagline: "Crack the next role",
-    desc: "System Design · Kafka · Spark · SQL · AI/ML · Behavioral",
-    detail: "Topic-wise Q&A banks, grilling sessions, and system design walkthroughs for Big Data and AI roles.",
-    borderClass: "hover:border-[var(--orange-text)]/60",
-    badgeClass: "bg-[var(--orange-soft)] text-[var(--orange-text)]",
-    highlights: ["System Design", "Kafka Q&A", "SQL Patterns", "Behavioral"],
+    name: "WhatsApp",
+    logo: "/logo-whatsapp.png",
+    tagline: "100B+ messages per day",
+    detail: "Messaging · Delivery · Privacy",
   },
-];
+  {
+    name: "Swiggy",
+    logo: "/logo-swiggy.png",
+    tagline: "Food delivery in milliseconds",
+    detail: "Orders · ETA · Logistics",
+  },
+  {
+    name: "MakeMyTrip",
+    logo: "/logo-makemytrip.png",
+    tagline: "Travel booking under peak demand",
+    detail: "Search · Inventory · Booking",
+  },
+  {
+    name: "BookMyShow",
+    logo: "/logo-bookmyshow.jpg",
+    tagline: "Ticketing under flash-sale load",
+    detail: "Seats · Queue · Payments",
+  },
+] as const;
 
-const SETUP_SPOTLIGHTS = [
-  { title: "Kafka local setup", slug: "kafka-local-setup", section: "big-data", emoji: "⚡", tag: "Kafka" },
-  { title: "RAG pipeline from scratch", slug: "rag-pipeline-complete", section: "ai", emoji: "🔍", tag: "RAG" },
-  { title: "Spark on local machine", slug: "spark-local-setup", section: "big-data", emoji: "🔥", tag: "Spark" },
-  { title: "Debezium + Kafka CDC", slug: "debezium-cdc-setup", section: "big-data", emoji: "🔄", tag: "CDC" },
-  { title: "Production chatbot with Claude", slug: "chatbot-claude-setup", section: "ai", emoji: "💬", tag: "Claude" },
-  { title: "Airflow local setup", slug: "airflow-local-setup", section: "big-data", emoji: "🌬️", tag: "Airflow" },
-];
+const LIBRARY_FORMATS = [
+  {
+    title: "Data Engineering Designs",
+    detail: "Company-scale interview tracks",
+    status: "3 available",
+    active: true,
+  },
+  {
+    title: "Quick Builds",
+    detail: "Small, focused implementations",
+    status: "Coming next",
+    active: false,
+  },
+  {
+    title: "End-to-End Projects",
+    detail: "Complete Big Data and AI systems",
+    status: "Planned",
+    active: false,
+  },
+  {
+    title: "AI Engineering",
+    detail: "RAG, agents and data workflows",
+    status: "Planned",
+    active: false,
+  },
+  {
+    title: "Templates",
+    detail: "Reusable technical starting points",
+    status: "Planned",
+    active: false,
+  },
+] as const;
 
-export default function Home() {
-  const featured = getFeatured();
-  const recent = getAllContent()
-    .filter((i) => i.section !== "tech-news" && i.section !== "radar")
-    .slice(0, 6);
-  const setupGuides = getSetupGuides();
+function CompanyCard({
+  company,
+  index,
+}: {
+  company: (typeof COMPANIES)[number];
+  index: number;
+}) {
+  const ready = "href" in company;
+  const content = (
+    <>
+      <div className="flex items-start justify-between gap-4">
+        <span className="flex h-12 w-12 items-center justify-center overflow-hidden rounded-xl border border-[#d6e1eb] bg-[#eef4f9] transition duration-300 group-hover:scale-105 group-hover:bg-white">
+          <Image
+            src={company.logo}
+            alt=""
+            width={44}
+            height={44}
+            className="h-10 w-10 rounded-lg object-contain"
+          />
+        </span>
+        <span className="rounded-full border border-[#d6e1eb] bg-[#eef4f9] px-2.5 py-1 text-[9px] font-bold uppercase tracking-[.14em] text-[#65798b]">
+          {ready ? `${company.chapters} chapters` : "Coming soon"}
+        </span>
+      </div>
 
-  const newsItems = (() => {
-    const seen = new Set<string>();
-    return [
-      ...getContentBySection("tech-news"),
-      ...getContentBySection("radar"),
-    ]
-      .sort((a, b) => (a.date < b.date ? 1 : -1))
-      .filter((item) => {
-        const key = item.title.toLowerCase().trim();
-        if (seen.has(key)) return false;
-        seen.add(key);
-        return true;
-      })
-      .slice(0, 8);
-  })();
+      <div className="mt-5">
+        <h2 className="text-lg font-bold tracking-[-.02em] text-[#17202b]">
+          {company.name}
+        </h2>
+        <p className="mt-1 text-sm text-[#526171]">{company.tagline}</p>
+        <p className="mt-3 text-[11px] font-semibold text-[#76879a]">
+          {company.detail}
+        </p>
+      </div>
+
+      <div className="mt-5 flex items-center justify-between border-t border-[#e1e8ee] pt-4 text-xs font-bold text-[#273544]">
+        <span>{ready ? "Start preparing" : "Planned"}</span>
+        {ready ? (
+          <span
+            className="text-base text-[#526b82] transition group-hover:translate-x-1"
+            aria-hidden
+          >
+            →
+          </span>
+        ) : null}
+      </div>
+    </>
+  );
+
+  const className = `data-design-library-card group relative min-h-[220px] overflow-hidden rounded-[22px] border border-[#d6e1eb] bg-white p-5 shadow-[0_8px_30px_rgba(57,75,91,.05)] ${
+    ready
+      ? "transition duration-300 hover:-translate-y-2 hover:border-[#8197aa] hover:shadow-[0_24px_55px_rgba(72,91,108,.16)]"
+      : "opacity-75"
+  }`;
+
+  if (ready) {
+    return (
+      <Link
+        href={company.href}
+        className={className}
+        style={{ animationDelay: `${index * 55}ms` }}
+      >
+        {content}
+      </Link>
+    );
+  }
 
   return (
-    <div className="mx-auto max-w-7xl px-4">
+    <article
+      className={className}
+      style={{ animationDelay: `${index * 55}ms` }}
+    >
+      {content}
+    </article>
+  );
+}
 
-      {/* ── Hero ──────────────────────────────────────────── */}
-      <section className="py-16 text-center">
-        <div className="inline-flex items-center gap-2 mb-6 rounded-full bg-[var(--accent-soft)] border border-[var(--accent)]/20 px-4 py-1.5 text-sm text-[var(--accent-text)] font-medium">
-          <span className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
-          Built in public · Updated as the industry moves
-        </div>
-        <h1 className="font-bold tracking-tight mb-6">
-          <div className="text-4xl md:text-6xl mb-1 font-bold text-[var(--text-muted)]">
-            Everything for a
+export default function HomePage() {
+  return (
+    <main className="min-h-[calc(100vh-56px)] bg-[#f4f7fb] text-[#17202b]">
+      <div className="relative mx-auto max-w-[1500px] overflow-hidden px-4 py-8 sm:px-7 lg:py-10">
+        <div
+          className="pointer-events-none absolute -right-36 -top-32 h-[420px] w-[420px] rounded-full bg-[#dce8f1] opacity-80 blur-3xl"
+          aria-hidden
+        />
+        <div
+          className="pointer-events-none absolute -left-40 top-80 h-80 w-80 rounded-full bg-white blur-3xl"
+          aria-hidden
+        />
+
+        <header className="data-design-library-enter relative mb-8 overflow-hidden rounded-[28px] border border-[#d6e1eb] bg-white px-6 py-7 shadow-[0_18px_60px_rgba(72,91,108,.08)] sm:px-9 sm:py-8">
+          <div
+            className="absolute inset-y-0 right-0 hidden w-1/3 bg-[radial-gradient(circle_at_center,#dce8f1_0,transparent_68%)] lg:block"
+            aria-hidden
+          />
+          <div className="relative max-w-4xl">
+            <div className="max-w-3xl">
+              <div className="mb-4 flex items-center gap-2 text-[10px] font-bold uppercase tracking-[.2em] text-[#65798b]">
+                <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-[#17202b] text-xs text-white">
+                  WS
+                </span>
+                Engineering Resource Library
+              </div>
+              <h1 className="text-3xl font-bold tracking-[-.045em] sm:text-5xl">
+                Practical resources for Big Data and AI engineering.
+              </h1>
+              <p className="mt-3 max-w-2xl text-sm leading-6 text-[#526171] sm:text-base">
+                Focused builds, complete projects, reusable templates, and
+                company-scale data platform designs—organized in one place.
+              </p>
+            </div>
           </div>
-          <div className="text-5xl md:text-7xl leading-tight text-transparent bg-clip-text bg-gradient-to-r from-[var(--blue)] via-[var(--accent)] to-[var(--purple)]">
-            Big Data + AI Engineer
+        </header>
+
+        <section
+          className="relative mb-10"
+          aria-labelledby="library-formats-title"
+        >
+          <div className="mb-4 flex items-center justify-between gap-4">
+            <h2
+              id="library-formats-title"
+              className="text-sm font-bold uppercase tracking-[.14em] text-[#526171]"
+            >
+              Browse by format
+            </h2>
+            <span className="text-[10px] font-semibold text-[#76879a]">
+              More collections will be added here
+            </span>
           </div>
-        </h1>
-        <p className="text-lg md:text-xl text-[var(--text-muted)] max-w-3xl mx-auto mb-10">
-          System Design · Setup Guides · LLM Deep Dives · Interview Prep · Cheatsheets.
-          One platform — daily work, career growth, and staying current.
-        </p>
-        <div className="flex flex-wrap gap-4 justify-center mb-6">
-          <Link href="/big-data" className="px-6 py-3 rounded-xl bg-[var(--blue)] hover:opacity-90 text-white font-semibold transition-opacity">
-            🗄️ Big Data Hub
-          </Link>
-          <Link href="/ai" className="px-6 py-3 rounded-xl bg-[var(--accent)] hover:opacity-90 text-white font-semibold transition-opacity">
-            🤖 AI & LLMs Hub
-          </Link>
-          <Link href="/interview" className="px-6 py-3 rounded-xl bg-[var(--orange)] hover:opacity-90 text-white font-semibold transition-opacity">
-            🎯 Interview Prep
-          </Link>
-          <Link href="/cheatsheets" className="px-6 py-3 rounded-xl bg-[var(--pink)] hover:opacity-90 text-white font-semibold transition-opacity">
-            📋 Cheatsheets
-          </Link>
-        </div>
-        {/* Benchmark trigger — sits below the main CTAs, centered */}
-        <div className="flex justify-center">
-          <LLMBenchmarkButton />
-        </div>
-      </section>
-
-      {/* ── Noticeboard + Sections ────────────────────────── */}
-      <section className="mb-20">
-        <div className="flex flex-col lg:flex-row gap-8">
-
-          {/* Noticeboard */}
-          <div className="lg:w-[360px] shrink-0">
-            <div className="rounded-2xl overflow-hidden border border-[#2d3748] shadow-xl bg-[#1a202c] h-full flex flex-col">
-              <div className="px-5 py-4 flex items-center justify-between border-b border-white/10 bg-[#2d3748]">
-                <div className="flex items-center gap-2.5">
-                  <span className="text-xl">📌</span>
-                  <div>
-                    <div className="font-bold text-white text-sm leading-tight">Tech News</div>
-                    <div className="text-xs text-slate-400">Latest in AI & Big Data</div>
-                  </div>
+          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
+            {LIBRARY_FORMATS.map((format) => (
+              <div
+                key={format.title}
+                className={`rounded-2xl border p-4 ${format.active ? "border-[#8197aa] bg-white shadow-[0_10px_28px_rgba(72,91,108,.09)]" : "border-[#d6e1eb] bg-[#f9fbfd]"}`}
+              >
+                <div className="flex items-center justify-end">
+                  <span
+                    className={`rounded-full px-2 py-1 text-[8px] font-bold uppercase tracking-[.1em] ${format.active ? "bg-[#17202b] text-white" : "bg-[#e8eff5] text-[#76879a]"}`}
+                  >
+                    {format.status}
+                  </span>
                 </div>
-                <Link href="/tech-news" className="text-xs font-semibold text-white bg-white/10 hover:bg-white/20 px-3 py-1.5 rounded-full transition-colors border border-white/20">
-                  All news →
-                </Link>
+                <p className="mt-4 text-sm font-bold text-[#273544]">
+                  {format.title}
+                </p>
+                <p className="mt-1 text-[11px] text-[#76879a]">
+                  {format.detail}
+                </p>
               </div>
-              <div className="p-3 space-y-2 flex-1">
-                {newsItems.length === 0 ? (
-                  <div className="text-center py-8 text-slate-500 text-sm">First news item coming soon.</div>
-                ) : newsItems.map((item, i) => {
-                  const dot = i === 0 ? "bg-red-400" : i === 1 ? "bg-orange-400" : i < 4 ? "bg-blue-400" : "bg-emerald-400";
-                  return (
-                    <Link key={`${item.section}-${item.slug}`} href={`/tech-news/${item.slug}`}
-                      className="group flex gap-3 p-3 rounded-lg bg-white/5 hover:bg-white/10 border border-white/5 hover:border-white/20 transition-all">
-                      <div className="shrink-0 pt-1.5"><div className={`w-2 h-2 rounded-full ${dot}`} /></div>
-                      <div className="flex-1 min-w-0">
-                        <p className="text-sm font-medium text-slate-200 group-hover:text-white leading-snug line-clamp-2 transition-colors">{item.title}</p>
-                        <div className="flex items-center gap-2 mt-1.5 flex-wrap">
-                          {item.tags.slice(0, 2).map((t) => (
-                            <span key={t} className="text-[10px] px-1.5 py-0.5 rounded bg-white/10 text-slate-400 font-medium">{t}</span>
-                          ))}
-                          {item.date && <span className="text-[10px] text-slate-500">{item.date}</span>}
-                        </div>
-                      </div>
-                      <div className="shrink-0 self-center text-slate-600 group-hover:text-slate-300 transition-colors">
-                        <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
-                        </svg>
-                      </div>
-                    </Link>
-                  );
-                })}
-              </div>
-              <div className="px-5 py-3 border-t border-white/10 text-center">
-                <Link href="/tech-news" className="text-xs text-slate-500 hover:text-slate-300 font-medium transition-colors">
-                  View all news & updates →
-                </Link>
-              </div>
-            </div>
-          </div>
-
-          {/* Section cards */}
-          <div className="flex-1">
-            <h2 className="text-2xl font-bold mb-5 text-[var(--text)]">Explore by section</h2>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              {SECTIONS.map(({ href, emoji, label, tagline, desc, detail, borderClass, badgeClass, highlights }) => (
-                <Link key={href} href={href}
-                  className={`group p-5 rounded-xl border border-[var(--border)] bg-[var(--bg-card)] transition-all hover:shadow-lg ${borderClass}`}>
-                  <div className="flex items-start justify-between mb-3">
-                    <div className="flex items-center gap-2.5">
-                      <span className="text-2xl">{emoji}</span>
-                      <span className={`text-xs px-2.5 py-1 rounded-full font-semibold ${badgeClass}`}>{label}</span>
-                    </div>
-                    <span className="text-[10px] text-[var(--text-faint)] bg-[var(--bg-muted)] px-2 py-0.5 rounded-full border border-[var(--border)] whitespace-nowrap ml-2">
-                      {tagline}
-                    </span>
-                  </div>
-                  <p className="text-xs font-medium text-[var(--text-muted)] mb-1">{desc}</p>
-                  <p className="text-sm text-[var(--text-muted)] leading-relaxed mb-3">{detail}</p>
-                  <div className="flex flex-wrap gap-1.5">
-                    {highlights.map((h) => (
-                      <span key={h} className="text-[10px] px-2 py-0.5 rounded bg-[var(--bg-muted)] text-[var(--text-faint)] border border-[var(--border)]">{h}</span>
-                    ))}
-                  </div>
-                  <div className="mt-3 text-xs text-[var(--text-faint)] group-hover:text-[var(--accent-text)] transition-colors font-medium">
-                    Open {label} →
-                  </div>
-                </Link>
-              ))}
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* ── Get started: Setup guides ──────────────────────── */}
-      <section className="mb-20">
-        <div className="flex items-center justify-between mb-6">
-          <div>
-            <h2 className="text-2xl font-bold text-[var(--text)]">🚀 Get started</h2>
-            <p className="text-sm text-[var(--text-muted)] mt-1">Step-by-step setup guides — copy, paste, run.</p>
-          </div>
-          <Link href="/big-data?sub=setup" className="text-sm text-[var(--accent-text)] hover:underline font-medium">
-            All setup guides →
-          </Link>
-        </div>
-        {setupGuides.length > 0 ? (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-            {setupGuides.map((item) => (
-              <ContentCard key={`${item.section}-${item.slug}`} item={item} href={`/${item.section}/${item.slug}`} />
-            ))}
-          </div>
-        ) : (
-          /* Static spotlight cards when no content yet */
-          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
-            {SETUP_SPOTLIGHTS.map(({ title, emoji, tag }) => (
-              <div key={title} className="p-4 rounded-xl border border-[var(--border)] bg-[var(--bg-card)] text-center opacity-60">
-                <div className="text-2xl mb-2">{emoji}</div>
-                <div className="text-xs font-semibold text-[var(--text)] leading-snug mb-1">{title}</div>
-                <div className="text-[10px] text-[var(--text-faint)]">{tag} · coming soon</div>
-              </div>
-            ))}
-          </div>
-        )}
-      </section>
-
-      {/* ── Featured ──────────────────────────────────────── */}
-      {featured.length > 0 && (
-        <section className="mb-20">
-          <div className="flex items-center justify-between mb-6">
-            <h2 className="text-2xl font-bold text-[var(--text)]">⭐ Featured</h2>
-            <Link href="/system-design/netflix/architecture" className="text-sm text-[var(--accent-text)] hover:underline font-medium">
-              View Netflix system design →
-            </Link>
-          </div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
-            {featured.slice(0, 6).map((item) => (
-              <ContentCard key={`${item.section}-${item.slug}`} item={item} href={`/${item.section}/${item.slug}`} />
             ))}
           </div>
         </section>
-      )}
 
-      {/* ── Latest ────────────────────────────────────────── */}
-      {recent.length > 0 && (
-        <section className="mb-20">
-          <div className="flex items-center justify-between mb-6">
-            <h2 className="text-2xl font-bold text-[var(--text)]">🕐 Latest</h2>
-            <Link href="/big-data" className="text-sm text-[var(--accent-text)] hover:underline font-medium">
-              View all →
-            </Link>
+        <section
+          id="data-engineering-designs"
+          className="relative scroll-mt-24"
+          aria-labelledby="data-engineering-designs-title"
+        >
+          <div className="mb-5 flex flex-wrap items-end justify-between gap-4">
+            <div>
+              <div className="flex items-center gap-3">
+                <h2
+                  id="data-engineering-designs-title"
+                  className="text-xl font-bold sm:text-2xl"
+                >
+                  Data Engineering Designs
+                </h2>
+              </div>
+              <p className="mt-1 text-xs text-[#65798b]">
+                Company-based data platform interview tracks
+              </p>
+            </div>
+            <div className="flex gap-2">
+              <span className="rounded-full border border-[#ccd9e4] bg-white px-2.5 py-1 text-[10px] font-bold text-[#526b82]">
+                3 available
+              </span>
+              <span className="rounded-full border border-[#d6e1eb] bg-[#e8f1f8] px-2.5 py-1 text-[10px] font-bold text-[#65798b]">
+                7 companies
+              </span>
+            </div>
           </div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
-            {recent.slice(0, 3).map((item) => (
-              <ContentCard key={`${item.section}-${item.slug}`} item={item} href={`/${item.section}/${item.slug}`} />
+
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+            {COMPANIES.map((company, index) => (
+              <CompanyCard key={company.name} company={company} index={index} />
             ))}
           </div>
         </section>
-      )}
-
-      {/* ── What this site is best for ────────────────────── */}
-      <section className="mb-20">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-          <div className="rounded-xl border border-[var(--border)] bg-[var(--bg-card)] p-6">
-            <h2 className="text-lg font-bold mb-3 text-[var(--text)]">What this site is best for</h2>
-            <ul className="space-y-2">
-              {[
-                "Preparing for senior data engineer and backend engineer interviews",
-                "Deep-diving Netflix, Uber, or distributed system architectures",
-                "Setting up Kafka, Spark, Airflow, or dbt in minutes — not hours",
-                "Quick-reference cheatsheets you can open mid-work",
-                "Understanding LLM trade-offs, RAG pipelines, and agent patterns",
-              ].map((item) => (
-                <li key={item} className="flex items-start gap-2 text-sm text-[var(--text-muted)]">
-                  <span className="text-[var(--accent-text)] mt-0.5 shrink-0">✓</span>
-                  {item}
-                </li>
-              ))}
-            </ul>
-          </div>
-          <div className="rounded-xl border border-[var(--border)] bg-[var(--bg-card)] p-6">
-            <h2 className="text-lg font-bold mb-3 text-[var(--text)]">Built from real interview prep</h2>
-            <p className="text-sm text-[var(--text-muted)] leading-relaxed mb-4">
-              Every guide, diagram, and Q&amp;A bank is drawn from real system design interview experience — production-style scenarios, not textbook theory.
-            </p>
-            <h3 className="text-sm font-bold mb-2 text-[var(--text)]">Coming next</h3>
-            <ul className="space-y-1.5">
-              {[
-                "Uber system design — ride matching, surge pricing, location ingestion",
-                "Kafka Q&A bank — questions 17–50 with full answers",
-                "Data Engineer roadmap — 6-week structured path",
-              ].map((item) => (
-                <li key={item} className="flex items-start gap-2 text-sm text-[var(--text-muted)]">
-                  <span className="text-[var(--text-faint)] mt-0.5 shrink-0">→</span>
-                  {item}
-                </li>
-              ))}
-            </ul>
-          </div>
-        </div>
-      </section>
-
-      {/* ── Daily Tip ────────────────────────────────────── */}
-      <section className="mb-20">
-        <DailyTip />
-      </section>
-
-      {/* ── Newsletter CTA ────────────────────────────────── */}
-      <section className="mb-20 rounded-2xl border border-[var(--accent)]/20 bg-[var(--accent-soft)] p-10 text-center">
-        <h2 className="text-2xl font-bold mb-2 text-[var(--text)]">Stay ahead of the interview</h2>
-        <p className="text-[var(--text-muted)] max-w-md mx-auto mb-6 text-sm">
-          New system design guides, Q&amp;A banks, and cheatsheets — delivered when they land.
-        </p>
-        <SubscribeForm />
-      </section>
-
-      {/* ── CTA ───────────────────────────────────────────── */}
-      <section className="mb-20 rounded-2xl border border-[var(--border)] bg-[var(--bg-card)] p-10 text-center">
-        <h2 className="text-3xl font-bold mb-3 text-[var(--text)]">Built in public, growing daily</h2>
-        <p className="text-[var(--text-muted)] max-w-xl mx-auto mb-6">
-          Every guide, comparison, and cheatsheet is added as the industry evolves.
-          No filler — just content that actually works in production.
-        </p>
-        <div className="flex flex-wrap gap-3 justify-center">
-          <Link href="/tech-news" className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-[var(--accent)] hover:opacity-90 text-white font-semibold transition-opacity text-sm">
-            📰 See what's new
-          </Link>
-          <Link href="/cheatsheets" className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl border border-[var(--border)] bg-[var(--bg-muted)] text-[var(--text)] hover:border-[var(--pink-text)]/60 font-semibold transition-colors text-sm">
-            📋 Browse cheatsheets
-          </Link>
-        </div>
-      </section>
-    </div>
+      </div>
+    </main>
   );
 }

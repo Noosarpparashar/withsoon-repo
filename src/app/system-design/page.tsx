@@ -40,13 +40,13 @@ const COMPANIES = [
   },
   {
     slug: "youtube",
-    name: "YouTube",
+    name: "YouTube Data Engineering",
     emoji: "▶️",
-    tagline: "Video upload, transcoding, CDN",
-    tabs: ["Architecture", "Upload Pipeline", "CDN", "Recommendations"],
+    tagline: "Playback events, streaming metrics, lakehouse, and creator analytics",
+    tabs: ["Start Here", "Requirements", "Kafka", "Streaming", "Lakehouse"],
     difficulty: "senior",
-    status: "coming-soon",
-    href: "#",
+    status: "live",
+    href: "/system-design/youtube/start-here",
   },
   {
     slug: "whatsapp",
@@ -186,7 +186,7 @@ export default function SystemDesignPage() {
 
       <div className="mt-12 rounded-xl border border-[var(--border)] bg-[var(--bg-card)] p-6 text-center">
         <h2 className="text-lg font-bold mb-2 text-[var(--text)]">More coming soon</h2>
-        <p className="text-sm text-[var(--text-muted)] mb-4">Uber, YouTube, and WhatsApp are next. Each will follow the same format: Start Here → Architecture → APIs → Data Models → Failures → Trade-offs → Mock Interview.</p>
+        <p className="text-sm text-[var(--text-muted)] mb-4">WhatsApp, BookMyShow, and Swiggy are next. Each will follow the same format: Start Here → Architecture → APIs → Data Models → Failures → Trade-offs → Mock Interview.</p>
         <Link href="/about" className="text-sm text-[var(--accent-text)] hover:underline font-medium">
           See what&apos;s planned →
         </Link>

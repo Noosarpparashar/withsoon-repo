@@ -1,10 +1,9 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useSyncExternalStore } from "react";
 import { useTheme } from "next-themes";
 import Image from "next/image";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 
 function hexToRgb(hex: string) {
   return `${parseInt(hex.slice(1,3),16)},${parseInt(hex.slice(3,5),16)},${parseInt(hex.slice(5,7),16)}`;
@@ -15,7 +14,7 @@ function hexToRgb(hex: string) {
 const COMPANIES = [
   { id: "netflix",    label: "Netflix",    emoji: "📺", logo: "/logo-netflix.webp",    tagline: "Streaming at 250M+ scale",             color: "#e50914", href: "/system-design/netflix" },
   { id: "uber",       label: "Uber",       emoji: "🚗", logo: "/logo-uber.png",         tagline: "Real-time ride & delivery matching",    color: "#276EF1", href: "/system-design/uber/start-here" },
-  { id: "youtube",    label: "YouTube",    emoji: "▶️", logo: "/logo-youtube.webp",    tagline: "Video at 2B+ users, 500h/min upload",  color: "#ff0000" },
+  { id: "youtube",    label: "YouTube",    emoji: "▶️", logo: "/logo-youtube.webp",    tagline: "Analytics & data platform at scale",    color: "#ff0000", href: "/system-design/youtube/start-here" },
   { id: "whatsapp",   label: "WhatsApp",   emoji: "💬", logo: "/logo-whatsapp.png",    tagline: "100B+ messages per day",               color: "#25D366" },
   { id: "swiggy",     label: "Swiggy",     emoji: "🍕", logo: "/logo-swiggy.png",      tagline: "Food delivery at milliseconds",        color: "#FC8019" },
   { id: "makemytrip", label: "MakeMyTrip", emoji: "✈️", logo: "/logo-makemytrip.png", tagline: "Travel booking under peak demand",    color: "#006DB7" },
@@ -284,21 +283,17 @@ function PipelineFlow({ isDark, onStepClick }: { isDark: boolean; onStepClick: (
 
 export default function BigDataLibraries() {
   const { resolvedTheme } = useTheme();
-  const [mounted, setMounted] = useState(false);
   const [active, setActive] = useState<{ item: Item; section: string } | null>(null);
-  const router = useRouter();
 
-  useEffect(() => { setMounted(true); }, []);
+  const mounted = useSyncExternalStore(
+    () => () => {},
+    () => true,
+    () => false,
+  );
   const isDark = !mounted || resolvedTheme === "dark";
 
   const handleCardClick = (item: Item, section: string) => {
-    if (item.id === "netflix") {
-      router.push("/system-design/netflix");
-    } else if (item.id === "uber") {
-      router.push("/system-design/uber/start-here");
-    } else {
-      setActive({ item, section });
-    }
+    setActive({ item, section });
   };
 
   return (

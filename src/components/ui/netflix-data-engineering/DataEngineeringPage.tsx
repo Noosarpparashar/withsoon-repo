@@ -14,8 +14,9 @@ import {
   type ReactFlowInstance,
 } from "@xyflow/react";
 import { AnimatePresence, motion, useReducedMotion } from "motion/react";
-import Link from "next/link";
+import Image from "next/image";
 import { copyTextToClipboard } from "../netflix-tabs/clipboard";
+import CompanyChapterRail from "../data-design/CompanyChapterRail";
 import StartHereDesktopExperience from "./StartHereDesktopExperience";
 import {
   ARCHITECTURE_NODES,
@@ -65,14 +66,14 @@ const T = {
   text: "var(--text)",
   muted: "var(--text-muted)",
   faint: "var(--text-faint)",
-  red: "#e50914",
-  amber: "#f59e0b",
-  gold: "#fbbf24",
-  blue: "#38bdf8",
-  violet: "#8b5cf6",
-  purple: "#a855f7",
-  green: "#22c55e",
-  orange: "#f97316",
+  red: "#5f565a",
+  amber: "#827a70",
+  gold: "#8b8377",
+  blue: "#6f879a",
+  violet: "#716b78",
+  purple: "#77707e",
+  green: "#6e8178",
+  orange: "#80756c",
 } as const;
 
 type WatchMetricMode = (typeof WATCH_TIME_DEFINITIONS)[number]["id"];
@@ -264,7 +265,7 @@ const SECTION4_ENVELOPE_FIELDS = [
     id: "producer_trace",
     label: "producer + trace_id",
     line: '"producer": "playback-service", "trace_id": "abc-789",',
-    color: "#fb7185",
+    color: "#756970",
     icon: "🛰️",
     meaning: "Carries ownership, escalation path, and debugging context with every record.",
     interviewUse: "Useful for lineage and on-call explanations.",
@@ -407,7 +408,7 @@ const SECTION4_DIMENSIONS = [
     id: "dim_geography",
     title: "dim_geography",
     icon: "🌍",
-    color: "#14b8a6",
+    color: "#6f8584",
     purpose: "Country, region, timezone, and regulatory grouping for reporting and licensing cuts.",
     fields: ["geo_sk", "country_code", "region", "timezone"],
     scd: "Usually stable; version only when hierarchy corrections matter.",
@@ -434,7 +435,7 @@ const SECTION4_DIMENSIONS = [
     id: "dim_ui_row",
     title: "dim_ui_row",
     icon: "🪄",
-    color: "#06b6d4",
+    color: "#6b8495",
     purpose: "Recommendation and browse placement context like row type, surface, and position family.",
     fields: ["row_sk", "surface", "row_type", "placement_group"],
     scd: "Type 2 when taxonomy or placement logic changes.",
@@ -443,7 +444,7 @@ const SECTION4_DIMENSIONS = [
     id: "dim_recommendation_model",
     title: "dim_recommendation_model",
     icon: "🤖",
-    color: "#c084fc",
+    color: "#7d7783",
     purpose: "Model lineage, version, and feature-set context behind every recommendation decision.",
     fields: ["model_sk", "model_name", "model_version", "training_snapshot"],
     scd: "Immutable model versions rather than mutable overwrite.",
@@ -1277,13 +1278,13 @@ const MODELING_TABLE_VISUALS = {
     accent: "Discovery fact",
   },
   fact_playback_event: {
-    color: "#fb7185",
+    color: "#756970",
     objectName: "FactPlaybackEventRow",
     builtBy: "Built directly from canonical playback event streams before they are rolled into the session fact, preserving sequence-level truth.",
     accent: "Event fact",
   },
   fact_qoe_event: {
-    color: "#22d3ee",
+    color: "#78909f",
     objectName: "FactQoeEventRow",
     builtBy: "Built from player QoE, CDN, and network diagnostics so operational playback pain can be analyzed independently from engagement facts.",
     accent: "QoE fact",
@@ -1325,7 +1326,7 @@ const MODELING_TABLE_VISUALS = {
     accent: "Dimension",
   },
   dim_geography: {
-    color: "#14b8a6",
+    color: "#6f8584",
     objectName: "DimGeographyRow",
     builtBy: "Prepared from standardized market and timezone hierarchies so facts can be sliced consistently across reporting and policy domains.",
     accent: "Dimension",
@@ -1337,13 +1338,13 @@ const MODELING_TABLE_VISUALS = {
     accent: "Dimension",
   },
   dim_time: {
-    color: "#a78bfa",
+    color: "#79737f",
     objectName: "DimTimeRow",
     builtBy: "Prepared as a static intraday dimension for hour, minute-bucket, and prime-time style analysis.",
     accent: "Dimension",
   },
   dim_app_version: {
-    color: "#60a5fa",
+    color: "#71889a",
     objectName: "DimAppVersionRow",
     builtBy: "Prepared from release metadata so QoE and playback metrics can be tied back to rollout cohorts and version regressions.",
     accent: "Dimension",
@@ -1355,13 +1356,13 @@ const MODELING_TABLE_VISUALS = {
     accent: "Dimension",
   },
   dim_recommendation_model: {
-    color: "#c084fc",
+    color: "#7d7783",
     objectName: "DimRecommendationModelRow",
     builtBy: "Prepared from model registry and deployment metadata so every recommendation fact row keeps immutable model lineage.",
     accent: "Dimension",
   },
   rpt_content_daily_metrics: {
-    color: "#14b8a6",
+    color: "#6f8584",
     objectName: "RptContentDailyMetricsRow",
     builtBy: "Prepared by daily Spark or dbt-style aggregation over trusted session facts, then published as the official business metric mart.",
     accent: "Gold mart",
@@ -1373,13 +1374,13 @@ const MODELING_TABLE_VISUALS = {
     accent: "Gold mart",
   },
   feature_user_genre_affinity: {
-    color: "#22c55e",
+    color: "#6e8178",
     objectName: "FeatureUserGenreAffinityRow",
     builtBy: "Prepared from watch history plus genre joins so offline training and online serving can share one consistent feature definition.",
     accent: "Feature",
   },
   feature_content_popularity: {
-    color: "#06b6d4",
+    color: "#6b8495",
     objectName: "FeatureContentPopularityRow",
     builtBy: "Prepared from nearline watch, start, and trend signals so recommendation systems can fetch a freshness-aware popularity feature.",
     accent: "Feature",
@@ -1429,23 +1430,23 @@ const MODELING_ER_LAYOUT = [
 const MODELING_ER_RELATIONSHIPS = [
   { from: "dim_user", to: "fact_playback_event", label: "profile / account", d: "M286 206 L380 206", color: T.green },
   { from: "dim_content", to: "fact_playback_event", label: "content_id", d: "M820 178 L730 178", color: T.blue },
-  { from: "dim_app_version", to: "fact_playback_event", label: "app_version", d: "M1210 178 L730 178", color: "#60a5fa" },
+  { from: "dim_app_version", to: "fact_playback_event", label: "app_version", d: "M1210 178 L730 178", color: "#71889a" },
   { from: "fact_playback_event", to: "fact_watch_session", label: "session rollup", d: "M555 266 L555 350", color: T.red },
-  { from: "dim_geography", to: "fact_watch_session", label: "geo", d: "M296 490 L380 490", color: "#14b8a6" },
+  { from: "dim_geography", to: "fact_watch_session", label: "geo", d: "M296 490 L380 490", color: "#6f8584" },
   { from: "dim_device", to: "fact_watch_session", label: "device", d: "M286 756 L380 756 L380 560", color: T.amber },
   { from: "dim_content", to: "fact_watch_session", label: "content_id", d: "M970 310 L970 250 L585 250 L585 350", color: T.blue },
   { from: "dim_date", to: "fact_watch_session", label: "event_date", d: "M1310 720 L790 720 L790 520", color: T.violet },
-  { from: "dim_time", to: "fact_qoe_event", label: "event_time", d: "M1310 460 L1240 460", color: "#a78bfa" },
-  { from: "dim_geography", to: "fact_qoe_event", label: "market / ISP", d: "M296 520 L820 520 L820 520 L860 520", color: "#14b8a6" },
+  { from: "dim_time", to: "fact_qoe_event", label: "event_time", d: "M1310 460 L1240 460", color: "#79737f" },
+  { from: "dim_geography", to: "fact_qoe_event", label: "market / ISP", d: "M296 520 L820 520 L820 520 L860 520", color: "#6f8584" },
   { from: "fact_watch_session", to: "fact_qoe_event", label: "session_id", d: "M790 470 L860 470", color: T.red },
-  { from: "fact_watch_session", to: "rpt_content_daily_metrics", label: "daily aggregate", d: "M790 650 L900 650 L900 980", color: "#14b8a6" },
+  { from: "fact_watch_session", to: "rpt_content_daily_metrics", label: "daily aggregate", d: "M790 650 L900 650 L900 980", color: "#6f8584" },
   { from: "dim_content", to: "rpt_content_daily_metrics", label: "title context", d: "M970 286 L970 900", color: T.blue },
   { from: "dim_user", to: "feature_user_genre_affinity", label: "user feature entity", d: "M161 350 L161 1240", color: T.green },
   { from: "dim_content", to: "feature_user_genre_affinity", label: "genre join", d: "M820 190 L414 190 L414 1240", color: T.blue },
-  { from: "fact_watch_session", to: "feature_content_popularity", label: "freshness signals", d: "M600 770 L600 1080 L640 1080 L640 1290", color: "#06b6d4" },
-  { from: "dim_content", to: "feature_content_popularity", label: "content entity", d: "M1120 190 L1120 1260 L810 1260", color: "#06b6d4" },
+  { from: "fact_watch_session", to: "feature_content_popularity", label: "freshness signals", d: "M600 770 L600 1080 L640 1080 L640 1290", color: "#6b8495" },
+  { from: "dim_content", to: "feature_content_popularity", label: "content entity", d: "M1120 190 L1120 1260 L810 1260", color: "#6b8495" },
   { from: "fact_browse_impression", to: "fact_recommendation_impression", label: "surface context", d: "M800 1010 L1140 1010 L1140 1480 L1300 1480", color: T.blue },
-  { from: "dim_recommendation_model", to: "fact_recommendation_impression", label: "model lineage", d: "M1240 1410 L1300 1410", color: "#c084fc" },
+  { from: "dim_recommendation_model", to: "fact_recommendation_impression", label: "model lineage", d: "M1240 1410 L1300 1410", color: "#7d7783" },
   { from: "dim_experiment", to: "fact_recommendation_impression", label: "experiment / variant", d: "M1440 1168 L1440 1320 L1510 1320 L1510 1360", color: T.purple },
 ] as const;
 
@@ -2147,180 +2148,19 @@ function DepthModeToggle({
 
 function TopTabStrip({
   activeTab,
-  visitedTabs,
-  progressPercent,
-  activeIndex,
-  total,
-  revisedCount,
   onNavigate,
 }: {
   activeTab: DataEngineeringTabSlug;
-  visitedTabs: Set<DataEngineeringTabSlug>;
-  progressPercent: number;
-  activeIndex: number;
-  total: number;
-  revisedCount: number;
   onNavigate: (tab: DataEngineeringTabSlug) => void;
 }) {
-  const railRef = useRef<HTMLDivElement | null>(null);
-  const [canScrollLeft, setCanScrollLeft] = useState(false);
-  const [canScrollRight, setCanScrollRight] = useState(false);
-
-  const syncRailButtons = useCallback(() => {
-    const rail = railRef.current;
-    if (!rail) return;
-    const maxScrollLeft = rail.scrollWidth - rail.clientWidth;
-    setCanScrollLeft(rail.scrollLeft > 8);
-    setCanScrollRight(rail.scrollLeft < maxScrollLeft - 8);
-  }, []);
-
-  useEffect(() => {
-    const rail = railRef.current;
-    if (!rail) return;
-
-    syncRailButtons();
-    const handleResize = () => syncRailButtons();
-    rail.addEventListener("scroll", syncRailButtons, { passive: true });
-    window.addEventListener("resize", handleResize);
-
-    return () => {
-      rail.removeEventListener("scroll", syncRailButtons);
-      window.removeEventListener("resize", handleResize);
-    };
-  }, [syncRailButtons]);
-
-  useEffect(() => {
-    const rail = railRef.current;
-    if (!rail) return;
-    const activeNode = rail.querySelector<HTMLElement>(`[data-tab-id="${activeTab}"]`);
-    activeNode?.scrollIntoView({ inline: "center", block: "nearest", behavior: "smooth" });
-    window.setTimeout(syncRailButtons, 180);
-  }, [activeTab, syncRailButtons]);
-
-  const nudgeRail = (direction: "left" | "right") => {
-    const rail = railRef.current;
-    if (!rail) return;
-    const delta = Math.max(320, Math.round(rail.clientWidth * 0.45));
-    rail.scrollBy({ left: direction === "right" ? delta : -delta, behavior: "smooth" });
-  };
-
-  const progressAngle = Math.max(12, Math.round((progressPercent / 100) * 360));
-
   return (
-    <>
-      <div className="shrink-0 h-[58px]" aria-hidden="true" />
-      <div
-        className="shrink-0 fixed left-0 right-0 z-20 border-b backdrop-blur-sm"
-        style={{ top: 56, borderColor: T.border, background: T.bg }}
-      >
-        <div className="relative flex items-center gap-3 px-4 xl:px-6 py-2">
-          <div className="shrink-0 flex items-center gap-3 rounded-[18px] px-3 py-1.5" style={{ background: T.card, border: `1px solid ${T.border}` }}>
-            <div
-              className="relative w-9 h-9 rounded-full flex items-center justify-center"
-              style={{ background: `conic-gradient(${T.blue} 0deg, ${T.amber} ${Math.max(0, progressAngle - 40)}deg, ${T.red} ${progressAngle}deg, ${T.card2} ${progressAngle}deg 360deg)` }}
-            >
-              <div className="w-6 h-6 rounded-full" style={{ background: T.bg }} />
-            </div>
-            <div className="hidden sm:block">
-              <p className="text-[10px] font-bold uppercase tracking-[0.18em]" style={{ color: T.faint }}>
-                Progress
-              </p>
-              <p className="text-[11px] mt-0.5" style={{ color: T.muted }}>
-                {visitedTabs.size} visited · {revisedCount} revised
-              </p>
-            </div>
-            <div className="w-px h-8" style={{ background: T.border }} />
-            <div>
-              <p className="text-[10px] font-bold uppercase tracking-[0.18em]" style={{ color: T.faint }}>
-                Chapter
-              </p>
-              <p className="text-sm font-bold mt-0.5" style={{ color: T.text }}>
-                {activeIndex + 1} / {total}
-              </p>
-            </div>
-          </div>
-          <div className="h-1 absolute left-0 right-0 top-0 overflow-hidden pointer-events-none" style={{ background: T.card2 }}>
-            <div className="h-full transition-all duration-300" style={{ width: `${progressPercent}%`, background: `linear-gradient(90deg, ${T.red}, ${T.amber}, ${T.blue})` }} />
-          </div>
-          <div className="relative flex-1 min-w-0">
-          <div
-            className={cn(
-              "pointer-events-none absolute inset-y-0 left-0 w-16 z-10 hidden xl:block transition-opacity",
-              canScrollLeft ? "opacity-100" : "opacity-0"
-            )}
-            style={{ background: `linear-gradient(90deg, ${T.bg} 30%, transparent)` }}
-          />
-          <div
-            className={cn(
-              "pointer-events-none absolute inset-y-0 right-0 w-24 z-10 hidden xl:block transition-opacity",
-              canScrollRight ? "opacity-100" : "opacity-0"
-            )}
-            style={{ background: `linear-gradient(270deg, ${T.bg} 35%, transparent)` }}
-          />
-          <button
-            onClick={() => nudgeRail("left")}
-            className={cn(
-              "hidden xl:flex absolute left-4 top-1/2 -translate-y-1/2 z-20 w-9 h-9 rounded-full items-center justify-center transition-all",
-              canScrollLeft ? "opacity-100" : "opacity-0 pointer-events-none"
-            )}
-            style={{ background: T.text, color: T.bg, border: `1px solid ${T.text}`, boxShadow: `0 10px 24px ${T.bg}` }}
-            aria-label="Scroll chapters left"
-          >
-            <svg width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden="true">
-              <path d="M8.75 2.5L4.25 7L8.75 11.5" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" />
-            </svg>
-          </button>
-          <button
-            onClick={() => nudgeRail("right")}
-            className={cn(
-              "hidden xl:flex absolute right-4 top-1/2 -translate-y-1/2 z-20 w-9 h-9 rounded-full items-center justify-center transition-all",
-              canScrollRight ? "opacity-100" : "opacity-0 pointer-events-none"
-            )}
-            style={{ background: T.text, color: T.bg, border: `1px solid ${T.text}`, boxShadow: `0 10px 24px ${T.bg}` }}
-            aria-label="Scroll chapters right"
-          >
-            <svg width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden="true">
-              <path d="M5.25 2.5L9.75 7L5.25 11.5" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" />
-            </svg>
-          </button>
-          <div ref={railRef} className="pr-10 xl:pr-12 overflow-x-auto no-scrollbar">
-            <div className="flex gap-2 min-w-max items-stretch">
-            {VISIBLE_DATA_ENGINEERING_TABS.map((tab, index) => {
-              const active = tab.id === activeTab;
-              return (
-                <button
-                  key={tab.id}
-                  data-tab-id={tab.id}
-                  onClick={() => onNavigate(tab.id)}
-                  className="min-w-0 rounded-xl px-2.5 py-2 text-left cursor-pointer transition-all duration-200 hover:-translate-y-0.5"
-                  style={{
-                    background: active ? `${tab.accent}16` : T.card,
-                    border: `1px solid ${active ? `${tab.accent}36` : T.border}`,
-                    flex: "0 0 auto",
-                    boxShadow: active ? `0 10px 24px ${tab.accent}18` : "none",
-                  }}
-                >
-                  <div className="flex items-center gap-2">
-                    <span className="text-[10px] font-bold uppercase tracking-[0.16em]" style={{ color: active ? tab.accent : T.faint }}>
-                      {String(index + 1).padStart(2, "0")}
-                    </span>
-                    <span className="text-[13px] font-semibold leading-5 whitespace-nowrap" style={{ color: T.text }}>
-                      {tab.label}
-                    </span>
-                    {visitedTabs.has(tab.id) ? <span className="text-[10px]" style={{ color: T.green }}>●</span> : null}
-                    <span className="text-xs" style={{ color: active ? tab.accent : T.faint }}>
-                      →
-                    </span>
-                  </div>
-                </button>
-              );
-            })}
-          </div>
-          </div>
-        </div>
-        </div>
-      </div>
-    </>
+    <CompanyChapterRail
+      company="netflix"
+      chapters={VISIBLE_DATA_ENGINEERING_TABS}
+      activeId={activeTab}
+      hrefFor={(id) => `/system-design/netflix-data-engineering/${id}`}
+      onNavigate={(id) => onNavigate(id as DataEngineeringTabSlug)}
+    />
   );
 }
 
@@ -2333,22 +2173,26 @@ function Sidebar({
   activeSectionId: string;
   onNavigateSection: (sectionId: string) => void;
 }) {
-  if (activeTab === "data-modeling") return null;
   const sections = PRODUCT_TAB_SECTIONS[activeTab];
   const accent = DATA_ENGINEERING_TABS.find((tab) => tab.id === activeTab)?.accent ?? T.red;
 
   return (
     <>
-      <aside className="hidden xl:block w-[232px] shrink-0 self-start" aria-hidden="true" />
+      <aside className="hidden w-[250px] shrink-0 self-start border-r xl:block" style={{ borderColor: T.border }} aria-hidden="true" />
       <div
-        className="hidden xl:block fixed left-0 z-20 w-[232px] overflow-y-auto no-scrollbar px-4 py-3"
+        data-testid="anchor-rail"
+        className="fixed z-20 hidden w-[218px] overflow-y-auto pr-1 xl:block"
         style={{
-          top: 114,
+          left: "max(16px, calc((100vw - 1600px) / 2 + 16px))",
+          top: 140,
           bottom: 16,
-          borderRight: `1px solid ${T.border}`,
           background: T.bg,
         }}
       >
+        <div className="mb-6 flex items-center gap-3">
+          <Image src="/logo-netflix.webp" alt="Netflix" width={36} height={36} className="h-9 w-9 rounded-lg object-contain" />
+          <p className="text-base font-bold" style={{ color: T.text }}>Netflix</p>
+        </div>
         <p className="mb-3 text-[10px] font-bold uppercase tracking-[0.22em]" style={{ color: T.faint }}>
           Page anchors
         </p>
@@ -2360,22 +2204,23 @@ function Sidebar({
                 key={section.id}
                 data-testid={`stage-nav-${section.id}`}
                 onClick={() => onNavigateSection(section.id)}
-                className="w-full text-left rounded-2xl px-3 py-3 cursor-pointer transition-all hover:-translate-y-px"
+                className="relative flex min-h-[54px] w-full cursor-pointer items-center gap-3 overflow-hidden rounded-md border px-3 py-2 text-left text-xs font-semibold leading-4 transition-all"
                 style={{
                   background: active ? `${accent}12` : T.card,
                   border: `1px solid ${active ? `${accent}33` : T.border}`,
                   boxShadow: active ? `0 10px 22px ${accent}12` : "none",
                 }}
               >
-                <div className="flex items-start gap-3">
+                {active ? <span className="absolute inset-y-0 left-0 w-1" style={{ background: accent }} /> : null}
+                <div className="flex items-center gap-3">
                   <span
-                    className="w-7 h-7 rounded-xl flex items-center justify-center text-[11px] font-bold shrink-0"
-                    style={{ background: active ? `${accent}22` : T.card2, color: active ? accent : T.faint }}
+                    className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-[10px] font-bold"
+                    style={{ background: active ? accent : T.card2, color: active ? "white" : T.faint }}
                   >
                     {index + 1}
                   </span>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm font-semibold" style={{ color: T.text }}>
+                  <div className="min-w-0 flex-1">
+                    <p className="text-xs font-semibold leading-4" style={{ color: active ? T.text : T.muted }}>
                       {section.title}
                     </p>
                   </div>
@@ -3240,7 +3085,7 @@ function ErDiagramPanel() {
                 width="1760"
                 height="1480"
                 rx="28"
-                fill="#0c1218"
+                fill="#f4f7fb"
               />
 
               <g fill="none" strokeWidth="1.4">
@@ -3323,8 +3168,8 @@ function ErDiagramPanel() {
                       width={node.width}
                       height={boxHeight}
                       rx="18"
-                      fill={isActive ? `${visual.color}16` : "#171e27"}
-                      stroke={isActive ? visual.color : "#374350"}
+                      fill={isActive ? `${visual.color}16` : "#eef3f7"}
+                      stroke={isActive ? visual.color : "#a7b2bc"}
                       strokeWidth={isActive ? 1.8 : 1}
                     />
                     <rect
@@ -3333,12 +3178,12 @@ function ErDiagramPanel() {
                       width={node.width}
                       height={headerHeight}
                       rx="18"
-                      fill={isActive ? `${visual.color}1f` : "#1a2430"}
+                      fill={isActive ? `${visual.color}1f` : "#e7eef4"}
                     />
                     <text x="16" y="22" fontSize="10" fontWeight="700" fill={visual.color} letterSpacing="0.16em">
                       {visual.accent.toUpperCase()}
                     </text>
-                    <text x="16" y="42" fontSize="16" fontWeight="700" fill="#f8fafc">
+                    <text x="16" y="42" fontSize="16" fontWeight="700" fill="#17202b">
                       {table.name}
                     </text>
 
@@ -3382,7 +3227,7 @@ function ErDiagramPanel() {
                             y="14"
                             fontSize="10"
                             fontWeight="700"
-                            fill={column.name.endsWith("_id") || column.name.endsWith("_sk") ? visual.color : "#cbd5e1"}
+                            fill={column.name.endsWith("_id") || column.name.endsWith("_sk") ? visual.color : "#526171"}
                           >
                             {column.name}
                           </text>
@@ -3450,17 +3295,17 @@ function ErDiagramPanel() {
               {activeColumn ? activeColumn.definition : activeTable.useCase}
             </p>
             {activeColumn && "formula" in activeColumn && activeColumn.formula ? (
-              <div className="mt-3 rounded-xl p-3 font-mono text-xs" style={{ background: "#111821", border: `1px solid ${T.border}`, color: T.text }}>
+              <div className="mt-3 rounded-xl p-3 font-mono text-xs" style={{ background: "#eef4f9", border: `1px solid ${T.border}`, color: T.text }}>
                 {activeColumn.formula}
               </div>
             ) : null}
           </div>
 
-          <div className="rounded-[20px] p-4" style={{ background: "#0d131a", border: `1px solid ${T.border}` }}>
+          <div className="rounded-[20px] p-4" style={{ background: "#eaf1f7", border: `1px solid ${T.border}` }}>
             <p className="text-[10px] font-bold uppercase tracking-[0.18em]" style={{ color: activeVisual.color }}>
               Row object shape
             </p>
-            <pre className="mt-3 overflow-x-auto whitespace-pre-wrap font-mono text-[12px] leading-6" style={{ color: "#cbd5e1" }}>
+            <pre className="mt-3 overflow-x-auto whitespace-pre-wrap font-mono text-[12px] leading-6" style={{ color: "#526171" }}>
               {objectSnippet.lines.map((line, index) => {
                 const highlighted =
                   activeColumn
@@ -3471,7 +3316,7 @@ function ErDiagramPanel() {
                     className="rounded-lg px-2"
                     style={{
                       background: highlighted ? `${activeVisual.color}18` : "transparent",
-                      color: highlighted ? "#ffffff" : "#cbd5e1",
+                      color: highlighted ? "#17202b" : "#526171",
                     }}
                   >
                     {line}
@@ -7375,39 +7220,39 @@ function HighLevelArchitectureDiagram() {
   );
 
   const toneStyles = {
-    blue: { fill: "#132436", stroke: "#28517a", title: "#4ea3ff", subtitle: "#8fb8de" },
-    purple: { fill: "#20182f", stroke: "#493670", title: "#b98bff", subtitle: "#c9b0f2" },
-    teal: { fill: "#0f2620", stroke: "#1f5c48", title: "#3ddbb0", subtitle: "#8fd8bf" },
-    coral: { fill: "#2a1a10", stroke: "#6b3d1e", title: "#ff9466", subtitle: "#e8b294" },
-    gray: { fill: "#1a2129", stroke: "#374350", title: "#aab4bf", subtitle: "#8b97a3" },
+    blue: { fill: "#e8f0f6", stroke: "#9caebe", title: "#667f94", subtitle: "#65788a" },
+    purple: { fill: "#eef0f4", stroke: "#aaa3ae", title: "#7a7480", subtitle: "#746f79" },
+    teal: { fill: "#edf2f1", stroke: "#9caaa4", title: "#6d827c", subtitle: "#6c7f77" },
+    coral: { fill: "#f2f0ed", stroke: "#afa69d", title: "#82766f", subtitle: "#7e746c" },
+    gray: { fill: "#edf1f4", stroke: "#a7b2bc", title: "#526171", subtitle: "#68798a" },
   } as const;
 
   const connectorPaths = useMemo(
     () => [
-      { d: "M340 96 L340 136", stroke: "#aab4bf" },
-      { d: "M340 192 L340 232", stroke: "#aab4bf" },
-      { d: "M340 296 L340 336", stroke: "#4ea3ff" },
-      { d: "M340 400 L340 420 L135 420 L135 440", stroke: "#b98bff" },
-      { d: "M340 400 L340 440", stroke: "#3ddbb0" },
-      { d: "M340 400 L340 420 L545 420 L545 440", stroke: "#ff9466" },
-      { d: "M135 512 L135 528 L110 528 L110 552", stroke: "#aab4bf" },
-      { d: "M135 512 L135 528 L270 528 L270 552", stroke: "#aab4bf" },
-      { d: "M135 512 L135 528 L430 528 L430 552", stroke: "#aab4bf" },
-      { d: "M340 512 L340 536 L565 536 L565 648 L340 648 L340 664", stroke: "#3ddbb0" },
-      { d: "M340 728 L340 744 L200 744 L200 768", stroke: "#b98bff" },
-      { d: "M340 728 L340 744 L485 744 L485 768", stroke: "#aab4bf" },
-      { d: "M200 840 L200 856 L340 856 L340 872", stroke: "#aab4bf" },
-      { d: "M485 840 L485 856 L340 856 L340 872", stroke: "#aab4bf" },
+      { d: "M340 96 L340 136", stroke: "#526171" },
+      { d: "M340 192 L340 232", stroke: "#526171" },
+      { d: "M340 296 L340 336", stroke: "#667f94" },
+      { d: "M340 400 L340 420 L135 420 L135 440", stroke: "#7a7480" },
+      { d: "M340 400 L340 440", stroke: "#6d827c" },
+      { d: "M340 400 L340 420 L545 420 L545 440", stroke: "#82766f" },
+      { d: "M135 512 L135 528 L110 528 L110 552", stroke: "#526171" },
+      { d: "M135 512 L135 528 L270 528 L270 552", stroke: "#526171" },
+      { d: "M135 512 L135 528 L430 528 L430 552", stroke: "#526171" },
+      { d: "M340 512 L340 536 L565 536 L565 648 L340 648 L340 664", stroke: "#6d827c" },
+      { d: "M340 728 L340 744 L200 744 L200 768", stroke: "#7a7480" },
+      { d: "M340 728 L340 744 L485 744 L485 768", stroke: "#526171" },
+      { d: "M200 840 L200 856 L340 856 L340 872", stroke: "#526171" },
+      { d: "M485 840 L485 856 L340 856 L340 872", stroke: "#526171" },
     ],
     [],
   );
 
   const connectorLabels = [
-    { x: 370, y: 216, text: "HTTPS / gRPC", color: "#aab4bf" },
-    { x: 365, y: 318, text: "Avro + schema registry", color: "#4ea3ff" },
-    { x: 98, y: 415, text: "real-time fan-out", color: "#b98bff" },
-    { x: 284, y: 410, text: "analytical fan-out", color: "#3ddbb0" },
-    { x: 478, y: 415, text: "CDC fan-out", color: "#ff9466" },
+    { x: 370, y: 216, text: "HTTPS / gRPC", color: "#526171" },
+    { x: 365, y: 318, text: "Avro + schema registry", color: "#667f94" },
+    { x: 98, y: 415, text: "real-time fan-out", color: "#7a7480" },
+    { x: 284, y: 410, text: "analytical fan-out", color: "#6d827c" },
+    { x: 478, y: 415, text: "CDC fan-out", color: "#82766f" },
   ] as const;
 
   const activeNode = architectureNodes.find((node) => node.id === activeNodeId) ?? null;
@@ -7443,11 +7288,11 @@ function HighLevelArchitectureDiagram() {
             style={{
               scrollbarGutter: "stable",
               background:
-                "radial-gradient(circle at top, rgba(78,163,255,0.08), transparent 34%), linear-gradient(180deg, rgba(15,21,28,0.98), rgba(11,15,20,0.98))",
+                "radial-gradient(circle at top, rgba(102,127,148,0.12), transparent 36%), linear-gradient(180deg, #f4f7fb, #eef4f9)",
               border: `1px solid ${T.border}`,
             }}
           >
-            <div className="sticky top-0 z-20 flex items-center justify-between gap-3 px-4 py-3" style={{ background: "linear-gradient(180deg, rgba(15,21,28,0.98), rgba(15,21,28,0.86))", borderBottom: `1px solid ${T.border}` }}>
+            <div className="sticky top-0 z-20 flex items-center justify-between gap-3 px-4 py-3" style={{ background: "linear-gradient(180deg, rgba(255,255,255,0.98), rgba(238,244,249,0.96))", borderBottom: `1px solid ${T.border}` }}>
               <div className="text-[11px] font-semibold" style={{ color: T.faint }}>
                 Explore the architecture
               </div>
@@ -7692,8 +7537,8 @@ function Section4EnvelopeStudio() {
             );
           })}
         </div>
-        <div className="mt-5 rounded-[22px] p-4 font-mono text-[12px] leading-7" style={{ background: "#0d131a", border: `1px solid ${T.border}` }}>
-          <div style={{ color: "#7dd3fc" }}>{"{"}</div>
+        <div className="mt-5 rounded-[22px] p-4 font-mono text-[12px] leading-7" style={{ background: "#eaf1f7", border: `1px solid ${T.border}` }}>
+          <div style={{ color: "#8497a6" }}>{"{"}</div>
           {SECTION4_ENVELOPE_FIELDS.map((field) => {
             const active = field.id === activeField.id;
             return (
@@ -7708,7 +7553,7 @@ function Section4EnvelopeStudio() {
                 className="rounded-xl px-3"
                 style={{
                   background: active ? `${field.color}14` : "transparent",
-                  color: active ? "#f8fafc" : "#94a3b8",
+                  color: active ? "#17202b" : "#64748b",
                   border: active ? `1px solid ${field.color}30` : "1px solid transparent",
                 }}
               >
@@ -7716,7 +7561,7 @@ function Section4EnvelopeStudio() {
               </motion.div>
             );
           })}
-          <div style={{ color: "#7dd3fc" }}>{"}"}</div>
+          <div style={{ color: "#8497a6" }}>{"}"}</div>
         </div>
       </div>
 
@@ -8909,8 +8754,6 @@ export default function DataEngineeringPage({ initialTab }: { initialTab?: strin
     () => [...revisedTabs].filter((tabId) => VISIBLE_DATA_ENGINEERING_TABS.some((tab) => tab.id === tabId)).length,
     [revisedTabs]
   );
-  const overallProgressPercent = Math.max(6, Math.round((visibleVisitedCount / VISIBLE_DATA_ENGINEERING_TABS.length) * 100));
-
   const prevTab = VISIBLE_DATA_ENGINEERING_TABS[activeIndex - 1];
   const nextTab = VISIBLE_DATA_ENGINEERING_TABS[activeIndex + 1];
   const activeSections = PRODUCT_TAB_SECTIONS[activeTab];
@@ -9009,27 +8852,21 @@ export default function DataEngineeringPage({ initialTab }: { initialTab?: strin
   };
 
   return (
-    <div className="flex flex-col min-h-0" style={{ minHeight: "calc(100dvh - 56px)", background: T.bg, color: T.text }}>
+    <div className="netflix-de-page flex flex-col min-h-0" style={{ minHeight: "calc(100dvh - 56px)", background: T.bg, color: T.text }}>
       {!focusMode ? (
         <TopTabStrip
           activeTab={activeTab}
-          visitedTabs={visitedTabs}
-          progressPercent={overallProgressPercent}
-          activeIndex={activeIndex}
-          total={VISIBLE_DATA_ENGINEERING_TABS.length}
-          revisedCount={revisedTabs.size}
           onNavigate={switchTab}
         />
       ) : null}
 
       {!focusMode ? (
-        activeTab === "data-modeling" ? null : (
           <>
             <div className="xl:hidden h-[60px]" aria-hidden="true" />
             <div
               className="xl:hidden fixed left-0 right-0 z-30 px-4 py-3 flex items-center justify-between backdrop-blur-md"
               style={{
-                top: 112,
+                top: 124,
                 borderBottom: `1px solid ${T.border}`,
                 background: "color-mix(in srgb, var(--bg) 88%, transparent)",
               }}
@@ -9047,10 +8884,9 @@ export default function DataEngineeringPage({ initialTab }: { initialTab?: strin
               </button>
             </div>
           </>
-        )
       ) : null}
 
-      <div className="flex-1 min-h-0 flex">
+      <div className="mx-auto flex min-h-0 w-full max-w-[1600px] flex-1">
         {!focusMode ? (
           <Sidebar activeTab={activeTab} activeSectionId={activeSectionId} onNavigateSection={navigateSection} />
         ) : null}
@@ -9079,9 +8915,7 @@ export default function DataEngineeringPage({ initialTab }: { initialTab?: strin
         </ScrollableShell>
       </div>
 
-      {activeTab === "data-modeling" ? null : (
-        <MobileMenu activeTab={activeTab} open={mobileMenuOpen} onClose={() => setMobileMenuOpen(false)} onNavigateSection={navigateSection} />
-      )}
+      <MobileMenu activeTab={activeTab} open={mobileMenuOpen} onClose={() => setMobileMenuOpen(false)} onNavigateSection={navigateSection} />
 
       {focusMode ? (
         <div className="fixed top-0 left-0 right-0 z-50 px-4 py-2 flex items-center justify-between" style={{ background: `${T.red}ee` }}>
@@ -9170,6 +9004,16 @@ export default function DataEngineeringPage({ initialTab }: { initialTab?: strin
       ) : null}
 
       <style>{`
+        .netflix-de-page {
+          --bg: #f4f7fb;
+          --bg-card: #ffffff;
+          --bg-muted: #eef4f9;
+          --border: #d6e1eb;
+          --text: #17202b;
+          --text-muted: #526171;
+          --text-faint: #76879a;
+          color-scheme: light;
+        }
         .moving-dot {
           animation: moveDot 4.2s linear infinite;
         }
