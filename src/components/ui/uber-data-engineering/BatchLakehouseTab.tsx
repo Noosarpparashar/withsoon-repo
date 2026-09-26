@@ -4,6 +4,10 @@ import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import { UBER_BATCH_SECTIONS } from "./data";
 import AnchorBrand from "./AnchorBrand";
+import {
+  getActiveDataDesignSection,
+  scrollToDataDesignSection,
+} from "../data-design/sectionAnchors";
 
 const C = {
   card: "var(--bg-card)",
@@ -11,14 +15,14 @@ const C = {
   border: "var(--border)",
   text: "var(--text)",
   muted: "var(--text-muted)",
-  blue: "#526b82",
-  cyan: "#657e90",
-  green: "#667a70",
-  amber: "#796f64",
-  violet: "#526b82",
-  bronze: "#82776e",
-  silver: "#a7b1c2",
-  gold: "#8b8377",
+  blue: "#42586c",
+  cyan: "#445e72",
+  green: "#50675d",
+  amber: "#625346",
+  violet: "#42586c",
+  bronze: "#62594f",
+  silver: "#59697a",
+  gold: "#655e55",
 };
 const SYSTEMS = [
   {
@@ -187,7 +191,7 @@ function Anchors({ active, go }: { active: string; go: (id: string) => void }) {
                 style={{
                   borderColor: selected ? C.blue : C.border,
                   background: selected
-                    ? "color-mix(in srgb, #526b82 13%, var(--bg-card))"
+                    ? "color-mix(in srgb, #42586c 13%, var(--bg-card))"
                     : C.card,
                   color: selected ? C.text : C.muted,
                 }}
@@ -236,7 +240,6 @@ function Section({
       style={{
         borderColor: `${color}38`,
         background: C.card,
-        scrollMarginTop: 140,
       }}
     >
       <h2 className="text-2xl font-semibold">{title}</h2>
@@ -270,6 +273,8 @@ function ArchitectureFlow() {
           {SYSTEMS.map((system, index) => (
             <div className="contents" key={system.id}>
               <button
+                type="button"
+                aria-pressed={active === system.id}
                 onMouseEnter={() => setActive(system.id)}
                 onFocus={() => setActive(system.id)}
                 onClick={() => setActive(system.id)}
@@ -670,33 +675,18 @@ export default function BatchLakehouseTab() {
   useEffect(() => {
     const sync = () => {
       if (lock.current) return;
-      const nodes = UBER_BATCH_SECTIONS.map((section) => {
-        const node = document.getElementById(section.id);
-        return node
-          ? { id: section.id, top: node.getBoundingClientRect().top }
-          : null;
-      }).filter((item): item is NonNullable<typeof item> => item !== null);
-      if (nodes.length)
-        setActive(
-          nodes.reduce((a, b) =>
-            Math.abs(b.top - 180) < Math.abs(a.top - 180) ? b : a,
-          ).id,
-        );
+      setActive(getActiveDataDesignSection(UBER_BATCH_SECTIONS));
     };
     sync();
     addEventListener("scroll", sync, { passive: true });
     return () => removeEventListener("scroll", sync);
   }, []);
   const go = (id: string) => {
-    const node = document.getElementById(id);
-    if (!node) return;
+    if (!document.getElementById(id)) return;
     if (lock.current) clearTimeout(lock.current);
     history.replaceState(null, "", `/data-engineering/uber/batch-pipelines#${id}`);
     setActive(id);
-    scrollTo({
-      top: node.getBoundingClientRect().top + scrollY - 140,
-      behavior: "smooth",
-    });
+    scrollToDataDesignSection(id);
     lock.current = window.setTimeout(() => {
       setActive(id);
       lock.current = null;

@@ -5,6 +5,10 @@ import { useEffect, useRef, useState } from "react";
 import { UBER_INTERVIEW_SECTIONS } from "./data";
 import { UBER_INTERVIEW_ANSWERS } from "./interviewAnswers";
 import AnchorBrand from "./AnchorBrand";
+import {
+  getActiveDataDesignSection,
+  scrollToDataDesignSection,
+} from "../data-design/sectionAnchors";
 
 const C = {
   card: "var(--bg-card)",
@@ -12,10 +16,10 @@ const C = {
   border: "var(--border)",
   text: "var(--text)",
   muted: "var(--text-muted)",
-  blue: "#526b82",
-  cyan: "#657e90",
-  green: "#667a70",
-  amber: "#796f64",
+  blue: "#42586c",
+  cyan: "#445e72",
+  green: "#50675d",
+  amber: "#625346",
 };
 
 type CategoryId = "foundations" | "streaming" | "modeling" | "reliability";
@@ -708,7 +712,7 @@ function Anchors({ active, go }: { active: string; go: (id: string) => void }) {
                 style={{
                   borderColor: selected ? C.blue : C.border,
                   background: selected
-                    ? "color-mix(in srgb, #526b82 13%, var(--bg-card))"
+                    ? "color-mix(in srgb, #42586c 13%, var(--bg-card))"
                     : C.card,
                   color: selected ? C.text : C.muted,
                 }}
@@ -758,7 +762,6 @@ function Section({
       style={{
         borderColor: `${color}3d`,
         background: C.card,
-        scrollMarginTop: 140,
       }}
     >
       <h2 className="text-2xl font-semibold">{title}</h2>
@@ -794,11 +797,18 @@ function QuestionBank() {
       style={{ borderColor: C.border, background: C.card2 }}
     >
       <div
+        role="tablist"
+        aria-label="Interview question categories"
         className="grid gap-2 border-b p-3 sm:grid-cols-4"
         style={{ borderColor: C.border }}
       >
         {CATEGORIES.map((item) => (
           <button
+            type="button"
+            role="tab"
+            id={`uber-question-category-${item.id}`}
+            aria-selected={category === item.id}
+            aria-controls="uber-question-category-panel"
             key={item.id}
             onClick={() => chooseCategory(item.id)}
             className="rounded-md border px-3 py-2 text-sm font-semibold"
@@ -815,14 +825,20 @@ function QuestionBank() {
           </button>
         ))}
       </div>
-      <div className="grid lg:grid-cols-[minmax(290px,38%)_1fr]">
+      <div id="uber-question-category-panel" role="tabpanel" aria-labelledby={`uber-question-category-${category}`} className="grid lg:grid-cols-[minmax(290px,38%)_1fr]">
         <div
+          role="radiogroup"
+          aria-label={`${CATEGORIES.find((item) => item.id === category)?.label ?? "Interview"} questions`}
           className="border-b p-3 lg:border-b-0 lg:border-r"
           style={{ borderColor: C.border }}
         >
           <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-1">
             {categoryQuestions.map((item, index) => (
               <button
+                type="button"
+                role="radio"
+                aria-checked={selected.id === item.id}
+                aria-controls="uber-interview-answer"
                 key={item.id}
                 data-testid="interview-question"
                 onMouseEnter={() => setSelectedId(item.id)}
@@ -847,7 +863,7 @@ function QuestionBank() {
             ))}
           </div>
         </div>
-        <aside data-testid="interview-answer" className="self-center p-5">
+        <aside id="uber-interview-answer" data-testid="interview-answer" aria-live="polite" aria-atomic="true" className="self-center p-5">
           <p
             className="text-[10px] font-bold uppercase tracking-[.14em]"
             style={{ color: accent }}
@@ -966,33 +982,18 @@ export default function InterviewQATab() {
   useEffect(() => {
     const sync = () => {
       if (lock.current) return;
-      const nodes = UBER_INTERVIEW_SECTIONS.map((section) => {
-        const node = document.getElementById(section.id);
-        return node
-          ? { id: section.id, top: node.getBoundingClientRect().top }
-          : null;
-      }).filter((item): item is NonNullable<typeof item> => item !== null);
-      if (nodes.length)
-        setActive(
-          nodes.reduce((a, b) =>
-            Math.abs(b.top - 180) < Math.abs(a.top - 180) ? b : a,
-          ).id,
-        );
+      setActive(getActiveDataDesignSection(UBER_INTERVIEW_SECTIONS));
     };
     sync();
     addEventListener("scroll", sync, { passive: true });
     return () => removeEventListener("scroll", sync);
   }, []);
   const go = (id: string) => {
-    const node = document.getElementById(id);
-    if (!node) return;
+    if (!document.getElementById(id)) return;
     if (lock.current) clearTimeout(lock.current);
     history.replaceState(null, "", `/data-engineering/uber/quiz#${id}`);
     setActive(id);
-    scrollTo({
-      top: node.getBoundingClientRect().top + scrollY - 140,
-      behavior: "smooth",
-    });
+    scrollToDataDesignSection(id);
     lock.current = window.setTimeout(() => {
       setActive(id);
       lock.current = null;

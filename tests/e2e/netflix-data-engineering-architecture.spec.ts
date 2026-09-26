@@ -33,13 +33,15 @@ test.describe("Netflix Data Engineering — Architecture high-level diagram", ()
     await expect(page.locator('[data-id="consumption"]')).toContainText(/Consumption layer/i);
   });
 
-  test("architecture map lives inside the scrollable shell", async ({ page }) => {
+  test("architecture map lives inside the document scroll shell", async ({ page }) => {
     await page.goto("/data-engineering/netflix/architecture#arch-layered");
 
-    const shell = page.locator(".flex-1.overflow-y-auto.relative.no-scrollbar").first();
-    const metrics = await shell.evaluate((node) => ({
-      scrollHeight: node.scrollHeight,
-      clientHeight: node.clientHeight,
+    const shell = page.locator("[data-de-scroll-shell]").first();
+    await expect(shell.getByTestId("architecture-high-level-flow")).toBeVisible();
+
+    const metrics = await page.evaluate(() => ({
+      scrollHeight: document.documentElement.scrollHeight,
+      clientHeight: document.documentElement.clientHeight,
     }));
 
     expect(metrics.scrollHeight).toBeGreaterThan(metrics.clientHeight);

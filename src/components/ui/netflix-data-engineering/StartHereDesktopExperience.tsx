@@ -1,15 +1,15 @@
 "use client";
 
-import type { ReactNode } from "react";
+import { useId, useState, type ReactNode } from "react";
 import { motion, useReducedMotion } from "motion/react";
 
 const C = {
   red: "#5f565a",
-  amber: "#827a70",
-  gold: "#8b8377",
-  blue: "#6f879a",
-  green: "#6e8178",
-  violet: "#716b78",
+  amber: "#62594f",
+  gold: "#655e55",
+  blue: "#49667d",
+  green: "#50675d",
+  violet: "#5b5263",
   text: "var(--text)",
   muted: "var(--text-muted)",
   faint: "var(--text-faint)",
@@ -394,11 +394,11 @@ function Box({
   children: ReactNode;
 }) {
   return (
-    <section id={id} className="scroll-mt-24 rounded-[28px] p-6" style={{ background: C.card, border: `1px solid ${color}1f` }}>
+    <section id={id} className="rounded-[24px] p-4 sm:p-5 xl:rounded-[28px] xl:p-6" style={{ background: C.card, border: `1px solid ${color}1f` }}>
       <p className="text-[10px] font-bold uppercase tracking-[0.2em]" style={{ color }}>
         {eyebrow}
       </p>
-      <h2 className="mt-3 text-[1.8rem] font-semibold tracking-[-0.04em] leading-[1.02]" style={{ color: C.text }}>
+      <h2 className="mt-3 text-[1.55rem] font-semibold tracking-[-0.04em] leading-[1.08] sm:text-[1.8rem] sm:leading-[1.02]" style={{ color: C.text }}>
         {title}
       </h2>
       <p className="mt-2 max-w-3xl text-sm leading-7" style={{ color: C.muted }}>
@@ -409,12 +409,29 @@ function Box({
   );
 }
 
+function NetflixExplanationCopy({ item, mobile = false }: { item: DetailItem; mobile?: boolean }) {
+  const example = item.examples.replace(/^Examples?:\s*/i, "");
+
+  return (
+    <div data-testid="explainer-copy" className="max-w-[65ch]">
+      <p className={mobile ? "text-sm leading-6" : "text-[12px] leading-5"} style={{ color: C.muted }}>
+        {item.detail} {item.why}
+      </p>
+      <p className={mobile ? "mt-3 text-sm leading-6" : "mt-2 text-[11px] leading-5"} style={{ color: C.faint }}>
+        <strong style={{ color: C.text }}>Netflix example: </strong>{example}
+      </p>
+    </div>
+  );
+}
+
 function RichTooltip({
   item,
   placement = "bottom",
+  id,
 }: {
   item: DetailItem;
   placement?: TooltipPlacement;
+  id: string;
 }) {
   const placementClassName =
     placement === "right"
@@ -425,7 +442,9 @@ function RichTooltip({
 
   return (
     <div
-      className={`pointer-events-none absolute z-30 w-[22rem] rounded-[22px] px-4 py-4 opacity-0 shadow-[0_24px_60px_rgba(0,0,0,0.38)] transition-all duration-150 group-hover:opacity-100 ${placementClassName}`}
+      id={id}
+      role="tooltip"
+      className={`pointer-events-none absolute z-30 hidden w-[min(25rem,calc(100vw-24px))] max-w-[65ch] rounded-xl px-4 py-3 opacity-0 shadow-[0_18px_44px_rgba(0,0,0,0.3)] transition-all duration-150 group-hover:opacity-100 group-focus-within:opacity-100 xl:block ${placementClassName}`}
       style={{ background: "color-mix(in srgb, var(--bg-card) 97%, black)", border: `1px solid ${item.color}30` }}
     >
       <div className="flex items-center gap-3">
@@ -441,15 +460,7 @@ function RichTooltip({
           </p>
         </div>
       </div>
-      <p className="mt-3 text-[12px] leading-5" style={{ color: C.muted }}>
-        {item.detail}
-      </p>
-      <p className="mt-3 text-[11px] leading-5" style={{ color: C.faint }}>
-        {item.examples}
-      </p>
-      <p className="mt-3 text-[11px] leading-5" style={{ color: C.muted }}>
-        {item.why}
-      </p>
+      <div className="mt-3"><NetflixExplanationCopy item={item} /></div>
     </div>
   );
 }
@@ -459,20 +470,30 @@ function HoverItem({
   compact = false,
   simple = false,
   placement = "bottom",
+  selected = false,
+  onSelect,
 }: {
   item: DetailItem;
   compact?: boolean;
   simple?: boolean;
   placement?: TooltipPlacement;
+  selected?: boolean;
+  onSelect: (item: DetailItem) => void;
 }) {
   const reduceMotion = useReducedMotion();
+  const tooltipId = useId();
 
   return (
-    <div className="group relative block w-full cursor-pointer">
-      <motion.div
+    <div className="group relative block w-full">
+      <motion.button
+        type="button"
+        aria-describedby={tooltipId}
+        aria-haspopup="dialog"
+        aria-expanded={selected}
+        onClick={() => onSelect(item)}
         whileHover={reduceMotion ? undefined : { y: -3 }}
-        className={compact ? "w-full rounded-[18px] px-4 py-3 cursor-pointer" : simple ? "w-full rounded-[18px] px-4 py-3.5 cursor-pointer" : "rounded-[20px] p-4 cursor-pointer"}
-        style={{ background: C.card2, border: `1px solid ${item.color}24` }}
+        className={compact ? "relative min-h-12 w-full cursor-pointer rounded-[18px] px-3 py-3 outline-none focus-visible:ring-2 focus-visible:ring-offset-2 sm:px-4" : simple ? "relative min-h-14 w-full cursor-pointer rounded-[18px] px-4 py-3.5 text-left outline-none focus-visible:ring-2 focus-visible:ring-offset-2" : "relative min-h-14 w-full cursor-pointer rounded-[20px] p-4 text-left outline-none focus-visible:ring-2 focus-visible:ring-offset-2"}
+        style={{ background: C.card2, border: `1px solid ${selected ? item.color : `${item.color}24`}`, boxShadow: selected ? `0 0 0 1px ${item.color}35` : undefined }}
       >
         {compact ? (
           <div className="flex items-center justify-center gap-2">
@@ -510,23 +531,67 @@ function HoverItem({
             </div>
           </div>
         )}
-      </motion.div>
-      <RichTooltip item={item} placement={placement} />
+        <span className="absolute right-2 top-2 flex h-5 w-5 items-center justify-center rounded-full text-[11px] font-bold xl:hidden" style={{ background: `${item.color}16`, color: item.color }} aria-hidden="true">
+          i
+        </span>
+      </motion.button>
+      <RichTooltip id={tooltipId} item={item} placement={placement} />
+    </div>
+  );
+}
+
+function MobileDetailSheet({ item, onClose }: { item: DetailItem; onClose: () => void }) {
+  const titleId = useId();
+
+  return (
+    <div className="fixed inset-0 z-[100] xl:hidden" onKeyDown={(event) => {
+      if (event.key === "Escape") onClose();
+    }}>
+      <button type="button" className="absolute inset-0 h-full w-full cursor-default bg-slate-950/45" aria-label="Close explanation" onClick={onClose} />
+      <section
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby={titleId}
+        className="absolute inset-x-0 bottom-0 z-10 max-h-[82dvh] overflow-y-auto rounded-t-[28px] p-5 pb-[max(1.5rem,env(safe-area-inset-bottom))] shadow-[0_-20px_60px_rgba(15,23,42,0.28)]"
+        style={{ background: C.card, border: `1px solid ${C.border}` }}
+      >
+        <div className="flex items-start justify-between gap-4">
+          <div className="flex min-w-0 items-center gap-3">
+            <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl text-xl" style={{ background: `${item.color}16` }} aria-hidden="true">
+              {item.emoji}
+            </div>
+            <div className="min-w-0">
+              <p className="text-[10px] font-bold uppercase tracking-[0.16em]" style={{ color: item.color }}>
+                Explanation · {item.category}
+              </p>
+              <h3 id={titleId} className="mt-1 text-lg font-semibold" style={{ color: C.text }}>
+                {item.label}
+              </h3>
+            </div>
+          </div>
+          <button
+            type="button"
+            autoFocus
+            onClick={onClose}
+            className="flex h-11 w-11 shrink-0 cursor-pointer items-center justify-center rounded-full text-xl outline-none focus-visible:ring-2 focus-visible:ring-offset-2"
+            style={{ background: C.card2, color: C.text, border: `1px solid ${C.border}` }}
+            aria-label="Close explanation"
+          >
+            ×
+          </button>
+        </div>
+        <div className="mt-5"><NetflixExplanationCopy item={item} mobile /></div>
+      </section>
     </div>
   );
 }
 
 export default function StartHereDesktopExperience() {
+  const [selectedItem, setSelectedItem] = useState<DetailItem | null>(null);
+
   return (
     <div className="space-y-6">
-      <div className="xl:hidden rounded-[24px] p-5" style={{ background: C.card, border: `1px solid ${C.border}` }}>
-        <h2 className="text-2xl font-semibold tracking-[-0.04em]" style={{ color: C.text }}>
-          Start with the platform shape.
-        </h2>
-      </div>
-
-      <div className="hidden xl:block">
-        <div className="space-y-6">
+      <div className="space-y-6">
           <Box
             id="platform-mission"
             eyebrow="Start here"
@@ -537,27 +602,31 @@ export default function StartHereDesktopExperience() {
             <div className="space-y-5">
               <div
                 data-testid="platform-mission-visual"
-                className="rounded-[24px] p-6"
+                className="rounded-[22px] p-4 sm:p-5 xl:rounded-[24px] xl:p-6"
                 style={{
                   background:
                     "radial-gradient(circle at top, rgba(111,135,154,0.08), transparent 34%), linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0))",
                   border: `1px solid ${C.border}`,
                 }}
               >
-                <div className="grid grid-cols-[minmax(0,240px)_56px_minmax(320px,1fr)_56px_minmax(0,240px)] items-center gap-5 2xl:grid-cols-[minmax(0,260px)_72px_minmax(360px,1fr)_72px_minmax(0,260px)]">
+                <div className="grid items-center gap-5 xl:grid-cols-[minmax(0,240px)_56px_minmax(320px,1fr)_56px_minmax(0,240px)] 2xl:grid-cols-[minmax(0,260px)_72px_minmax(360px,1fr)_72px_minmax(0,260px)]">
                   <div>
                     <p className="mb-3 text-[10px] font-bold uppercase tracking-[0.18em]" style={{ color: C.red }}>
                       Producers
                     </p>
-                    <div data-testid="hero-producers-grid" className="grid gap-3">
+                    <div data-testid="hero-producers-grid" className="grid grid-cols-2 gap-3 sm:grid-cols-3 xl:grid-cols-1">
                       {PRODUCERS.map((item) => (
-                        <HoverItem key={item.key} item={item} compact placement="right" />
+                        <HoverItem key={item.key} item={item} compact placement="right" selected={selectedItem?.key === item.key} onSelect={setSelectedItem} />
                       ))}
                     </div>
                   </div>
 
                   <div data-testid="hero-arrow-left" className="flex items-center justify-center">
-                    <div className="flex w-full items-center gap-2">
+                    <div className="flex h-8 items-center justify-center xl:hidden">
+                      <div className="h-full w-px" style={{ background: `${C.red}55` }} />
+                      <span className="ml-[-5px] mt-7 text-lg" style={{ color: C.red }}>↓</span>
+                    </div>
+                    <div className="hidden w-full items-center gap-2 xl:flex">
                       <div className="h-px flex-1" style={{ background: `${C.red}55` }} />
                       <span className="text-2xl" style={{ color: C.red }}>
                         →
@@ -565,7 +634,7 @@ export default function StartHereDesktopExperience() {
                     </div>
                   </div>
 
-                  <div data-testid="hero-platform-card" className="rounded-[24px] p-6 text-center" style={{ background: C.card2, border: `1px solid ${C.blue}24` }}>
+                  <div data-testid="hero-platform-card" className="rounded-[24px] p-4 text-center sm:p-5 xl:p-6" style={{ background: C.card2, border: `1px solid ${C.blue}24` }}>
                     <div className="mx-auto flex h-18 w-18 items-center justify-center rounded-[24px] text-4xl" style={{ background: `${C.blue}14` }}>
                       🧠
                     </div>
@@ -575,15 +644,19 @@ export default function StartHereDesktopExperience() {
                     <p className="mx-auto mt-2 max-w-md text-sm leading-6" style={{ color: C.muted }}>
                       Accept event streams and CDC once, then shape them into both fast and historical data products.
                     </p>
-                    <div className="mt-5 grid grid-cols-3 gap-3">
+                    <div className="mt-5 grid grid-cols-2 gap-3 sm:grid-cols-3">
                       {PLATFORM_STEPS.map((item) => (
-                        <HoverItem key={item.key} item={item} compact />
+                        <HoverItem key={item.key} item={item} compact selected={selectedItem?.key === item.key} onSelect={setSelectedItem} />
                       ))}
                     </div>
                   </div>
 
                   <div data-testid="hero-arrow-right" className="flex items-center justify-center">
-                    <div className="flex w-full items-center gap-2">
+                    <div className="flex h-8 items-center justify-center xl:hidden">
+                      <div className="h-full w-px" style={{ background: `${C.red}55` }} />
+                      <span className="ml-[-5px] mt-7 text-lg" style={{ color: C.red }}>↓</span>
+                    </div>
+                    <div className="hidden w-full items-center gap-2 xl:flex">
                       <span className="text-2xl" style={{ color: C.red }}>
                         →
                       </span>
@@ -595,9 +668,9 @@ export default function StartHereDesktopExperience() {
                     <p className="mb-3 text-[10px] font-bold uppercase tracking-[0.18em]" style={{ color: C.green }}>
                       Consumers
                     </p>
-                    <div data-testid="hero-consumers-grid" className="grid gap-3">
+                    <div data-testid="hero-consumers-grid" className="grid grid-cols-2 gap-3 sm:grid-cols-3 xl:grid-cols-1">
                       {CONSUMERS.slice(0, 5).map((item) => (
-                        <HoverItem key={item.key} item={item} compact placement="left" />
+                        <HoverItem key={item.key} item={item} compact placement="left" selected={selectedItem?.key === item.key} onSelect={setSelectedItem} />
                       ))}
                     </div>
                   </div>
@@ -616,7 +689,7 @@ export default function StartHereDesktopExperience() {
             id="requirements-snapshot"
             eyebrow="Requirements"
             title="Keep the requirements light"
-            subtitle="Use these as a quick checklist. Hover for the exact meaning and examples."
+            subtitle="Use these as a quick checklist. Select any card for its meaning and a Netflix example."
             color={C.amber}
           >
             <div className="grid gap-3 xl:grid-cols-2">
@@ -626,6 +699,8 @@ export default function StartHereDesktopExperience() {
                   item={item}
                   simple
                   placement={index % 2 === 0 ? "right" : "left"}
+                  selected={selectedItem?.key === item.key}
+                  onSelect={setSelectedItem}
                 />
               ))}
             </div>
@@ -680,14 +755,19 @@ export default function StartHereDesktopExperience() {
             color={C.gold}
           >
             <div className="rounded-[22px] p-5" style={{ background: C.card2, border: `1px solid ${C.gold}20` }}>
-              <div className="space-y-3">
+              <div className="space-y-4">
                 {FRESHNESS.map((row) => (
-                  <div key={row.label} className="grid grid-cols-[120px_1fr_86px] items-center gap-3">
-                    <div className="text-sm font-semibold" style={{ color: C.text }}>
-                      <span className="mr-2">{row.emoji}</span>
-                      {row.label}
+                  <div key={row.label}>
+                    <div className="flex items-center justify-between gap-3 xl:hidden">
+                      <div className="text-sm font-semibold" style={{ color: C.text }}>
+                        <span className="mr-2">{row.emoji}</span>
+                        {row.label}
+                      </div>
+                      <div className="shrink-0 text-right text-[12px] font-semibold" style={{ color: C.faint }}>
+                        {row.freshness}
+                      </div>
                     </div>
-                    <div className="h-3 rounded-full" style={{ background: "rgba(148,163,184,0.14)" }}>
+                    <div className="mt-2 h-3 rounded-full xl:hidden" style={{ background: "rgba(148,163,184,0.14)" }}>
                       <motion.div
                         initial={{ width: 0 }}
                         whileInView={{ width: row.width }}
@@ -697,8 +777,24 @@ export default function StartHereDesktopExperience() {
                         style={{ background: row.color }}
                       />
                     </div>
-                    <div className="text-right text-[12px] font-semibold" style={{ color: C.faint }}>
-                      {row.freshness}
+                    <div className="hidden grid-cols-[120px_1fr_86px] items-center gap-3 xl:grid">
+                      <div className="text-sm font-semibold" style={{ color: C.text }}>
+                        <span className="mr-2">{row.emoji}</span>
+                        {row.label}
+                      </div>
+                      <div className="h-3 rounded-full" style={{ background: "rgba(148,163,184,0.14)" }}>
+                        <motion.div
+                          initial={{ width: 0 }}
+                          whileInView={{ width: row.width }}
+                          viewport={{ once: true, amount: 0.4 }}
+                          transition={{ duration: 0.45 }}
+                          className="h-3 rounded-full"
+                          style={{ background: row.color }}
+                        />
+                      </div>
+                      <div className="text-right text-[12px] font-semibold" style={{ color: C.faint }}>
+                        {row.freshness}
+                      </div>
                     </div>
                   </div>
                 ))}
@@ -719,8 +815,8 @@ export default function StartHereDesktopExperience() {
               </p>
             </div>
           </Box>
-        </div>
       </div>
+      {selectedItem ? <MobileDetailSheet item={selectedItem} onClose={() => setSelectedItem(null)} /> : null}
     </div>
   );
 }

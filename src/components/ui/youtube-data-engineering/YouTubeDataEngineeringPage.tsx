@@ -6,7 +6,7 @@ import {
   YOUTUBE_SLOS,
 } from "./content";
 import { START_SECTIONS } from "./data";
-import { Section, Tooltip, YouTubeFrame } from "./shared";
+import { Section, SectionInspector, YouTubeFrame } from "./shared";
 
 const inputSignals = [
   ["▶", "Playback", "Starts, heartbeats, pauses, seeks, completions, and QoE signals describe the viewing session."],
@@ -53,19 +53,19 @@ const capabilityGroups = [
   {
     label: "Measure",
     note: "Collect and qualify audience behavior",
-    tone: "#2563eb",
+    tone: "#1d4ed8",
     titles: ["Ingestion", "Views", "Watch Time"],
   },
   {
     label: "Decide",
     note: "Turn fresh signals into product decisions",
-    tone: "#7c3aed",
+    tone: "#6d28d9",
     titles: ["Trending", "Recommendations", "Experiments"],
   },
   {
     label: "Operate",
     note: "Serve creators, revenue, and trust",
-    tone: "#16a34a",
+    tone: "#077149",
     titles: ["Creator Studio", "Monetization", "Trust"],
   },
 ] as const;
@@ -73,9 +73,7 @@ const capabilityGroups = [
 function MiniNode({
   icon,
   title,
-  detail,
   tone,
-  align = "center",
 }: {
   icon: string;
   title: string;
@@ -84,9 +82,8 @@ function MiniNode({
   align?: "start" | "center" | "end";
 }) {
   return (
-    <button
-      type="button"
-      className="group relative flex min-h-[58px] cursor-pointer items-center gap-2 rounded-lg border bg-[var(--bg-card)] px-3 text-left text-xs font-semibold transition hover:-translate-y-0.5 hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#ff0033]"
+    <div
+      className="relative flex min-h-[58px] items-center gap-2 rounded-lg border bg-[var(--bg-card)] px-3 text-left text-xs font-semibold"
       style={{ borderColor: `${tone}44` }}
     >
       <span
@@ -99,11 +96,7 @@ function MiniNode({
         {icon}
       </span>
       <span>{title}</span>
-      <span className="ml-auto text-[10px]" style={{ color: tone }} aria-hidden>
-        ⓘ
-      </span>
-      <Tooltip align={align}>{detail}</Tooltip>
-    </button>
+    </div>
   );
 }
 
@@ -112,7 +105,7 @@ function ScopeFlow() {
     <div className="mt-5">
       <div className="grid gap-3 rounded-xl border border-[var(--border)] bg-[var(--bg-muted)] p-4 lg:grid-cols-[1fr_auto_1.25fr_auto_1fr] lg:items-center">
         <div>
-          <p className="mb-2 text-[10px] font-bold uppercase tracking-[.16em] text-blue-600">
+          <p className="mb-2 text-[10px] font-bold uppercase tracking-[.16em] text-[#1d4ed8]">
             Signals in
           </p>
           <div className="grid gap-2">
@@ -122,20 +115,19 @@ function ScopeFlow() {
                 icon={icon}
                 title={title}
                 detail={detail}
-                tone="#2563eb"
+                tone="#1d4ed8"
                 align={index === 0 ? "start" : "center"}
               />
             ))}
           </div>
         </div>
 
-        <span className="hidden text-[#ff0033] lg:block">→</span>
+        <span className="hidden text-[#b00020] lg:block">→</span>
 
-        <button
-          type="button"
-          className="group relative rounded-xl border border-red-500/35 bg-red-500/[.05] p-5 text-center transition hover:-translate-y-0.5 hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#ff0033]"
+        <div
+          className="relative rounded-xl border border-red-500/35 bg-red-500/[.05] p-5 text-center"
         >
-          <span className="mx-auto flex h-11 w-11 items-center justify-center rounded-xl bg-red-500/10 text-xl font-bold text-[#ff0033]">
+          <span className="mx-auto flex h-11 w-11 items-center justify-center rounded-xl bg-red-500/10 text-xl font-bold text-[#b00020]">
             YT
           </span>
           <h3 className="mt-3 text-lg font-semibold">YouTube Data Platform</h3>
@@ -149,15 +141,12 @@ function ScopeFlow() {
               </span>
             ))}
           </div>
-          <Tooltip>
-            The platform turns high-volume YouTube behavior and business events into fresh signals, replayable history, certified metrics, and recommendation data.
-          </Tooltip>
-        </button>
+        </div>
 
-        <span className="hidden text-[#ff0033] lg:block">→</span>
+        <span className="hidden text-[#b00020] lg:block">→</span>
 
         <div>
-          <p className="mb-2 text-[10px] font-bold uppercase tracking-[.16em] text-emerald-600">
+          <p className="mb-2 text-[10px] font-bold uppercase tracking-[.16em] text-[#077149]">
             Products out
           </p>
           <div className="grid gap-2">
@@ -167,7 +156,7 @@ function ScopeFlow() {
                 icon={icon}
                 title={title}
                 detail={detail}
-                tone="#16a34a"
+                tone="#077149"
                 align={index === 0 ? "end" : "center"}
               />
             ))}
@@ -175,8 +164,18 @@ function ScopeFlow() {
         </div>
       </div>
 
+      <SectionInspector
+        id="scope-inspector"
+        label="scope"
+        items={[
+          ...scopeSources.map(([, title, detail]) => ({ id: `source-${title}`, title, summary: "Signal source", detail })),
+          { id: "platform", title: "YouTube Data Platform", summary: "Ingest · process · store · serve · govern", detail: "Turns high-volume YouTube behavior and business events into fresh signals, replayable history, certified metrics, and recommendation data." },
+          ...scopeOutputs.map(([, title, detail]) => ({ id: `output-${title}`, title, summary: "Data product", detail })),
+        ]}
+      />
+
       <div className="mt-3 rounded-xl border border-red-500/25 bg-red-500/[.05] px-4 py-3">
-        <p className="text-[10px] font-bold uppercase tracking-[.16em] text-[#ff0033]">
+        <p className="text-[10px] font-bold uppercase tracking-[.16em] text-[#b00020]">
           Interview Script
         </p>
         <p className="mt-2 text-sm font-medium leading-7">“{interviewScript}”</p>
@@ -223,12 +222,11 @@ function CapabilitiesFlow() {
               </div>
 
               <div className="grid gap-2 sm:grid-cols-3">
-                {items.map((item, index) =>
+                {items.map((item) =>
                   item ? (
-                    <button
-                      type="button"
+                    <div
                       key={item.title}
-                      className="group relative min-h-[86px] overflow-visible rounded-lg border border-[var(--border)] bg-[var(--bg-card)] p-3 text-left transition hover:-translate-y-0.5 hover:border-current hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#ff0033]"
+                      className="relative min-h-[86px] overflow-visible rounded-lg border border-[var(--border)] bg-[var(--bg-card)] p-3 text-left"
                       style={{ color: item.tone }}
                     >
                       <span className="flex items-center gap-3">
@@ -246,20 +244,12 @@ function CapabilitiesFlow() {
                             {item.sub}
                           </span>
                         </span>
-                        <span className="ml-auto self-start text-[10px]" aria-hidden>
-                          ⓘ
-                        </span>
                       </span>
                       <span
-                        className="absolute inset-x-3 bottom-0 h-0.5 origin-left scale-x-0 rounded-full transition-transform group-hover:scale-x-100 group-focus-visible:scale-x-100"
+                        className="absolute inset-x-3 bottom-0 h-0.5 rounded-full"
                         style={{ background: item.tone }}
                       />
-                      <Tooltip
-                        align={index === 0 ? "start" : index === items.length - 1 ? "end" : "center"}
-                      >
-                        {item.detail}
-                      </Tooltip>
-                    </button>
+                    </div>
                   ) : null,
                 )}
               </div>
@@ -267,6 +257,11 @@ function CapabilitiesFlow() {
           </div>
         );
       })}
+      <SectionInspector
+        id="capabilities-inspector"
+        label="capability"
+        items={REQUIREMENT_CAPABILITIES.map((item) => ({ id: item.title, title: item.title, summary: item.sub, detail: item.detail }))}
+      />
     </div>
   );
 }
@@ -276,7 +271,7 @@ function PlatformFlow() {
     <div className="mt-5 rounded-xl border border-[var(--border)] bg-[var(--bg-muted)] p-4">
       <div className="grid gap-3 xl:grid-cols-[190px_auto_150px_auto_1fr] xl:items-center">
         <div>
-          <p className="mb-2 text-[10px] font-bold uppercase tracking-[.16em] text-blue-600">
+          <p className="mb-2 text-[10px] font-bold uppercase tracking-[.16em] text-[#1d4ed8]">
             YouTube signals
           </p>
           <div className="grid grid-cols-2 gap-2 xl:grid-cols-1">
@@ -286,36 +281,36 @@ function PlatformFlow() {
                 icon={icon}
                 title={title}
                 detail={detail}
-                tone="#2563eb"
+                tone="#1d4ed8"
                 align={index === 0 ? "start" : "center"}
               />
             ))}
           </div>
         </div>
 
-        <span className="hidden text-[#ff0033] xl:block">→</span>
+        <span className="hidden text-[#b00020] xl:block">→</span>
 
         <div className="grid gap-2">
           <MiniNode
             icon="G"
             title="Event Gateway"
             detail="Authenticates, checks consent, validates the schema, adds trusted ingest metadata, and sends rejected events to a DLQ."
-            tone="#d97706"
+            tone="#8a4b00"
           />
           <MiniNode
             icon="K"
             title="Kafka"
             detail="A durable, replayable log separates producers from stream processing, raw lake ingestion, fraud detection, and feature consumers."
-            tone="#d97706"
+            tone="#8a4b00"
           />
         </div>
 
-        <span className="hidden text-[#ff0033] xl:block">⇉</span>
+        <span className="hidden text-[#b00020] xl:block">⇉</span>
 
         <div className="grid gap-2">
           <div className="rounded-xl border border-violet-500/30 bg-violet-500/[.045] p-3">
             <div className="mb-2 flex items-center justify-between">
-              <p className="text-[10px] font-bold uppercase tracking-[.16em] text-violet-600">
+              <p className="text-[10px] font-bold uppercase tracking-[.16em] text-[#6d28d9]">
                 Fast path
               </p>
               <span className="text-[10px] text-[var(--text-faint)]">seconds → minutes</span>
@@ -327,11 +322,11 @@ function PlatformFlow() {
                     icon={icon}
                     title={title}
                     detail={detail}
-                    tone="#7c3aed"
+                    tone="#6d28d9"
                     align={index === liveNodes.length - 1 ? "end" : "center"}
                   />
                   {index < liveNodes.length - 1 ? (
-                    <span className="hidden text-violet-600 sm:block">→</span>
+                    <span className="hidden text-[#6d28d9] sm:block">→</span>
                   ) : null}
                 </div>
               ))}
@@ -340,7 +335,7 @@ function PlatformFlow() {
 
           <div className="rounded-xl border border-emerald-500/30 bg-emerald-500/[.045] p-3">
             <div className="mb-2 flex items-center justify-between">
-              <p className="text-[10px] font-bold uppercase tracking-[.16em] text-emerald-600">
+              <p className="text-[10px] font-bold uppercase tracking-[.16em] text-[#077149]">
                 Truth path
               </p>
               <span className="text-[10px] text-[var(--text-faint)]">hourly → T+1</span>
@@ -352,11 +347,11 @@ function PlatformFlow() {
                     icon={icon}
                     title={title}
                     detail={detail}
-                    tone="#16a34a"
+                    tone="#077149"
                     align={index === truthNodes.length - 1 ? "end" : "center"}
                   />
                   {index < truthNodes.length - 1 ? (
-                    <span className="hidden text-emerald-600 sm:block">→</span>
+                    <span className="hidden text-[#077149] sm:block">→</span>
                   ) : null}
                 </div>
               ))}
@@ -365,13 +360,24 @@ function PlatformFlow() {
         </div>
       </div>
 
-      <div className="mt-3 rounded-lg border border-dashed border-cyan-500/35 bg-cyan-500/[.035] px-3 py-2 text-center text-[10px] font-bold uppercase tracking-[.13em] text-cyan-600">
+      <div className="mt-3 rounded-lg border border-dashed border-cyan-500/35 bg-cyan-500/[.035] px-3 py-2 text-center text-[10px] font-bold uppercase tracking-[.13em] text-[#0b6f87]">
         Governance · quality · lineage · security · metric versions · replay
       </div>
 
-      <p className="mt-3 border-l-4 border-[#ff0033] bg-red-500/[.04] px-4 py-3 text-sm font-medium leading-6">
+      <p className="mt-3 border-l-4 border-[#b00020] bg-red-500/[.04] px-4 py-3 text-sm font-medium leading-6">
         “Playback and business events enter one replayable platform. Streaming serves freshness-sensitive products, while Iceberg and batch jobs publish certified data for creators, recommendations, monetization, experiments, and backfills.”
       </p>
+      <SectionInspector
+        id="platform-inspector"
+        label="platform step"
+        items={[
+          ...inputSignals.map(([, title, detail]) => ({ id: `signal-${title}`, title, summary: "Producer signal", detail })),
+          { id: "gateway", title: "Event Gateway", summary: "Trust boundary", detail: "Authenticates requests, checks consent, validates schemas, adds trusted ingest metadata, and sends rejected events to a replayable DLQ." },
+          { id: "kafka", title: "Kafka", summary: "Durable event backbone", detail: "Separates producers from stream processing, lake ingestion, fraud detection, and feature consumers while retaining replayable ordered partitions." },
+          ...liveNodes.map(([, title, detail]) => ({ id: `live-${title}`, title, summary: "Fast path", detail })),
+          ...truthNodes.map(([, title, detail]) => ({ id: `truth-${title}`, title, summary: "Certification path", detail })),
+        ]}
+      />
     </div>
   );
 }
@@ -380,40 +386,42 @@ function ScaleTargets() {
   return (
     <div className="mt-5">
       <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-4">
-        {YOUTUBE_SCALE_ANCHORS.map((item, index) => (
-          <button
-            type="button"
+        {YOUTUBE_SCALE_ANCHORS.map((item) => (
+          <div
             key={item.label}
-            className="group relative rounded-xl border bg-[var(--bg-muted)] p-3 text-left transition hover:-translate-y-0.5 hover:shadow-md focus-visible:outline-none focus-visible:ring-2"
+            className="relative rounded-xl border bg-[var(--bg-muted)] p-3 text-left"
             style={{ borderColor: `${item.tone}44` }}
           >
             <strong className="text-xl" style={{ color: item.tone }}>{item.value}</strong>
             <span className="mt-1 block text-xs font-semibold">{item.label}</span>
-            <Tooltip align={index === 0 ? "start" : index === YOUTUBE_SCALE_ANCHORS.length - 1 ? "end" : "center"}>
-              {item.detail}
-            </Tooltip>
-          </button>
+          </div>
         ))}
       </div>
 
       <div className="mt-3 rounded-xl border border-[var(--border)] bg-[var(--bg-muted)] p-4">
         <div className="space-y-3">
-          {YOUTUBE_SLOS.map((row, index) => (
-            <button
-              type="button"
+          {YOUTUBE_SLOS.map((row) => (
+            <div
               key={row.title}
-              className="group relative grid w-full grid-cols-[120px_1fr_88px] items-center gap-3 text-left sm:grid-cols-[170px_1fr_110px]"
+              className="relative grid w-full grid-cols-[120px_1fr_88px] items-center gap-3 text-left sm:grid-cols-[170px_1fr_110px]"
             >
               <span className="text-xs font-semibold sm:text-sm">{row.title}</span>
               <span className="h-2.5 overflow-hidden rounded-full bg-[var(--border)]">
                 <span className="block h-full rounded-full" style={{ width: row.width, background: row.tone }} />
               </span>
               <strong className="text-right text-xs" style={{ color: row.tone }}>{row.value}</strong>
-              <Tooltip align={index === 0 ? "start" : "center"}>{row.detail}</Tooltip>
-            </button>
+            </div>
           ))}
         </div>
       </div>
+      <SectionInspector
+        id="scale-inspector"
+        label="scale target"
+        items={[
+          ...YOUTUBE_SCALE_ANCHORS.map((item) => ({ id: `scale-${item.label}`, title: `${item.value} ${item.label}`, detail: item.detail })),
+          ...YOUTUBE_SLOS.map((item) => ({ id: `slo-${item.title}`, title: item.title, summary: item.value, detail: item.detail })),
+        ]}
+      />
       <p className="mt-2 text-[10px] text-[var(--text-faint)]">
         Interview assumptions for sizing and trade-off discussion.
       </p>
@@ -433,45 +441,37 @@ function CorrectnessFlow() {
   return (
     <div className="mt-5 rounded-xl border border-[var(--border)] bg-[var(--bg-muted)] p-4">
       <div className="grid gap-2 lg:grid-cols-[140px_auto_140px_auto_1fr] lg:items-center">
-        <MiniNode icon="▶" title="Client Events" detail="Playback, impression, engagement, search, QoE, and ad events arrive with stable event identity and event time." tone="#2563eb" align="start" />
-        <span className="hidden text-[#ff0033] lg:block">→</span>
+        <MiniNode icon="▶" title="Client Events" detail="Playback, impression, engagement, search, QoE, and ad events arrive with stable event identity and event time." tone="#1d4ed8" align="start" />
+        <span className="hidden text-[#b00020] lg:block">→</span>
         <MiniNode
           icon="K"
           title="Kafka + Bronze"
           detail="Kafka is the durable hot event log for fan-out and short-term replay. Every accepted event is also copied unchanged into Bronze object storage, which becomes the long-term evidence for audits, full reprocessing, and corrections."
-          tone="#d97706"
+          tone="#8a4b00"
         />
-        <span className="hidden text-[#ff0033] lg:block">⇉</span>
+        <span className="hidden text-[#b00020] lg:block">⇉</span>
         <div className="grid gap-2">
           <div
-            className="group relative grid cursor-pointer gap-2 rounded-xl border border-violet-500/30 bg-violet-500/[.045] p-3 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-500 sm:grid-cols-[110px_auto_1fr_auto_120px] sm:items-center"
-            tabIndex={0}
+            className="relative grid gap-2 rounded-xl border border-violet-500/30 bg-violet-500/[.045] p-3 sm:grid-cols-[110px_auto_1fr_auto_120px] sm:items-center"
           >
-            <strong className="flex items-center gap-2 text-xs text-violet-600">
+            <strong className="flex items-center gap-2 text-xs text-[#6d28d9]">
               FAST LANE <span className="text-[10px]" aria-hidden>ⓘ</span>
             </strong>
-            <span className="hidden text-violet-600 sm:block">→</span>
+            <span className="hidden text-[#6d28d9] sm:block">→</span>
             <span className="rounded-lg border border-[var(--border)] bg-[var(--bg-card)] px-3 py-3 text-xs font-semibold">Window + bounded dedupe</span>
-            <span className="hidden text-violet-600 sm:block">→</span>
-            <span className="rounded-full bg-violet-500/10 px-3 py-2 text-center text-[10px] font-bold text-violet-600">PROVISIONAL</span>
-            <Tooltip align="end">
-              Consumes Kafka continuously, uses event-time windows and bounded deduplication, then publishes seconds-to-minutes results. It favors freshness, so late events and later fraud decisions may still change the count.
-            </Tooltip>
+            <span className="hidden text-[#6d28d9] sm:block">→</span>
+            <span className="rounded-full bg-violet-500/10 px-3 py-2 text-center text-[10px] font-bold text-[#6d28d9]">PROVISIONAL</span>
           </div>
           <div
-            className="group relative grid cursor-pointer gap-2 rounded-xl border border-emerald-500/30 bg-emerald-500/[.045] p-3 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 sm:grid-cols-[110px_auto_1fr_auto_120px] sm:items-center"
-            tabIndex={0}
+            className="relative grid gap-2 rounded-xl border border-emerald-500/30 bg-emerald-500/[.045] p-3 sm:grid-cols-[110px_auto_1fr_auto_120px] sm:items-center"
           >
-            <strong className="flex items-center gap-2 text-xs text-emerald-600">
+            <strong className="flex items-center gap-2 text-xs text-[#077149]">
               CERTIFY LANE <span className="text-[10px]" aria-hidden>ⓘ</span>
             </strong>
-            <span className="hidden text-emerald-600 sm:block">→</span>
+            <span className="hidden text-[#077149] sm:block">→</span>
             <span className="rounded-lg border border-[var(--border)] bg-[var(--bg-card)] px-3 py-3 text-xs font-semibold">Full replay + quality gates</span>
-            <span className="hidden text-emerald-600 sm:block">→</span>
-            <span className="rounded-full bg-emerald-500/10 px-3 py-2 text-center text-[10px] font-bold text-emerald-600">CERTIFIED</span>
-            <Tooltip align="end">
-              Replays complete Bronze history after the lateness window, performs full deduplication, applies traffic-quality and metric-version rules, and publishes an atomic certified snapshot for official views, watch time, and revenue.
-            </Tooltip>
+            <span className="hidden text-[#077149] sm:block">→</span>
+            <span className="rounded-full bg-emerald-500/10 px-3 py-2 text-center text-[10px] font-bold text-[#077149]">CERTIFIED</span>
           </div>
         </div>
       </div>
@@ -483,7 +483,7 @@ function CorrectnessFlow() {
             icon={icon}
             title={title}
             detail={detail}
-            tone="#0891b2"
+            tone="#0b6f87"
             align={index === 0 ? "start" : index === checks.length - 1 ? "end" : "center"}
           />
         ))}
@@ -496,7 +496,7 @@ function CorrectnessFlow() {
             icon={icon}
             title={title}
             detail={detail}
-            tone="#16a34a"
+            tone="#077149"
             align={index === 0 ? "start" : index === reconciliation.length - 1 ? "end" : "center"}
           />
         ))}
@@ -504,9 +504,21 @@ function CorrectnessFlow() {
 
       <div className="mt-3 flex flex-wrap items-center justify-center gap-2 text-xs font-semibold text-[var(--text-muted)]">
         <span className="rounded-md border border-violet-500/30 bg-violet-500/[.05] px-3 py-2">Live views · trending · alerts</span>
-        <span className="text-[#ff0033]">corrected by</span>
+        <span className="text-[#b00020]">corrected by</span>
         <span className="rounded-md border border-emerald-500/30 bg-emerald-500/[.05] px-3 py-2">Official views · watch time · revenue</span>
       </div>
+      <SectionInspector
+        id="correctness-inspector"
+        label="correctness step"
+        items={[
+          { id: "client-events", title: "Client Events", summary: "Evidence enters", detail: "Playback, impression, engagement, search, QoE, and ad events arrive with stable event identity and event time." },
+          { id: "kafka-bronze", title: "Kafka + Bronze", summary: "Hot log + durable evidence", detail: "Kafka provides fan-out and short-term replay; Bronze keeps every accepted event unchanged for long-term audit, full reprocessing, and corrections." },
+          { id: "fast-lane", title: "Fast Lane", summary: "Seconds to minutes · provisional", detail: "Consumes Kafka continuously, uses event-time windows and bounded deduplication, then publishes responsive results that late events or later fraud decisions may still change." },
+          { id: "certify-lane", title: "Certify Lane", summary: "Complete replay · certified", detail: "Replays complete Bronze history, performs full deduplication, applies traffic-quality and metric-version rules, and atomically publishes certified views, watch time, and revenue." },
+          ...checks.map(([, title, detail]) => ({ id: `check-${title}`, title, summary: "Correctness control", detail })),
+          ...reconciliation.map(([, title, detail]) => ({ id: `reconcile-${title}`, title, summary: "Reconciliation", detail })),
+        ]}
+      />
     </div>
   );
 }

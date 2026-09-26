@@ -4,6 +4,11 @@ import Link from "next/link";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { UBER_MODELING_SECTIONS } from "./data";
 import AnchorBrand from "./AnchorBrand";
+import {
+  getActiveDataDesignSection,
+  scrollToDataDesignSection,
+} from "../data-design/sectionAnchors";
+import useCompactInteraction from "../data-design/useCompactInteraction";
 
 const C = {
   card: "var(--bg-card)",
@@ -11,10 +16,10 @@ const C = {
   border: "var(--border)",
   text: "var(--text)",
   muted: "var(--text-muted)",
-  blue: "#526b82",
-  cyan: "#657e90",
-  green: "#667a70",
-  amber: "#796f64",
+  blue: "#42586c",
+  cyan: "#445e72",
+  green: "#50675d",
+  amber: "#625346",
   red: "#62595d",
 };
 type TableDef = {
@@ -810,7 +815,7 @@ function Anchors({
                   style={{
                     borderColor: on ? C.blue : C.border,
                     background: on
-                      ? "color-mix(in srgb, #526b82 13%, var(--bg-card))"
+                      ? "color-mix(in srgb, #42586c 13%, var(--bg-card))"
                       : C.card,
                     color: on ? C.text : C.muted,
                   }}
@@ -866,7 +871,6 @@ function Section({
       style={{
         borderColor: `${color}38`,
         background: C.card,
-        scrollMarginTop: 140,
       }}
     >
       <h2 className="text-2xl font-semibold">{title}</h2>
@@ -887,6 +891,7 @@ function ErdExplorer({
   selectedId: string;
   onSelect: (id: string) => void;
 }) {
+  const compactInteraction = useCompactInteraction();
   const [viewId, setViewId] = useState("trip");
   const view = VIEWS.find((v) => v.id === viewId) ?? VIEWS[0];
   const viewColor = VIEW_COLORS[view.id];
@@ -919,10 +924,19 @@ function ErdExplorer({
       style={{ borderColor: C.border, background: C.card2 }}
     >
       <div className="border-b p-3" style={{ borderColor: C.border }}>
-        <div className="grid gap-2 sm:grid-cols-3">
+        <div
+          className="grid gap-2 sm:grid-cols-3"
+          role="tablist"
+          aria-label="ER diagram domains"
+        >
           {VIEWS.map((v) => (
             <button
               key={v.id}
+              type="button"
+              role="tab"
+              id={`uber-model-domain-${v.id}`}
+              aria-selected={viewId === v.id}
+              aria-controls="uber-model-domain-panel"
               onClick={() => {
                 setViewId(v.id);
                 const firstFact = v.nodes.find(
@@ -949,6 +963,9 @@ function ErdExplorer({
       </div>
       <div>
         <div
+          id="uber-model-domain-panel"
+          role="tabpanel"
+          aria-labelledby={`uber-model-domain-${viewId}`}
           data-testid="model-erd-canvas"
           className="overflow-hidden border-b p-2 xl:border-b-0 xl:border-r"
           style={{ borderColor: C.border, background: `${viewColor}08` }}
@@ -960,7 +977,7 @@ function ErdExplorer({
               data-accent={viewColor}
               viewBox="0 0 1040 810"
               className="block h-auto w-full"
-              role="img"
+              role="group"
               aria-label={`Uber ${view.label} entity relationship diagram`}
             >
               <defs>
@@ -1006,12 +1023,20 @@ function ErdExplorer({
                   <g
                     key={pos.id}
                     transform={`translate(${pos.x},${pos.y})`}
-                    role="button"
-                    tabIndex={0}
-                    aria-label={`${table.id}, ${table.kind}`}
+                    role={compactInteraction ? undefined : "button"}
+                    tabIndex={compactInteraction ? undefined : 0}
+                    aria-label={compactInteraction ? undefined : `${table.id}, ${table.kind}`}
+                    aria-pressed={compactInteraction ? undefined : on}
+                    pointerEvents={compactInteraction ? "none" : undefined}
                     onMouseEnter={() => onSelect(pos.id)}
                     onFocus={() => onSelect(pos.id)}
                     onClick={() => onSelect(pos.id)}
+                    onKeyDown={(event) => {
+                      if (event.key === "Enter" || event.key === " ") {
+                        event.preventDefault();
+                        onSelect(pos.id);
+                      }
+                    }}
                     className="cursor-pointer outline-none"
                   >
                     <rect
@@ -1097,13 +1122,19 @@ function TableCatalog({
       className="mt-5 overflow-hidden rounded-2xl border"
       style={{ borderColor: C.border, background: C.card }}
     >
-      <div className="grid content-start gap-px sm:grid-cols-2 lg:grid-cols-3">
+      <div
+        className="grid content-start gap-px sm:grid-cols-2 lg:grid-cols-3"
+        role="group"
+        aria-label="Data model tables"
+      >
         {tables.map((table) => {
           const active = table.id === selectedId;
           return (
             <button
               key={table.id}
+              type="button"
               aria-label={`Inspect ${table.id}`}
+              aria-pressed={active}
               onMouseEnter={() => onSelect(table.id)}
               onFocus={() => onSelect(table.id)}
               onClick={() => onSelect(table.id)}
@@ -1147,7 +1178,7 @@ function TableInspector({
   return (
     <aside
       data-testid={testId}
-      className="rounded-2xl border p-3"
+      className={`rounded-2xl border p-3 ${testId === "model-table-inspector" ? "h-full overflow-y-auto" : ""}`}
       style={{
         borderColor: `${color}88`,
         background: `color-mix(in srgb, ${color} 11%, var(--bg-card))`,
@@ -1173,7 +1204,7 @@ function TableInspector({
           </span>
         ) : null}
       </div>
-      <h3 className="mt-1 break-all text-lg font-semibold">{table.id}</h3>
+      <h2 className="mt-1 break-all text-lg font-semibold">{table.id}</h2>
       <p className="mt-1.5 text-xs leading-5" style={{ color: C.muted }}>
         <strong style={{ color: C.text }}>Grain:</strong> {table.grain}
       </p>
@@ -1246,31 +1277,18 @@ export default function DataModelingTab() {
   useEffect(() => {
     const sync = () => {
       if (lock.current) return;
-      const xs = UBER_MODELING_SECTIONS.map((s) => {
-        const n = document.getElementById(s.id);
-        return n ? { id: s.id, top: n.getBoundingClientRect().top } : null;
-      }).filter((x): x is NonNullable<typeof x> => x !== null);
-      if (xs.length)
-        setActive(
-          xs.reduce((a, b) =>
-            Math.abs(b.top - 180) < Math.abs(a.top - 180) ? b : a,
-          ).id,
-        );
+      setActive(getActiveDataDesignSection(UBER_MODELING_SECTIONS));
     };
     sync();
     addEventListener("scroll", sync, { passive: true });
     return () => removeEventListener("scroll", sync);
   }, []);
   const go = (id: string) => {
-    const n = document.getElementById(id);
-    if (!n) return;
+    if (!document.getElementById(id)) return;
     if (lock.current) clearTimeout(lock.current);
     history.replaceState(null, "", `/data-engineering/uber/data-modeling#${id}`);
     setActive(id);
-    scrollTo({
-      top: n.getBoundingClientRect().top + scrollY - 140,
-      behavior: "smooth",
-    });
+    scrollToDataDesignSection(id);
     lock.current = window.setTimeout(() => {
       setActive(id);
       lock.current = null;

@@ -5,8 +5,8 @@
 /* Keep the Uber architecture inspector below the fixed chapter rail. */
 [data-testid="architecture-detail-panel"] {
   position: sticky !important;
-  top: 140px !important;
-  max-height: calc(100dvh - 156px) !important;
+  top: var(--de-content-sticky-top) !important;
+  max-height: var(--de-content-sticky-max-height) !important;
   transition: opacity 160ms ease, visibility 160ms ease;
 }
 
@@ -29,7 +29,7 @@
   [data-testid="architecture-detail-panel"] {
     position: fixed !important;
     right: max(24px, calc((100vw - 1600px) / 2 + 48px));
-    top: 140px !important;
+    top: var(--de-content-sticky-top) !important;
     bottom: 16px;
     width: 320px;
     max-height: none !important;
@@ -51,6 +51,18 @@
 
 /* ── Light mode (default) ─────────────────────────────── */
 :root {
+  color-scheme: light;
+  --touch-target-size: 44px;
+  --site-nav-height: 56px;
+  --de-navbar-visible-height: var(--site-nav-height);
+  --de-chapter-rail-height: 68px;
+  --de-section-nav-height: 0px;
+  --de-chapter-shell-offset: calc(var(--de-navbar-visible-height) + var(--de-chapter-rail-height));
+  --de-sticky-shell-height: calc(var(--de-chapter-shell-offset) + var(--de-section-nav-height));
+  --de-anchor-gap: 24px;
+  --de-anchor-offset: 148px;
+  --de-content-sticky-top: calc(var(--de-chapter-shell-offset) + 16px);
+  --de-content-sticky-max-height: calc(100dvh - var(--de-content-sticky-top) - 16px);
   --bg:          #F8FAFC;
   --bg-card:     #FFFFFF;
   --bg-muted:    #F6F8FC;
@@ -83,39 +95,6 @@
   --yellow-text: #713f12;
 }
 
-/* ── Dark mode ────────────────────────────────────────── */
-.dark {
-  --bg:          #111318;
-  --bg-card:     #181b22;
-  --bg-muted:    #20242d;
-  --border:      #343a46;
-  --text:        #f8fafc;
-  --text-muted:  #cbd5e1;
-  --text-faint:  #94a3b8;
-  --accent:      #7c3aed;
-  --accent-fg:   #ffffff;
-  --accent-soft: rgba(124,58,237,0.15);
-  --accent-text: #a78bfa;
-  --blue:        #3b82f6;
-  --blue-soft:   rgba(59,130,246,0.12);
-  --blue-text:   #93c5fd;
-  --purple:      #8b5cf6;
-  --purple-soft: rgba(139,92,246,0.12);
-  --purple-text: #c4b5fd;
-  --green:       #10b981;
-  --green-soft:  rgba(16,185,129,0.12);
-  --green-text:  #6ee7b7;
-  --orange:      #f59e0b;
-  --orange-soft: rgba(245,158,11,0.12);
-  --orange-text: #fcd34d;
-  --pink:        #ec4899;
-  --pink-soft:   rgba(236,72,153,0.12);
-  --pink-text:   #f9a8d4;
-  --yellow:      #eab308;
-  --yellow-soft: rgba(234,179,8,0.12);
-  --yellow-text: #fde047;
-}
-
 /* ── Netflix diagram variables — wrapped in @layer base so Tailwind v4 does not tree-shake them ── */
 @layer base {
   :root {
@@ -129,18 +108,6 @@
     --netflix-node-visited-fill: rgba(245,166,35,0.12);
     --netflix-node-hover-fill: rgba(37,99,235,0.08);
     --netflix-node-hover-stroke: rgba(37,99,235,0.55);
-  }
-  .dark {
-    --netflix-canvas-band: rgba(255,255,255,0.012);
-    --netflix-dot: #252525;
-    --netflix-dot-opacity: 0.6;
-    --netflix-vignette: radial-gradient(ellipse 80% 80% at 50% 50%, transparent 55%, rgba(10,10,10,0.6) 100%);
-    --netflix-tooltip-bg: #1a1a1a;
-    --netflix-tooltip-shadow: 0 4px 16px rgba(0,0,0,0.5);
-    --netflix-node-selected-fill: rgba(229,9,20,0.18);
-    --netflix-node-visited-fill: rgba(245,166,35,0.16);
-    --netflix-node-hover-fill: rgba(59,130,246,0.12);
-    --netflix-node-hover-stroke: rgba(147,197,253,0.6);
   }
 }
 
@@ -156,7 +123,103 @@ body {
   transition: background 0.2s, color 0.2s;
 }
 
-html { scroll-behavior: smooth; }
+html {
+  scroll-behavior: smooth;
+  scroll-padding-top: var(--de-anchor-offset);
+}
+
+@media (max-width: 1279px) {
+  :root {
+    --site-nav-height: 48px;
+    --de-chapter-rail-height: 52px;
+    --de-section-nav-height: 44px;
+    --de-anchor-offset: 168px;
+  }
+
+  :root[data-de-shell-condensed="true"] {
+    --de-navbar-visible-height: 0px;
+    --de-anchor-offset: 120px;
+  }
+
+  [data-testid="global-header"] {
+    transition: transform 180ms ease, opacity 180ms ease;
+  }
+
+  :root[data-de-shell-condensed="true"] [data-testid="global-header"] {
+    pointer-events: none;
+    transform: translateY(-100%);
+    opacity: 0;
+  }
+}
+
+@media (max-width: 768px), (pointer: coarse) {
+  :where(
+    button,
+    a[href],
+    [role="button"],
+    [role="tab"],
+    [role="radio"],
+    summary,
+    select,
+    input[type="range"],
+    input[type="checkbox"],
+    input[type="radio"]
+  ) {
+    min-width: var(--touch-target-size) !important;
+    min-height: var(--touch-target-size) !important;
+  }
+
+  input[type="range"] {
+    margin-block: 0;
+  }
+}
+
+/* Long chapters stay fully expanded on laptop/desktop. Mobile and tablet use
+   the native details control so the same content remains available on demand. */
+@media (min-width: 1024px) {
+  details[data-depth-panel] {
+    margin-top: 1rem;
+    overflow: visible;
+    border: 0;
+    background: transparent;
+  }
+
+  details[data-depth-panel] > summary {
+    display: none !important;
+  }
+
+  details[data-depth-panel] > [data-depth-content] {
+    border-top: 0;
+    padding: 0;
+  }
+}
+
+:is(.netflix-de-page, .uber-de-page, .youtube-de-page, .bookmyshow-de-page) section[id] {
+  scroll-margin-top: var(--de-anchor-offset) !important;
+}
+
+/* BookMyShow is intentionally monochrome. Its micro-labels use a darker gray
+   because most are 9–10px and need more contrast than decorative captions. */
+.bookmyshow-de-page :is(
+  [class*="text-[#777]"],
+  [class*="text-[#737373]"],
+  [class*="text-[#999]"],
+  [class*="text-[#8a8a8a]"]
+) {
+  color: #5f5f5f !important;
+}
+
+.bookmyshow-de-page [data-testid="chapter-position-track"] > span,
+.bookmyshow-de-page [data-active-indicator] {
+  background: #111111 !important;
+}
+
+[data-de-content] {
+  padding-bottom: max(
+    6rem,
+    calc(100dvh - var(--de-anchor-offset) + 2rem)
+  ) !important;
+}
 
 button:not(:disabled),
 [role="button"],
@@ -185,19 +248,12 @@ button:disabled {
 @media (prefers-reduced-motion: reduce) {
   .data-design-library-enter,
   .data-design-library-card { animation: none; }
-}
-/* Uber chapter onboarding sits beside, rather than over, the page-anchor rail. */
-.uber-hover-hint {
-  left: 16px;
-  right: auto !important;
-}
 
-@media (min-width: 1280px) {
-  .uber-hover-hint {
-    left: max(248px, calc((100vw - 1600px) / 2 + 248px));
-  }
+  [data-testid="global-header"] { transition: none; }
+  [data-testid="company-chapter-rail"],
+  [data-testid="mobile-section-nav"],
+  [data-testid="netflix-mobile-section-nav"] { transition: none; }
 }
-
 .uber-de-page [data-testid^="stage-nav-"] {
   height: auto !important;
   min-height: 54px;

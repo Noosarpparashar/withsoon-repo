@@ -1,201 +1,29 @@
-export const DATA_ENGINEERING_GROUPS = [
-  "FOUNDATION",
-  "PIPELINES",
-  "MODELING",
-  "PRODUCTION",
-  "PRACTICE",
-] as const;
+import {
+  NETFLIX_ROUTE_REGISTRY,
+  resolveNetflixRoute,
+  type NetflixChapterSlug,
+} from "./curriculum";
 
-export type DataEngineeringGroup = typeof DATA_ENGINEERING_GROUPS[number];
+export {
+  NETFLIX_ROUTE_ALIASES,
+  NETFLIX_ROUTE_REGISTRY,
+  resolveNetflixRoute,
+} from "./curriculum";
+export type {
+  NetflixChapterSlug,
+  NetflixRouteResolution,
+} from "./curriculum";
 
-export const DATA_ENGINEERING_TAB_SLUGS = [
-  "start-here",
-  "requirements",
-  "event-sources",
-  "architecture",
-  "ingestion-kafka",
-  "real-time-streaming",
-  "data-modeling",
-  "batch-pipelines",
-  "warehouse-serving",
-  "feature-store-experimentation",
-  "governance-quality",
-  "backfill-replay",
-  "capacity-cost",
-  "failures",
-  "quiz",
-  "cheat-sheet",
-] as const;
+export type DataEngineeringTabSlug = NetflixChapterSlug;
 
-export type DataEngineeringTabSlug = typeof DATA_ENGINEERING_TAB_SLUGS[number];
-
-export type DataEngineeringTab = {
-  id: DataEngineeringTabSlug;
-  label: string;
-  group: DataEngineeringGroup;
-  mins: number;
-  accent: string;
-  summary: string;
-  description: string;
-};
-
-export const DATA_ENGINEERING_LEGACY_MAP = {
-  "data-engineering": "start-here",
-  architecture: "architecture",
-  "architecture-map": "architecture",
-  ingestion: "ingestion-kafka",
-  streaming: "real-time-streaming",
-  batch: "batch-pipelines",
-  lakehouse: "batch-pipelines",
-  modeling: "data-modeling",
-  reliability: "failures",
-  governance: "governance-quality",
-  "ml-serving": "feature-store-experimentation",
-  stack: "warehouse-serving",
-  "performance-cost": "capacity-cost",
-  capacity: "capacity-cost",
-  quiz: "quiz",
-  "scale-estimation": "capacity-cost",
-  "event-taxonomy": "event-sources",
-  "high-level-data-architecture": "architecture",
-  "ingestion-layer": "ingestion-kafka",
-  "kafka-topic-design": "ingestion-kafka",
-  "streaming-pipeline": "real-time-streaming",
-  "watch-time-calculation": "real-time-streaming",
-  sessionization: "real-time-streaming",
-  "late-events-replay": "backfill-replay",
-  "lakehouse-design": "batch-pipelines",
-  "table-design": "data-modeling",
-  "batch-pipeline": "batch-pipelines",
-  "data-quality": "governance-quality",
-  "governance-security": "governance-quality",
-  "reliability-backfill": "failures",
-  "trade-offs": "capacity-cost",
-  "interview-qa": "quiz",
-  "mock-interview": "quiz",
-} as const satisfies Record<string, DataEngineeringTabSlug>;
-
-export function isDataEngineeringTabSlug(value: string): value is DataEngineeringTabSlug {
-  return (DATA_ENGINEERING_TAB_SLUGS as readonly string[]).includes(value);
+export function normalizeDataEngineeringTab(
+  value?: string | null,
+): DataEngineeringTabSlug | null {
+  const resolution = resolveNetflixRoute(value);
+  return resolution.availability === "missing"
+    ? null
+    : resolution.canonicalSlug;
 }
-
-export function normalizeDataEngineeringTab(value?: string | null): DataEngineeringTabSlug | null {
-  if (!value) return null;
-  if (value === "failures") return "governance-quality";
-  if (isDataEngineeringTabSlug(value)) return value;
-  return DATA_ENGINEERING_LEGACY_MAP[value as keyof typeof DATA_ENGINEERING_LEGACY_MAP] ?? null;
-}
-
-export const DATA_ENGINEERING_TABS: DataEngineeringTab[] = [
-  {
-    id: "start-here",
-    label: "Start Here",
-    group: "FOUNDATION",
-    mins: 5,
-    accent: "#5f565a",
-    summary: "Open the round like a dedicated Netflix data-platform interview.",
-    description: "Clarify scope, show the end-to-end journey, and position the data-engineering boundary before any deep dive.",
-  },
-  {
-    id: "requirements",
-    label: "Requirements",
-    group: "FOUNDATION",
-    mins: 8,
-    accent: "#827a70",
-    summary: "Turn business questions into freshness, correctness, and SLA contracts.",
-    description: "Group requirements by domain, show scale anchors, and separate real-time, batch, and governance expectations.",
-  },
-  {
-    id: "architecture",
-    label: "Architecture",
-    group: "FOUNDATION",
-    mins: 10,
-    accent: "#6f879a",
-    summary: "Show the full Netflix data journey as one layered system map.",
-    description: "Walk from event emitters to validation, Kafka, streaming, Bronze/Silver/Gold, warehouse, features, replay, and governance.",
-  },
-  {
-    id: "ingestion-kafka",
-    label: "Event Contracts",
-    group: "PIPELINES",
-    mins: 9,
-    accent: "#827a70",
-    summary: "Make canonical events, Kafka ordering, and data trust easy to explain.",
-    description: "Cover canonical event envelopes, topic keys and partition math, late data handling, SCD2 joins, quality gates, and cost-aware controls.",
-  },
-  {
-    id: "real-time-streaming",
-    label: "Real-Time Streaming",
-    group: "PIPELINES",
-    mins: 10,
-    accent: "#6f879a",
-    summary: "Explain how raw events become trusted real-time metrics and features.",
-    description: "Cover Flink jobs, watch-time logic, sessionization, watermarks, late data handling, and exactly-once style guarantees.",
-  },
-  {
-    id: "data-modeling",
-    label: "Data Modeling",
-    group: "MODELING",
-    mins: 9,
-    accent: "#716b78",
-    summary: "Connect ERD, star schema, lineage, and table semantics in one place.",
-    description: "Explain grain, partitions, facts, dimensions, marts, lineage, and why each table exists for analytics or ML use cases.",
-  },
-  {
-    id: "batch-pipelines",
-    label: "Batch + Lakehouse",
-    group: "PIPELINES",
-    mins: 10,
-    accent: "#8b8377",
-    summary: "Show how trusted batch truth and the lakehouse operating model work together.",
-    description: "Combine DAG visuals, Bronze/Silver/Gold responsibilities, Iceberg layout, DQ gates, replayability, and official publish flows in one section.",
-  },
-  {
-    id: "governance-quality",
-    label: "Governance / Quality",
-    group: "PRODUCTION",
-    mins: 8,
-    accent: "#6e8178",
-    summary: "Treat schema, privacy, freshness, and trust as first-class product surfaces.",
-    description: "Cover data contracts, DQ dashboards, PII policy, deletions, lineage, audits, and severity-driven response paths.",
-  },
-  {
-    id: "capacity-cost",
-    label: "Capacity / Cost",
-    group: "PRODUCTION",
-    mins: 7,
-    accent: "#8b8377",
-    summary: "Make scale math, tool choices, and cost controls explicit and defensible.",
-    description: "Derive event rates, partitions, retention, storage, and compute costs from one consistent workload model.",
-  },
-  {
-    id: "failures",
-    label: "Failures",
-    group: "PRODUCTION",
-    mins: 9,
-    accent: "#675d62",
-    summary: "Turn incidents into a visible failure playbook with recovery steps.",
-    description: "Simulate data outages, skew, schema breaks, and stale Gold tables with detection, mitigation, recovery, and prevention guidance.",
-  },
-  {
-    id: "quiz",
-    label: "Interview Q&A",
-    group: "PRACTICE",
-    mins: 9,
-    accent: "#6f879a",
-    summary: "Merge follow-up answers and Netflix tech name-drops into one light interview section.",
-    description: "Use compact Q&A, a technology map, and simple draw-if-asked visuals so you can explain the platform crisply in an interview.",
-  },
-  {
-    id: "cheat-sheet",
-    label: "Cheat Sheet",
-    group: "PRACTICE",
-    mins: 6,
-    accent: "#5f565a",
-    summary: "Revise the whole story with fast answer versions, formulas, and mistakes to avoid.",
-    description: "Use print-ready and copy-ready revision blocks for the 30-second, 2-minute, and 5-minute interview versions.",
-  },
-];
 
 export const DATA_ENGINEERING_TAB_META: Record<
   DataEngineeringTabSlug,
@@ -209,7 +37,7 @@ export const DATA_ENGINEERING_TAB_META: Record<
     interviewAngle: string;
   }
 > = Object.fromEntries(
-  DATA_ENGINEERING_TABS.map((tab) => [
+  NETFLIX_ROUTE_REGISTRY.map((tab) => [
     tab.id,
     {
       title: `Netflix Data Engineering — ${tab.label} | withsoon.com`,
@@ -236,11 +64,11 @@ export const DATA_ENGINEERING_TAB_META: Record<
 }>;
 
 export const DATA_TRACK_NUMBERS = [
-  { label: "Monthly users", value: "200M-250M", note: "Docs use both 200M+ and 250M assumptions", color: "#6f879a" },
+  { label: "Monthly users", value: "200M-250M", note: "Docs use both 200M+ and 250M assumptions", color: "#49667d" },
   { label: "Daily active users", value: "80M", note: "Used for heartbeat and Kafka math", color: "#6e8178" },
   { label: "Peak concurrency", value: "15M", note: "Useful for QoE and live ops workloads", color: "#827a70" },
   { label: "Heartbeat events/day", value: "19.2B", note: "80M DAU x 2h x heartbeat every 30s", color: "#5f565a" },
-  { label: "Peak ingest", value: "1M-2M events/s", note: "Peak multiplier applied to total events/sec", color: "#716b78" },
+  { label: "Peak ingest", value: "1M-2M events/s", note: "Peak multiplier applied to total events/sec", color: "#5b5263" },
   { label: "Raw data/day", value: "50-100 TB", note: "Playback, browse, search, errors, CDN, billing, CDC", color: "#6b8495" },
 ];
 
@@ -291,7 +119,7 @@ export const REQUIREMENT_DOMAINS = [
   {
     id: "engagement",
     title: "User Engagement Analytics",
-    color: "#6f879a",
+    color: "#49667d",
     rows: [
       {
         requirement: "How many hours were streamed per title?",
@@ -485,7 +313,7 @@ export const EVENT_FAMILIES = [
   {
     id: "playback",
     title: "Playback Events",
-    color: "#6f879a",
+    color: "#49667d",
     events: [
       {
         id: "video-heartbeat",
@@ -573,7 +401,7 @@ export const EVENT_FAMILIES = [
   {
     id: "search",
     title: "Search Events",
-    color: "#716b78",
+    color: "#5b5263",
     events: [
       {
         id: "search-query",
@@ -719,7 +547,7 @@ export const ARCHITECTURE_NODES = [
   {
     id: "clients",
     label: "Client Apps",
-    color: "#6f879a",
+    color: "#49667d",
     reveal: "base",
     x: 6,
     y: 34,
@@ -764,7 +592,7 @@ export const ARCHITECTURE_NODES = [
   {
     id: "flink",
     label: "Flink Streaming",
-    color: "#6f879a",
+    color: "#49667d",
     reveal: "base",
     x: 54,
     y: 34,
@@ -779,7 +607,7 @@ export const ARCHITECTURE_NODES = [
   {
     id: "bronze",
     label: "Bronze Lake",
-    color: "#716b78",
+    color: "#5b5263",
     reveal: "base",
     x: 70,
     y: 34,
@@ -794,7 +622,7 @@ export const ARCHITECTURE_NODES = [
   {
     id: "silver",
     label: "Silver Iceberg",
-    color: "#716b78",
+    color: "#5b5263",
     reveal: "medallion",
     x: 86,
     y: 34,
@@ -902,7 +730,7 @@ export const INGESTION_LANES = [
   {
     id: "client-events",
     title: "Client Events",
-    color: "#6f879a",
+    color: "#49667d",
     flow: ["Mobile / Web / TV", "Event Gateway", "Schema validation", "Kafka playback/browse/search topics"],
     details: [
       "Clients batch events every few seconds instead of sending a network request for every click or heartbeat.",
@@ -1040,7 +868,7 @@ export const FLINK_JOBS = [
   {
     id: "playback-sessionizer",
     title: "Playback Sessionizer",
-    color: "#6f879a",
+    color: "#49667d",
     inputTopics: ["playback.heartbeat.raw", "video.buffer.*", "video.pause", "video.seek"],
     keyBy: "user_id + profile_id + content_id + device_id",
     state: "active session, seen event_ids, watched_segments, pause_count, buffering_seconds",
@@ -1054,7 +882,7 @@ export const FLINK_JOBS = [
   {
     id: "watchtime-aggregator",
     title: "Watch-Time Aggregator",
-    color: "#6f879a",
+    color: "#49667d",
     inputTopics: ["playback.heartbeat.raw"],
     keyBy: "session_id",
     state: "watch_seconds, unique_segments, avg_bitrate, buffering_ratio",
@@ -1231,7 +1059,7 @@ export const LAKEHOUSE_LAYERS = [
   {
     id: "bronze",
     title: "Bronze",
-    color: "#716b78",
+    color: "#5b5263",
     summary: "Raw, immutable, append-only landing zone.",
     inputs: ["Raw JSON / Avro events", "CDC envelopes", "Partner files", "CDN / service logs"],
     rules: [
@@ -1244,7 +1072,7 @@ export const LAKEHOUSE_LAYERS = [
   {
     id: "silver",
     title: "Silver",
-    color: "#716b78",
+    color: "#5b5263",
     summary: "Cleaned, deduplicated, schema-enforced, PII-safe trusted data.",
     inputs: ["Bronze events", "Dimension joins", "Normalization logic", "DQ checks"],
     rules: [
@@ -1577,12 +1405,12 @@ export const BATCH_DAG_STEPS = [
 ] as const;
 
 export const DQ_METRICS = [
-  { label: "Freshness", value: "3m", color: "#6f879a", note: "Minutes behind SLA for critical live metrics" },
+  { label: "Freshness", value: "3m", color: "#49667d", note: "Minutes behind SLA for critical live metrics" },
   { label: "Duplicate rate", value: "0.03%", color: "#675d62", note: "Spike means dedupe or producer retry issue" },
   { label: "Late event %", value: "1.8%", color: "#827a70", note: "Tracks watermark stress and correction demand" },
   { label: "DLQ count", value: "1.2K", color: "#675d62", note: "Needs owner + replay plan, not silent storage" },
   { label: "SLA misses", value: "2", color: "#675d62", note: "Critical failures page on-call and stakeholders" },
-  { label: "Backfill status", value: "Running", color: "#716b78", note: "Track blast radius and audit state" },
+  { label: "Backfill status", value: "Running", color: "#5b5263", note: "Track blast radius and audit state" },
 ] as const;
 
 export const DQ_SEVERITIES = [
@@ -1652,7 +1480,7 @@ export const GOVERNANCE_CHECKLIST = [
 export const FEATURE_STORE_CONTENT = {
   offline: {
     title: "Offline Feature Store",
-    color: "#716b78",
+    color: "#5b5263",
     summary: "S3 + Iceberg feature tables used for reproducible training and backtesting.",
     bullets: [
       "Stores historical training features with point-in-time aligned snapshots",
@@ -1960,7 +1788,7 @@ export const INTERVIEW_QUESTIONS = [
     strongAnswer: "The raw event is still stored because source truth should not be dropped just because it missed a live dashboard window. In the streaming path, that event may already be outside the active watermark and allowed-lateness range, so I would avoid endlessly reopening live windows. Instead, the event goes into the correction path: Bronze or raw history keeps it, Silver or Gold corrections recompute the affected partitions or sessions later, and the dashboard semantics stay honest by labeling what is provisional versus finalized. That separation lets me preserve correctness without making live state unbounded.",
     followUp: "Would the real-time dashboard change immediately, eventually, or never for that event?",
     badAnswer: "If it is three hours late, I would just ignore it because the real-time pipeline already moved on.",
-    linkedTab: "backfill-replay" as DataEngineeringTabSlug,
+    linkedTab: "batch-pipelines" as DataEngineeringTabSlug,
   },
   {
     id: "qa-correct-seven-days",

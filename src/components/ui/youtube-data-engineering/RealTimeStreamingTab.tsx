@@ -1,7 +1,8 @@
 "use client";
 
-import { Section, Tooltip, YouTubeFrame } from "./shared";
+import { Section, SectionInspector, YouTubeFrame } from "./shared";
 import { STREAMING_SECTIONS } from "./data";
+import { CoreTakeaway, DepthPanel, InterviewPath } from "../data-design/ProgressiveChapter";
 
 type ExplainCardProps = {
   title: string;
@@ -11,23 +12,21 @@ type ExplainCardProps = {
   wide?: boolean;
 };
 
-function ExplainCard({ title, sub, detail, side = "top", wide = false }: ExplainCardProps) {
+function ExplainCard({ title, sub }: ExplainCardProps) {
   return (
-    <button type="button" className="group relative min-h-[94px] rounded-xl border border-[var(--border)] bg-[var(--bg-card)] p-4 text-left transition hover:z-50 hover:-translate-y-0.5 hover:shadow-md focus-visible:z-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#8da5bd]">
-      <span className="flex items-start justify-between gap-3"><strong className="text-sm text-[var(--text)]">{title}</strong><span className="text-[10px] text-[var(--text-faint)]" aria-hidden>i</span></span>
+    <div className="relative min-h-[94px] rounded-xl border border-[var(--border)] bg-[var(--bg-card)] p-4 text-left">
+      <span className="flex items-start justify-between gap-3"><strong className="text-sm text-[var(--text)]">{title}</strong></span>
       <span className="mt-2 block text-xs leading-5 text-[var(--text-muted)]">{sub}</span>
-      <Tooltip align="center" side={side} wide={wide}>{detail}</Tooltip>
-    </button>
+    </div>
   );
 }
 
 function Explanation({ what, how, example }: { what: string; how: string; example: string }) {
   return (
-    <span className="block space-y-2">
-      <span className="block"><strong>What it does: </strong>{what}</span>
-      <span className="block"><strong>How: </strong>{how}</span>
-      <span className="block"><strong>Example: </strong>{example}</span>
-    </span>
+    <div data-testid="explainer-copy" className="max-w-[65ch] space-y-2">
+      <p>{what} {how}</p>
+      <p><strong>YouTube example: </strong>{example}</p>
+    </div>
   );
 }
 
@@ -94,6 +93,13 @@ const operations = [
   ["Canary Compare", "Run the new job beside the old version on the same events, compare output by key and window, then expand only after differences are understood."],
 ] as const;
 
+const stateBranches = [
+  { title: "Buffering", path: "PLAYING -> BUFFERING -> PLAYING", trigger: "buffering heartbeat -> playing heartbeat", detail: "Stop adding played time while the player reports BUFFERING. Continue the same session when a later PLAYING heartbeat arrives, and add the buffered duration only to buffering_ms." },
+  { title: "Paused", path: "PLAYING -> PAUSED -> PLAYING", trigger: "pause -> resume", detail: "A pause keeps the session open but contributes no watch time. Resume returns to Playing unless the inactivity rule already closed the session." },
+  { title: "Seeking", path: "PLAYING -> SEEKING -> PLAYING", trigger: "seek -> playing heartbeat", detail: "A seek changes playback position. The next valid Playing heartbeat establishes the new position; impossible jumps are flagged instead of being counted as watched content." },
+  { title: "Closed", path: "PLAYING -> CLOSED", trigger: "inactivity > watermark + grace", detail: "If an app crashes or never sends video_end, the event-time timer closes the partial session. A permitted late event updates the same session key with a higher version." },
+] as const;
+
 function StreamingJobs() {
   return (
     <div className="mt-5 rounded-xl border border-[var(--border)] bg-[var(--bg-muted)] p-4">
@@ -104,17 +110,16 @@ function StreamingJobs() {
         <span className="hidden text-center text-[var(--text-faint)] lg:block">-&gt;</span>
         <div className="rounded-xl border border-[var(--border)] bg-[var(--bg-card)] p-4 text-center"><strong className="text-sm">Live Outputs</strong><p className="mt-2 text-xs text-[var(--text-muted)]">Pinot · Redis<br />alerts · versioned facts</p></div>
       </div>
+      <SectionInspector
+        id="streaming-jobs-inspector"
+        label="streaming job"
+        items={jobs.map((job) => ({ id: job.title, title: job.title, summary: job.sub, detail: <Explanation what={job.what} how={job.how} example={job.example} /> }))}
+      />
     </div>
   );
 }
 
 function StateMachine() {
-  const branches = [
-    { title: "Buffering", path: "PLAYING -> BUFFERING -> PLAYING", trigger: "buffering heartbeat -> playing heartbeat", detail: "Stop adding played time while the player reports BUFFERING. Continue the same session when a later PLAYING heartbeat arrives, and add the buffered duration only to buffering_ms." },
-    { title: "Paused", path: "PLAYING -> PAUSED -> PLAYING", trigger: "pause -> resume", detail: "A pause keeps the session open but contributes no watch time. Resume returns to Playing unless the inactivity rule already closed the session." },
-    { title: "Seeking", path: "PLAYING -> SEEKING -> PLAYING", trigger: "seek -> playing heartbeat", detail: "A seek changes playback position. The next valid Playing heartbeat establishes the new position; impossible jumps are flagged instead of being counted as watched content." },
-    { title: "Closed", path: "PLAYING -> CLOSED", trigger: "inactivity > watermark + grace", detail: "If an app crashes or never sends video_end, the event-time timer closes the partial session. A permitted late event updates the same session key with a higher version." },
-  ] as const;
   return (
     <div className="mt-5 rounded-xl border border-[var(--border)] bg-[var(--bg-muted)] p-4">
       <p className="text-[10px] font-bold uppercase tracking-[.16em] text-[var(--text-faint)]">Normal path</p>
@@ -127,12 +132,11 @@ function StateMachine() {
       <div className="mx-auto mt-2 max-w-md rounded-lg border border-dashed border-[var(--border)] bg-[var(--bg-card)] px-3 py-2 text-center text-[11px] text-[var(--text-muted)]"><strong>Playing self-loop:</strong> each valid PLAYING heartbeat adds a bounded played delta and updates last_valid_event_time.</div>
       <p className="mt-4 text-[10px] font-bold uppercase tracking-[.16em] text-[var(--text-faint)]">Branches from Playing</p>
       <div className="mt-3 grid gap-2 md:grid-cols-2 xl:grid-cols-4">
-        {branches.map((branch) => (
-          <button key={branch.title} type="button" className="group relative rounded-xl border border-[var(--border)] bg-[var(--bg-card)] p-3 text-left hover:z-50 hover:border-[#91a9c2]">
+        {stateBranches.map((branch) => (
+          <div key={branch.title} className="relative rounded-xl border border-[var(--border)] bg-[var(--bg-card)] p-3 text-left">
             <strong className="text-xs">{branch.path}</strong>
             <span className="mt-2 block text-[10px] leading-4 text-[var(--text-muted)]">{branch.trigger}</span>
-            <Tooltip align="center" side="top"><strong className="mb-1 block">{branch.title} path</strong>{branch.detail}</Tooltip>
-          </button>
+          </div>
         ))}
       </div>
       <div className="mt-3 rounded-lg border border-[var(--border)] bg-[var(--bg-card)] px-4 py-3 text-center text-xs"><strong>Late/offline event:</strong> reopen the same playback-attempt key, recalculate the session, and emit a versioned upsert—never a duplicate fact.</div>
@@ -198,8 +202,13 @@ function RuntimePlacement() {
 function OutputTable() {
   return (
     <div className="mt-5 rounded-xl border border-[var(--border)] bg-[var(--bg-muted)] p-3">
-      <div className="hidden grid-cols-[1.1fr_1fr_1fr_30px] gap-3 px-3 pb-2 text-[10px] font-bold uppercase tracking-[.14em] text-[var(--text-faint)] md:grid"><span>Output</span><span>Stable key</span><span>Update model</span><span /></div>
-      <div className="grid gap-2">{outputs.map((row) => <button key={row.output} type="button" className="group relative grid min-h-[60px] gap-1 rounded-lg border border-[var(--border)] bg-[var(--bg-card)] px-3 py-2 text-left hover:z-50 md:grid-cols-[1.1fr_1fr_1fr_30px] md:items-center md:gap-3"><strong className="text-xs">{row.output}</strong><code className="text-xs">{row.keyName}</code><span className="text-xs text-[var(--text-muted)]">{row.update}</span><span className="text-[10px] text-[var(--text-faint)]">i</span><Tooltip align="center" side="top" wide><strong className="mb-1 block uppercase tracking-[.14em] text-[var(--text-faint)]">Explanation</strong>{row.detail}</Tooltip></button>)}</div>
+      <div className="hidden grid-cols-[1.1fr_1fr_1fr] gap-3 px-3 pb-2 text-[10px] font-bold uppercase tracking-[.14em] text-[var(--text-faint)] md:grid"><span>Output</span><span>Stable key</span><span>Update model</span></div>
+      <div className="grid gap-2">{outputs.map((row) => <div key={row.output} className="relative grid min-h-[60px] gap-1 rounded-lg border border-[var(--border)] bg-[var(--bg-card)] px-3 py-2 text-left md:grid-cols-[1.1fr_1fr_1fr] md:items-center md:gap-3"><strong className="text-xs">{row.output}</strong><code className="text-xs">{row.keyName}</code><span className="text-xs text-[var(--text-muted)]">{row.update}</span></div>)}</div>
+      <SectionInspector
+        id="output-contracts-inspector"
+        label="output contract"
+        items={outputs.map((row) => ({ id: row.output, title: row.output, summary: `${row.keyName} · ${row.update}`, detail: row.detail }))}
+      />
     </div>
   );
 }
@@ -207,29 +216,77 @@ function OutputTable() {
 export default function RealTimeStreamingTab() {
   return (
     <YouTubeFrame activeTab="real-time-streaming" sections={STREAMING_SECTIONS} previous={{ id: "ingestion-kafka", label: "Ingestion / Kafka" }} next={{ id: "data-modeling", label: "Data Modeling" }}>
-      <Section id="streaming-jobs" number="01" title="Streaming Jobs"><StreamingJobs /></Section>
+      <InterviewPath
+        accent="#526b82"
+        title="Turn continuous activity into fast, correct, replaceable signals"
+        summary="Explain the keyed event-time pipeline first. Then show how YouTube reconstructs playback, publishes low-latency products, and lets certified batch correct incomplete live history."
+        steps={[
+          { title: "Route", detail: "Kafka keeps each playback attempt ordered and replayable." },
+          { title: "Reconstruct", detail: "Flink applies event time, state, timers, and deduplication." },
+          { title: "Compute", detail: "Jobs produce sessions, counters, trends, QoE, fraud, and features." },
+          { title: "Publish", detail: "Stable keys and versioned upserts make late updates safe." },
+          { title: "Certify", detail: "Batch reconciles complete history and replaces provisional windows." },
+        ]}
+      />
+      <Section id="streaming-jobs" number="01" title="Streaming Jobs">
+        <CoreTakeaway>Split the stream by decision latency: dedicated jobs consume shared Kafka evidence and publish sessions, counters, trends, alerts, and online features with stable keys.</CoreTakeaway>
+        <DepthPanel title="Explore the streaming jobs" summary="Inputs, six job responsibilities, live outputs, and YouTube examples.">
+          <StreamingJobs />
+        </DepthPanel>
+      </Section>
 
       <Section id="session-state" number="02" title="Session State">
+        <CoreTakeaway>Keep one state record per playback attempt. Playing heartbeats add bounded time; pause, buffer, seek, duplicate, close, and late-reopen rules update that same versioned session.</CoreTakeaway>
+        <DepthPanel title="Explore playback state" summary="State machine, record fields, event rules, inactivity close, and late reopen.">
         <StateMachine />
         <SessionStateFlow />
         <p className="mt-4 text-[10px] font-bold uppercase tracking-[.16em] text-[var(--text-faint)]">Inside one state record</p>
         <div className="mt-2 grid gap-2 sm:grid-cols-2 lg:grid-cols-5">{stateGroups.map((group) => <ExplainCard key={group.title} title={group.title} sub={group.sub} detail={<Explanation what={group.what} how={group.how} example={`${group.example} Fields: ${group.fields.join(", ")}.`} />} />)}</div>
         <p className="mt-4 text-[10px] font-bold uppercase tracking-[.16em] text-[var(--text-faint)]">Rules applied after each event</p>
         <div className="mt-3 grid gap-2 sm:grid-cols-2 lg:grid-cols-5">{sessionRules.map((rule) => <ExplainCard key={rule.title} title={rule.title} sub={rule.sub} detail={<><strong className="mb-1 block">Rule</strong>{rule.detail}</>} />)}</div>
+        <SectionInspector
+          id="session-state-inspector"
+          label="session concept"
+          items={[
+            ...stateBranches.map((branch) => ({ id: `branch-${branch.title}`, title: branch.title, summary: branch.path, detail: branch.detail })),
+            ...stateGroups.map((group) => ({ id: `state-${group.title}`, title: group.title, summary: group.sub, detail: <Explanation what={group.what} how={group.how} example={`${group.example} Fields: ${group.fields.join(", ")}.`} /> })),
+            ...sessionRules.map((rule) => ({ id: `rule-${rule.title}`, title: rule.title, summary: rule.sub, detail: rule.detail })),
+          ]}
+        />
+        </DepthPanel>
       </Section>
 
       <Section id="time-windows" number="03" title="Time + Windows">
+        <CoreTakeaway>Use event time for truth, watermarks for bounded waiting, and a late-data side path for evidence outside the live allowance. Never silently discard delayed mobile events.</CoreTakeaway>
+        <DepthPanel title="Explore event time and windows" summary="Watermarks, window types, late heartbeats, recovery, and live-versus-certified truth.">
         <div className="mt-5 grid gap-2 sm:grid-cols-2 lg:grid-cols-3">{concepts.map((item) => <ExplainCard key={item.title} title={item.title} sub={item.sub} detail={<Explanation what={item.what} how={item.how} example={item.example} />} />)}</div>
         <LateHeartbeatFlow />
         <div className="mt-3 grid gap-2 sm:grid-cols-2">
           <ExplainCard title="Exactly Once" sub="Checkpoint + idempotent upsert" detail={<Explanation what="Prevents a recovered job from changing one logical metric twice." how="Restore Flink state and Kafka offsets from the same checkpoint, then write outputs by stable key and version." example="After a crash, watch session p-42 is replayed but replaces the same versioned row rather than adding another session." />} />
           <ExplainCard title="Live vs Official" sub="Fast estimate, certified batch truth" detail={<Explanation what="Streaming serves seconds-old decisions while batch owns final deduplicated and fraud-filtered history." how="Publish live values as provisional and let the certified nightly output overwrite the historical window." example="Creator Studio shows a fast view estimate now; the next certified run publishes the official count after late-event and abuse reconciliation." />} />
         </div>
+        <SectionInspector
+          id="time-windows-inspector"
+          label="time concept"
+          items={[
+            ...concepts.map((item) => ({ id: item.title, title: item.title, summary: item.sub, detail: <Explanation what={item.what} how={item.how} example={item.example} /> })),
+            { id: "exactly-once", title: "Exactly Once", summary: "Checkpoint + idempotent upsert", detail: <Explanation what="Prevents a recovered job from changing one logical metric twice." how="Restore Flink state and Kafka offsets from the same checkpoint, then write outputs by stable key and version." example="After a crash, watch session p-42 is replayed but replaces the same versioned row rather than adding another session." /> },
+            { id: "live-official", title: "Live vs Official", summary: "Fast estimate, certified batch result", detail: <Explanation what="Streaming serves seconds-old decisions while batch owns final deduplicated and fraud-filtered history." how="Publish live values as provisional and let the certified nightly output overwrite the historical window." example="Creator Studio shows a fast view estimate now; the next certified run publishes the official count after late-event and abuse reconciliation." /> },
+          ]}
+        />
+        </DepthPanel>
       </Section>
 
-      <Section id="output-contracts" number="04" title="Output Contracts"><OutputTable /></Section>
+      <Section id="output-contracts" number="04" title="Output Contracts">
+        <CoreTakeaway>Every live product has a stable business key and update rule, so replay and late evidence replace the intended version instead of creating duplicate facts.</CoreTakeaway>
+        <DepthPanel title="Explore output contracts" summary="Keys and write semantics for counters, sessions, trending, alerts, and features.">
+          <OutputTable />
+        </DepthPanel>
+      </Section>
 
       <Section id="trending-design" number="05" title="Trending">
+        <CoreTakeaway>Rank recent, broad, meaningful attention—not lifetime popularity—using sliding-window momentum, audience breadth, engagement quality, freshness, and abuse penalties.</CoreTakeaway>
+        <DepthPanel title="Explore trending design" summary="Eligible evidence, feature groups, regional windows, trust penalties, and versioned ranking.">
         <div className="mt-5 rounded-xl border border-[#a9bacb] bg-[var(--bg-muted)] px-4 py-3 text-sm leading-6"><strong>Problem being solved:</strong><span className="ml-1 text-[var(--text-muted)]">find trustworthy videos gaining meaningful attention now for each region—not the videos with the largest lifetime totals.</span></div>
         <div className="mt-5 grid gap-3 rounded-xl border border-[var(--border)] bg-[var(--bg-muted)] p-4 lg:grid-cols-[190px_auto_1fr_auto_190px] lg:items-center">
           <div className="rounded-xl border border-[var(--border)] bg-[var(--bg-card)] p-4 text-center"><strong className="text-sm">Eligible Events</strong><p className="mt-2 text-xs text-[var(--text-muted)]">deduped views · watch depth<br />engagement · trust flags</p></div><span className="hidden lg:block">-&gt;</span>
@@ -241,18 +298,38 @@ export default function RealTimeStreamingTab() {
           <div className="rounded-xl border border-[var(--border)] bg-[var(--bg-card)] p-4 text-center"><strong className="text-sm">Versioned Policy</strong><p className="mt-2 text-xs text-[var(--text-muted)]">combines auditable features<br />publishes top-N by region</p></div>
         </div>
         <div className="mt-3 flex flex-wrap items-center justify-center gap-2 text-xs font-semibold"><span className="rounded-lg bg-[var(--bg-muted)] px-3 py-2">Fast growth</span><span>+</span><span className="rounded-lg bg-[var(--bg-muted)] px-3 py-2">broad audience</span><span>+</span><span className="rounded-lg bg-[var(--bg-muted)] px-3 py-2">strong engagement</span><span>-</span><span className="rounded-lg bg-[var(--bg-muted)] px-3 py-2">abuse</span><span>-&gt;</span><span className="rounded-lg border border-[#91a9c2] bg-[var(--bg-card)] px-3 py-2">regional trending candidates</span></div>
+        <SectionInspector
+          id="trending-inspector"
+          label="trending signal"
+          items={trendFeatures.map((feature) => ({ id: feature.title, title: feature.title, summary: `${feature.group} · ${feature.sub}`, detail: <Explanation what={feature.what} how={feature.how} example={feature.example} /> }))}
+        />
+        </DepthPanel>
       </Section>
 
       <Section id="engine-choice" number="06" title="Runtime + Operations">
+        <CoreTakeaway>Use Flink where keyed state, event-time timers, and low latency matter; operate it through checkpoint health, lag, watermark, state, rescaling, and sink-commit signals.</CoreTakeaway>
+        <DepthPanel title="Explore runtime and operations" summary="Flink placement, Spark trade-off, recovery controls, state lifecycle, and production monitoring.">
         <RuntimePlacement />
         <div className="mt-5 grid gap-3 md:grid-cols-2">
           <ExplainCard title="Apache Flink" sub="Preferred · event-at-a-time" wide detail={<Explanation what="Provides low-latency event processing with rich keyed state, event-time timers, checkpoints, and side outputs." how="Use it for playback sessionization, fraud patterns, live counters, QoE alerts, and online features." example="A late p-42 heartbeat updates its keyed session immediately while checkpointed state protects recovery." />} />
           <ExplainCard title="Spark Structured Streaming" sub="Valid · micro-batch" wide detail={<Explanation what="Processes small batches continuously and fits teams already operating Spark." how="Choose it when existing skills and lake integrations matter more than the lowest per-event latency." example="A several-second micro-batch can serve dashboard aggregates when the latency target does not require event-at-a-time timers." />} />
         </div>
         <div className="mt-3 grid gap-2 sm:grid-cols-2 lg:grid-cols-4">{operations.map(([title, detail]) => <ExplainCard key={title} title={title} sub="Production control" detail={<><strong className="mb-1 block">Explanation</strong>{detail}</>} />)}</div>
+        <SectionInspector
+          id="runtime-operations-inspector"
+          label="runtime control"
+          items={[
+            { id: "flink", title: "Apache Flink", summary: "Preferred · event-at-a-time", detail: <Explanation what="Provides low-latency event processing with rich keyed state, event-time timers, checkpoints, and side outputs." how="Use it for playback sessionization, fraud patterns, live counters, QoE alerts, and online features." example="A late p-42 heartbeat updates its keyed session immediately while checkpointed state protects recovery." /> },
+            { id: "spark", title: "Spark Structured Streaming", summary: "Alternative · micro-batch", detail: <Explanation what="Processes small batches continuously and fits teams already operating Spark." how="Choose it when existing skills and lake integrations matter more than the lowest per-event latency." example="A several-second micro-batch can serve dashboard aggregates when the latency target does not require event-at-a-time timers." /> },
+            ...operations.map(([title, detail]) => ({ id: title, title, summary: "Production control", detail })),
+          ]}
+        />
+        </DepthPanel>
       </Section>
 
       <Section id="streaming-answer" number="07" title="Interview Answer">
+        <CoreTakeaway>Route by playback attempt, reconstruct with event time and state, publish versioned live products, and let certified batch replace incomplete history.</CoreTakeaway>
+        <DepthPanel title="Open the complete interview answer" summary="Five-part speaking structure and the full answer to rehearse.">
         <div className="mt-5 rounded-xl border border-[#a9bacb] bg-[var(--bg-muted)] px-4 py-3 text-sm leading-6"><strong>Goal:</strong><span className="ml-1 text-[var(--text-muted)]">turn continuous playback and engagement events into seconds-old watch sessions, counters, trends, alerts, and recommendation features without letting retries or delayed phones corrupt the results.</span></div>
         <div className="mt-3 grid gap-2 sm:grid-cols-2 lg:grid-cols-5">{[
           ["1. Bring together", "Send every event for one playback attempt to the same Flink worker."],
@@ -262,6 +339,7 @@ export default function RealTimeStreamingTab() {
           ["5. Certify later", "Let nightly batch reconcile complete history and publish the official numbers."],
         ].map(([title, detail]) => <div key={title} className="rounded-xl border border-[var(--border)] bg-[var(--bg-card)] p-3"><strong className="text-xs">{title}</strong><p className="mt-2 text-[11px] leading-5 text-[var(--text-muted)]">{detail}</p></div>)}</div>
         <div className="mt-3 rounded-xl border border-[var(--border)] bg-[var(--bg-muted)] p-5 text-sm font-medium leading-7 text-[var(--text)]"><span className="mb-2 block text-[10px] font-bold uppercase tracking-[.16em] text-[var(--text-faint)]">Say this</span>The goal of the real-time layer is to turn raw YouTube activity into useful signals within seconds while keeping playback sessions correct. I route all heartbeat, pause, seek, buffer, and end events for the same playback attempt to one Flink worker so it can rebuild that attempt in order and maintain its state. Event time and watermarks place delayed mobile events into the session where they happened; duplicates are ignored by event ID, and accepted late changes replace the older session version. Separate streaming jobs produce live video counters, trending features, fraud signals, QoE alerts, and recent recommendation features. These outputs are provisional for fast product decisions, while the nightly batch pipeline publishes the final deduplicated and fraud-filtered truth.</div>
+        </DepthPanel>
       </Section>
     </YouTubeFrame>
   );

@@ -1,11 +1,11 @@
 import type { Metadata } from "next";
-import { redirect } from "next/navigation";
+import { notFound, permanentRedirect } from "next/navigation";
 import DataEngineeringPage from "@/components/ui/netflix-data-engineering/DataEngineeringPage";
 import {
   DATA_ENGINEERING_TAB_META,
-  DATA_ENGINEERING_TAB_SLUGS,
-  normalizeDataEngineeringTab,
-  type DataEngineeringTabSlug,
+  NETFLIX_ROUTE_REGISTRY,
+  resolveNetflixRoute,
+  type NetflixChapterSlug,
 } from "@/components/ui/netflix-data-engineering/data";
 
 const BASE_URL = "https://withsoon.com/data-engineering/netflix";
@@ -16,7 +16,11 @@ export async function generateMetadata({
   params: Promise<{ tab: string }>;
 }): Promise<Metadata> {
   const { tab } = await params;
-  const canonicalTab = normalizeDataEngineeringTab(tab) ?? "start-here";
+  const resolution = resolveNetflixRoute(tab);
+  const canonicalTab =
+    resolution.availability === "missing"
+      ? "start-here"
+      : resolution.canonicalSlug;
   const meta = DATA_ENGINEERING_TAB_META[canonicalTab];
 
   return {
@@ -33,20 +37,28 @@ export async function generateMetadata({
   };
 }
 
+export function generateStaticParams() {
+  return NETFLIX_ROUTE_REGISTRY.map((chapter) => ({ tab: chapter.id }));
+}
+
 export default async function NetflixDataEngineeringTab({
   params,
 }: {
   params: Promise<{ tab: string }>;
 }) {
   const { tab } = await params;
-  const normalizedTab = normalizeDataEngineeringTab(tab);
+  const resolution = resolveNetflixRoute(tab);
 
-  if (normalizedTab && normalizedTab !== tab) {
-    redirect(`/data-engineering/netflix/${normalizedTab}`);
+  if (resolution.availability === "missing") {
+    notFound();
   }
-  if (!(DATA_ENGINEERING_TAB_SLUGS as readonly string[]).includes(tab)) {
-    redirect("/data-engineering/netflix/start-here");
+  if (resolution.availability === "redirect") {
+    permanentRedirect(
+      `/data-engineering/netflix/${resolution.canonicalSlug}`,
+    );
   }
 
-  return <DataEngineeringPage initialTab={tab as DataEngineeringTabSlug} />;
+  return (
+    <DataEngineeringPage initialTab={resolution.canonicalSlug as NetflixChapterSlug} />
+  );
 }

@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { redirect } from "next/navigation";
+import { notFound } from "next/navigation";
 import ArchitectureTab from "@/components/ui/youtube-data-engineering/ArchitectureTab";
 import BatchLakehouseTab from "@/components/ui/youtube-data-engineering/BatchLakehouseTab";
 import DataModelingTab from "@/components/ui/youtube-data-engineering/DataModelingTab";
@@ -39,7 +39,7 @@ export default async function YouTubeDataEngineeringTab({
 }) {
   const { tab } = await params;
   if (!isReadyYouTubeTab(tab)) {
-    redirect("/data-engineering/youtube/start-here");
+    notFound();
   }
 
   switch (tab) {

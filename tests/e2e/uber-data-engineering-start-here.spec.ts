@@ -7,26 +7,28 @@ test.describe("Uber Data Engineering - Start Here", () => {
     await expect(page.getByRole("heading", { name: "Design the shared marketplace data platform" })).toBeVisible();
   });
 
-  test("outline navigation updates the section anchor", async ({ page }) => {
+  test("outline navigation updates the section anchor", async ({ page }, testInfo) => {
+    test.skip(testInfo.project.name === "mobile", "The desktop outline is hidden on touch-sized viewports.");
     await page.goto("/data-engineering/uber/start-here");
     await page.getByTestId("stage-nav-freshness-map").click();
     await expect(page).toHaveURL(/#freshness-map$/);
     await expect(page.getByRole("heading", { name: "Compare the serving clocks" })).toBeVisible();
   });
 
-  test("cards reveal source-grounded explanations on hover", async ({ page }) => {
+  test("cards reveal source-grounded explanations on hover", async ({ page }, testInfo) => {
+    test.skip(testInfo.project.name === "mobile", "Precise-pointer hover is covered by the desktop project.");
     await page.goto("/data-engineering/uber/start-here#platform-mission");
     await page.getByRole("button", { name: /Surge pricing/i }).hover();
     await expect(page.getByRole("tooltip", { name: /supply and demand aggregates/i })).toBeVisible();
     await expect(page.getByText(/Fraud/i)).toHaveCount(0);
   });
 
-  test("supports the global light theme", async ({ page }) => {
+  test("uses the global light theme without exposing a partial theme control", async ({ page }) => {
+    await page.emulateMedia({ colorScheme: "dark" });
     await page.goto("/data-engineering/uber/start-here");
-    const themeButton = page.getByRole("button", { name: "Toggle theme" });
-    await themeButton.locator("svg").waitFor();
-    await themeButton.click();
+    await expect(page.getByRole("button", { name: /theme|dark mode|light mode/i })).toHaveCount(0);
     await expect(page.locator("html")).not.toHaveClass(/dark/);
+    expect(await page.evaluate(() => getComputedStyle(document.documentElement).colorScheme)).toBe("light");
     await expect(page.getByTestId("platform-mission-visual")).toBeVisible();
   });
 
@@ -55,14 +57,13 @@ test.describe("Uber Data Engineering - Start Here", () => {
     expect(anchors!.y + anchors!.height).toBeLessThanOrEqual(900);
   });
 
-  test("shows the hover hint once per chapter", async ({ page }) => {
+  test("uses an on-demand explainer instead of a blocking hover hint", async ({ page }) => {
     await page.goto("/data-engineering/uber/start-here");
-    await expect(page.getByRole("dialog", { name: "Card details hint" })).toBeVisible();
-    await page.getByRole("button", { name: "Dismiss card details hint" }).click();
-    await page.reload();
     await expect(page.getByRole("dialog", { name: "Card details hint" })).toHaveCount(0);
-
-    await page.goto("/data-engineering/uber/requirements");
-    await expect(page.getByRole("dialog", { name: "Card details hint" })).toBeVisible();
+    const card = page.getByRole("button", { name: /Driver app/i });
+    await card.click();
+    await expect(page.getByTestId("explainer-panel")).toHaveAttribute("role", "dialog");
+    await page.keyboard.press("Escape");
+    await expect(card).toHaveAttribute("aria-expanded", "false");
   });
 });

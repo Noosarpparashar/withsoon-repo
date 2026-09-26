@@ -1,9 +1,9 @@
 "use client";
 
-import { useState, type ReactNode } from "react";
-import { createPortal } from "react-dom";
+import { type ReactNode } from "react";
 import { BATCH_LAKEHOUSE_SECTIONS } from "./data";
-import { Section, YouTubeFrame } from "./shared";
+import { Section, SectionInspector, YouTubeFrame } from "./shared";
+import { CoreTakeaway, DepthPanel, InterviewPath } from "../data-design/ProgressiveChapter";
 
 type Explainable = {
   id: string;
@@ -14,8 +14,6 @@ type Explainable = {
 };
 
 type ExplanationGuide = { purpose: string; result: string };
-
-type TipPosition = { left: number; top: number; above: boolean };
 
 const EXPLANATION_GUIDE: Record<string, ExplanationGuide> = {
   sources: {
@@ -289,61 +287,32 @@ function FloatingCard({
   children: ReactNode;
   className?: string;
 }) {
-  const [position, setPosition] = useState<TipPosition | null>(null);
+  return (
+    <div className={className} data-flow-id={item.id}>
+      {children}
+    </div>
+  );
+}
 
-  const show = (element: HTMLElement) => {
-    const rect = element.getBoundingClientRect();
-    const width = Math.min(460, window.innerWidth - 24);
-    const left = Math.max(12, Math.min(rect.left + rect.width / 2 - width / 2, window.innerWidth - width - 12));
-    if (window.innerWidth < 640) {
-      setPosition({ left: 12, top: 12, above: false });
-      return;
-    }
-    const expectedHeight = 285;
-    const roomBelow = window.innerHeight - rect.bottom;
-    const above = roomBelow < expectedHeight && rect.top > expectedHeight;
-    const top = roomBelow < expectedHeight && rect.top <= expectedHeight ? 12 : above ? rect.top - 10 : rect.bottom + 10;
-    setPosition({ left, top, above });
-  };
-
+function toInspectorItem(item: Explainable) {
   const guide = EXPLANATION_GUIDE[item.id] ?? {
     purpose: `Make ${item.short.toLowerCase()} explicit and testable in the pipeline.`,
     result: `A documented ${item.title.toLowerCase()} result that the next stage can consume safely.`,
   };
 
-  const tooltip = position && typeof document !== "undefined"
-    ? createPortal(
-        <div
-          role="tooltip"
-          className="pointer-events-none fixed z-[100] max-h-[calc(100vh-24px)] w-[min(460px,calc(100vw-24px))] overflow-y-auto rounded-lg border border-[#9aabba] bg-white px-4 py-3 text-left shadow-[0_14px_34px_rgba(23,32,43,.20)]"
-          style={{ left: position.left, top: position.top, transform: position.above ? "translateY(-100%)" : undefined }}
-        >
-          <div className="flex items-center justify-between gap-3">
-            <strong className="text-sm text-[#17202b]">{item.title}</strong>
-            <span className="text-[10px] font-bold uppercase tracking-[.16em] text-[#687b8d]">Explanation</span>
-          </div>
-          <p className="mt-2.5 text-xs leading-5 text-[#445464]">{item.detail}</p>
-          <p className="mt-2 border-t border-[#d6e1eb] pt-2 text-xs leading-5 text-[#445464]">{guide.result} <strong className="text-[#17202b]">For example, </strong>{item.example}</p>
-        </div>,
-        document.body,
-      )
-    : null;
-
-  return (
-    <>
-      <button
-        type="button"
-        onMouseEnter={(event) => show(event.currentTarget)}
-        onMouseLeave={() => setPosition(null)}
-        onFocus={(event) => show(event.currentTarget)}
-        onBlur={() => setPosition(null)}
-        className={`cursor-default focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#70879b] ${className}`}
-      >
-        {children}
-      </button>
-      {tooltip}
-    </>
-  );
+  return {
+    id: item.id,
+    title: item.title,
+    summary: item.short,
+    detail: (
+      <>
+        <p>{item.detail}</p>
+        <p className="mt-1.5 border-t border-[#d6e1eb] pt-1.5">
+          {guide.result} <strong className="text-[#17202b]">Example: </strong>{item.example}
+        </p>
+      </>
+    ),
+  };
 }
 
 const ARCHITECTURE: readonly Explainable[] = [
@@ -560,7 +529,7 @@ function CardGrid({ items, columns = "sm:grid-cols-2 xl:grid-cols-4" }: { items:
   return (
     <div className={`grid gap-2 ${columns}`}>
       {items.map((item) => (
-        <FloatingCard key={item.id} item={item} className="rounded-lg border border-[var(--border)] bg-[var(--bg-muted)] p-3 text-left transition hover:-translate-y-0.5 hover:border-[#8fa5b8] hover:bg-[#e7eef5] hover:shadow-md">
+        <FloatingCard key={item.id} item={item} className="rounded-lg border border-[var(--border)] bg-[var(--bg-muted)] p-3 text-left">
           <strong className="block text-sm">{item.title}</strong>
           <span className="mt-1 block text-[11px] leading-4 text-[var(--text-faint)]">{item.short}</span>
         </FloatingCard>
@@ -571,7 +540,7 @@ function CardGrid({ items, columns = "sm:grid-cols-2 xl:grid-cols-4" }: { items:
 
 function ArchitectureNode({ item, number }: { item: Explainable; number: number }) {
   return (
-    <FloatingCard item={item} className="min-h-[94px] flex-1 rounded-xl border border-[var(--border)] bg-white p-3 text-left transition hover:border-[#8097aa] hover:bg-[#e7eef5] hover:shadow-md">
+    <FloatingCard item={item} className="min-h-[94px] flex-1 rounded-xl border border-[var(--border)] bg-white p-3 text-left">
       <span className="text-[10px] font-bold text-[var(--text-faint)]">{String(number).padStart(2, "0")}</span>
       <strong className="mt-2 block text-sm">{item.title}</strong>
       <span className="mt-1 block text-[10px] leading-4 text-[var(--text-faint)]">{item.short}</span>
@@ -612,7 +581,7 @@ function BatchArchitecture() {
       <div>
         <h3 className="mb-2 text-sm font-semibold">Storage foundation</h3>
         <div className="grid gap-2 lg:grid-cols-[1fr_auto_1fr_auto_1fr] lg:items-center">
-          {STORAGE.map((item, index) => <div key={item.id} className="contents"><FloatingCard item={item} className="rounded-xl border border-[var(--border)] bg-[var(--bg-muted)] p-4 text-left hover:border-[#8fa5b8] hover:bg-[#e7eef5]"><strong className="text-sm">{item.title}</strong><span className="mt-1 block text-xs text-[var(--text-faint)]">{item.short}</span></FloatingCard>{index < STORAGE.length - 1 ? <Arrow /> : null}</div>)}
+          {STORAGE.map((item, index) => <div key={item.id} className="contents"><FloatingCard item={item} className="rounded-xl border border-[var(--border)] bg-[var(--bg-muted)] p-4 text-left"><strong className="text-sm">{item.title}</strong><span className="mt-1 block text-xs text-[var(--text-faint)]">{item.short}</span></FloatingCard>{index < STORAGE.length - 1 ? <Arrow /> : null}</div>)}
         </div>
       </div>
       <div>
@@ -631,6 +600,11 @@ function BatchArchitecture() {
         <div className="rounded-xl border border-[var(--border)] bg-white p-4"><strong className="text-sm">Transaction correctness</strong><p className="mt-2 text-xs leading-5 text-[var(--text-muted)]">Iceberg committed one complete, isolated, durable table snapshot.</p></div>
         <div className="rounded-xl border border-[#9fb1c2] bg-[#eaf1f7] p-4"><strong className="text-sm">Metric correctness</strong><p className="mt-2 text-xs leading-5 text-[var(--text-muted)]">Inputs were complete, semantics passed, differences were explained, and the accountable owner approved release.</p></div>
       </div>
+      <SectionInspector
+        id="batch-architecture-inspector"
+        label="architecture concept"
+        items={[...ARCHITECTURE, ...STORAGE, ...LAYERS, ...PARTITIONING, ...OUTPUTS].map(toInspectorItem)}
+      />
     </div>
   );
 }
@@ -641,7 +615,7 @@ function DailyDag() {
       <div className="grid gap-3 xl:grid-cols-4">
         {DAG_PHASES.map((phase, phaseIndex) => (
           <div key={phase.title} className="relative rounded-xl border border-[var(--border)] bg-[#f7fafd] p-3">
-            <FloatingCard item={phase.explanation} className="w-full rounded-lg border border-[#a8b8c7] bg-[#eaf1f7] p-3 text-left hover:bg-[#e1ebf3]">
+            <FloatingCard item={phase.explanation} className="w-full rounded-lg border border-[#a8b8c7] bg-[#eaf1f7] p-3 text-left">
               <span className="text-[10px] font-bold text-[var(--text-faint)]">PHASE {phaseIndex + 1}</span>
               <strong className="mt-1 block text-base">{phase.title}</strong>
               <span className="mt-1 block text-[11px] text-[var(--text-faint)]">{phase.short}</span>
@@ -650,7 +624,7 @@ function DailyDag() {
               {phase.steps.map((step, index) => (
                 <div key={step.id}>
                   {index > 0 ? <div className="flex h-4 justify-center text-[#70879b]">↓</div> : null}
-                  <FloatingCard item={step} className="w-full rounded-md border border-[var(--border)] bg-white px-3 py-2.5 text-left hover:border-[#8fa5b8] hover:bg-[#e7eef5]">
+                  <FloatingCard item={step} className="w-full rounded-md border border-[var(--border)] bg-white px-3 py-2.5 text-left">
                     <strong className="block text-xs">{step.title}</strong>
                     <code className="mt-1 block break-all text-[9px] text-[var(--text-faint)]">{step.short}</code>
                   </FloatingCard>
@@ -665,6 +639,11 @@ function DailyDag() {
         <h3 className="mb-3 text-sm font-semibold">Where pipeline controls apply</h3>
         <CardGrid items={CONTROLS} />
       </div>
+      <SectionInspector
+        id="daily-dag-inspector"
+        label="DAG stage"
+        items={[...DAG_PHASES.flatMap((phase) => [phase.explanation, ...phase.steps]), ...CONTROLS].map(toInspectorItem)}
+      />
     </div>
   );
 }
@@ -690,6 +669,7 @@ function Publishing() {
         <h3 className="text-sm font-semibold">Data Quality Checks</h3>
         <div className="mt-3 flex flex-wrap gap-2 text-[11px]">{["Row count", "Uniqueness", "Required nulls", "Relationships", "Distribution", "Freshness", "Business reconciliation", "Finance approval"].map((gate) => <span key={gate} className="rounded-md border border-[var(--border)] bg-[var(--bg-muted)] px-3 py-2">{gate}</span>)}</div>
       </div>
+      <SectionInspector id="publishing-inspector" label="publishing stage" items={PUBLISHING.map(toInspectorItem)} />
     </div>
   );
 }
@@ -699,12 +679,12 @@ function Reconciliation() {
     <div className="mt-5 space-y-4">
       <div className="rounded-xl border border-[var(--border)] bg-[#f7fafd] p-4">
         <div className="grid gap-3 md:grid-cols-2">
-          <FloatingCard item={RECON_FLOW[0]} className="rounded-xl border border-[var(--border)] bg-white p-4 text-left hover:bg-[#e7eef5]"><span className="text-[10px] font-bold text-[var(--text-faint)]">SECONDS</span><strong className="mt-1 block text-sm">Streaming Window</strong><span className="mt-1 block text-xs text-[var(--text-faint)]">Live counters + trending · provisional</span></FloatingCard>
-          <FloatingCard item={RECON_FLOW[1]} className="rounded-xl border border-[var(--border)] bg-white p-4 text-left hover:bg-[#e7eef5]"><span className="text-[10px] font-bold text-[var(--text-faint)]">HOURS / DAILY</span><strong className="mt-1 block text-sm">Batch Candidate</strong><span className="mt-1 block text-xs text-[var(--text-faint)]">Certified counts + revenue + ML · exact</span></FloatingCard>
+          <FloatingCard item={RECON_FLOW[0]} className="rounded-xl border border-[var(--border)] bg-white p-4 text-left"><span className="text-[10px] font-bold text-[var(--text-faint)]">SECONDS</span><strong className="mt-1 block text-sm">Streaming Window</strong><span className="mt-1 block text-xs text-[var(--text-faint)]">Live counters + trending · provisional</span></FloatingCard>
+          <FloatingCard item={RECON_FLOW[1]} className="rounded-xl border border-[var(--border)] bg-white p-4 text-left"><span className="text-[10px] font-bold text-[var(--text-faint)]">HOURS / DAILY</span><strong className="mt-1 block text-sm">Batch Candidate</strong><span className="mt-1 block text-xs text-[var(--text-faint)]">Certified counts + revenue + ML · exact</span></FloatingCard>
         </div>
         <div className="flex h-8 items-center justify-center text-[#70879b]">↘ &nbsp; ↙</div>
         <div className="grid gap-2 xl:grid-cols-[1fr_auto_1fr_auto_1fr_auto_1fr] xl:items-center">
-          {RECON_FLOW.slice(2).map((item, index) => <div key={item.id} className="contents"><FloatingCard item={item} className="rounded-xl border border-[var(--border)] bg-white p-3 text-left hover:border-[#8fa5b8] hover:bg-[#e7eef5]"><strong className="block text-sm">{item.title}</strong><span className="mt-1 block text-[11px] text-[var(--text-faint)]">{item.short}</span></FloatingCard>{index < 3 ? <Arrow /> : null}</div>)}
+          {RECON_FLOW.slice(2).map((item, index) => <div key={item.id} className="contents"><FloatingCard item={item} className="rounded-xl border border-[var(--border)] bg-white p-3 text-left"><strong className="block text-sm">{item.title}</strong><span className="mt-1 block text-[11px] text-[var(--text-faint)]">{item.short}</span></FloatingCard>{index < 3 ? <Arrow /> : null}</div>)}
         </div>
       </div>
       <div>
@@ -718,6 +698,11 @@ function Reconciliation() {
         </div>
         <p className="mt-3 text-xs leading-5 text-[var(--text-muted)]"><strong>Keep three dates:</strong> event date tells when viewing happened; processing date tells when the platform handled it; publication date tells when consumers received the certified correction.</p>
       </div>
+      <SectionInspector
+        id="reconciliation-inspector"
+        label="reconciliation concept"
+        items={[...RECON_FLOW, ...DELTAS].map(toInspectorItem)}
+      />
     </div>
   );
 }
@@ -725,14 +710,49 @@ function Reconciliation() {
 export default function BatchLakehouseTab() {
   return (
     <YouTubeFrame activeTab="batch-lakehouse" sections={BATCH_LAKEHOUSE_SECTIONS} previous={{ id: "data-modeling", label: "Data Modeling" }} next={{ id: "governance-quality", label: "Governance / Quality" }}>
-      <Section id="batch-architecture" number="01" title="Batch Architecture"><BatchArchitecture /></Section>
-      <Section id="batch-dag" number="02" title="Daily DAG"><DailyDag /></Section>
-      <Section id="publish-protocol" number="03" title="Publishing"><Publishing /></Section>
-      <Section id="reconciliation" number="04" title="Reconciliation"><Reconciliation /></Section>
+      <InterviewPath
+        accent="#526b82"
+        title="Publish one reproducible certified history"
+        summary="Lead with the immutable evidence and atomic release path. Then explain incremental recomputation, data-quality gates, and why batch is allowed to correct the faster streaming estimate."
+        steps={[
+          { title: "Close inputs", detail: "Record Kafka ranges, CDC snapshots, files, schemas, and cutoff time." },
+          { title: "Build evidence", detail: "Deduplicate and sessionize Bronze into reusable Silver facts." },
+          { title: "Recompute", detail: "Process only changed dates and keys with idempotent deterministic jobs." },
+          { title: "Reconcile", detail: "Explain stream-versus-batch differences at the same grain and version." },
+          { title: "Promote", detail: "Publish one tested Gold snapshot atomically and retain rollback history." },
+        ]}
+      />
+      <Section id="batch-architecture" number="01" title="Batch Architecture">
+        <CoreTakeaway>Immutable Bronze evidence flows through deterministic Silver reconstruction into candidate Gold products; Iceberg snapshots make every input and output reproducible.</CoreTakeaway>
+        <DepthPanel title="Explore the batch architecture" summary="Eight-stage flow, storage foundation, layer contracts, partitioning, and outputs.">
+          <BatchArchitecture />
+        </DepthPanel>
+      </Section>
+      <Section id="batch-dag" number="02" title="Daily DAG">
+        <CoreTakeaway>The orchestrator waits for a complete manifest, plans changed partitions, runs deterministic transforms, validates the candidate, and only then permits publication.</CoreTakeaway>
+        <DepthPanel title="Explore the daily DAG" summary="Four phases, individual tasks, dependencies, idempotency, and pipeline controls.">
+          <DailyDag />
+        </DepthPanel>
+      </Section>
+      <Section id="publish-protocol" number="03" title="Publishing">
+        <CoreTakeaway>Write into run-scoped staging, test the candidate, record the release manifest, and switch one atomic pointer so consumers never observe a partial table.</CoreTakeaway>
+        <DepthPanel title="Explore the publish protocol" summary="Staging, quality checks, approval, atomic promotion, rollback, and consumer refresh.">
+          <Publishing />
+        </DepthPanel>
+      </Section>
+      <Section id="reconciliation" number="04" title="Reconciliation">
+        <CoreTakeaway>Compare stream and batch only at the same key, window, timezone, and metric version; attribute every material delta before replacing provisional history.</CoreTakeaway>
+        <DepthPanel title="Explore reconciliation" summary="Aligned inputs, delta ledger, decision gates, corrections, and late dimension repair.">
+          <Reconciliation />
+        </DepthPanel>
+      </Section>
       <Section id="batch-answer" number="05" title="Interview Answer">
+        <CoreTakeaway>Close inputs, rebuild trusted evidence incrementally, reconcile the candidate, and atomically promote one certified snapshot for every consumer.</CoreTakeaway>
+        <DepthPanel title="Open the complete interview answer" summary="The full batch and lakehouse answer to rehearse.">
         <div className="mx-auto mt-5 w-full max-w-5xl rounded-xl border border-[var(--border)] bg-[var(--bg-muted)] px-6 py-5 text-justify text-sm font-medium leading-7 md:px-8">
           I use batch processing to publish YouTube’s certified historical metrics for views, watch time, audience retention, revenue, payouts, and point-in-time ML datasets. Ingestion first closes the processing window and records the exact Kafka ranges, CDC snapshots, and files in a source manifest, so the Airflow or Dagster DAG cannot start from partial input. Spark then reads immutable Bronze Iceberg tables, deduplicates events, builds playback sessions, enforces consent, and applies versioned trust-and-safety decisions to create reusable Silver evidence. Incremental planning selects only changed dates and keys, while deterministic transforms, run-scoped staging, and partition replacement make every retry idempotent. Gold candidates are reconciled with matching streaming windows, tested, reviewed where required, and promoted with one atomic pointer change. Parquet on object storage provides efficient analytical scans, while Iceberg provides snapshots, time travel, schema evolution, hidden partitioning, and safe backfills. Creator Studio, BI, finance, recommendation features, and training jobs therefore read the same certified release with a reproducible explanation for every material correction.
         </div>
+        </DepthPanel>
       </Section>
     </YouTubeFrame>
   );

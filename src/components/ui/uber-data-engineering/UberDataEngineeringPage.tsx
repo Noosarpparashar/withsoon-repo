@@ -6,10 +6,14 @@ import {
   normalizeUberDeTab,
   type UberDeTabSlug,
   UBER_ARCHITECTURE_SECTIONS,
+  UBER_BATCH_SECTIONS,
   UBER_DE_TABS,
   UBER_DE_TAB_META,
   UBER_EVENT_SOURCE_SECTIONS,
+  UBER_FAILURE_QUALITY_SECTIONS,
+  UBER_INTERVIEW_SECTIONS,
   UBER_KAFKA_SECTIONS,
+  UBER_MODELING_SECTIONS,
   UBER_REQUIREMENTS_SECTIONS,
   UBER_START_HERE_SECTIONS,
 } from "./data";
@@ -19,6 +23,14 @@ import FailuresDataQualityTab from "./FailuresDataQualityTab";
 import InterviewQATab from "./InterviewQATab";
 import AnchorBrand from "./AnchorBrand";
 import CompanyChapterRail from "../data-design/CompanyChapterRail";
+import AccessibleExplainer from "../data-design/AccessibleExplainer";
+import ChapterPageHeading from "../data-design/ChapterPageHeading";
+import MobileSectionNav from "../data-design/MobileSectionNav";
+import UberInteractionTutorial from "./UberInteractionTutorial";
+import {
+  getActiveDataDesignSection,
+  scrollToDataDesignSection,
+} from "../data-design/sectionAnchors";
 
 const C = {
   bg: "var(--bg)",
@@ -28,14 +40,29 @@ const C = {
   text: "var(--text)",
   muted: "var(--text-muted)",
   faint: "var(--text-muted)",
-  blue: "#526b82",
-  cyan: "#657e90",
-  green: "#667a70",
-  amber: "#796f64",
+  blue: "#42586c",
+  cyan: "#445e72",
+  green: "#50675d",
+  amber: "#625346",
   red: "#62595d",
   violet: "#6d6774",
 };
 const href = (tab: UberDeTabSlug) => `/data-engineering/uber/${tab}`;
+
+const UBER_PAGE_SECTIONS: Record<
+  UberDeTabSlug,
+  readonly { id: string; title: string }[]
+> = {
+  "start-here": UBER_START_HERE_SECTIONS,
+  requirements: UBER_REQUIREMENTS_SECTIONS,
+  "event-sources": UBER_EVENT_SOURCE_SECTIONS,
+  architecture: UBER_ARCHITECTURE_SECTIONS,
+  "ingestion-kafka": UBER_KAFKA_SECTIONS,
+  "batch-pipelines": UBER_BATCH_SECTIONS,
+  "data-modeling": UBER_MODELING_SECTIONS,
+  "governance-quality": UBER_FAILURE_QUALITY_SECTIONS,
+  quiz: UBER_INTERVIEW_SECTIONS,
+};
 
 function Tabs({ active }: { active: UberDeTabSlug }) {
   return (
@@ -87,7 +114,7 @@ function Outline({
                 style={{
                   borderColor: on ? C.blue : C.border,
                   background: on
-                    ? "color-mix(in srgb, #526b82 13%, var(--bg-card))"
+                    ? "color-mix(in srgb, #42586c 13%, var(--bg-card))"
                     : C.card,
                   color: on ? C.text : C.muted,
                   boxShadow: on ? "0 6px 18px rgba(82,107,130,.12)" : "none",
@@ -120,15 +147,7 @@ function Outline({
 
 type VisualItem = { icon: string; title: string; sub: string; detail: string };
 function Tip({ text }: { text: string }) {
-  return (
-    <span
-      role="tooltip"
-      className="pointer-events-none absolute bottom-[calc(100%+8px)] left-1/2 z-50 hidden w-64 -translate-x-1/2 rounded-md border px-3 py-2 text-xs font-normal leading-5 shadow-xl group-hover:block group-focus-visible:block"
-      style={{ borderColor: C.border, background: C.card, color: C.text }}
-    >
-      {text}
-    </span>
-  );
+  return <AccessibleExplainer company="Uber">{text}</AccessibleExplainer>;
 }
 const producers: VisualItem[] = [
   {
@@ -327,7 +346,6 @@ function Section({
       style={{
         borderColor: `${color}38`,
         background: C.card,
-        scrollMarginTop: 140,
       }}
     >
       {kafkaSection ? null : (
@@ -443,7 +461,7 @@ function StartHere() {
           className="mt-4 rounded-md border px-5 py-4"
           style={{
             borderColor: "rgba(82,107,130,.35)",
-            background: "color-mix(in srgb, #526b82 8%, var(--bg-card))",
+            background: "color-mix(in srgb, #42586c 8%, var(--bg-card))",
           }}
         >
           <p
@@ -640,7 +658,7 @@ function StartHere() {
       >
         <Link
           href={href("requirements")}
-          className="inline-flex items-center gap-3 rounded-md border px-4 py-3 text-sm font-semibold transition-colors hover:border-[#526b82]"
+          className="inline-flex items-center gap-3 rounded-md border px-4 py-3 text-sm font-semibold transition-colors hover:border-[#42586c]"
           style={{ borderColor: C.border, background: C.card, color: C.text }}
         >
           <span>
@@ -667,33 +685,18 @@ function RequirementsTab() {
   );
   useEffect(() => {
     const sync = () => {
-      const items = UBER_REQUIREMENTS_SECTIONS.map((section) => {
-        const node = document.getElementById(section.id);
-        return node
-          ? { id: section.id, top: node.getBoundingClientRect().top }
-          : null;
-      }).filter((item): item is NonNullable<typeof item> => item !== null);
-      if (items.length)
-        setRequirementsActive(
-          items.reduce((closest, item) =>
-            Math.abs(item.top - 180) < Math.abs(closest.top - 180)
-              ? item
-              : closest,
-          ).id,
-        );
+      setRequirementsActive(
+        getActiveDataDesignSection(UBER_REQUIREMENTS_SECTIONS),
+      );
     };
     sync();
     addEventListener("scroll", sync, { passive: true });
     return () => removeEventListener("scroll", sync);
   }, []);
   const goToRequirement = (id: string) => {
-    const node = document.getElementById(id);
-    if (!node) return;
+    if (!document.getElementById(id)) return;
     history.replaceState(null, "", `${href("requirements")}#${id}`);
-    scrollTo({
-      top: node.getBoundingClientRect().top + scrollY - 140,
-      behavior: "smooth",
-    });
+    scrollToDataDesignSection(id);
     setRequirementsActive(id);
   };
   const assumptions: VisualItem[] = [
@@ -861,7 +864,7 @@ function RequirementsTab() {
             className="mt-3 flex items-center gap-3 rounded-xl border px-4 py-3"
             style={{
               borderColor: "rgba(82,107,130,.35)",
-              background: "color-mix(in srgb, #526b82 8%, var(--bg-card))",
+              background: "color-mix(in srgb, #42586c 8%, var(--bg-card))",
             }}
           >
             <strong className="text-2xl" style={{ color: C.blue }}>
@@ -1126,54 +1129,16 @@ function EventSourcesTab() {
   );
   useEffect(() => {
     const sync = () => {
-      const items = UBER_EVENT_SOURCE_SECTIONS.map((section) => {
-        const node = document.getElementById(section.id);
-        return node
-          ? { id: section.id, top: node.getBoundingClientRect().top }
-          : null;
-      }).filter((item): item is NonNullable<typeof item> => item !== null);
-      if (items.length)
-        setSourceActive(
-          items.reduce((closest, item) =>
-            Math.abs(item.top - 180) < Math.abs(closest.top - 180)
-              ? item
-              : closest,
-          ).id,
-        );
+      setSourceActive(getActiveDataDesignSection(UBER_EVENT_SOURCE_SECTIONS));
     };
     sync();
     addEventListener("scroll", sync, { passive: true });
     return () => removeEventListener("scroll", sync);
   }, []);
-  useEffect(() => {
-    const producerList = document.querySelector<HTMLElement>(
-      "#trip-reconciliation > button > div > div:first-child",
-    );
-    const tooltip = document.querySelector<HTMLElement>(
-      '#trip-reconciliation > button > [role="tooltip"]',
-    );
-    if (!producerList || !tooltip) return;
-    const show = () =>
-      tooltip.style.setProperty("display", "block", "important");
-    const hide = () =>
-      tooltip.style.setProperty("display", "none", "important");
-    hide();
-    producerList.addEventListener("mouseenter", show);
-    producerList.addEventListener("mouseleave", hide);
-    return () => {
-      producerList.removeEventListener("mouseenter", show);
-      producerList.removeEventListener("mouseleave", hide);
-      tooltip.style.removeProperty("display");
-    };
-  }, []);
   const goToSource = (id: string) => {
-    const node = document.getElementById(id);
-    if (!node) return;
+    if (!document.getElementById(id)) return;
     history.replaceState(null, "", `${href("event-sources")}#${id}`);
-    scrollTo({
-      top: node.getBoundingClientRect().top + scrollY - 140,
-      behavior: "smooth",
-    });
+    scrollToDataDesignSection(id);
     setSourceActive(id);
   };
   const sources = [
@@ -1940,7 +1905,7 @@ function ArchitectureSvg({
       data-testid="uber-architecture-svg"
       viewBox="0 0 760 750"
       className="h-full w-full"
-      role="img"
+      role="group"
       aria-label="Uber data platform architecture"
     >
       <defs>
@@ -2036,12 +2001,27 @@ function ArchitectureSvg({
               role="button"
               tabIndex={0}
               aria-label={`${data.label}: ${data.summary}`}
+              aria-pressed={active}
               onMouseDown={(event) => event.preventDefault()}
               onMouseEnter={() => onFocus(id)}
               onClick={() => onFocus(id)}
               onFocus={() => onFocus(id)}
+              onKeyDown={(event) => {
+                if (event.key === "Enter" || event.key === " ") {
+                  event.preventDefault();
+                  onFocus(id);
+                }
+              }}
               className="cursor-pointer outline-none"
             >
+              <rect
+                x={pos.x - 16}
+                y={pos.y - 16}
+                width={width + 32}
+                height={architectureNodeHeight + 32}
+                fill="transparent"
+                pointerEvents="all"
+              />
               <rect
                 x={pos.x}
                 y={pos.y}
@@ -2115,18 +2095,9 @@ function ArchitectureTab() {
   const [zoom, setZoom] = useState(1);
   useEffect(() => {
     const sync = () => {
-      const items = UBER_ARCHITECTURE_SECTIONS.map((section) => {
-        const node = document.getElementById(section.id);
-        return node
-          ? { id: section.id, top: node.getBoundingClientRect().top }
-          : null;
-      }).filter((item): item is NonNullable<typeof item> => item !== null);
-      if (items.length)
-        setArchitectureActive(
-          items.reduce((a, b) =>
-            Math.abs(b.top - 180) < Math.abs(a.top - 180) ? b : a,
-          ).id,
-        );
+      setArchitectureActive(
+        getActiveDataDesignSection(UBER_ARCHITECTURE_SECTIONS),
+      );
     };
     sync();
     addEventListener("scroll", sync, { passive: true });
@@ -2137,21 +2108,10 @@ function ArchitectureTab() {
       .querySelector<HTMLElement>('[data-testid="architecture-detail-panel"]')
       ?.scrollTo({ top: 0 });
   }, [focused]);
-  useEffect(() => {
-    document
-      .querySelectorAll<HTMLElement>('#architecture-principle [role="tooltip"]')
-      .forEach((tooltip) =>
-        tooltip.style.setProperty("display", "none", "important"),
-      );
-  }, []);
   const goToArchitecture = (id: string) => {
-    const node = document.getElementById(id);
-    if (!node) return;
+    if (!document.getElementById(id)) return;
     history.replaceState(null, "", `${href("architecture")}#${id}`);
-    scrollTo({
-      top: node.getBoundingClientRect().top + scrollY - 140,
-      behavior: "smooth",
-    });
+    scrollToDataDesignSection(id);
     setArchitectureActive(id);
   };
   const selected = architectureDetails[focused];
@@ -2177,8 +2137,9 @@ function ArchitectureTab() {
               style={{ borderColor: C.border, background: C.card2 }}
             >
               <div
-                className="absolute right-3 top-3 z-10 flex items-center overflow-hidden rounded-lg border shadow-sm"
-                style={{ borderColor: C.border, background: C.card }}
+                data-testid="uber-architecture-zoom-controls"
+                className="absolute right-3 top-3 z-10 flex items-center gap-2 rounded-lg shadow-sm"
+                style={{ background: C.card }}
               >
                 <button
                   aria-label="Zoom out"
@@ -2187,15 +2148,15 @@ function ArchitectureTab() {
                       Math.max(0.8, Number((value - 0.1).toFixed(1))),
                     )
                   }
-                  className="flex h-9 w-9 items-center justify-center text-lg"
-                  style={{ color: C.text }}
+                  className="flex h-9 w-9 items-center justify-center rounded-lg border text-lg"
+                  style={{ borderColor: C.border, color: C.text }}
                 >
                   −
                 </button>
                 <button
                   aria-label="Reset zoom"
                   onClick={() => setZoom(1)}
-                  className="h-9 min-w-14 border-x px-2 text-xs font-semibold"
+                  className="h-9 min-w-14 rounded-lg border px-2 text-xs font-semibold"
                   style={{ borderColor: C.border, color: C.muted }}
                 >
                   {Math.round(zoom * 100)}%
@@ -2207,8 +2168,8 @@ function ArchitectureTab() {
                       Math.min(1.5, Number((value + 0.1).toFixed(1))),
                     )
                   }
-                  className="flex h-9 w-9 items-center justify-center text-lg"
-                  style={{ color: C.text }}
+                  className="flex h-9 w-9 items-center justify-center rounded-lg border text-lg"
+                  style={{ borderColor: C.border, color: C.text }}
                 >
                   +
                 </button>
@@ -2339,8 +2300,11 @@ function ArchitectureTab() {
             </div>
             <div className="grid md:grid-cols-2">
               <button
+                type="button"
+                aria-pressed={focused === "flink"}
                 onMouseEnter={() => setFocused("flink")}
                 onFocus={() => setFocused("flink")}
+                onClick={() => setFocused("flink")}
                 className="group relative min-h-[150px] border-b p-5 text-left md:border-b-0 md:border-r"
                 style={{ borderColor: C.border, background: "transparent" }}
               >
@@ -2363,8 +2327,11 @@ function ArchitectureTab() {
                 <Tip text={architectureDetails.flink.why} />
               </button>
               <button
+                type="button"
+                aria-pressed={focused === "batch-orchestration"}
                 onMouseEnter={() => setFocused("batch-orchestration")}
                 onFocus={() => setFocused("batch-orchestration")}
+                onClick={() => setFocused("batch-orchestration")}
                 className="group relative min-h-[150px] p-5 text-left"
                 style={{ background: "transparent" }}
               >
@@ -2435,33 +2402,18 @@ function KafkaTab() {
   useEffect(() => {
     const sync = () => {
       if (kafkaAnchorLock.current) return;
-      const items = UBER_KAFKA_SECTIONS.map((section) => {
-        const node = document.getElementById(section.id);
-        return node
-          ? { id: section.id, top: node.getBoundingClientRect().top }
-          : null;
-      }).filter((item): item is NonNullable<typeof item> => item !== null);
-      if (items.length)
-        setKafkaActive(
-          items.reduce((a, b) =>
-            Math.abs(b.top - 180) < Math.abs(a.top - 180) ? b : a,
-          ).id,
-        );
+      setKafkaActive(getActiveDataDesignSection(UBER_KAFKA_SECTIONS));
     };
     sync();
     addEventListener("scroll", sync, { passive: true });
     return () => removeEventListener("scroll", sync);
   }, []);
   const goToKafka = (id: string) => {
-    const node = document.getElementById(id);
-    if (!node) return;
+    if (!document.getElementById(id)) return;
     if (kafkaAnchorLock.current) clearTimeout(kafkaAnchorLock.current);
     history.replaceState(null, "", `${href("ingestion-kafka")}#${id}`);
     setKafkaActive(id);
-    scrollTo({
-      top: node.getBoundingClientRect().top + scrollY - 140,
-      behavior: "smooth",
-    });
+    scrollToDataDesignSection(id);
     kafkaAnchorLock.current = window.setTimeout(() => {
       setKafkaActive(id);
       kafkaAnchorLock.current = null;
@@ -3074,46 +3026,21 @@ export default function UberDataEngineeringPage({
   initialTab?: string;
 }) {
   const tab = normalizeUberDeTab(initialTab) ?? "start-here";
+  const chapter = UBER_DE_TABS.find((item) => item.id === tab);
+  const usesSharedChapterHeading = UBER_DE_TABS.findIndex((item) => item.id === tab) < 7;
   const [active, setActive] =
     useState<(typeof UBER_START_HERE_SECTIONS)[number]["id"]>(
       "platform-mission",
     );
-  const [hintOpen, setHintOpen] = useState(false);
   useEffect(() => {
     document.title = UBER_DE_TAB_META[tab].title;
   }, [tab]);
   useEffect(() => {
-    const frame = requestAnimationFrame(() => {
-      try {
-        setHintOpen(
-          localStorage.getItem(`uber-de-hover-hint:${tab}`) !== "dismissed",
-        );
-      } catch {
-        setHintOpen(true);
-      }
-    });
-    return () => cancelAnimationFrame(frame);
-  }, [tab]);
-  useEffect(() => {
     if (tab !== "start-here") return;
     const sync = () => {
-      const xs = UBER_START_HERE_SECTIONS.map((s) => {
-        const n = document.getElementById(s.id);
-        return n ? { id: s.id, top: n.getBoundingClientRect().top } : null;
-      }).filter(
-        (
-          x,
-        ): x is {
-          id: (typeof UBER_START_HERE_SECTIONS)[number]["id"];
-          top: number;
-        } => !!x,
+      setActive(
+        getActiveDataDesignSection(UBER_START_HERE_SECTIONS) as (typeof UBER_START_HERE_SECTIONS)[number]["id"],
       );
-      if (xs.length)
-        setActive(
-          xs.reduce((a, b) =>
-            Math.abs(b.top - 180) < Math.abs(a.top - 180) ? b : a,
-          ).id,
-        );
     };
     sync();
     addEventListener("scroll", sync, { passive: true });
@@ -3123,80 +3050,40 @@ export default function UberDataEngineeringPage({
     const n = document.getElementById(id);
     if (!n) return;
     history.replaceState(null, "", `${href(tab)}#${id}`);
-    scrollTo({
-      top: n.getBoundingClientRect().top + scrollY - 96,
-      behavior: "smooth",
-    });
+    scrollToDataDesignSection(id);
     setActive(id as (typeof UBER_START_HERE_SECTIONS)[number]["id"]);
-  };
-  const dismissHint = () => {
-    setHintOpen(false);
-    try {
-      localStorage.setItem(`uber-de-hover-hint:${tab}`, "dismissed");
-    } catch {}
   };
   return (
     <div
-      className="uber-de-page min-h-[calc(100dvh-56px)]"
+      className="uber-de-page min-h-[calc(100dvh-var(--site-nav-height))]"
       style={{ background: C.bg, color: C.text }}
     >
       <Tabs active={tab} />
+      <MobileSectionNav
+        sections={UBER_PAGE_SECTIONS[tab]}
+        accent={C.blue}
+      />
+      <UberInteractionTutorial />
       <div className="mx-auto flex max-w-[1600px]">
         {tab === "start-here" ? <Outline active={active} onGo={go} /> : null}
-        <main className="min-w-0 flex-1 px-4 pb-12 pt-5 md:px-8 xl:px-12">
-          {tab === "start-here" ? <StartHere /> : <Placeholder tab={tab} />}
-        </main>
-      </div>
-      {hintOpen ? (
-        <aside
-          role="dialog"
-          aria-label="Card details hint"
-          className="uber-hover-hint fixed right-4 top-[140px] z-50 w-[370px] max-w-[calc(100vw-32px)] rounded-2xl border p-4 shadow-2xl md:right-6"
-          style={{
-            borderColor: "rgba(255,255,255,.55)",
-            background: C.blue,
-            color: "#fff",
-            boxShadow:
-              "0 18px 45px rgba(82,107,130,.38), 0 0 0 4px rgba(82,107,130,.14)",
-          }}
+        <section
+          data-de-content
+          aria-label={`${chapter?.label ?? "Data Engineering"} chapter content`}
+          className="uber-de-content min-w-0 flex-1 px-4 pb-12 pt-5 md:px-8 xl:px-12"
         >
-          <button
-            onClick={dismissHint}
-            aria-label="Dismiss card details hint"
-            className="absolute right-3 top-3 flex h-8 w-8 items-center justify-center rounded-lg border text-lg leading-none"
-            style={{
-              borderColor: "rgba(255,255,255,.5)",
-              background: "rgba(0,0,0,.14)",
-              color: "#fff",
-            }}
-          >
-            ×
-          </button>
-          <div className="flex gap-3 pr-9">
-            <span
-              className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border text-lg"
-              style={{
-                borderColor: "rgba(255,255,255,.35)",
-                background: "rgba(255,255,255,.18)",
-                color: "#fff",
-              }}
-            >
-              ⓘ
-            </span>
-            <div>
-              <p className="font-bold">Hover cards for more detail</p>
-              <p
-                className="mt-1 text-sm leading-6"
-                style={{ color: "rgba(255,255,255,.9)" }}
-              >
-                Move over any card to reveal its full explanation. Keyboard
-                focus works too.
-              </p>
+          {usesSharedChapterHeading ? (
+            <div className={tab === "start-here" ? "" : tab === "data-modeling" ? "xl:ml-[420px]" : "xl:ml-[232px]"}>
+              <ChapterPageHeading
+                company="Uber"
+                title={chapter?.label ?? "Data Engineering"}
+                description={chapter?.summary ?? "Design Uber's shared marketplace data platform."}
+              />
             </div>
-          </div>
-        </aside>
-      ) : null}
-      <style>{`.uber-de-page { --bg: #f4f7fb; --bg-card: #ffffff; --bg-muted: #eef4f9; --border: #d6e1eb; --text: #17202b; --text-muted: #526171; --text-faint: #76879a; color-scheme: light; } .uber-de-page main section button { border-radius: 14px; } .uber-de-page [data-testid="platform-mission-visual"] { border-radius: 20px; } .uber-de-page main section > div { border-radius: 16px; } .uber-architecture-canvas .react-flow__controls-button { background: var(--bg-card); color: var(--text); border-color: var(--border); } .uber-architecture-canvas .react-flow__controls-button:hover { background: var(--bg-muted); } .uber-architecture-canvas .react-flow__controls-button svg { fill: currentColor; } .uber-hover-hint { animation: uberHintIn .28s ease-out both; } @keyframes uberHintIn { from { opacity: 0; transform: translateY(-10px) scale(.98); } to { opacity: 1; transform: translateY(0) scale(1); } }`}</style>
+          ) : null}
+          {tab === "start-here" ? <StartHere /> : <Placeholder tab={tab} />}
+        </section>
+      </div>
+      <style>{`.uber-de-page { --bg: #f4f7fb; --bg-card: #ffffff; --bg-muted: #eef4f9; --border: #d6e1eb; --text: #17202b; --text-muted: #526171; --text-faint: #59697a; color-scheme: light; } .uber-de-content section button { border-radius: 14px; } .uber-de-page [data-testid="platform-mission-visual"] { border-radius: 20px; } .uber-de-content section > div { border-radius: 16px; } .uber-architecture-canvas .react-flow__controls-button { background: var(--bg-card); color: var(--text); border-color: var(--border); } .uber-architecture-canvas .react-flow__controls-button:hover { background: var(--bg-muted); } .uber-architecture-canvas .react-flow__controls-button svg { fill: currentColor; }`}</style>
     </div>
   );
 }

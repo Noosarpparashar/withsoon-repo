@@ -17,6 +17,18 @@ import { AnimatePresence, motion, useReducedMotion } from "motion/react";
 import Image from "next/image";
 import { copyTextToClipboard } from "../data-design/clipboard";
 import CompanyChapterRail from "../data-design/CompanyChapterRail";
+import ChapterPageHeading from "../data-design/ChapterPageHeading";
+import {
+  CoreTakeaway,
+  DepthPanel,
+  InterviewPath,
+} from "../data-design/ProgressiveChapter";
+import useCompactInteraction from "../data-design/useCompactInteraction";
+import {
+  alignDataDesignHash,
+  getActiveDataDesignSection,
+  scrollToDataDesignSection,
+} from "../data-design/sectionAnchors";
 import StartHereDesktopExperience from "./StartHereDesktopExperience";
 import {
   ARCHITECTURE_NODES,
@@ -24,7 +36,6 @@ import {
   BATCH_DAG_STEPS,
   CHEAT_SHEET_CONTENT,
   DATA_ENGINEERING_TAB_META,
-  DATA_ENGINEERING_TABS,
   DATA_TRACK_NUMBERS,
   DQ_INVESTIGATION_PATH,
   DQ_METRICS,
@@ -42,6 +53,7 @@ import {
   LATENCY_SLA_ROWS,
   MOCK_INTERVIEW_RUBRIC,
   MOCK_INTERVIEW_STEPS,
+  NETFLIX_ROUTE_REGISTRY,
   NFRS,
   RELIABILITY_INCIDENTS,
   REPLAY_FLOW,
@@ -67,12 +79,12 @@ const T = {
   muted: "var(--text-muted)",
   faint: "var(--text-faint)",
   red: "#5f565a",
-  amber: "#827a70",
-  gold: "#8b8377",
-  blue: "#6f879a",
-  violet: "#716b78",
+  amber: "#62594f",
+  gold: "#655e55",
+  blue: "#49667d",
+  violet: "#5b5263",
   purple: "#77707e",
-  green: "#6e8178",
+  green: "#50675d",
   orange: "#80756c",
 } as const;
 
@@ -117,12 +129,6 @@ const PRODUCT_TAB_SECTIONS: Record<DataEngineeringTabSlug, OutlineItem[]> = {
     { id: "req-nfr", title: "Board formulas", note: "Write only the formulas that matter." },
     { id: "req-say", title: "Punchline", note: "Close with the architecture implication." },
   ],
-  "event-sources": [
-    { id: "sources-map", title: "Source map", note: "Producers and key event families." },
-    { id: "sources-contract", title: "Event contract", note: "Fields, topics, and consumers." },
-    { id: "sources-lineage", title: "Population flow", note: "How sources become trusted tables." },
-    { id: "sources-say", title: "Say this", note: "Explain why sources come first." },
-  ],
   architecture: [
     { id: "arch-layered", title: "Architecture map", note: "One high-level interactive diagram." },
   ],
@@ -148,48 +154,22 @@ const PRODUCT_TAB_SECTIONS: Record<DataEngineeringTabSlug, OutlineItem[]> = {
     { id: "model-erd", title: "ER diagram", note: "Facts, dims, columns, and joins." },
     { id: "model-say", title: "Interview answer", note: "Explain modeling by grain first." },
   ],
-  "warehouse-serving": [
-    { id: "serve-matrix", title: "Workload matrix", note: "Which consumer uses which store." },
-    { id: "serve-freshness", title: "Freshness matrix", note: "Expected latency by consumer." },
-    { id: "serve-say", title: "Say this", note: "Serving layer interview line." },
-  ],
-  "feature-store-experimentation": [
-    { id: "feature-online-offline", title: "Online vs offline", note: "Separate low latency from training truth." },
-    { id: "feature-experiment", title: "Experimentation", note: "Assignments, exposure, and analysis." },
-    { id: "feature-say", title: "Say this", note: "How DE supports ML without becoming ML mode." },
-  ],
   "governance-quality": [
     { id: "gov-contracts", title: "Trust flow", note: "Contract, validate, certify, publish." },
     { id: "gov-quality", title: "Release control", note: "What blocks publish and how failures are investigated." },
     { id: "gov-incidents", title: "Failure flow", note: "What the team does after trust fails." },
     { id: "gov-privacy", title: "Privacy ops", note: "PII policy, deletion flow, and operating ownership." },
   ],
-  "backfill-replay": [
-    { id: "replay-late", title: "Late events", note: "Watermarks and correction windows." },
-    { id: "replay-dlq", title: "DLQ / quarantine", note: "Route bad events safely." },
-    { id: "replay-backfill", title: "Audited backfill", note: "How official metrics get corrected." },
-    { id: "replay-say", title: "Say this", note: "Correction workflow in interview language." },
-  ],
   "capacity-cost": [
     { id: "cost-scale", title: "Scale math", note: "Throughput, partitions, and storage." },
     { id: "cost-tradeoffs", title: "Cost levers", note: "Where compute and storage spend moves." },
   ],
-  failures: [
-    { id: "failures-playbook", title: "Incident playbook", note: "Detection, mitigation, recovery." },
-    { id: "failures-matrix", title: "Failure matrix", note: "Schema breaks, lag, stale Gold, skew." },
-    { id: "failures-say", title: "Say this", note: "Failure answer shape." },
-  ],
   quiz: [
     { id: "quiz-followups", title: "Q/A", note: "Interview follow-up questions." },
   ],
-  "cheat-sheet": [
-    { id: "cheat-short", title: "Answer versions", note: "30-second, 2-minute, 5-minute." },
-    { id: "cheat-formulas", title: "Formulas", note: "Scale, watch-time, and partitions." },
-    { id: "cheat-copy", title: "Print / copy", note: "Takeaway revision actions." },
-  ],
 };
 
-const TAB_INTERVIEW_LINES: Record<DataEngineeringTabSlug, string> = {
+const TAB_INTERVIEW_LINES: Record<string, string> = {
   "start-here": "I will scope this as the Netflix data platform behind events, streaming, lakehouse, analytics, quality, and replay rather than the playback backend itself.",
   requirements: "I estimate from a small set of assumptions, derive throughput and storage, and then explain how those numbers force partitioning, replay, and a shared batch-plus-stream backbone.",
   "event-sources": "Before I design Kafka or tables, I want to make the event sources explicit so the interviewer can see what data exists, who produces it, and what each event feeds.",
@@ -207,8 +187,6 @@ const TAB_INTERVIEW_LINES: Record<DataEngineeringTabSlug, string> = {
   quiz: "When the interviewer pushes deeper, I answer with one clear position, one concrete trade-off, and the right Netflix technology names in the right place.",
   "cheat-sheet": "My cheat sheet reduces the full design into a few answer versions, formulas, and red-flag mistakes so I can recall it quickly under interview pressure.",
 };
-
-const VISIBLE_DATA_ENGINEERING_TABS = DATA_ENGINEERING_TABS.filter((tab) => tab.id !== "failures" && tab.id !== "cheat-sheet");
 
 const SECTION4_ENVELOPE_FIELDS = [
   {
@@ -1374,7 +1352,7 @@ const MODELING_TABLE_VISUALS = {
     accent: "Gold mart",
   },
   feature_user_genre_affinity: {
-    color: "#6e8178",
+    color: "#50675d",
     objectName: "FeatureUserGenreAffinityRow",
     builtBy: "Prepared from watch history plus genre joins so offline training and online serving can share one consistent feature definition.",
     accent: "Feature",
@@ -2156,7 +2134,7 @@ function TopTabStrip({
   return (
     <CompanyChapterRail
       company="netflix"
-      chapters={VISIBLE_DATA_ENGINEERING_TABS}
+      chapters={NETFLIX_ROUTE_REGISTRY}
       activeId={activeTab}
       hrefFor={(id) => `/data-engineering/netflix/${id}`}
       onNavigate={(id) => onNavigate(id as DataEngineeringTabSlug)}
@@ -2174,14 +2152,23 @@ function Sidebar({
   onNavigateSection: (sectionId: string) => void;
 }) {
   const sections = PRODUCT_TAB_SECTIONS[activeTab];
-  const accent = DATA_ENGINEERING_TABS.find((tab) => tab.id === activeTab)?.accent ?? T.red;
+  const accent = NETFLIX_ROUTE_REGISTRY.find((tab) => tab.id === activeTab)?.accent ?? T.red;
+  const activeIndex = Math.max(0, sections.findIndex((section) => section.id === activeSectionId));
+  const progress = ((activeIndex + 1) / Math.max(1, sections.length)) * 100;
 
   return (
     <>
-      <aside className="hidden w-[250px] shrink-0 self-start border-r xl:block" style={{ borderColor: T.border }} aria-hidden="true" />
+      <aside
+        className="hidden shrink-0 self-start border-r xl:block"
+        style={{
+          width: "max(266px, calc((100vw - 1600px) / 2 + 266px))",
+          borderColor: T.border,
+        }}
+        aria-hidden="true"
+      />
       <div
         data-testid="anchor-rail"
-        className="fixed z-20 hidden w-[218px] overflow-y-auto pr-1 xl:block"
+        className="fixed z-20 hidden w-[250px] overflow-y-auto pr-1 xl:block"
         style={{
           left: "max(16px, calc((100vw - 1600px) / 2 + 16px))",
           top: 140,
@@ -2193,42 +2180,52 @@ function Sidebar({
           <Image src="/logo-netflix.webp" alt="Netflix" width={36} height={36} className="h-9 w-9 rounded-lg object-contain" />
           <p className="text-base font-bold" style={{ color: T.text }}>Netflix</p>
         </div>
-        <p className="mb-3 text-[10px] font-bold uppercase tracking-[0.22em]" style={{ color: T.faint }}>
-          Page anchors
-        </p>
-        <div className="space-y-2">
-          {sections.map((section, index) => {
-            const active = activeSectionId === section.id;
-            return (
-              <button
-                key={section.id}
-                data-testid={`stage-nav-${section.id}`}
-                onClick={() => onNavigateSection(section.id)}
-                className="relative flex min-h-[54px] w-full cursor-pointer items-center gap-3 overflow-hidden rounded-md border px-3 py-2 text-left text-xs font-semibold leading-4 transition-all"
-                style={{
-                  background: active ? `${accent}12` : T.card,
-                  border: `1px solid ${active ? `${accent}33` : T.border}`,
-                  boxShadow: active ? `0 10px 22px ${accent}12` : "none",
-                }}
-              >
-                {active ? <span className="absolute inset-y-0 left-0 w-1" style={{ background: accent }} /> : null}
-                <div className="flex items-center gap-3">
-                  <span
-                    className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-[10px] font-bold"
-                    style={{ background: active ? accent : T.card2, color: active ? "white" : T.faint }}
+        {activeTab !== "data-modeling" ? (
+          <>
+            <div data-testid="desktop-section-progress" className="mb-3 rounded-lg p-3" style={{ background: T.card, border: `1px solid ${T.border}` }}>
+              <div className="flex items-center justify-between gap-3 text-[10px] font-bold uppercase tracking-[0.14em]" style={{ color: T.faint }}>
+                <span>Page sections</span>
+                <span>{activeIndex + 1}/{sections.length}</span>
+              </div>
+              <div className="mt-2 h-1 overflow-hidden rounded-full" style={{ background: T.card2 }} aria-hidden="true">
+                <span className="block h-full transition-[width]" style={{ width: `${progress}%`, background: accent }} />
+              </div>
+            </div>
+            <div className="space-y-2">
+              {sections.map((section, index) => {
+                const active = activeSectionId === section.id;
+                return (
+                  <button
+                    key={section.id}
+                    data-testid={`stage-nav-${section.id}`}
+                    onClick={() => onNavigateSection(section.id)}
+                    className="relative flex min-h-[54px] w-full cursor-pointer items-center gap-3 overflow-hidden rounded-md border px-3 py-2 text-left text-xs font-semibold leading-4 transition-all"
+                    style={{
+                      background: active ? `${accent}12` : T.card,
+                      border: `1px solid ${active ? `${accent}33` : T.border}`,
+                      boxShadow: active ? `0 10px 22px ${accent}12` : "none",
+                    }}
                   >
-                    {index + 1}
-                  </span>
-                  <div className="min-w-0 flex-1">
-                    <p className="text-xs font-semibold leading-4" style={{ color: active ? T.text : T.muted }}>
-                      {section.title}
-                    </p>
-                  </div>
-                </div>
-              </button>
-            );
-          })}
-        </div>
+                    {active ? <span className="absolute inset-y-0 left-0 w-1" style={{ background: accent }} /> : null}
+                    <div className="flex items-center gap-3">
+                      <span
+                        className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-[10px] font-bold"
+                        style={{ background: active ? accent : T.card2, color: active ? "white" : T.faint }}
+                      >
+                        {index + 1}
+                      </span>
+                      <div className="min-w-0 flex-1">
+                        <p className="text-xs font-semibold leading-4" style={{ color: active ? T.text : T.muted }}>
+                          {section.title}
+                        </p>
+                      </div>
+                    </div>
+                  </button>
+                );
+              })}
+            </div>
+          </>
+        ) : null}
       </div>
     </>
   );
@@ -2247,19 +2244,26 @@ function MobileMenu({
 }) {
   if (!open) return null;
   return (
-    <div className="fixed inset-0 z-50 xl:hidden" style={{ background: T.bg }}>
+    <div
+      role="dialog"
+      aria-modal="true"
+      aria-label="Page outline"
+      data-testid="mobile-page-outline"
+      className="fixed inset-0 z-50 xl:hidden"
+      style={{ background: T.bg }}
+    >
       <div className="flex items-center justify-between px-4 py-3" style={{ borderBottom: `1px solid ${T.border}` }}>
         <span className="text-sm font-bold" style={{ color: T.text }}>
           On this page
         </span>
-        <button onClick={onClose} className="text-lg cursor-pointer" style={{ color: T.muted }}>
+        <button onClick={onClose} aria-label="Close page outline" className="text-lg cursor-pointer" style={{ color: T.muted }}>
           ✕
         </button>
       </div>
       <div className="p-4 overflow-y-auto no-scrollbar space-y-5">
         <div className="rounded-2xl p-4" style={{ background: T.card, border: `1px solid ${T.border}` }}>
           <p className="text-sm font-semibold" style={{ color: T.text }}>
-            {DATA_ENGINEERING_TABS.find((tab) => tab.id === activeTab)?.label}
+            {NETFLIX_ROUTE_REGISTRY.find((tab) => tab.id === activeTab)?.label}
           </p>
           <p className="text-[12px] mt-2 leading-5" style={{ color: T.faint }}>
             {DATA_ENGINEERING_TAB_META[activeTab].heroSubtitle}
@@ -2320,8 +2324,8 @@ function ScrollableShell({
   }, [scrollRef]);
 
   return (
-    <div ref={scrollRef} data-de-scroll-shell className="flex-1 min-h-0 relative" style={{ background: T.bg }}>
-      <div className="px-4 lg:px-6 py-6 pb-24 max-w-[1320px] mx-auto">
+    <div ref={scrollRef} data-de-scroll-shell className="relative min-h-0 min-w-0 flex-1 overflow-x-hidden" style={{ background: T.bg }}>
+      <div data-de-content className="box-border w-full min-w-0 px-4 py-6 pb-24 lg:px-6">
         {children}
         <div className="mt-10 rounded-2xl p-4 flex flex-wrap items-center justify-between gap-3" style={{ background: T.card, border: `1px solid ${T.border}` }}>
           <div className="flex items-center gap-2 flex-wrap">
@@ -2336,7 +2340,7 @@ function ScrollableShell({
               </button>
             ) : null}
           </div>
-          <button onClick={onMarkRevised} className="text-xs px-3 py-2 rounded-xl font-semibold cursor-pointer" style={{ background: revised ? `${T.green}18` : T.card2, color: revised ? T.green : T.text, border: `1px solid ${revised ? `${T.green}33` : T.border}` }}>
+          <button type="button" aria-pressed={revised} onClick={onMarkRevised} className="text-xs px-3 py-2 rounded-xl font-semibold cursor-pointer" style={{ background: revised ? `${T.green}18` : T.card2, color: revised ? T.green : T.text, border: `1px solid ${revised ? `${T.green}33` : T.border}` }}>
             {revised ? "Marked revised" : "Mark as revised"}
           </button>
         </div>
@@ -2349,11 +2353,14 @@ function ScrollableShell({
               Numbers are interview assumptions, not real Netflix internal figures.
             </p>
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2" role="group" aria-label="Was this tab useful?">
             <span className="text-[12px]" style={{ color: T.faint }}>
               Was this tab useful?
             </span>
             <button
+              type="button"
+              aria-label="Yes, this tab was useful"
+              aria-pressed={feedbackVote === "up"}
               onClick={() => onFeedback("up")}
               className="px-3 py-2 rounded-xl text-xs font-semibold cursor-pointer"
               style={{ background: feedbackVote === "up" ? `${T.green}18` : T.card2, color: feedbackVote === "up" ? T.green : T.text, border: `1px solid ${feedbackVote === "up" ? `${T.green}33` : T.border}` }}
@@ -2361,12 +2368,18 @@ function ScrollableShell({
               👍
             </button>
             <button
+              type="button"
+              aria-label="No, this tab was not useful"
+              aria-pressed={feedbackVote === "down"}
               onClick={() => onFeedback("down")}
               className="px-3 py-2 rounded-xl text-xs font-semibold cursor-pointer"
               style={{ background: feedbackVote === "down" ? `${T.red}18` : T.card2, color: feedbackVote === "down" ? T.red : T.text, border: `1px solid ${feedbackVote === "down" ? `${T.red}33` : T.border}` }}
             >
               👎
             </button>
+            <span className="sr-only" role="status" aria-live="polite">
+              {feedbackVote === "up" ? "Feedback saved: useful." : feedbackVote === "down" ? "Feedback saved: not useful." : "No feedback selected."}
+            </span>
           </div>
         </div>
       </div>
@@ -2489,15 +2502,26 @@ function AnchoredSection({
   accent: string;
   children: React.ReactNode;
 }) {
+  const accessibleTitle =
+    title ||
+    Object.values(PRODUCT_TAB_SECTIONS)
+      .flat()
+      .find((section) => section.id === id)?.title ||
+    eyebrow ||
+    "Chapter section";
+
   return (
-    <section id={id} data-de-anchor className="scroll-mt-24">
+    <section id={id} data-de-anchor>
       <div className="mb-4">
         <div className="flex items-center gap-2 flex-wrap">
           <Pill color={accent}>{eyebrow}</Pill>
         </div>
-        <h3 className="text-2xl font-bold mt-3 tracking-[-0.04em]" style={{ color: T.text }}>
-          {title}
-        </h3>
+        <h2
+          className={title ? "mt-3 text-2xl font-bold tracking-[-0.04em]" : "sr-only"}
+          style={{ color: T.text }}
+        >
+          {accessibleTitle}
+        </h2>
         <p className="text-sm mt-2 max-w-3xl" style={{ color: T.faint }}>
           {subtitle}
         </p>
@@ -2542,7 +2566,7 @@ function InterviewAnswerStrip({
   tab,
   accent,
 }: {
-  tab: DataEngineeringTabSlug;
+  tab: string;
   accent: string;
 }) {
   return <AnswerCard title="Interview answer" body={TAB_INTERVIEW_LINES[tab]} accent={accent} />;
@@ -2769,13 +2793,14 @@ function GovernanceTrustFlow() {
               </div>
             ))}
           </div>
-          <div className="grid gap-3 md:grid-cols-3 mt-4">
+          <div className="grid gap-3 md:grid-cols-3 mt-4" role="group" aria-label="Governance trust questions">
             {GOVERNANCE_TRUST_QUESTIONS.map((item) => {
               const active = item.question === activeQuestion.question;
               return (
                 <button
                   key={item.question}
                   type="button"
+                  aria-pressed={active}
                   onMouseEnter={() => setSelectedQuestion(item.question)}
                   onFocus={() => setSelectedQuestion(item.question)}
                   onClick={() => setSelectedQuestion(item.question)}
@@ -2789,7 +2814,7 @@ function GovernanceTrustFlow() {
               );
             })}
           </div>
-          <div className="rounded-[18px] p-4 mt-3" style={{ background: `${activeQuestion.color}18`, border: `1px solid ${activeQuestion.color}32` }}>
+          <div aria-live="polite" className="rounded-[18px] p-4 mt-3" style={{ background: `${activeQuestion.color}18`, border: `1px solid ${activeQuestion.color}32` }}>
             <p className="text-[10px] font-bold uppercase tracking-[0.18em]" style={{ color: activeQuestion.color }}>
               Interview answer
             </p>
@@ -2823,7 +2848,8 @@ function TableLineagePanel() {
 }
 
 function ErDiagramPanel() {
-  const defaultZoom = 0.58;
+  const compactInteraction = useCompactInteraction();
+  const defaultZoom = 0.92;
   const minZoom = 0.42;
   const maxZoom = 1.55;
   const rowHeight = 22;
@@ -2981,13 +3007,13 @@ function ErDiagramPanel() {
   }, []);
 
   return (
-    <div className="grid gap-5 xl:grid-cols-[minmax(0,1fr)_340px] xl:items-start">
+    <div className="min-w-0 w-full">
       <div
-        className="rounded-[28px] overflow-hidden"
+        className="min-w-0 w-full overflow-hidden rounded-[28px]"
         style={{ background: T.card, border: `1px solid ${T.violet}24` }}
       >
-        <div className="flex items-center justify-between gap-3 px-5 py-4" style={{ borderBottom: `1px solid ${T.border}` }}>
-          <div>
+        <div className="flex flex-wrap items-center justify-between gap-3 px-5 py-4" style={{ borderBottom: `1px solid ${T.border}` }}>
+          <div className="min-w-[280px] flex-1">
             <p className="text-[10px] font-bold uppercase tracking-[0.18em]" style={{ color: T.violet }}>
               Fact-dimension ER diagram
             </p>
@@ -3069,7 +3095,7 @@ function ErDiagramPanel() {
           >
             <svg
               viewBox="0 0 1760 1480"
-              role="img"
+              role="group"
               aria-label="Netflix dimensional ER diagram"
               className="block w-full h-auto"
             >
@@ -3160,8 +3186,7 @@ function ErDiagramPanel() {
                       setActiveColumnName(null);
                     }}
                     className="cursor-pointer"
-                    tabIndex={0}
-                    role="button"
+                    role="group"
                     aria-label={table.name}
                   >
                     <rect
@@ -3210,9 +3235,10 @@ function ErDiagramPanel() {
                             setActiveTableName(table.name);
                             setActiveColumnName(column.name);
                           }}
-                          tabIndex={0}
-                          role="button"
-                          aria-label={`${table.name} ${column.name}`}
+                          tabIndex={compactInteraction ? undefined : 0}
+                          role={compactInteraction ? undefined : "button"}
+                          aria-label={compactInteraction ? undefined : `${table.name} ${column.name}`}
+                          pointerEvents={compactInteraction ? "none" : undefined}
                         >
                           <rect
                             width={node.width - 24}
@@ -3225,7 +3251,7 @@ function ErDiagramPanel() {
                           <text
                             x="10"
                             y="14"
-                            fontSize="10"
+                            fontSize="11"
                             fontWeight="700"
                             fill={column.name.endsWith("_id") || column.name.endsWith("_sk") ? visual.color : "#526171"}
                           >
@@ -3249,26 +3275,67 @@ function ErDiagramPanel() {
             </svg>
           </div>
         </div>
+
+        <div
+          data-testid="netflix-model-mobile-fields"
+          className="border-t border-[var(--border)] bg-[var(--bg-muted)] p-4 md:hidden"
+        >
+          <p className="text-[10px] font-bold uppercase tracking-[0.16em]" style={{ color: activeVisual.color }}>
+            Fields in {activeTable.name}
+          </p>
+          <div className="mt-3 grid gap-2 sm:grid-cols-2">
+            {activeTable.columns.map((column) => {
+              const selected = activeColumn?.name === column.name;
+              return (
+                <button
+                  key={`${activeTable.name}-mobile-${column.name}`}
+                  type="button"
+                  aria-pressed={selected}
+                  onClick={() => setActiveColumnName(column.name)}
+                  className="flex min-h-11 items-center justify-between gap-3 rounded-xl border bg-white px-3 py-2 text-left outline-none focus-visible:ring-2"
+                  style={{
+                    borderColor: selected ? activeVisual.color : T.border,
+                    boxShadow: selected ? `inset 3px 0 0 ${activeVisual.color}` : undefined,
+                  }}
+                >
+                  <code className="min-w-0 truncate text-xs font-semibold" style={{ color: T.text }}>
+                    {column.name}
+                  </code>
+                  <span className="shrink-0 text-[10px]" style={{ color: T.faint }}>
+                    {column.type}
+                  </span>
+                </button>
+              );
+            })}
+          </div>
+        </div>
       </div>
 
-      <div className="xl:sticky xl:top-4 self-start">
+      <div
+        className="mt-5 w-full xl:fixed xl:bottom-4 xl:left-[var(--desktop-inspector-left)] xl:top-[200px] xl:z-20 xl:mt-0 xl:w-[var(--desktop-inspector-width)]"
+        style={{
+          "--desktop-inspector-left": "calc(max(16px, calc((100vw - 1600px) / 2 + 16px)) - clamp(0px, calc((100vw - 1600px) / 2), 81px))",
+          "--desktop-inspector-width": "calc(250px + clamp(0px, calc((100vw - 1600px) / 2), 81px))",
+        } as React.CSSProperties}
+      >
         <div
-          className="rounded-[24px] p-5 space-y-4"
-          style={{ background: T.card2, border: `1px solid ${activeVisual.color}28`, maxHeight: "calc(100vh - 7rem)", overflowY: "auto" }}
+          data-testid="netflix-model-hover-inspector"
+          className="h-full space-y-4 overflow-x-hidden overflow-y-auto rounded-[24px] p-4"
+          style={{ background: T.card2, border: `1px solid ${activeVisual.color}28` }}
         >
           <div className="flex items-start justify-between gap-3">
             <div>
               <p className="text-[10px] font-bold uppercase tracking-[0.18em]" style={{ color: activeVisual.color }}>
                 Hover inspector
               </p>
-              <h3 className="mt-2 text-xl font-bold" style={{ color: T.text }}>
+              <h3 className="mt-2 break-all text-lg font-bold leading-6" style={{ color: T.text }}>
                 {activeTable.name}
               </h3>
             </div>
             <Pill color={activeVisual.color}>{activeVisual.accent}</Pill>
           </div>
 
-          <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-1">
+          <div className="netflix-model-inspector-metrics grid gap-3 md:grid-cols-2 xl:grid-cols-1">
             <InfoTile label="Grain" value={activeTable.grain} />
             <InfoTile label="Partition" value={activeTable.partition} />
             <InfoTile label="Bucket" value={activeTable.bucket} />
@@ -3305,7 +3372,7 @@ function ErDiagramPanel() {
             <p className="text-[10px] font-bold uppercase tracking-[0.18em]" style={{ color: activeVisual.color }}>
               Row object shape
             </p>
-            <pre className="mt-3 overflow-x-auto whitespace-pre-wrap font-mono text-[12px] leading-6" style={{ color: "#526171" }}>
+            <pre className="mt-3 whitespace-pre-wrap break-all font-mono text-[11px] leading-5" style={{ color: "#526171" }}>
               {objectSnippet.lines.map((line, index) => {
                 const highlighted =
                   activeColumn
@@ -3400,6 +3467,9 @@ function RequirementsTab() {
             return (
               <div key={domain.id} className="rounded-2xl overflow-hidden" style={{ background: T.card, border: `1px solid ${domain.color}24` }}>
                 <button
+                  type="button"
+                  aria-expanded={open}
+                  aria-controls={`requirements-domain-${domain.id}`}
                   onClick={() => setOpenDomains((prev) => ({ ...prev, [domain.id]: !prev[domain.id] }))}
                   className="w-full text-left px-5 py-4 flex items-center justify-between cursor-pointer"
                   style={{ background: `${domain.color}10` }}
@@ -3415,11 +3485,13 @@ function RequirementsTab() {
                   <span style={{ color: domain.color }}>{open ? "−" : "+"}</span>
                 </button>
                 {open ? (
-                  <div className="p-4 space-y-3">
+                  <div id={`requirements-domain-${domain.id}`} className="p-4 space-y-3">
                     {domain.rows.map((row, index) => {
                       const active = selectedKey === `${domain.id}-${index}`;
                       return (
                         <button
+                          type="button"
+                          aria-pressed={active}
                           key={`${domain.id}-${row.requirement}`}
                           onClick={() => setSelectedKey(`${domain.id}-${index}`)}
                           className="w-full text-left rounded-2xl p-4 cursor-pointer"
@@ -3898,9 +3970,9 @@ function CapacityEstimationExperience() {
                   <p className="text-[10px] font-bold uppercase tracking-[0.18em]" style={{ color: activeFormula.accent }}>
                     Formula meaning
                   </p>
-                  <h4 className="mt-2 text-[1.45rem] font-semibold tracking-[-0.04em]" style={{ color: T.text }}>
+                  <h3 className="mt-2 text-[1.45rem] font-semibold tracking-[-0.04em]" style={{ color: T.text }}>
                     {activeFormula.title}
-                  </h4>
+                  </h3>
                 </div>
                 <Pill color={activeFormula.accent}>2.2</Pill>
               </div>
@@ -4182,7 +4254,7 @@ function ScaleEstimationTab({ depthMode }: { depthMode: DepthMode }) {
               <button onClick={resetDefaults} className="text-[11px] px-3 py-1.5 rounded-xl font-semibold cursor-pointer" style={{ background: T.card2, color: T.text, border: `1px solid ${T.border}` }}>
                 Reset defaults
               </button>
-              <button onClick={() => setShowInterviewExplanation((v) => !v)} className="text-[11px] px-3 py-1.5 rounded-xl font-semibold cursor-pointer" style={{ background: T.card2, color: T.text, border: `1px solid ${T.border}` }}>
+              <button type="button" aria-expanded={showInterviewExplanation} aria-controls="scale-interview-explanation" onClick={() => setShowInterviewExplanation((v) => !v)} className="text-[11px] px-3 py-1.5 rounded-xl font-semibold cursor-pointer" style={{ background: T.card2, color: T.text, border: `1px solid ${T.border}` }}>
                 {showInterviewExplanation ? "Hide explanation" : "Show explanation"}
               </button>
             </div>
@@ -4196,7 +4268,7 @@ function ScaleEstimationTab({ depthMode }: { depthMode: DepthMode }) {
             <RangeField label="Headroom" value={headroomPercent} min={10} max={60} step={5} suffix="%" onChange={setHeadroomPercent} />
           </div>
           {showInterviewExplanation ? (
-            <div className="mt-3 rounded-2xl p-3" style={{ background: `${T.blue}0f`, border: `1px solid ${T.blue}24` }}>
+            <div id="scale-interview-explanation" className="mt-3 rounded-2xl p-3" style={{ background: `${T.blue}0f`, border: `1px solid ${T.blue}24` }}>
               <div className="flex items-center justify-between gap-3 mb-2 flex-wrap">
                 <p className="text-[13px] font-semibold" style={{ color: T.text }}>
                   How to say it in the interview
@@ -4272,16 +4344,20 @@ function EventTaxonomyTab() {
     <div className="grid gap-4 xl:grid-cols-[0.95fr_1.05fr]">
       <div className="space-y-4">
         {EVENT_FAMILIES.map((group) => (
-          <button
+          <div
             key={group.id}
-            onClick={() => setFamilyId(group.id)}
-            className="w-full text-left rounded-[22px] p-5 cursor-pointer"
+            className="w-full text-left rounded-[22px] p-5"
             style={{
               background: familyId === group.id ? `${group.color}0f` : T.card,
               border: `1px solid ${familyId === group.id ? `${group.color}35` : T.border}`,
             }}
           >
-            <div className="flex items-center justify-between gap-3 mb-3">
+            <button
+              type="button"
+              aria-pressed={familyId === group.id}
+              onClick={() => setFamilyId(group.id)}
+              className="flex w-full items-center justify-between gap-3 mb-3 text-left"
+            >
               <div>
                 <p className="text-[10px] font-bold uppercase tracking-[0.18em]" style={{ color: group.color }}>
                   {group.title}
@@ -4291,10 +4367,12 @@ function EventTaxonomyTab() {
                 </p>
               </div>
               <Pill color={group.color}>Family</Pill>
-            </div>
+            </button>
             <div className="flex flex-wrap gap-2">
               {group.events.map((event) => (
                 <button
+                  type="button"
+                  aria-pressed={selectedEvent.id === event.id}
                   key={event.id}
                   onClick={(e) => {
                     e.stopPropagation();
@@ -4312,7 +4390,7 @@ function EventTaxonomyTab() {
                 </button>
               ))}
             </div>
-          </button>
+          </div>
         ))}
       </div>
       <div className="rounded-[24px] p-5" style={{ background: T.card, border: `1px solid ${family.color}24` }}>
@@ -4432,6 +4510,8 @@ function ArchitectureTab({ onNavigate }: { onNavigate: (tab: DataEngineeringTabS
               { label: "Show cost overlay", action: () => { setOverlayMode("cost"); setSelectedNodeId("bronze"); }, active: overlayMode === "cost" },
             ].map((item) => (
               <button
+                type="button"
+                aria-pressed={item.active}
                 key={item.label}
                 onClick={item.action}
                 className="px-3 py-2 rounded-xl text-xs font-semibold cursor-pointer transition-all duration-200 hover:-translate-y-0.5"
@@ -4446,6 +4526,8 @@ function ArchitectureTab({ onNavigate }: { onNavigate: (tab: DataEngineeringTabS
               const active = reveals.includes(item.id);
               return (
                 <button
+                  type="button"
+                  aria-pressed={active}
                   key={item.id}
                   onClick={() => setReveals((prev) => (prev.includes(item.id) ? prev.filter((entry) => entry !== item.id) : [...prev, item.id]))}
                   className="px-3 py-2 rounded-xl text-xs font-semibold cursor-pointer transition-all duration-200 hover:-translate-y-0.5"
@@ -4512,6 +4594,8 @@ function ArchitectureTab({ onNavigate }: { onNavigate: (tab: DataEngineeringTabS
             </div>
             {visibleNodes.map((node, index) => (
               <button
+                type="button"
+                aria-pressed={selectedNode?.id === node.id}
                 key={node.id}
                 onClick={() => {
                   setSelectedNodeId(node.id);
@@ -4569,7 +4653,7 @@ function ArchitectureTab({ onNavigate }: { onNavigate: (tab: DataEngineeringTabS
               Open deep dive
             </button>
           </div>
-          <div className="flex flex-wrap gap-2 mb-4">
+          <div className="flex flex-wrap gap-2 mb-4" role="tablist" aria-label="Pipeline node details">
             {[
               { id: "overview", label: "Overview" },
               { id: "input", label: "Input" },
@@ -4580,6 +4664,11 @@ function ArchitectureTab({ onNavigate }: { onNavigate: (tab: DataEngineeringTabS
               const active = drawerTab === item.id;
               return (
                 <button
+                  type="button"
+                  role="tab"
+                  id={`pipeline-node-tab-${item.id}`}
+                  aria-selected={active}
+                  aria-controls="pipeline-node-tabpanel"
                   key={item.id}
                   onClick={() => setDrawerTab(item.id as typeof drawerTab)}
                   className="px-3 py-2 rounded-xl text-xs font-semibold cursor-pointer transition-all duration-200 hover:-translate-y-0.5"
@@ -4590,7 +4679,7 @@ function ArchitectureTab({ onNavigate }: { onNavigate: (tab: DataEngineeringTabS
               );
             })}
           </div>
-          <div className="grid gap-4 md:grid-cols-2">
+          <div id="pipeline-node-tabpanel" role="tabpanel" aria-labelledby={`pipeline-node-tab-${drawerTab}`} className="grid gap-4 md:grid-cols-2">
             {drawerTab === "overview" ? (
               <>
                 <DetailBlock title="What it does" accent={selectedNode.color}>{selectedNode.what}</DetailBlock>
@@ -4661,6 +4750,8 @@ function IngestionTab() {
           const active = selectedLane.id === lane.id;
           return (
             <button
+              type="button"
+              aria-pressed={active}
               key={lane.id}
               onClick={() => setSelectedLaneId(lane.id)}
               className="w-full text-left rounded-[24px] p-5 cursor-pointer"
@@ -4731,6 +4822,8 @@ function KafkaTopicsTab() {
             const active = selectedTopic.id === topic.id;
             return (
               <button
+                type="button"
+                aria-pressed={active}
                 key={topic.id}
                 onClick={() => setSelectedTopicId(topic.id)}
                 className="rounded-[22px] p-4 text-left cursor-pointer"
@@ -4845,6 +4938,7 @@ function StreamingPipelineTab() {
                   jobButtonRefs.current[job.id] = node;
                 }}
                 type="button"
+                aria-pressed={active}
                 onClick={() => setSelectedJobId(job.id)}
                 whileHover={{ y: -2 }}
                 className="rounded-full px-3 py-2 text-xs font-semibold cursor-pointer shrink-0 whitespace-nowrap"
@@ -5022,7 +5116,7 @@ function WatchTimeTab() {
           </p>
           <div className="flex flex-wrap gap-2 mb-4">
             {WATCH_TIME_DEFINITIONS.map((item) => (
-              <button key={item.id} onClick={() => setMode(item.id)} className="px-3 py-2 rounded-xl text-sm font-semibold cursor-pointer" style={{ background: mode === item.id ? `${T.blue}18` : T.card2, color: mode === item.id ? T.blue : T.text, border: `1px solid ${mode === item.id ? `${T.blue}33` : T.border}` }}>
+              <button type="button" aria-pressed={mode === item.id} key={item.id} onClick={() => setMode(item.id)} className="px-3 py-2 rounded-xl text-sm font-semibold cursor-pointer" style={{ background: mode === item.id ? `${T.blue}18` : T.card2, color: mode === item.id ? T.blue : T.text, border: `1px solid ${mode === item.id ? `${T.blue}33` : T.border}` }}>
                 {item.label}
               </button>
             ))}
@@ -5128,6 +5222,8 @@ function SessionizationTab() {
         <div className="mt-4 flex gap-2 overflow-x-auto pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
           {SESSIONIZATION_SCENARIOS.map((item) => (
             <button
+              type="button"
+              aria-pressed={scenario.id === item.id}
               key={item.id}
               ref={(node) => {
                 scenarioButtonRefs.current[item.id] = node;
@@ -5325,6 +5421,7 @@ function LakehouseTab() {
               <div key={item.id} className="contents">
                 <motion.button
                   type="button"
+                  aria-pressed={active}
                   onMouseEnter={() => setLayerId(item.id)}
                   onFocus={() => setLayerId(item.id)}
                   onClick={() => setLayerId(item.id)}
@@ -5456,7 +5553,7 @@ function TableDesignTab() {
         </p>
         <div className="space-y-2">
           {TABLE_SCHEMAS.map((item, index) => (
-            <button key={`${item.name}-${index}`} onClick={() => setTableName(item.name)} className="w-full text-left rounded-xl p-3 cursor-pointer" style={{ background: item.name === table.name ? `${T.violet}12` : T.card2, border: `1px solid ${item.name === table.name ? `${T.violet}33` : T.border}` }}>
+            <button type="button" aria-pressed={item.name === table.name} key={`${item.name}-${index}`} onClick={() => setTableName(item.name)} className="w-full text-left rounded-xl p-3 cursor-pointer" style={{ background: item.name === table.name ? `${T.violet}12` : T.card2, border: `1px solid ${item.name === table.name ? `${T.violet}33` : T.border}` }}>
               <p className="text-sm font-semibold" style={{ color: T.text }}>
                 {item.name}
               </p>
@@ -5481,7 +5578,7 @@ function TableDesignTab() {
         </div>
         <div className="space-y-2">
           {table.columns.map((item, index) => (
-            <button key={`${table.name}-${item.name}-${index}`} onClick={() => setColumnName(item.name)} className="w-full text-left rounded-xl p-3 cursor-pointer" style={{ background: item.name === column.name ? `${T.blue}12` : T.card2, border: `1px solid ${item.name === column.name ? `${T.blue}33` : T.border}` }}>
+            <button type="button" aria-pressed={item.name === column.name} key={`${table.name}-${item.name}-${index}`} onClick={() => setColumnName(item.name)} className="w-full text-left rounded-xl p-3 cursor-pointer" style={{ background: item.name === column.name ? `${T.blue}12` : T.card2, border: `1px solid ${item.name === column.name ? `${T.blue}33` : T.border}` }}>
               <p className="text-sm font-semibold" style={{ color: T.text }}>
                 {item.name}
               </p>
@@ -5653,6 +5750,7 @@ function BatchPipelineTab() {
                   ) : null}
                   <motion.button
                     type="button"
+                    aria-pressed={active}
                     onMouseEnter={() => setStepId(item.id)}
                     onFocus={() => setStepId(item.id)}
                     onClick={() => setStepId(item.id)}
@@ -5750,7 +5848,7 @@ function DataQualityTab() {
     <div className="space-y-6">
       <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
         {DQ_METRICS.map((item) => (
-          <button key={item.label} onClick={() => setSelectedMetric(item.label)} className="rounded-2xl p-4 text-left cursor-pointer" style={{ background: metric.label === item.label ? `${item.color}12` : T.card, border: `1px solid ${metric.label === item.label ? `${item.color}33` : T.border}` }}>
+          <button type="button" aria-pressed={metric.label === item.label} key={item.label} onClick={() => setSelectedMetric(item.label)} className="rounded-2xl p-4 text-left cursor-pointer" style={{ background: metric.label === item.label ? `${item.color}12` : T.card, border: `1px solid ${metric.label === item.label ? `${item.color}33` : T.border}` }}>
             <p className="text-[10px] font-bold uppercase tracking-[0.18em]" style={{ color: item.color }}>
               {item.label}
             </p>
@@ -5813,7 +5911,7 @@ function GovernanceTab() {
         </p>
         <div className="space-y-3">
           {GOVERNANCE_FIELDS.map((item) => (
-            <button key={item.name} onClick={() => setFieldName(item.name)} className="w-full text-left rounded-2xl p-4 cursor-pointer" style={{ background: field.name === item.name ? `${T.green}12` : T.card2, border: `1px solid ${field.name === item.name ? `${T.green}33` : T.border}` }}>
+            <button type="button" aria-pressed={field.name === item.name} key={item.name} onClick={() => setFieldName(item.name)} className="w-full text-left rounded-2xl p-4 cursor-pointer" style={{ background: field.name === item.name ? `${T.green}12` : T.card2, border: `1px solid ${field.name === item.name ? `${T.green}33` : T.border}` }}>
               <p className="text-sm font-bold" style={{ color: T.text }}>
                 {item.name}
               </p>
@@ -6037,6 +6135,8 @@ function GovernanceQualityControlRoom() {
               const active = item.label === metric.label;
               return (
                 <button
+                  type="button"
+                  aria-pressed={active}
                   key={item.label}
                   onClick={() => setSelectedMetric(item.label)}
                   className="px-3 py-2 rounded-full text-xs font-semibold cursor-pointer"
@@ -6131,13 +6231,14 @@ function GovernanceQualityControlRoom() {
         </div>
       </div>
 
-      <div className="grid gap-3 md:grid-cols-3">
+      <div className="grid gap-3 md:grid-cols-3" role="group" aria-label="Release safety questions">
         {GOVERNANCE_RELEASE_QUESTIONS.map((item) => {
           const active = item.question === activeQuestion.question;
           return (
             <button
               key={item.question}
               type="button"
+              aria-pressed={active}
               onMouseEnter={() => setSelectedQuestion(item.question)}
               onFocus={() => setSelectedQuestion(item.question)}
               onClick={() => setSelectedQuestion(item.question)}
@@ -6152,7 +6253,7 @@ function GovernanceQualityControlRoom() {
         })}
       </div>
 
-      <div className="rounded-[18px] p-4" style={{ background: `${activeQuestion.color}18`, border: `1px solid ${activeQuestion.color}32` }}>
+      <div aria-live="polite" className="rounded-[18px] p-4" style={{ background: `${activeQuestion.color}18`, border: `1px solid ${activeQuestion.color}32` }}>
         <p className="text-[10px] font-bold uppercase tracking-[0.18em]" style={{ color: activeQuestion.color }}>
           Interview answer
         </p>
@@ -6205,6 +6306,8 @@ function GovernancePrivacyOps() {
               const active = item.name === field.name;
               return (
                 <button
+                  type="button"
+                  aria-pressed={active}
                   key={item.name}
                   onClick={() => setFieldName(item.name)}
                   className="px-3 py-2 rounded-full text-xs font-semibold cursor-pointer"
@@ -6308,13 +6411,14 @@ function GovernancePrivacyOps() {
         </div>
       </div>
 
-      <div className="grid gap-3 md:grid-cols-3">
+      <div className="grid gap-3 md:grid-cols-3" role="group" aria-label="Privacy and deletion questions">
         {GOVERNANCE_PRIVACY_QUESTIONS.map((item) => {
           const active = item.question === activeQuestion.question;
           return (
             <button
               key={item.question}
               type="button"
+              aria-pressed={active}
               onMouseEnter={() => setSelectedQuestion(item.question)}
               onFocus={() => setSelectedQuestion(item.question)}
               onClick={() => setSelectedQuestion(item.question)}
@@ -6329,7 +6433,7 @@ function GovernancePrivacyOps() {
         })}
       </div>
 
-      <div className="rounded-[18px] p-4" style={{ background: `${activeQuestion.color}18`, border: `1px solid ${activeQuestion.color}32` }}>
+      <div aria-live="polite" className="rounded-[18px] p-4" style={{ background: `${activeQuestion.color}18`, border: `1px solid ${activeQuestion.color}32` }}>
         <p className="text-[10px] font-bold uppercase tracking-[0.18em]" style={{ color: activeQuestion.color }}>
           Interview answer
         </p>
@@ -6380,7 +6484,7 @@ function ServingLayerTab() {
         </p>
         <div className="space-y-3">
           {SERVING_MATRIX.map((entry) => (
-            <button key={entry.workload} onClick={() => setWorkload(entry.workload)} className="w-full text-left rounded-2xl p-4 cursor-pointer" style={{ background: workload === entry.workload ? `${T.gold}12` : T.card2, border: `1px solid ${workload === entry.workload ? `${T.gold}33` : T.border}` }}>
+            <button type="button" aria-pressed={workload === entry.workload} key={entry.workload} onClick={() => setWorkload(entry.workload)} className="w-full text-left rounded-2xl p-4 cursor-pointer" style={{ background: workload === entry.workload ? `${T.gold}12` : T.card2, border: `1px solid ${workload === entry.workload ? `${T.gold}33` : T.border}` }}>
               <p className="text-sm font-bold" style={{ color: T.text }}>
                 {entry.workload}
               </p>
@@ -6426,6 +6530,7 @@ function ReliabilityTab() {
           <button
             key={item.id}
             type="button"
+            aria-pressed={incident.id === item.id}
             onClick={() => setIncidentId(item.id)}
             onMouseEnter={() => setIncidentId(item.id)}
             onFocus={() => setIncidentId(item.id)}
@@ -6505,6 +6610,8 @@ function TradeoffsTab() {
       <div className="grid gap-2 md:grid-cols-2 xl:grid-cols-6">
           {TRADEOFFS.map((entry) => (
             <button
+              type="button"
+              aria-pressed={item.decision === entry.decision}
               key={entry.decision}
               onClick={() => setDecision(entry.decision)}
               onMouseEnter={() => setDecision(entry.decision)}
@@ -6636,9 +6743,13 @@ function InterviewQATab({ onNavigate }: { onNavigate: (tab: DataEngineeringTabSl
         className="rounded-[24px] p-5 xl:h-full xl:overflow-y-auto"
         style={{ background: T.card, border: `1px solid ${T.blue}24` }}
       >
-        <div className="space-y-3">
+        <div className="space-y-3" role="radiogroup" aria-label="Netflix interview questions">
           {INTERVIEW_QUESTIONS.map((item) => (
             <button
+              type="button"
+              role="radio"
+              aria-checked={item.id === question.id}
+              aria-controls="netflix-interview-answer"
               key={item.id}
               onMouseEnter={() => setQuestionId(item.id)}
               onFocus={() => setQuestionId(item.id)}
@@ -6657,6 +6768,9 @@ function InterviewQATab({ onNavigate }: { onNavigate: (tab: DataEngineeringTabSl
         </div>
       </div>
       <div
+        id="netflix-interview-answer"
+        aria-live="polite"
+        aria-atomic="true"
         className="rounded-[24px] p-4 xl:h-full xl:overflow-hidden"
         style={{ background: T.card, border: `1px solid ${T.blue}24` }}
       >
@@ -6721,6 +6835,8 @@ function NetflixTechMapTab() {
                 <div className="flex flex-wrap gap-3">
                   {items.map((item) => (
                     <button
+                      type="button"
+                      aria-pressed={selected.id === item.id}
                       key={item.id}
                       onClick={() => setSelectedId(item.id)}
                       className="rounded-[20px] px-4 py-3 text-left cursor-pointer min-w-[180px] transition-transform hover:-translate-y-0.5"
@@ -6777,6 +6893,8 @@ function DrawIfAskedTab() {
       <div className="space-y-3">
         {INTERVIEW_DRAWING_BOARDS.map((item) => (
           <button
+            type="button"
+            aria-pressed={selected.id === item.id}
             key={item.id}
             onClick={() => setSelectedId(item.id)}
             className="w-full text-left rounded-[22px] p-5 cursor-pointer"
@@ -6862,7 +6980,7 @@ function MockInterviewTabCustom() {
           </p>
           <div className="space-y-3">
             {MOCK_INTERVIEW_STEPS.map((item, index) => (
-              <button key={item.id} onClick={() => { setStepIndex(index); setShowHints(false); setShowStrongAnswer(false); }} className="w-full text-left rounded-2xl p-4 cursor-pointer" style={{ background: step.id === item.id ? `${T.red}12` : T.card2, border: `1px solid ${step.id === item.id ? `${T.red}33` : T.border}` }}>
+              <button type="button" aria-pressed={step.id === item.id} key={item.id} onClick={() => { setStepIndex(index); setShowHints(false); setShowStrongAnswer(false); }} className="w-full text-left rounded-2xl p-4 cursor-pointer" style={{ background: step.id === item.id ? `${T.red}12` : T.card2, border: `1px solid ${step.id === item.id ? `${T.red}33` : T.border}` }}>
                 <p className="text-sm font-semibold" style={{ color: T.text }}>
                   Step {index + 1}: {item.title}
                 </p>
@@ -6895,10 +7013,10 @@ function MockInterviewTabCustom() {
             placeholder="Write your answer as if you are responding in a senior data-engineering interview."
           />
           <div className="flex flex-wrap gap-2 mt-4">
-            <button onClick={() => setShowHints((v) => !v)} className="px-3 py-2 rounded-xl text-xs font-semibold cursor-pointer" style={{ background: T.card2, color: T.text, border: `1px solid ${T.border}` }}>
+            <button type="button" aria-expanded={showHints} aria-controls="mock-interview-hints" onClick={() => setShowHints((v) => !v)} className="px-3 py-2 rounded-xl text-xs font-semibold cursor-pointer" style={{ background: T.card2, color: T.text, border: `1px solid ${T.border}` }}>
               {showHints ? "Hide hints" : "Reveal hint"}
             </button>
-            <button onClick={() => setShowStrongAnswer((v) => !v)} className="px-3 py-2 rounded-xl text-xs font-semibold cursor-pointer" style={{ background: T.card2, color: T.text, border: `1px solid ${T.border}` }}>
+            <button type="button" aria-expanded={showStrongAnswer} aria-controls="mock-interview-strong-answer" onClick={() => setShowStrongAnswer((v) => !v)} className="px-3 py-2 rounded-xl text-xs font-semibold cursor-pointer" style={{ background: T.card2, color: T.text, border: `1px solid ${T.border}` }}>
               {showStrongAnswer ? "Hide strong answer" : "Show strong answer"}
             </button>
             <button onClick={() => setStepIndex((value) => Math.min(value + 1, MOCK_INTERVIEW_STEPS.length - 1))} className="px-3 py-2 rounded-xl text-xs font-semibold cursor-pointer" style={{ background: T.red, color: "#fff", border: "1px solid transparent" }}>
@@ -6931,7 +7049,7 @@ function MockInterviewTabCustom() {
             ))}
           </div>
           {showHints ? (
-            <div className="space-y-3 mb-4">
+            <div id="mock-interview-hints" className="space-y-3 mb-4">
               {step.hints.slice(0, 3).map((hint) => (
                 <div key={hint} className="rounded-xl p-3" style={{ background: `${T.amber}10`, border: `1px solid ${T.amber}24` }}>
                   <p className="text-sm leading-6" style={{ color: T.muted }}>
@@ -6942,7 +7060,9 @@ function MockInterviewTabCustom() {
             </div>
           ) : null}
           {showStrongAnswer ? (
-            <AnswerCard title="Strong answer direction" body={step.hints.join(" ")} accent={T.green} />
+            <div id="mock-interview-strong-answer">
+              <AnswerCard title="Strong answer direction" body={step.hints.join(" ")} accent={T.green} />
+            </div>
           ) : null}
         </div>
       </div>
@@ -7351,7 +7471,7 @@ function HighLevelArchitectureDiagram() {
             >
               <svg
                 viewBox="0 0 680 980"
-                role="img"
+                role="group"
                 aria-label="Netflix big data architecture"
                 className="block w-full h-auto"
               >
@@ -7408,6 +7528,7 @@ function HighLevelArchitectureDiagram() {
                         tabIndex={0}
                         role="button"
                         aria-label={node.title}
+                        aria-pressed={isHovered}
                         onClick={(event) => {
                           event.stopPropagation();
                           setActiveNodeId(node.id);
@@ -7417,6 +7538,14 @@ function HighLevelArchitectureDiagram() {
                         className="cursor-pointer outline-none"
                         style={{ filter: isHovered ? "brightness(1.12)" : "none" }}
                       >
+                        <rect
+                          x="-8"
+                          y="-18"
+                          width={node.width + 16}
+                          height={node.height + 36}
+                          fill="transparent"
+                          pointerEvents="all"
+                        />
                         <rect
                           width={node.width}
                           height={node.height}
@@ -7521,6 +7650,7 @@ function Section4EnvelopeStudio() {
               <motion.button
                 key={field.id}
                 type="button"
+                aria-pressed={active}
                 onMouseEnter={() => setActiveFieldId(field.id)}
                 onFocus={() => setActiveFieldId(field.id)}
                 onClick={() => setActiveFieldId(field.id)}
@@ -7547,13 +7677,13 @@ function Section4EnvelopeStudio() {
                 initial={false}
                 animate={{
                   x: active ? 8 : 0,
-                  opacity: active ? 1 : 0.72,
+                  opacity: 1,
                 }}
                 transition={{ duration: 0.18, ease: "easeOut" }}
                 className="rounded-xl px-3"
                 style={{
                   background: active ? `${field.color}14` : "transparent",
-                  color: active ? "#17202b" : "#64748b",
+                  color: active ? "#17202b" : "#59697a",
                   border: active ? `1px solid ${field.color}30` : "1px solid transparent",
                 }}
               >
@@ -7632,6 +7762,7 @@ function Section4TopicStudio() {
                 <motion.button
                   key={item.id}
                   type="button"
+                  aria-pressed={active}
                   onMouseEnter={() => setChoiceId(item.id)}
                   onFocus={() => setChoiceId(item.id)}
                   onClick={() => setChoiceId(item.id)}
@@ -7777,6 +7908,7 @@ function Section4FactModelStudio() {
                 <button
                   key={item.id}
                   type="button"
+                  aria-pressed={active}
                   onClick={() => setFactId(item.id)}
                   className="rounded-full px-3 py-2 text-xs font-semibold cursor-pointer"
                   style={{
@@ -7802,6 +7934,7 @@ function Section4FactModelStudio() {
                 <motion.button
                   key={dimension.id}
                   type="button"
+                  aria-pressed={active}
                   onMouseEnter={() => setFocusId(dimension.id)}
                   onFocus={() => setFocusId(dimension.id)}
                   onClick={() => setFocusId(dimension.id)}
@@ -7824,6 +7957,7 @@ function Section4FactModelStudio() {
             <div className="hidden md:block text-2xl" style={{ color: fact.color }}>↘</div>
             <motion.button
               type="button"
+              aria-pressed={isFactFocused}
               onMouseEnter={() => setFocusId(fact.id)}
               onFocus={() => setFocusId(fact.id)}
               onClick={() => setFocusId(fact.id)}
@@ -7857,6 +7991,7 @@ function Section4FactModelStudio() {
                 <motion.button
                   key={dimension.id}
                   type="button"
+                  aria-pressed={active}
                   onMouseEnter={() => setFocusId(dimension.id)}
                   onFocus={() => setFocusId(dimension.id)}
                   onClick={() => setFocusId(dimension.id)}
@@ -7952,6 +8087,7 @@ function Section4ControlsStudio() {
               <motion.button
                 key={item.id}
                 type="button"
+                aria-pressed={active}
                 onMouseEnter={() => setControlId(item.id)}
                 onFocus={() => setControlId(item.id)}
                 onClick={() => setControlId(item.id)}
@@ -8292,18 +8428,42 @@ function FeatureExperimentTrackTab() {
 
 function GovernanceQualityTrackTab() {
   return (
-    <div className="space-y-8">
-      <AnchoredSection id="gov-contracts" eyebrow="" title="" subtitle="" accent={T.green}>
-        <GovernanceTrustFlow />
+    <div className="space-y-5">
+      <InterviewPath
+        accent={T.green}
+        title="Make every published metric explainably trustworthy"
+        summary="Start with the release path, then show how Netflix prevents bad data, contains incidents, and enforces privacy without turning governance into a separate afterthought."
+        steps={[
+          { title: "Contract", detail: "Name the owner, schema, semantics, compatibility, and sensitive fields." },
+          { title: "Validate", detail: "Reject malformed events and test Bronze, Silver, and Gold expectations." },
+          { title: "Certify", detail: "Reconcile the candidate and keep the last trusted release when checks fail." },
+          { title: "Respond", detail: "Trace lineage, contain impact, replay safely, and record the incident." },
+          { title: "Protect", detail: "Enforce purpose, access, retention, deletion, and auditable ownership." },
+        ]}
+      />
+      <AnchoredSection id="gov-contracts" eyebrow="Release path" title="Trust flow" subtitle="Define what may enter the platform and what is allowed to become certified." accent={T.green}>
+        <CoreTakeaway>Define trust before ingestion: every Netflix event and table needs an owner, compatible contract, privacy classification, and an explicit certification path.</CoreTakeaway>
+        <DepthPanel title="Explore the trust flow" summary="Contract, validation, certification, publishing, and ownership questions.">
+          <GovernanceTrustFlow />
+        </DepthPanel>
       </AnchoredSection>
-      <AnchoredSection id="gov-quality" eyebrow="" title="" subtitle="" accent={T.red}>
-        <GovernanceQualityControlRoom />
+      <AnchoredSection id="gov-quality" eyebrow="Publish decision" title="Release control" subtitle="Block an unsafe candidate without removing the last trusted release." accent={T.red}>
+        <CoreTakeaway>A failed freshness, completeness, uniqueness, or reconciliation check blocks the candidate release; consumers continue reading the last certified snapshot.</CoreTakeaway>
+        <DepthPanel title="Explore release controls" summary="Quality dimensions, severity, evidence, and the publish decision.">
+          <GovernanceQualityControlRoom />
+        </DepthPanel>
       </AnchoredSection>
-      <AnchoredSection id="gov-incidents" eyebrow="" title="" subtitle="" accent={T.red}>
-        <GovernanceIncidentFlow />
+      <AnchoredSection id="gov-incidents" eyebrow="Recovery" title="Failure flow" subtitle="Contain, repair, replay, and learn from broken data products." accent={T.red}>
+        <CoreTakeaway>Operate failures as a closed loop: detect, scope the affected Netflix products, contain the release, repair from durable evidence, and prevent recurrence.</CoreTakeaway>
+        <DepthPanel title="Explore the incident workflow" summary="Detection, blast radius, mitigation, replay, and follow-up controls.">
+          <GovernanceIncidentFlow />
+        </DepthPanel>
       </AnchoredSection>
-      <AnchoredSection id="gov-privacy" eyebrow="" title="" subtitle="" accent={T.green}>
-        <GovernancePrivacyOps />
+      <AnchoredSection id="gov-privacy" eyebrow="Data responsibility" title="Privacy operations" subtitle="Carry purpose, access, retention, and deletion rules through every derivative." accent={T.green}>
+        <CoreTakeaway>Privacy rules travel with the data: tokenization, purpose-based access, retention, deletion propagation, and audit evidence apply through every derived table.</CoreTakeaway>
+        <DepthPanel title="Explore privacy operations" summary="Classification, access, retention, deletion, and accountable operations.">
+          <GovernancePrivacyOps />
+        </DepthPanel>
       </AnchoredSection>
     </div>
   );
@@ -8360,7 +8520,8 @@ function FailuresTrackTab() {
 function QuizTrackTab({ onNavigate }: { onNavigate: (tab: DataEngineeringTabSlug) => void }) {
   return (
     <div className="space-y-8">
-      <section id="quiz-followups" className="scroll-mt-28">
+      <section id="quiz-followups">
+        <h2 className="sr-only">Interview questions</h2>
         <InterviewQATab onNavigate={onNavigate} />
       </section>
     </div>
@@ -8385,8 +8546,6 @@ function ContentForTab({
       return <StartTrackTab activeSectionId={activeSectionId} />;
     case "requirements":
       return <RequirementsTrackTab />;
-    case "event-sources":
-      return <EventSourcesTrackTab />;
     case "architecture":
       return <ArchitectureTrackTab onNavigate={onNavigate} depthMode={depthMode} />;
     case "ingestion-kafka":
@@ -8399,16 +8558,10 @@ function ContentForTab({
       return <ModelingTrackTab />;
     case "governance-quality":
       return <GovernanceQualityTrackTab />;
-    case "backfill-replay":
-      return <ReplayTrackTab />;
     case "capacity-cost":
       return <CapacityCostTrackTab depthMode={depthMode} />;
-    case "failures":
-      return <FailuresTrackTab />;
     case "quiz":
       return <QuizTrackTab onNavigate={onNavigate} />;
-    case "cheat-sheet":
-      return <CheatSheetTabCustom />;
   }
 }
 
@@ -8737,54 +8890,38 @@ export default function DataEngineeringPage({ initialTab }: { initialTab?: strin
     return () => window.removeEventListener("popstate", onPopState);
   }, []);
 
-  useEffect(() => {
-    const hash = window.location.hash.replace("#", "");
-    if (hash) setActiveSectionId(hash);
-  }, []);
-
   const activeIndex = useMemo(
-    () => VISIBLE_DATA_ENGINEERING_TABS.findIndex((tab) => tab.id === activeTab),
+    () => NETFLIX_ROUTE_REGISTRY.findIndex((tab) => tab.id === activeTab),
     [activeTab]
   );
   const visibleVisitedCount = useMemo(
-    () => [...visitedTabs].filter((tabId) => VISIBLE_DATA_ENGINEERING_TABS.some((tab) => tab.id === tabId)).length,
+    () => [...visitedTabs].filter((tabId) => NETFLIX_ROUTE_REGISTRY.some((tab) => tab.id === tabId)).length,
     [visitedTabs]
   );
   const visibleRevisedCount = useMemo(
-    () => [...revisedTabs].filter((tabId) => VISIBLE_DATA_ENGINEERING_TABS.some((tab) => tab.id === tabId)).length,
+    () => [...revisedTabs].filter((tabId) => NETFLIX_ROUTE_REGISTRY.some((tab) => tab.id === tabId)).length,
     [revisedTabs]
   );
-  const prevTab = VISIBLE_DATA_ENGINEERING_TABS[activeIndex - 1];
-  const nextTab = VISIBLE_DATA_ENGINEERING_TABS[activeIndex + 1];
+  const prevTab = NETFLIX_ROUTE_REGISTRY[activeIndex - 1];
+  const nextTab = NETFLIX_ROUTE_REGISTRY[activeIndex + 1];
   const activeSections = PRODUCT_TAB_SECTIONS[activeTab];
+  const activePageSectionIndex = Math.max(
+    0,
+    activeSections.findIndex((section) => section.id === activeSectionId),
+  );
+
+  useEffect(
+    () => alignDataDesignHash(activeSections, setActiveSectionId),
+    [activeSections],
+  );
 
   useEffect(() => {
     const syncActiveSection = () => {
       if (Date.now() < sectionNavLockRef.current) return;
 
-      const threshold = window.innerWidth >= 1280 ? 220 : 190;
-      const sectionNodes = activeSections
-        .map((section) => {
-          const node = document.getElementById(section.id);
-          if (!node) return null;
-          return {
-            id: section.id,
-            top: node.getBoundingClientRect().top,
-          };
-        })
-        .filter((item): item is { id: string; top: number } => item !== null);
-
-      if (sectionNodes.length === 0) return;
-
-      const current = sectionNodes.reduce((closest, section) => {
-        if (!closest) return section;
-        const sectionDistance = Math.abs(section.top - threshold);
-        const closestDistance = Math.abs(closest.top - threshold);
-        return sectionDistance < closestDistance ? section : closest;
-      }, sectionNodes[0]);
-
-      if (current.id !== activeSectionId) {
-        setActiveSectionId(current.id);
+      const currentId = getActiveDataDesignSection(activeSections);
+      if (currentId && currentId !== activeSectionId) {
+        setActiveSectionId(currentId);
       }
     };
 
@@ -8824,17 +8961,14 @@ export default function DataEngineeringPage({ initialTab }: { initialTab?: strin
     sectionNavLockRef.current = Date.now() + 500;
     setActiveSectionId(sectionId);
     window.history.replaceState(null, "", `/data-engineering/netflix/${activeTab}#${sectionId}`);
-    window.requestAnimationFrame(() => {
-      const latestNode = document.getElementById(sectionId);
-      if (!latestNode) return;
-      const absoluteTop = latestNode.getBoundingClientRect().top + document.documentElement.scrollTop - 96;
-      window.scrollTo({ top: Math.max(0, absoluteTop), behavior: "auto" });
-    });
+    window.requestAnimationFrame(() =>
+      scrollToDataDesignSection(sectionId, "auto"),
+    );
   }, [activeTab, scrollRef]);
 
   const handleExportNotes = () => {
     const lines: string[] = ["# Netflix Data Engineering Notes", ""];
-    VISIBLE_DATA_ENGINEERING_TABS.forEach((tab) => {
+    NETFLIX_ROUTE_REGISTRY.forEach((tab) => {
       const note = notes[tab.id];
       if (!note?.trim()) return;
       lines.push(`## ${tab.label}`);
@@ -8852,7 +8986,7 @@ export default function DataEngineeringPage({ initialTab }: { initialTab?: strin
   };
 
   return (
-    <div className="netflix-de-page flex flex-col min-h-0" style={{ minHeight: "calc(100dvh - 56px)", background: T.bg, color: T.text }}>
+    <div className="netflix-de-page flex flex-col min-h-0" style={{ minHeight: "calc(100dvh - var(--site-nav-height))", background: T.bg, color: T.text }}>
       {!focusMode ? (
         <TopTabStrip
           activeTab={activeTab}
@@ -8862,31 +8996,32 @@ export default function DataEngineeringPage({ initialTab }: { initialTab?: strin
 
       {!focusMode ? (
           <>
-            <div className="xl:hidden h-[60px]" aria-hidden="true" />
+            <div className="xl:hidden h-[var(--de-section-nav-height)]" aria-hidden="true" />
             <div
-              className="xl:hidden fixed left-0 right-0 z-30 px-4 py-3 flex items-center justify-between backdrop-blur-md"
+              data-testid="netflix-mobile-section-nav"
+              className="fixed left-0 right-0 z-30 flex h-[var(--de-section-nav-height)] items-center justify-between gap-3 px-3 backdrop-blur-md transition-[top] duration-200 xl:hidden"
               style={{
-                top: 124,
+                top: "var(--de-chapter-shell-offset)",
                 borderBottom: `1px solid ${T.border}`,
                 background: "color-mix(in srgb, var(--bg) 88%, transparent)",
               }}
             >
-              <div>
-                <p className="text-[10px] font-bold uppercase tracking-[0.18em]" style={{ color: T.faint }}>
-                  On this page
-                </p>
-                <p className="text-sm font-semibold" style={{ color: T.text }}>
-                  {activeSections.find((section) => section.id === activeSectionId)?.title ?? VISIBLE_DATA_ENGINEERING_TABS[activeIndex]?.label}
+              <div data-testid="netflix-mobile-section-progress" className="flex min-w-0 items-center gap-2">
+                <span className="shrink-0 rounded-md px-2 py-1 text-[10px] font-bold" style={{ background: T.card2, color: T.faint }}>
+                  {activePageSectionIndex + 1}/{activeSections.length}
+                </span>
+                <p className="truncate text-xs font-semibold" style={{ color: T.text }}>
+                  {activeSections.find((section) => section.id === activeSectionId)?.title ?? NETFLIX_ROUTE_REGISTRY[activeIndex]?.label}
                 </p>
               </div>
-              <button onClick={() => setMobileMenuOpen(true)} className="px-3 py-2 rounded-xl text-xs font-semibold cursor-pointer" style={{ background: T.card, color: T.text, border: `1px solid ${T.border}` }}>
-                Open outline
+              <button onClick={() => setMobileMenuOpen(true)} className="h-8 shrink-0 rounded-lg px-3 text-xs font-semibold" style={{ background: T.card, color: T.text, border: `1px solid ${T.border}` }}>
+                Outline
               </button>
             </div>
           </>
       ) : null}
 
-      <div className="mx-auto flex min-h-0 w-full max-w-[1600px] flex-1">
+      <div className="flex min-h-0 w-full flex-1">
         {!focusMode ? (
           <Sidebar activeTab={activeTab} activeSectionId={activeSectionId} onNavigateSection={navigateSection} />
         ) : null}
@@ -8905,6 +9040,11 @@ export default function DataEngineeringPage({ initialTab }: { initialTab?: strin
           feedbackVote={feedback[activeTab] ?? null}
           onFeedback={(vote) => setFeedback((prev) => ({ ...prev, [activeTab]: vote }))}
         >
+          <ChapterPageHeading
+            company="Netflix"
+            title={NETFLIX_ROUTE_REGISTRY[activeIndex]?.label ?? "Data Engineering"}
+            description={NETFLIX_ROUTE_REGISTRY[activeIndex]?.description ?? "Design a trustworthy data platform at Netflix scale."}
+          />
           <ContentForTab
             activeTab={activeTab}
             activeSectionId={activeSectionId}
@@ -8920,7 +9060,7 @@ export default function DataEngineeringPage({ initialTab }: { initialTab?: strin
       {focusMode ? (
         <div className="fixed top-0 left-0 right-0 z-50 px-4 py-2 flex items-center justify-between" style={{ background: `${T.red}ee` }}>
           <span className="text-xs font-bold text-white">
-            Focus Mode — {VISIBLE_DATA_ENGINEERING_TABS[activeIndex]?.label}
+            Focus Mode — {NETFLIX_ROUTE_REGISTRY[activeIndex]?.label}
           </span>
           <button onClick={() => setFocusMode(false)} className="px-3 py-1.5 rounded-lg text-xs font-semibold cursor-pointer" style={{ background: "rgba(255,255,255,0.2)", color: "#fff", border: "1px solid rgba(255,255,255,0.35)" }}>
             Exit focus
@@ -8933,7 +9073,7 @@ export default function DataEngineeringPage({ initialTab }: { initialTab?: strin
           <div className="px-4 py-3 flex items-center justify-between" style={{ borderBottom: `1px solid ${T.border}` }}>
             <div>
               <p className="text-sm font-bold" style={{ color: T.text }}>
-                Notes — {VISIBLE_DATA_ENGINEERING_TABS[activeIndex]?.label}
+                Notes — {NETFLIX_ROUTE_REGISTRY[activeIndex]?.label}
               </p>
             </div>
             <div className="flex items-center gap-2">
@@ -8977,12 +9117,12 @@ export default function DataEngineeringPage({ initialTab }: { initialTab?: strin
               </button>
             </div>
             <div className="grid gap-4 md:grid-cols-3 mb-5">
-              <MetricCard label="Visited" value={`${visibleVisitedCount}/${VISIBLE_DATA_ENGINEERING_TABS.length}`} note="Tabs you have opened" color={T.red} />
-              <MetricCard label="Revised" value={`${visibleRevisedCount}/${VISIBLE_DATA_ENGINEERING_TABS.length}`} note="Tabs you explicitly marked revised" color={T.green} />
+              <MetricCard label="Visited" value={`${visibleVisitedCount}/${NETFLIX_ROUTE_REGISTRY.length}`} note="Tabs you have opened" color={T.red} />
+              <MetricCard label="Revised" value={`${visibleRevisedCount}/${NETFLIX_ROUTE_REGISTRY.length}`} note="Tabs you explicitly marked revised" color={T.green} />
               <MetricCard label="Notes" value={String(Object.values(notes).filter((value) => value.trim()).length)} note="Tabs with saved notes" color={T.amber} />
             </div>
             <div className="grid gap-2 md:grid-cols-2">
-              {VISIBLE_DATA_ENGINEERING_TABS.map((tab) => (
+              {NETFLIX_ROUTE_REGISTRY.map((tab) => (
                 <div key={tab.id} className="rounded-xl p-3 flex items-center justify-between gap-3" style={{ background: T.card2, border: `1px solid ${T.border}` }}>
                   <div>
                     <p className="text-sm font-semibold" style={{ color: T.text }}>
@@ -9011,11 +9151,16 @@ export default function DataEngineeringPage({ initialTab }: { initialTab?: strin
           --border: #d6e1eb;
           --text: #17202b;
           --text-muted: #526171;
-          --text-faint: #76879a;
+          --text-faint: #59697a;
           color-scheme: light;
         }
         .moving-dot {
           animation: moveDot 4.2s linear infinite;
+        }
+        @media (min-width: 1676px) {
+          .netflix-model-inspector-metrics {
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+          }
         }
         @keyframes moveDot {
           0% { transform: translate(0, 0); opacity: 0; }

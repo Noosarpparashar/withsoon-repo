@@ -4,6 +4,10 @@ import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import { UBER_FAILURE_QUALITY_SECTIONS } from "./data";
 import AnchorBrand from "./AnchorBrand";
+import {
+  getActiveDataDesignSection,
+  scrollToDataDesignSection,
+} from "../data-design/sectionAnchors";
 
 const C = {
   card: "var(--bg-card)",
@@ -11,10 +15,10 @@ const C = {
   border: "var(--border)",
   text: "var(--text)",
   muted: "var(--text-muted)",
-  blue: "#526b82",
-  cyan: "#657e90",
-  green: "#667a70",
-  amber: "#796f64",
+  blue: "#42586c",
+  cyan: "#445e72",
+  green: "#50675d",
+  amber: "#625346",
   red: "#62595d",
 };
 
@@ -278,7 +282,7 @@ function Anchors({ active, go }: { active: string; go: (id: string) => void }) {
                 style={{
                   borderColor: selected ? C.blue : C.border,
                   background: selected
-                    ? "color-mix(in srgb, #526b82 13%, var(--bg-card))"
+                    ? "color-mix(in srgb, #42586c 13%, var(--bg-card))"
                     : C.card,
                   color: selected ? C.text : C.muted,
                 }}
@@ -328,7 +332,6 @@ function Section({
       style={{
         borderColor: `${color}3d`,
         background: C.card,
-        scrollMarginTop: 140,
       }}
     >
       <h2 className="text-2xl font-semibold">{title}</h2>
@@ -357,6 +360,8 @@ function QualitySlos() {
       >
         {QUALITY.map((item) => (
           <button
+            type="button"
+            aria-pressed={active === item.id}
             key={item.id}
             onMouseEnter={() => setActive(item.id)}
             onFocus={() => setActive(item.id)}
@@ -441,6 +446,8 @@ function FailureResponse() {
       <div className="space-y-2">
         {FAILURES.map((failure) => (
           <button
+            type="button"
+            aria-pressed={active === failure.id}
             key={failure.id}
             onMouseEnter={() => setActive(failure.id)}
             onFocus={() => setActive(failure.id)}
@@ -514,6 +521,8 @@ function QualityGates() {
         {GATES.map((gate, index) => (
           <div className="contents" key={gate.name}>
             <button
+              type="button"
+              aria-pressed={active === index}
               onMouseEnter={() => setActive(index)}
               onFocus={() => setActive(index)}
               onClick={() => setActive(index)}
@@ -594,6 +603,8 @@ function ReplayRecovery() {
       <div className="grid max-w-xl grid-cols-2 gap-2">
         {RECOVERY.map((item) => (
           <button
+            type="button"
+            aria-pressed={active === item.id}
             key={item.id}
             onClick={() => setActive(item.id)}
             className="rounded-md border px-4 py-3 text-sm font-semibold"
@@ -650,26 +661,14 @@ export default function FailuresDataQualityTab() {
   useEffect(() => {
     const sync = () => {
       if (lock.current) return;
-      const nodes = UBER_FAILURE_QUALITY_SECTIONS.map((section) => {
-        const node = document.getElementById(section.id);
-        return node
-          ? { id: section.id, top: node.getBoundingClientRect().top }
-          : null;
-      }).filter((item): item is NonNullable<typeof item> => item !== null);
-      if (nodes.length)
-        setActive(
-          nodes.reduce((a, b) =>
-            Math.abs(b.top - 180) < Math.abs(a.top - 180) ? b : a,
-          ).id,
-        );
+      setActive(getActiveDataDesignSection(UBER_FAILURE_QUALITY_SECTIONS));
     };
     sync();
     addEventListener("scroll", sync, { passive: true });
     return () => removeEventListener("scroll", sync);
   }, []);
   const go = (id: string) => {
-    const node = document.getElementById(id);
-    if (!node) return;
+    if (!document.getElementById(id)) return;
     if (lock.current) clearTimeout(lock.current);
     history.replaceState(
       null,
@@ -677,10 +676,7 @@ export default function FailuresDataQualityTab() {
       `/data-engineering/uber/governance-quality#${id}`,
     );
     setActive(id);
-    scrollTo({
-      top: node.getBoundingClientRect().top + scrollY - 140,
-      behavior: "smooth",
-    });
+    scrollToDataDesignSection(id);
     lock.current = window.setTimeout(() => {
       setActive(id);
       lock.current = null;

@@ -1,8 +1,14 @@
 import type { NextConfig } from "next";
+import { NETFLIX_ROUTE_ALIASES } from "./src/components/ui/netflix-data-engineering/curriculum";
 
 const nextConfig: NextConfig = {
   async redirects() {
     return [
+      ...NETFLIX_ROUTE_ALIASES.map(({ alias, destination }) => ({
+        source: `/data-engineering/netflix/${alias}`,
+        destination: `/data-engineering/netflix/${destination}`,
+        permanent: true,
+      })),
       { source: "/system-design/netflix-data-engineering/:path*", destination: "/data-engineering/netflix/:path*", permanent: true },
       { source: "/system-design/uber/:path*", destination: "/data-engineering/uber/:path*", permanent: true },
       { source: "/system-design/youtube/:path*", destination: "/data-engineering/youtube/:path*", permanent: true },

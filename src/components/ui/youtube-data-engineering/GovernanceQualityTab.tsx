@@ -1,9 +1,9 @@
 "use client";
 
-import { useState, type ReactNode } from "react";
-import { createPortal } from "react-dom";
+import { type ReactNode } from "react";
 import { GOVERNANCE_QUALITY_SECTIONS } from "./data";
 import { Section, YouTubeFrame } from "./shared";
+import AccessibleExplainer from "../data-design/AccessibleExplainer";
 
 type Explainable = {
   id: string;
@@ -14,48 +14,21 @@ type Explainable = {
   example: string;
 };
 
-type TipPosition = { left: number; top: number; above: boolean };
-
 function HoverInfo({ item, children, className = "" }: { item: Explainable; children: ReactNode; className?: string }) {
-  const [position, setPosition] = useState<TipPosition | null>(null);
-
-  const show = (element: HTMLElement) => {
-    const rect = element.getBoundingClientRect();
-    const width = Math.min(460, window.innerWidth - 24);
-    if (window.innerWidth < 640) {
-      setPosition({ left: 12, top: 12, above: false });
-      return;
-    }
-    const left = Math.max(12, Math.min(rect.left + rect.width / 2 - width / 2, window.innerWidth - width - 12));
-    const above = window.innerHeight - rect.bottom < 285 && rect.top > 285;
-    setPosition({ left, top: above ? rect.top - 10 : rect.bottom + 10, above });
-  };
-
   return (
-    <>
-      <button
-        type="button"
-        onMouseEnter={(event) => show(event.currentTarget)}
-        onMouseLeave={() => setPosition(null)}
-        onFocus={(event) => show(event.currentTarget)}
-        onBlur={() => setPosition(null)}
-        className={`cursor-default focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#70879b] ${className}`}
-      >
-        {children}
-      </button>
-      {position && typeof document !== "undefined" ? createPortal(
-        <div
-          role="tooltip"
-          className="pointer-events-none fixed z-[100] max-h-[calc(100vh-24px)] w-[min(460px,calc(100vw-24px))] overflow-y-auto rounded-lg border border-[#9aabba] bg-white px-4 py-3 text-left shadow-[0_14px_34px_rgba(23,32,43,.20)]"
-          style={{ left: position.left, top: position.top, transform: position.above ? "translateY(-100%)" : undefined }}
-        >
-          <div className="flex items-center justify-between gap-3"><strong className="text-sm text-[#17202b]">{item.title}</strong><span className="text-[10px] font-bold uppercase tracking-[.16em] text-[#687b8d]">Explanation</span></div>
-          <p className="mt-2.5 text-xs leading-5 text-[#445464]">{item.detail}</p>
-          <p className="mt-2 border-t border-[#d6e1eb] pt-2 text-xs leading-5 text-[#445464]">{item.result} <strong className="text-[#17202b]">For example, </strong>{item.example}</p>
-        </div>,
-        document.body,
-      ) : null}
-    </>
+    <button
+      type="button"
+      className={`cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#70879b] ${className}`}
+    >
+      {children}
+      <AccessibleExplainer wide label={`${item.title} explanation`} triggerLabel={item.title}>
+        <strong className="block text-sm text-[#17202b]">{item.title}</strong>
+        <p className="mt-2 text-xs leading-5 text-[#445464]">{item.detail}</p>
+        <p className="mt-2 border-t border-[#d6e1eb] pt-2 text-xs leading-5 text-[#445464]">
+          {item.result} <strong className="text-[#17202b]">For example, </strong>{item.example}
+        </p>
+      </AccessibleExplainer>
+    </button>
   );
 }
 

@@ -7,7 +7,7 @@ export default function Footer() {
   if (pathname.startsWith("/data-engineering/")) return null;
 
   return (
-    <footer className="border-t border-[#d6e1eb] bg-[#f4f7fb] py-6 text-center text-xs text-[#65798b]">
+    <footer className="border-t border-[#d6e1eb] bg-[#f4f7fb] py-6 text-center text-xs text-[#59697a]">
       <p>© {new Date().getFullYear()} withsoon · Data engineering interview designs</p>
     </footer>
   );

@@ -26,7 +26,7 @@ const architectureNodes: Record<string, ArchitectureNode> = {
     receives: "Viewer actions, player state, playback position, device and network context",
     produces: "Versioned playback, engagement, impression, and QoE events",
     guarantee: "Stable IDs · source event time · consent context",
-    tone: "#2563eb",
+    tone: "#1d4ed8",
   },
   edge: {
     id: "edge",
@@ -37,7 +37,7 @@ const architectureNodes: Record<string, ArchitectureNode> = {
     receives: "Video segment and manifest requests from active players",
     produces: "Delivery logs, cache status, response codes, latency, and byte counts",
     guarantee: "Server-observed delivery evidence",
-    tone: "#0891b2",
+    tone: "#0b6f87",
   },
   services: {
     id: "services",
@@ -48,7 +48,7 @@ const architectureNodes: Record<string, ArchitectureNode> = {
     receives: "Ranking requests, ad decisions, creator actions, and operational transactions",
     produces: "Impressions, ad lifecycle, search, content, channel, subscription, and policy events",
     guarantee: "Authoritative business state",
-    tone: "#7c3aed",
+    tone: "#6d28d9",
   },
   gateway: {
     id: "gateway",
@@ -59,7 +59,7 @@ const architectureNodes: Record<string, ArchitectureNode> = {
     receives: "Batched Avro or Protobuf events over HTTP/gRPC",
     produces: "Validated records to Kafka plus malformed records to a DLQ",
     guarantee: "≥99.99% ingest · explicit accept/reject",
-    tone: "#d97706",
+    tone: "#8a4b00",
   },
   kafka: {
     id: "kafka",
@@ -70,7 +70,7 @@ const architectureNodes: Record<string, ArchitectureNode> = {
     receives: "Validated playback, impression, engagement, search, ad, QoE, and CDC events",
     produces: "Ordered topic partitions read independently by streaming and lake sinks",
     guarantee: "Durable replay · backpressure buffer · fan-out",
-    tone: "#d97706",
+    tone: "#8a4b00",
   },
   flink: {
     id: "flink",
@@ -81,7 +81,7 @@ const architectureNodes: Record<string, ArchitectureNode> = {
     receives: "Kafka topics plus broadcast dimensions and policy versions",
     produces: "Live views, trending signals, QoE alerts, fraud features, and online recommendation features",
     guarantee: "Seconds-to-minutes freshness · provisional",
-    tone: "#7c3aed",
+    tone: "#6d28d9",
   },
   realtime: {
     id: "realtime",
@@ -92,7 +92,7 @@ const architectureNodes: Record<string, ArchitectureNode> = {
     receives: "Versioned Flink aggregates, alerts, and feature upserts",
     produces: "Live counters, trending pages, operational dashboards, and inference features",
     guarantee: "Low-latency reads · workload-specific consistency",
-    tone: "#8b5cf6",
+    tone: "#6d28d9",
   },
   bronze: {
     id: "bronze",
@@ -103,7 +103,7 @@ const architectureNodes: Record<string, ArchitectureNode> = {
     receives: "Full-fidelity Kafka records with source and ingest metadata",
     produces: "Replayable raw Iceberg snapshots organized by event family and time",
     guarantee: "Long-term evidence · reproducible replay",
-    tone: "#0891b2",
+    tone: "#0b6f87",
   },
   batch: {
     id: "batch",
@@ -114,7 +114,7 @@ const architectureNodes: Record<string, ArchitectureNode> = {
     receives: "Bronze snapshots, CDC dimensions, trust decisions, metric definitions, and experiment assignments",
     produces: "Conformed Silver events and staged certified Gold aggregates",
     guarantee: "Complete-history correction · replay safety",
-    tone: "#16a34a",
+    tone: "#077149",
   },
   certified: {
     id: "certified",
@@ -125,7 +125,7 @@ const architectureNodes: Record<string, ArchitectureNode> = {
     receives: "Validated batch outputs that passed completeness, quality, reconciliation, and policy gates",
     produces: "Atomic, discoverable, versioned data-product snapshots",
     guarantee: "Certified truth · lineage · rollback",
-    tone: "#16a34a",
+    tone: "#077149",
   },
   serving: {
     id: "serving",
@@ -136,7 +136,7 @@ const architectureNodes: Record<string, ArchitectureNode> = {
     receives: "Certified Gold snapshots and approved incremental updates",
     produces: "Creator Studio, BI, finance, experiments, recommendations, ads, and official counters",
     guarantee: "Fit-for-purpose latency and access control",
-    tone: "#ff0033",
+    tone: "#b00020",
   },
   orchestration: {
     id: "orchestration",
@@ -147,7 +147,7 @@ const architectureNodes: Record<string, ArchitectureNode> = {
     receives: "Dataset readiness, job state, partition availability, quality results, and backfill requests",
     produces: "Scheduled runs, dependency gates, retries, alerts, and atomic publication workflows",
     guarantee: "Dependency control · retries · recoverable backfills",
-    tone: "#7c3aed",
+    tone: "#6d28d9",
   },
   governance: {
     id: "governance",
@@ -158,7 +158,7 @@ const architectureNodes: Record<string, ArchitectureNode> = {
     receives: "Schemas, metric versions, consent tags, lineage events, quality results, ownership, and access requests",
     produces: "Compatibility decisions, policy enforcement, catalog metadata, audit evidence, and publication approvals",
     guarantee: "Trusted definitions · traceability · policy enforcement",
-    tone: "#0891b2",
+    tone: "#0b6f87",
   },
 };
 
@@ -182,23 +182,23 @@ const dataPlane = [
 ] as const;
 
 const ownershipDomains = [
-  { name: "Playback", tone: "#ff0033", producer: "Player + Playback teams", contract: "playback.* + qualified-view inputs", product: "views · watch time · retention", consumers: "Creator · Recs · Ads · Public counters" },
-  { name: "Engagement", tone: "#d97706", producer: "Engagement product team", contract: "like · comment · share · subscribe", product: "engagement_daily_vN", consumers: "Creator · Recs · Product analytics" },
-  { name: "Search", tone: "#7c3aed", producer: "Search + Ranking teams", contract: "query · result impression · click", product: "search_quality_vN", consumers: "Search science · Recs · Experiments" },
-  { name: "Ads", tone: "#16a34a", producer: "Ads serving team", contract: "request · impression · click · complete", product: "ad_revenue_daily", consumers: "Finance · Monetization · Creator" },
-  { name: "Creator", tone: "#0891b2", producer: "Creator + Content teams", contract: "upload · metadata · channel state", product: "creator_performance_vN", consumers: "Creator Studio · Support · BI" },
-  { name: "QoE", tone: "#2563eb", producer: "Player + CDN teams", contract: "startup · buffer · bitrate · error", product: "qoe_timeseries", consumers: "SRE · Client teams · Capacity" },
-  { name: "Trust", tone: "#dc2626", producer: "Trust & Safety", contract: "traffic-quality decisions + policy evidence", product: "qualified_traffic_vN", consumers: "Views · Ads · Recs · Finance" },
+  { name: "Playback", tone: "#b00020", producer: "Player + Playback teams", contract: "playback.* + qualified-view inputs", product: "views · watch time · retention", consumers: "Creator · Recs · Ads · Public counters" },
+  { name: "Engagement", tone: "#8a4b00", producer: "Engagement product team", contract: "like · comment · share · subscribe", product: "engagement_daily_vN", consumers: "Creator · Recs · Product analytics" },
+  { name: "Search", tone: "#6d28d9", producer: "Search + Ranking teams", contract: "query · result impression · click", product: "search_quality_vN", consumers: "Search science · Recs · Experiments" },
+  { name: "Ads", tone: "#077149", producer: "Ads serving team", contract: "request · impression · click · complete", product: "ad_revenue_daily", consumers: "Finance · Monetization · Creator" },
+  { name: "Creator", tone: "#0b6f87", producer: "Creator + Content teams", contract: "upload · metadata · channel state", product: "creator_performance_vN", consumers: "Creator Studio · Support · BI" },
+  { name: "QoE", tone: "#1d4ed8", producer: "Player + CDN teams", contract: "startup · buffer · bitrate · error", product: "qoe_timeseries", consumers: "SRE · Client teams · Capacity" },
+  { name: "Trust", tone: "#b91c1c", producer: "Trust & Safety", contract: "traffic-quality decisions + policy evidence", product: "qualified_traffic_vN", consumers: "Views · Ads · Recs · Finance" },
   { name: "Experiments", tone: "#0f766e", producer: "Experimentation platform", contract: "assignment · exposure · metric version", product: "experiment_scorecard_vN", consumers: "Product · Science · Leadership" },
 ] as const;
 
 function ArchitectureButton({ id, selected, onSelect, align = "center", side = "top" }: { id: string; selected: boolean; onSelect: (id: string) => void; align?: "start" | "center" | "end"; side?: "top" | "bottom" }) {
   const node = architectureNodes[id];
   return (
-    <button type="button" onMouseEnter={() => onSelect(id)} onFocus={() => onSelect(id)} onClick={() => onSelect(id)} className="group relative z-0 min-h-[62px] w-full cursor-pointer rounded-lg border bg-[var(--bg-card)] px-3 py-2 text-left transition hover:z-50 hover:-translate-y-0.5 hover:shadow-md focus-visible:z-50 focus-visible:outline-none focus-visible:ring-2" style={{ borderColor: selected ? node.tone : `${node.tone}40`, boxShadow: selected ? `0 0 0 1px ${node.tone}55` : undefined, "--tw-ring-color": node.tone } as React.CSSProperties}>
+    <button type="button" aria-pressed={selected} onMouseEnter={() => onSelect(id)} onFocus={() => onSelect(id)} onClick={() => onSelect(id)} className="group relative z-0 min-h-[62px] w-full cursor-pointer rounded-lg border bg-[var(--bg-card)] px-3 py-2 text-left transition hover:z-50 hover:-translate-y-0.5 hover:shadow-md focus-visible:z-50 focus-visible:outline-none focus-visible:ring-2" style={{ borderColor: selected ? node.tone : `${node.tone}40`, boxShadow: selected ? `0 0 0 1px ${node.tone}55` : undefined, "--tw-ring-color": node.tone } as React.CSSProperties}>
       <span className="flex items-center justify-between gap-2"><strong className="text-xs">{node.label}</strong><span className="h-2 w-2 rounded-full" style={{ background: node.tone }} /></span>
       <span className="mt-1 block text-[10px]" style={{ color: node.tone }}>{node.guarantee.split(" · ")[0]}</span>
-      <Tooltip align={align} side={side}>{node.summary}</Tooltip>
+      <Tooltip align={align} side={side} triggerLabel={node.label}>{node.summary}</Tooltip>
     </button>
   );
 }
@@ -211,31 +211,31 @@ function ArchitectureMap() {
       <div className="rounded-xl border border-[var(--border)] bg-[var(--bg-muted)] p-3">
         <div className="grid gap-2 lg:grid-cols-[1fr_auto_1fr_auto_1fr_auto_1fr_auto_1fr] lg:items-start">
           <div className="rounded-xl border border-blue-500/25 bg-blue-500/[.035] p-2">
-            <p className="mb-2 text-[9px] font-bold uppercase tracking-[.15em] text-blue-600">Producers</p>
+            <p className="mb-2 text-[9px] font-bold uppercase tracking-[.15em] text-[#1d4ed8]">Producers</p>
             <div className="grid gap-2"><ArchitectureButton id="players" selected={focused === "players"} onSelect={setFocused} align="start" side="bottom" /><ArchitectureButton id="edge" selected={focused === "edge"} onSelect={setFocused} align="start" /><ArchitectureButton id="services" selected={focused === "services"} onSelect={setFocused} align="start" /></div>
           </div>
-          <span className="hidden self-center text-[#ff0033] lg:block">→</span>
+          <span className="hidden self-center text-[#b00020] lg:block">→</span>
 
           <div className="rounded-xl border border-amber-500/25 bg-amber-500/[.035] p-2">
-            <p className="mb-2 text-[9px] font-bold uppercase tracking-[.15em] text-amber-600">Ingestion</p>
+            <p className="mb-2 text-[9px] font-bold uppercase tracking-[.15em] text-[#8a4b00]">Ingestion</p>
             <div className="grid gap-2"><ArchitectureButton id="gateway" selected={focused === "gateway"} onSelect={setFocused} side="bottom" /><ArchitectureButton id="kafka" selected={focused === "kafka"} onSelect={setFocused} /></div>
           </div>
-          <span className="hidden self-center text-[#ff0033] lg:block">→</span>
+          <span className="hidden self-center text-[#b00020] lg:block">→</span>
 
           <div className="rounded-xl border border-violet-500/25 bg-violet-500/[.035] p-2">
-            <p className="mb-2 text-[9px] font-bold uppercase tracking-[.15em] text-violet-600">Processing</p>
+            <p className="mb-2 text-[9px] font-bold uppercase tracking-[.15em] text-[#6d28d9]">Processing</p>
             <div className="grid gap-2"><ArchitectureButton id="flink" selected={focused === "flink"} onSelect={setFocused} side="bottom" /><ArchitectureButton id="batch" selected={focused === "batch"} onSelect={setFocused} /></div>
           </div>
-          <span className="hidden self-center text-[#ff0033] lg:block">→</span>
+          <span className="hidden self-center text-[#b00020] lg:block">→</span>
 
           <div className="rounded-xl border border-cyan-500/25 bg-cyan-500/[.035] p-2">
-            <p className="mb-2 text-[9px] font-bold uppercase tracking-[.15em] text-cyan-600">Lakehouse</p>
+            <p className="mb-2 text-[9px] font-bold uppercase tracking-[.15em] text-[#0b6f87]">Lakehouse</p>
             <div className="grid gap-2"><ArchitectureButton id="bronze" selected={focused === "bronze"} onSelect={setFocused} side="bottom" /><ArchitectureButton id="certified" selected={focused === "certified"} onSelect={setFocused} /></div>
           </div>
-          <span className="hidden self-center text-[#ff0033] lg:block">→</span>
+          <span className="hidden self-center text-[#b00020] lg:block">→</span>
 
           <div className="rounded-xl border border-red-500/25 bg-red-500/[.035] p-2">
-            <p className="mb-2 text-[9px] font-bold uppercase tracking-[.15em] text-[#ff0033]">Serving</p>
+            <p className="mb-2 text-[9px] font-bold uppercase tracking-[.15em] text-[#b00020]">Serving</p>
             <div className="grid gap-2"><ArchitectureButton id="realtime" selected={focused === "realtime"} onSelect={setFocused} align="end" side="bottom" /><ArchitectureButton id="serving" selected={focused === "serving"} onSelect={setFocused} align="end" /></div>
           </div>
         </div>
@@ -262,13 +262,13 @@ function PlatformPlanes() {
   return (
     <div className="mt-5 rounded-xl border border-[var(--border)] bg-[var(--bg-muted)] p-4">
       <div className="rounded-xl border border-violet-500/30 bg-violet-500/[.04] p-3">
-        <div className="mb-3 flex items-center justify-between"><div><p className="text-[9px] font-bold uppercase tracking-[.15em] text-violet-600">Control plane</p><strong className="mt-1 block text-sm">Defines how pipelines are allowed to run</strong></div><span className="text-violet-600">↓ configures</span></div>
-        <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-7">{controlPlane.map(([name, detail], index) => <button type="button" key={name} className="group relative cursor-pointer rounded-lg border border-[var(--border)] bg-[var(--bg-card)] px-3 py-3 text-left text-xs font-semibold hover:border-violet-500"><span className="text-violet-600">{String(index + 1).padStart(2, "0")}</span><span className="mt-1 block">{name}</span><Tooltip align={index === 0 ? "start" : index === controlPlane.length - 1 ? "end" : "center"}>{detail}</Tooltip></button>)}</div>
+        <div className="mb-3 flex items-center justify-between"><div><p className="text-[9px] font-bold uppercase tracking-[.15em] text-[#6d28d9]">Control plane</p><strong className="mt-1 block text-sm">Defines how pipelines are allowed to run</strong></div><span className="text-[#6d28d9]">↓ configures</span></div>
+        <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-7">{controlPlane.map(([name, detail], index) => <button type="button" key={name} className="group relative cursor-pointer rounded-lg border border-[var(--border)] bg-[var(--bg-card)] px-3 py-3 text-left text-xs font-semibold hover:border-violet-500"><span className="text-[#6d28d9]">{String(index + 1).padStart(2, "0")}</span><span className="mt-1 block">{name}</span><Tooltip align={index === 0 ? "start" : index === controlPlane.length - 1 ? "end" : "center"} triggerLabel={`${name} control plane`}>{detail}</Tooltip></button>)}</div>
       </div>
       <div className="mx-auto h-6 w-px bg-violet-500/50" />
       <div className="rounded-xl border border-blue-500/30 bg-blue-500/[.04] p-3">
-        <div className="mb-3"><p className="text-[9px] font-bold uppercase tracking-[.15em] text-blue-600">Data plane</p><strong className="mt-1 block text-sm">Moves and transforms YouTube events</strong></div>
-        <div className="grid gap-2 sm:grid-cols-3 xl:grid-cols-[1fr_auto_1fr_auto_1fr_auto_1fr_auto_1fr_auto_1fr] xl:items-center">{dataPlane.map(([name, detail], index) => <div className="contents" key={name}><button type="button" className="group relative cursor-pointer rounded-lg border border-[var(--border)] bg-[var(--bg-card)] px-3 py-3 text-left text-xs font-semibold hover:border-blue-500">{name}<Tooltip align={index === 0 ? "start" : index === dataPlane.length - 1 ? "end" : "center"}>{detail}</Tooltip></button>{index < dataPlane.length - 1 ? <span className="hidden text-blue-600 xl:block">→</span> : null}</div>)}</div>
+        <div className="mb-3"><p className="text-[9px] font-bold uppercase tracking-[.15em] text-[#1d4ed8]">Data plane</p><strong className="mt-1 block text-sm">Moves and transforms YouTube events</strong></div>
+        <div className="grid gap-2 sm:grid-cols-3 xl:grid-cols-[1fr_auto_1fr_auto_1fr_auto_1fr_auto_1fr_auto_1fr] xl:items-center">{dataPlane.map(([name, detail], index) => <div className="contents" key={name}><button type="button" className="group relative cursor-pointer rounded-lg border border-[var(--border)] bg-[var(--bg-card)] px-3 py-3 text-left text-xs font-semibold hover:border-blue-500">{name}<Tooltip align={index === 0 ? "start" : index === dataPlane.length - 1 ? "end" : "center"} triggerLabel={`${name} data plane`}>{detail}</Tooltip></button>{index < dataPlane.length - 1 ? <span className="hidden text-[#1d4ed8] xl:block">→</span> : null}</div>)}</div>
       </div>
     </div>
   );
@@ -286,7 +286,7 @@ function OwnershipFlow() {
   ] as const;
   return (
     <div className="mt-5">
-      <div className="flex flex-wrap gap-2">{ownershipDomains.map((item) => <button type="button" key={item.name} onClick={() => setSelectedDomain(item.name)} className="cursor-pointer rounded-full border px-3 py-2 text-xs font-bold transition" style={{ borderColor: selectedDomain === item.name ? item.tone : "var(--border)", color: selectedDomain === item.name ? item.tone : "var(--text-muted)", background: selectedDomain === item.name ? `${item.tone}12` : "var(--bg-muted)" }}>{item.name}</button>)}</div>
+      <div className="flex flex-wrap gap-2" role="radiogroup" aria-label="Ownership domain">{ownershipDomains.map((item) => <button type="button" role="radio" aria-checked={selectedDomain === item.name} key={item.name} onClick={() => setSelectedDomain(item.name)} className="cursor-pointer rounded-full border px-3 py-2 text-xs font-bold transition" style={{ borderColor: selectedDomain === item.name ? item.tone : "var(--border)", color: selectedDomain === item.name ? item.tone : "var(--text-muted)", background: selectedDomain === item.name ? `${item.tone}12` : "var(--bg-muted)" }}>{item.name}</button>)}</div>
       <div className="mt-3 rounded-xl border border-[var(--border)] bg-[var(--bg-muted)] p-3">
         <div className="grid gap-2 lg:grid-cols-[1fr_auto_1fr_auto_1fr_auto_1fr_auto_1fr] lg:items-center">
           {stages.map(([owner, value, detail], index) => (
@@ -298,9 +298,9 @@ function OwnershipFlow() {
         </div>
       </div>
       <div className="mt-3 grid gap-2 md:grid-cols-3">
-        <div className="rounded-lg border border-red-500/25 bg-red-500/[.04] px-3 py-3 text-xs"><strong className="text-[#ff0033]">Domain team</strong><span className="ml-2 text-[var(--text-muted)]">owns meaning, quality, products, and SLOs</span></div>
-        <div className="rounded-lg border border-blue-500/25 bg-blue-500/[.04] px-3 py-3 text-xs"><strong className="text-blue-600">Platform team</strong><span className="ml-2 text-[var(--text-muted)]">owns reusable infrastructure and reliability</span></div>
-        <div className="rounded-lg border border-violet-500/25 bg-violet-500/[.04] px-3 py-3 text-xs"><strong className="text-violet-600">Governance</strong><span className="ml-2 text-[var(--text-muted)]">approves shared metrics, privacy, and financial controls</span></div>
+        <div className="rounded-lg border border-red-500/25 bg-red-500/[.04] px-3 py-3 text-xs"><strong className="text-[#b00020]">Domain team</strong><span className="ml-2 text-[var(--text-muted)]">owns meaning, quality, products, and SLOs</span></div>
+        <div className="rounded-lg border border-blue-500/25 bg-blue-500/[.04] px-3 py-3 text-xs"><strong className="text-[#1d4ed8]">Platform team</strong><span className="ml-2 text-[var(--text-muted)]">owns reusable infrastructure and reliability</span></div>
+        <div className="rounded-lg border border-violet-500/25 bg-violet-500/[.04] px-3 py-3 text-xs"><strong className="text-[#6d28d9]">Governance</strong><span className="ml-2 text-[var(--text-muted)]">approves shared metrics, privacy, and financial controls</span></div>
       </div>
     </div>
   );

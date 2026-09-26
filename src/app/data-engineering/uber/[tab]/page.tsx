@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { redirect } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 import UberDataEngineeringPage from "@/components/ui/uber-data-engineering/UberDataEngineeringPage";
 import {
   normalizeUberDeTab,
@@ -41,7 +41,7 @@ export default async function UberDataEngineeringTab({
     redirect(`/data-engineering/uber/${normalizedTab}`);
   }
   if (!(UBER_DE_TAB_SLUGS as readonly string[]).includes(tab)) {
-    redirect("/data-engineering/uber/start-here");
+    notFound();
   }
 
   return <UberDataEngineeringPage initialTab={tab as UberDeTabSlug} />;

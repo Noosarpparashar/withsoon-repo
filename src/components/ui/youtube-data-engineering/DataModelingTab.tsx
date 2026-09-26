@@ -84,8 +84,8 @@ function kindStyle(kind: TableKind) {
 }
 
 function ErDiagram() {
-  const defaultZoom = 0.46;
-  const minZoom = 0.34;
+  const defaultZoom = 0.8;
+  const minZoom = 0.62;
   const maxZoom = 1.25;
   const shellRef = useRef<HTMLDivElement>(null);
   const dragRef = useRef({ active: false, x: 0, y: 0, left: 0, top: 0 });
@@ -107,8 +107,8 @@ function ErDiagram() {
     <div className="mt-5 grid gap-4 xl:grid-cols-[minmax(0,1fr)_330px] xl:items-start">
       <div className="overflow-hidden rounded-xl border border-[var(--border)] bg-[var(--bg-card)]">
         <div className="flex flex-wrap items-center justify-between gap-3 border-b border-[var(--border)] px-4 py-3">
-          <div><strong className="text-sm">YouTube analytics ER canvas</strong><p className="mt-1 text-[11px] text-[var(--text-faint)]">Drag the canvas. Hover a table or field to inspect it.</p></div>
-          <div className="flex items-center gap-2"><span className="rounded-md bg-[var(--bg-muted)] px-2 py-1 text-[11px] font-semibold">{Math.round(zoom * 100)}%</span><input aria-label="ER diagram zoom" type="range" min={minZoom} max={maxZoom} step="0.01" value={zoom} onChange={(event) => setZoom(Number(event.target.value))} className="w-24 accent-slate-600" /><button type="button" onClick={() => setZoom((value) => Math.max(minZoom, value - 0.08))} className="rounded-md border border-[var(--border)] px-2 py-1 text-sm">−</button><button type="button" onClick={reset} className="rounded-md border border-[var(--border)] px-2 py-1 text-[11px] font-semibold">Reset</button><button type="button" onClick={() => setZoom((value) => Math.min(maxZoom, value + 0.08))} className="rounded-md border border-[var(--border)] px-2 py-1 text-sm">+</button></div>
+          <div><strong className="text-sm">YouTube analytics ER canvas</strong><p className="mt-1 text-xs text-[var(--text-faint)]">Drag to pan. Select a table to inspect its grain, fields, and joins.</p></div>
+          <div className="flex flex-wrap items-center gap-2"><span className="flex h-11 min-w-12 items-center justify-center rounded-md bg-[var(--bg-muted)] px-2 text-xs font-semibold">{Math.round(zoom * 100)}%</span><input aria-label="ER diagram zoom" type="range" min={minZoom} max={maxZoom} step="0.01" value={zoom} onChange={(event) => setZoom(Number(event.target.value))} className="h-11 w-28 accent-slate-600" /><button aria-label="Zoom out" type="button" onClick={() => setZoom((value) => Math.max(minZoom, value - 0.08))} className="h-11 min-w-11 rounded-md border border-[var(--border)] px-3 text-lg">−</button><button type="button" onClick={reset} className="h-11 rounded-md border border-[var(--border)] px-3 text-xs font-semibold">Readable view</button><button aria-label="Zoom in" type="button" onClick={() => setZoom((value) => Math.min(maxZoom, value + 0.08))} className="h-11 min-w-11 rounded-md border border-[var(--border)] px-3 text-lg">+</button></div>
         </div>
         <div
           ref={shellRef}
@@ -116,7 +116,7 @@ function ErDiagram() {
           className="h-[690px] touch-none cursor-grab select-none overflow-auto bg-[#f4f7fb] active:cursor-grabbing"
           onPointerDown={(event) => {
             const shell = shellRef.current;
-            if (!shell) return;
+            if (!shell || (event.target as HTMLElement).closest("[data-nodrag]")) return;
             dragRef.current = { active: true, x: event.clientX, y: event.clientY, left: shell.scrollLeft, top: shell.scrollTop };
             event.currentTarget.setPointerCapture(event.pointerId);
           }}
@@ -142,10 +142,10 @@ function ErDiagram() {
               {tables.map((table, index) => {
                 const position = positions[index]; const selected = table.name === activeName; const style = kindStyle(table.kind);
                 return (
-                  <div key={table.name} data-nodrag role="group" aria-label={`Inspect ${table.name}`} tabIndex={0} onMouseEnter={() => { setActiveName(table.name); setActiveField(null); }} onFocus={() => { setActiveName(table.name); setActiveField(null); }} className="absolute z-10 h-[220px] w-[250px] overflow-hidden rounded-xl border-2 shadow-sm transition hover:z-30 hover:shadow-lg" style={{ left: position[0], top: position[1], background: style.background, borderColor: selected ? "#526b82" : style.border }}>
+                  <button key={table.name} data-nodrag data-model-table type="button" aria-label={`Inspect ${table.name}, ${table.grain}`} aria-pressed={selected} onClick={() => { setActiveName(table.name); setActiveField(null); }} onMouseEnter={() => { setActiveName(table.name); setActiveField(null); }} onFocus={() => { setActiveName(table.name); setActiveField(null); }} className="absolute z-10 h-[220px] w-[250px] overflow-hidden rounded-xl border-2 text-left shadow-sm outline-none transition hover:z-30 hover:shadow-lg focus-visible:z-30 focus-visible:ring-4 focus-visible:ring-[#42586c]/30" style={{ left: position[0], top: position[1], background: style.background, borderColor: selected ? "#42586c" : style.border }}>
                     <div className="border-b border-[#cfdae4] px-3 py-1.5"><div className="flex items-center justify-between gap-2"><code className="min-w-0 truncate text-[19px] font-bold leading-5 tracking-[-0.03em] text-[#17202b]">{table.name}</code><span className="shrink-0 rounded px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wider text-[#526171]">{table.kind}</span></div><p className="mt-0.5 truncate text-[12px] font-medium leading-[14px] text-[#526171]">{table.grain}</p></div>
-                    <div className="p-2">{table.fields.slice(0, 6).map((field) => <button key={field.name} type="button" onMouseEnter={(event) => { event.stopPropagation(); setActiveName(table.name); setActiveField(field); }} onFocus={() => { setActiveName(table.name); setActiveField(field); }} onClick={(event) => { event.stopPropagation(); setActiveName(table.name); setActiveField(field); }} className="flex w-full items-center justify-between gap-2 rounded px-1.5 py-0.5 text-left leading-4 hover:bg-[#dfeaf3]"><code className="min-w-0 truncate text-[14px] font-semibold text-[#263442]">{field.name}</code><span className="shrink-0 text-[10px] text-[#76879a]">{field.type}</span></button>)}</div>
-                  </div>
+                    <div className="p-2">{table.fields.slice(0, 6).map((field) => <div key={field.name} className="flex min-h-7 w-full items-center justify-between gap-2 rounded px-1.5 text-left leading-4"><code className="min-w-0 truncate text-[14px] font-semibold text-[#263442]">{field.name}</code><span className="shrink-0 text-[10px] text-[#59697a]">{field.type}</span></div>)}</div>
+                  </button>
                 );
               })}
             </div>
@@ -157,7 +157,7 @@ function ErDiagram() {
         data-testid="youtube-model-inspector"
         className="self-start rounded-xl border border-[var(--border)] bg-[var(--bg-card)] p-4 xl:sticky xl:top-[140px] xl:max-h-[calc(100dvh-156px)] xl:overflow-y-auto xl:overscroll-contain"
       >
-        <div className="flex items-center justify-between gap-2"><span className="rounded-md bg-[var(--bg-muted)] px-2 py-1 text-[9px] font-bold uppercase tracking-wider">{active.kind}</span><span className="text-[10px] text-[var(--text-faint)]">Hover inspector</span></div>
+        <div className="flex items-center justify-between gap-2"><span className="rounded-md bg-[var(--bg-muted)] px-2 py-1 text-[10px] font-bold uppercase tracking-wider">{active.kind}</span><span className="text-[11px] text-[var(--text-faint)]">Selected entity</span></div>
         <code className="mt-3 block text-base font-bold">{active.name}</code>
         {activeField ? <div className="mt-3 rounded-lg border border-[#a9bacb] bg-[var(--bg-muted)] p-3"><div className="flex justify-between gap-2"><code className="text-xs font-bold">{activeField.name}</code><span className="text-[10px] text-[var(--text-faint)]">{activeField.type}</span></div><p className="mt-2 text-xs leading-5 text-[var(--text-muted)]">{activeField.meaning}</p></div> : null}
         <div className="mt-3 space-y-3 text-xs leading-5"><div><strong className="block text-[10px] uppercase tracking-wider text-[var(--text-faint)]">Grain</strong><p className="mt-1 text-[var(--text-muted)]">{active.grain}</p></div><div><strong className="block text-[10px] uppercase tracking-wider text-[var(--text-faint)]">Built from</strong><p className="mt-1 text-[var(--text-muted)]">{active.source}</p></div><div><strong className="block text-[10px] uppercase tracking-wider text-[var(--text-faint)]">Used for</strong><p className="mt-1 text-[var(--text-muted)]">{active.use}</p></div></div>
@@ -167,10 +167,124 @@ function ErDiagram() {
   );
 }
 
+const overviewGroups = [
+  { label: "Business context", relationship: "video_sk · viewer_sk · device_sk", names: ["dim_video", "dim_viewer", "dim_channel", "dim_device"] },
+  { label: "Behavior facts", relationship: "sessionize · attribute · qualify", names: ["fact_watch_session", "fact_impression", "fact_engagement_event"] },
+  { label: "Certified products", relationship: "metric_version", names: ["fact_video_metric_daily", "fact_channel_metric_daily"] },
+  { label: "Semantic control", relationship: "", names: ["metric_registry"] },
+] as const;
+
+const tableKinds: readonly TableKind[] = ["Dimension", "Fact", "Bridge", "Registry"];
+
+function joinsFor(name: string) {
+  return relationships.filter(([from, to]) => from === name || to === name);
+}
+
+function OverviewInspector({ activeName }: { activeName: string }) {
+  const table = byName[activeName].table;
+  const joins = joinsFor(activeName);
+  const keys = table.fields.filter((field) => /(?:PK|FK|BK)/.test(field.type));
+  const attributes = table.fields.filter((field) => !/(?:PK|FK|BK)/.test(field.type));
+
+  return (
+    <aside data-testid="youtube-model-inspector" aria-label={`Selected entity: ${table.name}`} className="self-start rounded-xl border border-[var(--border)] bg-[var(--bg-card)] p-4 2xl:sticky 2xl:top-[140px] 2xl:max-h-[calc(100dvh-156px)] 2xl:overflow-y-auto">
+      <div className="flex items-center justify-between gap-2"><span className="rounded-md bg-[var(--bg-muted)] px-2 py-1 text-[10px] font-bold uppercase tracking-wider">{table.kind}</span><span className="text-[11px] text-[var(--text-faint)]">Selected entity</span></div>
+      <code className="mt-3 block break-all text-lg font-bold">{table.name}</code>
+      <div className="mt-3 space-y-3 text-xs leading-5"><div><strong className="block text-[10px] uppercase tracking-wider text-[var(--text-faint)]">Grain</strong><p className="mt-1 text-[var(--text-muted)]">{table.grain}</p></div><div><strong className="block text-[10px] uppercase tracking-wider text-[var(--text-faint)]">Built from</strong><p className="mt-1 text-[var(--text-muted)]">{table.source}</p></div><div><strong className="block text-[10px] uppercase tracking-wider text-[var(--text-faint)]">Used for</strong><p className="mt-1 text-[var(--text-muted)]">{table.use}</p></div></div>
+      <div className="mt-4"><strong className="text-[10px] uppercase tracking-wider text-[var(--text-faint)]">Keys</strong><div className="mt-2 flex flex-wrap gap-1.5">{keys.length ? keys.map((field) => <code key={field.name} className="rounded-md bg-[var(--bg-muted)] px-2 py-1.5 text-[11px]">{field.name}</code>) : <span className="text-xs text-[var(--text-faint)]">No declared key</span>}</div></div>
+      <div className="mt-4"><strong className="text-[10px] uppercase tracking-wider text-[var(--text-faint)]">Measures + attributes</strong><div className="mt-2 flex flex-wrap gap-1.5">{attributes.map((field) => <code key={field.name} className="rounded-md bg-[var(--bg-muted)] px-2 py-1.5 text-[11px]">{field.name}</code>)}</div></div>
+      <div className="mt-4"><strong className="text-[10px] uppercase tracking-wider text-[var(--text-faint)]">Relationships</strong><div className="mt-2 space-y-1.5">{joins.length ? joins.map(([from, to, key]) => <div key={`${from}-${to}-${key}`} className="rounded-md bg-[var(--bg-muted)] px-2 py-2 text-[11px]"><code>{from === activeName ? to : from}</code><span className="ml-1 text-[var(--text-faint)]">via {key}</span></div>) : <p className="text-xs text-[var(--text-faint)]">No direct star join shown.</p>}</div></div>
+    </aside>
+  );
+}
+
+function ModelOverview() {
+  const [activeName, setActiveName] = useState("fact_watch_session");
+
+  return (
+    <div className="grid gap-4 2xl:grid-cols-[minmax(0,1fr)_330px] 2xl:items-start">
+      <div data-testid="youtube-model-overview" className="rounded-xl border border-[var(--border)] bg-[#f4f7fb] p-3 sm:p-4">
+        <div className="grid gap-3 lg:grid-cols-[1fr_auto_1fr_auto_1fr_auto_1fr] lg:items-stretch">
+          {overviewGroups.map((group, groupIndex) => (
+            <div className="contents" key={group.label}>
+              <section aria-label={group.label} className="rounded-xl border border-[#c8d5e1] bg-white p-3">
+                <p className="text-[11px] font-bold uppercase tracking-[.14em] text-[#59697a]">{group.label}</p>
+                <div className="mt-3 space-y-2">
+                  {group.names.map((name) => {
+                    const table = byName[name].table;
+                    const selected = activeName === name;
+                    return (
+                      <button key={name} type="button" onClick={() => setActiveName(name)} aria-pressed={selected} className="min-h-20 w-full rounded-lg border bg-[#f8fafc] p-3 text-left outline-none transition hover:border-[#42586c] focus-visible:ring-2 focus-visible:ring-[#42586c]" style={{ borderColor: selected ? "#42586c" : "#d6e1eb", boxShadow: selected ? "0 0 0 1px #42586c" : undefined }}>
+                        <span className="block"><code className="block break-words text-sm font-bold text-[#17202b]">{table.name}</code><span className="mt-1 inline-block text-[10px] font-bold uppercase text-[#59697a]">{table.kind}</span></span>
+                        <span className="mt-2 block text-xs leading-5 text-[#445464]">{table.grain}</span>
+                      </button>
+                    );
+                  })}
+                </div>
+              </section>
+              {groupIndex < overviewGroups.length - 1 ? <div className="flex min-h-14 items-center justify-center gap-2 px-1 text-center text-[11px] font-semibold text-[#445464] lg:w-16 lg:flex-col" aria-label={`Relationship: ${group.relationship}`}><span aria-hidden className="text-base lg:hidden">↓</span><span>{group.relationship}</span><span aria-hidden className="hidden text-base lg:inline">→</span></div> : null}
+            </div>
+          ))}
+        </div>
+      </div>
+      <OverviewInspector activeName={activeName} />
+    </div>
+  );
+}
+
+function SemanticModelOutline() {
+  return (
+    <section aria-labelledby="semantic-model-title" data-testid="youtube-semantic-model" className="mt-4 rounded-xl border border-[var(--border)] bg-[var(--bg-card)] p-4">
+      <h3 id="semantic-model-title" className="text-base font-bold">Table and relationship outline</h3>
+      <p className="mt-1 text-xs leading-5 text-[var(--text-muted)]">Text alternative to the canvas. Open a group to read every table, field definition, grain, and relationship.</p>
+      <div className="mt-4 grid gap-2 lg:grid-cols-2">
+        {tableKinds.map((kind) => {
+          const kindTables = tables.filter((table) => table.kind === kind);
+          return (
+            <details key={kind} className="rounded-lg border border-[var(--border)] bg-[var(--bg-muted)]">
+              <summary className="flex min-h-11 cursor-pointer list-none items-center justify-between gap-3 px-3 py-2 text-sm font-bold outline-none focus-visible:ring-2 focus-visible:ring-[#42586c]"><span>{kind}s</span><span className="text-xs font-medium text-[var(--text-faint)]">{kindTables.length} tables <span aria-hidden>＋</span></span></summary>
+              <div className="space-y-3 border-t border-[var(--border)] p-3">
+                {kindTables.map((table) => {
+                  const joins = joinsFor(table.name);
+                  return (
+                    <article key={table.name} className="rounded-lg border border-[var(--border)] bg-white p-3">
+                      <h4><code className="break-all text-sm font-bold">{table.name}</code></h4>
+                      <dl className="mt-2 grid gap-2 text-xs leading-5"><div><dt className="font-bold text-[#59697a]">Grain</dt><dd>{table.grain}</dd></div><div><dt className="font-bold text-[#59697a]">Relationships</dt><dd>{joins.length ? joins.map(([from, to, key]) => `${from === table.name ? to : from} via ${key}`).join("; ") : "No direct star join shown."}</dd></div></dl>
+                      <div className="mt-3 overflow-x-auto"><table className="w-full min-w-[420px] border-collapse text-left text-xs"><caption className="sr-only">Fields in {table.name}</caption><thead><tr className="border-b border-[#c8d5e1]"><th className="py-2 pr-3">Field</th><th className="py-2 pr-3">Type</th><th className="py-2">Meaning</th></tr></thead><tbody>{table.fields.map((field) => <tr key={field.name} className="border-b border-[#e3eaf0] last:border-0"><th scope="row" className="py-2 pr-3 font-mono font-semibold">{field.name}</th><td className="py-2 pr-3 text-[#59697a]">{field.type}</td><td className="py-2 text-[#445464]">{field.meaning}</td></tr>)}</tbody></table></div>
+                    </article>
+                  );
+                })}
+              </div>
+            </details>
+          );
+        })}
+      </div>
+    </section>
+  );
+}
+
+function ReadableErDiagram() {
+  const [mode, setMode] = useState<"overview" | "detail">("overview");
+
+  return (
+    <div className="mt-5">
+      <div className="mb-4 flex flex-col justify-between gap-3 rounded-xl border border-[var(--border)] bg-[var(--bg-card)] p-3 sm:flex-row sm:items-center">
+        <div><strong className="text-sm">Choose the useful level of detail</strong><p className="mt-1 text-xs leading-5 text-[var(--text-muted)]">Overview explains the interview story. Full model exposes every entity and join.</p></div>
+        <div className="inline-flex rounded-lg border border-[var(--border)] bg-[var(--bg-muted)] p-1" role="group" aria-label="ER diagram display mode">
+          <button type="button" onClick={() => setMode("overview")} aria-pressed={mode === "overview"} className="min-h-11 flex-1 rounded-md px-4 text-xs font-bold outline-none focus-visible:ring-2 focus-visible:ring-[#42586c] sm:flex-none" style={{ background: mode === "overview" ? "white" : "transparent", color: mode === "overview" ? "#17202b" : "#59697a" }}>Overview</button>
+          <button type="button" onClick={() => setMode("detail")} aria-pressed={mode === "detail"} className="min-h-11 flex-1 rounded-md px-4 text-xs font-bold outline-none focus-visible:ring-2 focus-visible:ring-[#42586c] sm:flex-none" style={{ background: mode === "detail" ? "white" : "transparent", color: mode === "detail" ? "#17202b" : "#59697a" }}>Full model</button>
+        </div>
+      </div>
+      {mode === "overview" ? <ModelOverview /> : <ErDiagram />}
+      <SemanticModelOutline />
+    </div>
+  );
+}
+
 export default function DataModelingTab() {
   return (
     <YouTubeFrame activeTab="data-modeling" sections={MODELING_SECTIONS} previous={{ id: "real-time-streaming", label: "Real-Time Streaming" }} next={{ id: "batch-lakehouse", label: "Batch + Lakehouse" }}>
-      <Section id="model-erd" number="01" title="ER Diagram"><ErDiagram /></Section>
+      <Section id="model-erd" number="01" title="ER Diagram"><ReadableErDiagram /></Section>
 
       <Section id="model-answer" number="02" title="Interview Answer">
         <div className="mx-auto mt-5 w-full max-w-5xl rounded-xl border border-[var(--border)] bg-[var(--bg-muted)] px-6 py-5 text-justify text-sm font-medium leading-7 md:px-8">I start by defining the grain of every fact so one row has an unambiguous meaning—for example, fact_watch_session is one playback attempt and version, while fact_video_metric_daily is one video, date, and metric version. I connect those facts to conformed date, video, channel, viewer, device, geography, surface, experiment, and ad dimensions. Video and channel use Type 2 history so facts retain the metadata and monetization state valid when the event occurred. Identity links remain consent-aware and reversible. Live, Shorts, and VOD share dimensions but use separate facts where concurrency, loops, swipes, and retention curves have different semantics. Finally, a versioned metric registry owns formulas such as qualified views instead of duplicating logic across dashboards.</div>

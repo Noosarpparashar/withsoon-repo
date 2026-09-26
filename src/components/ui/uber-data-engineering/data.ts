@@ -24,7 +24,7 @@ export const UBER_DE_TABS: UberDeTab[] = [
   {
     id: "start-here",
     label: "Start Here",
-    accent: "#526b82",
+    accent: "#42586c",
     mins: 5,
     summary:
       "Frame Uber as a shared batch and streaming data platform for marketplace signals and trusted history.",
@@ -61,21 +61,21 @@ export const UBER_DE_TABS: UberDeTab[] = [
   {
     id: "batch-pipelines",
     label: "Batch + Lakehouse",
-    accent: "#8b8377",
+    accent: "#655e55",
     mins: 9,
     summary: "Explain Bronze, Silver, Gold, DAGs, and trusted publish.",
   },
   {
     id: "data-modeling",
     label: "Data Modeling",
-    accent: "#657e90",
+    accent: "#445e72",
     mins: 9,
     summary: "Move from trip grain to fact constellation and dimensions.",
   },
   {
     id: "governance-quality",
     label: "Failures + Data Quality",
-    accent: "#526b82",
+    accent: "#42586c",
     mins: 10,
     summary:
       "Connect quality controls, PII governance, failure detection, blast radius, mitigation, and replay recovery.",

@@ -26,7 +26,6 @@ test.describe("Uber Data Engineering - Ingestion and Kafka", () => {
     page,
   }) => {
     await page.goto("/data-engineering/uber/ingestion-kafka");
-    await expect(page.getByText("10 chapters", { exact: true })).toBeVisible();
     const batchChapter = page.getByRole("link", {
       name: /06 Batch \+ Lakehouse/i,
     });

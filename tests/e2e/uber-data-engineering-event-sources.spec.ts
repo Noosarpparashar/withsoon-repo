@@ -17,22 +17,16 @@ test.describe("Uber Data Engineering - Event Sources", () => {
     await expect(page.getByRole("tooltip", { name: /recognize retries/i })).toBeVisible();
   });
 
-  test("interview insight explanation opens below the producer flow", async ({ page }) => {
+  test("interview insight explanation can be pinned and dismissed", async ({ page }) => {
     await page.setViewportSize({ width: 1600, height: 900 });
     await page.goto("/data-engineering/uber/event-sources");
     const card = page.locator("#trip-reconciliation > button");
-    const producerList = card.locator(":scope > div > div").first();
-    await producerList.hover();
-    const flowBox = await card.locator(":scope > div").boundingBox();
-    const tooltip = card.getByRole("tooltip");
-    await expect(tooltip).toBeVisible();
-    const tooltipBox = await tooltip.boundingBox();
-    expect(flowBox).not.toBeNull();
-    expect(tooltipBox).not.toBeNull();
-    expect(tooltipBox!.y).toBeGreaterThanOrEqual(flowBox!.y + flowBox!.height);
-
-    await card.getByText("Trusted output", { exact: true }).hover();
-    await expect(tooltip).toBeHidden();
+    await card.click();
+    const panel = page.getByTestId("explainer-panel");
+    await expect(panel).toHaveAttribute("role", "dialog");
+    await expect(panel).toContainText(/events can arrive late/i);
+    await page.getByTestId("explainer-close").click();
+    await expect(panel).toBeHidden();
   });
 
   test("event source anchors navigate and highlight", async ({ page }) => {

@@ -10,7 +10,7 @@ const producers = [
     title: "Player SDKs",
     scope: "iOS · Android · Web · TV · Console · Embed",
     events: "video_start · heartbeat · pause · seek · end",
-    tone: "#2563eb",
+    tone: "#1d4ed8",
     detail: "The YouTube player is the authoritative source for what the device attempted to play and how playback progressed. It generates stable event IDs before retrying, preserves event time during offline buffering, and attaches playback_attempt_id so heartbeats can be reconstructed into one viewing attempt.",
   },
   {
@@ -18,7 +18,7 @@ const producers = [
     title: "YouTube Edge",
     scope: "CDN · media delivery · edge telemetry",
     events: "segment_request · cache_status · delivery_error",
-    tone: "#0891b2",
+    tone: "#0b6f87",
     detail: "CDN and edge logs provide server-side delivery evidence: requested video segments, response codes, cache hit or miss, bytes delivered, region, and edge latency. Joining this with client buffering and bitrate events separates network delivery failures from player defects.",
   },
   {
@@ -26,7 +26,7 @@ const producers = [
     title: "Product Services",
     scope: "Home · Search · Ads · Live · Upload",
     events: "impression · result_click · ad_impression · upload",
-    tone: "#7c3aed",
+    tone: "#6d28d9",
     detail: "YouTube backend services emit the decision that the client observed: which videos were ranked on Home or Search, which experiment and model produced the slate, which ad request won, and which upload or subscription state changed.",
   },
   {
@@ -34,7 +34,7 @@ const producers = [
     title: "Operational CDC",
     scope: "Video · channel · subscription · policy state",
     events: "video_updated · channel_changed · consent_changed",
-    tone: "#16a34a",
+    tone: "#077149",
     detail: "Debezium-style CDC captures authoritative row changes without repeatedly scanning production databases. These streams maintain video, channel, subscription, monetization, and policy dimensions used to interpret behavioral events at the correct point in time.",
   },
 ] as const;
@@ -43,7 +43,7 @@ const familyGroups = [
   {
     label: "Firehose",
     note: "Continuous or exposure-driven telemetry",
-    tone: "#ff0033",
+    tone: "#b00020",
     items: [
       { name: "Playback", volume: "Highest", events: "start · heartbeat · seek · end", output: "views · watch time · retention", detail: "Heartbeats every 10–30 seconds dominate sustained playback traffic. played_delta_ms, position_ms, playback_state, and playback_attempt_id allow YouTube to reconstruct actual watched time rather than trusting a single play click." },
       { name: "Impression", volume: "Very high", events: "home · search · suggested · shorts", output: "CTR · ranking · recs training", detail: "An impression records a video that YouTube actually rendered to a viewer, including surface, position, request ID, model version, and experiment assignment. It is the denominator for CTR and prevents click-only training bias." },
@@ -52,7 +52,7 @@ const familyGroups = [
   {
     label: "Interaction",
     note: "Viewer intent, quality, and money",
-    tone: "#d97706",
+    tone: "#8a4b00",
     items: [
       { name: "Engagement", volume: "High", events: "like · comment · share · subscribe", output: "creator analytics · recs", detail: "Explicit actions are sparse but strong preference signals. The event must distinguish create versus undo actions, identify the video and channel, and retain the recommendation surface that led to the action." },
       { name: "Search", volume: "High", events: "query · results shown · result click", output: "search quality · recs", detail: "Search events connect normalized query text, locale, filters, result position, ranking version, and the clicked video within one search session so YouTube can evaluate relevance and reformulation." },
@@ -63,7 +63,7 @@ const familyGroups = [
   {
     label: "Reference",
     note: "Lower-volume authoritative state",
-    tone: "#16a34a",
+    tone: "#077149",
     items: [
       { name: "Creator", volume: "Low / CDC", events: "upload · metadata · monetization", output: "video + channel dimensions", detail: "Creator actions change the meaning and eligibility of content. CDC preserves when a title, category, visibility, ownership, monetization setting, or channel attribute became effective." },
       { name: "Policy", volume: "Low / critical", events: "consent · kids mode · residency", output: "governance · feature eligibility", detail: "Policy state controls whether YouTube may retain an identifier, personalize recommendations, move data across regions, or use an event for analytics. These tags must propagate into every derived table and feature." },
@@ -72,12 +72,12 @@ const familyGroups = [
 ] as const;
 
 const contractGroups = [
-  { id: "identity", name: "Identity", fields: ["event_id", "user_or_anon_id", "device_id", "session_id", "playback_attempt_id"], tone: "#2563eb", detail: "event_id identifies one emitted record for deduplication. playback_attempt_id groups all events for one attempt to play one video. User and device IDs remain privacy-scoped and rotatable." },
-  { id: "time", name: "Time", fields: ["event_time", "client_send_time", "ingest_time"], tone: "#7c3aed", detail: "event_time drives YouTube watch windows; client_send_time reveals device buffering; platform-assigned ingest_time measures transport delay and powers late-event monitoring." },
-  { id: "content", name: "Content", fields: ["video_id", "channel_id", "is_live", "surface"], tone: "#ff0033", detail: "Content identifiers and the discovery surface distinguish Home, Search, Suggested, Shorts, embeds, Live, and VOD while preserving the publishing channel." },
-  { id: "playback", name: "Playback", fields: ["position_ms", "played_delta_ms", "buffered_delta_ms", "playback_state"], tone: "#16a34a", detail: "played_delta_ms is watch-time evidence. YouTube validates it against position movement, state transitions, buffering, video duration, retry patterns, and traffic-quality signals." },
-  { id: "policy", name: "Policy", fields: ["schema_version", "metric_semantics_version", "experiment_assignments", "consent"], tone: "#d97706", detail: "Schema version controls payload decoding; metric_semantics_version pins the view/watch-time definition. Experiment and consent context travel with the event so later joins do not rewrite history." },
-  { id: "client", name: "Client", fields: ["client", "network", "trace_id"], tone: "#0891b2", detail: "Platform, app version, and network type isolate regressions by client population. trace_id connects player telemetry to collector, CDN, and backend request diagnostics." },
+  { id: "identity", name: "Identity", fields: ["event_id", "user_or_anon_id", "device_id", "session_id", "playback_attempt_id"], tone: "#1d4ed8", detail: "event_id identifies one emitted record for deduplication. playback_attempt_id groups all events for one attempt to play one video. User and device IDs remain privacy-scoped and rotatable." },
+  { id: "time", name: "Time", fields: ["event_time", "client_send_time", "ingest_time"], tone: "#6d28d9", detail: "event_time drives YouTube watch windows; client_send_time reveals device buffering; platform-assigned ingest_time measures transport delay and powers late-event monitoring." },
+  { id: "content", name: "Content", fields: ["video_id", "channel_id", "is_live", "surface"], tone: "#b00020", detail: "Content identifiers and the discovery surface distinguish Home, Search, Suggested, Shorts, embeds, Live, and VOD while preserving the publishing channel." },
+  { id: "playback", name: "Playback", fields: ["position_ms", "played_delta_ms", "buffered_delta_ms", "playback_state"], tone: "#077149", detail: "played_delta_ms is watch-time evidence. YouTube validates it against position movement, state transitions, buffering, video duration, retry patterns, and traffic-quality signals." },
+  { id: "policy", name: "Policy", fields: ["schema_version", "metric_semantics_version", "experiment_assignments", "consent"], tone: "#8a4b00", detail: "Schema version controls payload decoding; metric_semantics_version pins the view/watch-time definition. Experiment and consent context travel with the event so later joins do not rewrite history." },
+  { id: "client", name: "Client", fields: ["client", "network", "trace_id"], tone: "#0b6f87", detail: "Platform, app version, and network type isolate regressions by client population. trace_id connects player telemetry to collector, CDN, and backend request diagnostics." },
 ] as const;
 
 const jsonLines = [
@@ -118,16 +118,16 @@ const contractRules = [
 ] as const;
 
 const workloads = [
-  { name: "Shorts", shape: "Rapid swipe sessions", keys: "shorts_session_id · loop_index", processing: "Unique coverage + loop watch time", tone: "#ff0033", detail: "A Shorts session contains many videos with fast swipes, autoplay, and possible loops. Keep looped watch time separate from unique covered duration, and attach feed position plus swipe reason so engaged-view and retention logic does not reuse long-form assumptions." },
-  { name: "Live", shape: "Unbounded + reconnecting", keys: "broadcast_id · playback_attempt_id", processing: "Concurrency windows + VOD handoff", tone: "#7c3aed", detail: "Live viewers can reconnect, change latency mode, and remain for hours. Count concurrent viewers with expiring event-time state, preserve live-edge latency and chat rate, then link the ended broadcast to its VOD identity without double-counting history." },
-  { name: "Embedded", shape: "External page context", keys: "embed_origin · referrer_policy", processing: "Consent + invalid-traffic checks", tone: "#2563eb", detail: "An embedded player runs outside youtube.com. Capture allowed origin and referrer context, first-party versus third-party consent, player API behavior, and traffic-quality evidence before using the playback for public counts or recommendations." },
-  { name: "Offline", shape: "Delayed burst upload", keys: "event_time · offline_batch_id", processing: "Bounded batch correction", tone: "#0891b2", detail: "A mobile device may watch downloaded video without connectivity and upload events much later in one burst. Preserve original event time and stable IDs, protect collectors from synchronized flushes, and correct certified partitions instead of keeping unbounded Flink state." },
-  { name: "Kids", shape: "Restricted identity", keys: "policy_context · content_rating", processing: "No disallowed personalization", tone: "#d97706", detail: "Kids-content policy can restrict durable identifiers, profiling, ad personalization, and retention. The policy context must be attached at collection and propagated through Bronze, Silver, Gold, experiments, and feature generation." },
+  { name: "Shorts", shape: "Rapid swipe sessions", keys: "shorts_session_id · loop_index", processing: "Unique coverage + loop watch time", tone: "#b00020", detail: "A Shorts session contains many videos with fast swipes, autoplay, and possible loops. Keep looped watch time separate from unique covered duration, and attach feed position plus swipe reason so engaged-view and retention logic does not reuse long-form assumptions." },
+  { name: "Live", shape: "Unbounded + reconnecting", keys: "broadcast_id · playback_attempt_id", processing: "Concurrency windows + VOD handoff", tone: "#6d28d9", detail: "Live viewers can reconnect, change latency mode, and remain for hours. Count concurrent viewers with expiring event-time state, preserve live-edge latency and chat rate, then link the ended broadcast to its VOD identity without double-counting history." },
+  { name: "Embedded", shape: "External page context", keys: "embed_origin · referrer_policy", processing: "Consent + invalid-traffic checks", tone: "#1d4ed8", detail: "An embedded player runs outside youtube.com. Capture allowed origin and referrer context, first-party versus third-party consent, player API behavior, and traffic-quality evidence before using the playback for public counts or recommendations." },
+  { name: "Offline", shape: "Delayed burst upload", keys: "event_time · offline_batch_id", processing: "Bounded batch correction", tone: "#0b6f87", detail: "A mobile device may watch downloaded video without connectivity and upload events much later in one burst. Preserve original event time and stable IDs, protect collectors from synchronized flushes, and correct certified partitions instead of keeping unbounded Flink state." },
+  { name: "Kids", shape: "Restricted identity", keys: "policy_context · content_rating", processing: "No disallowed personalization", tone: "#8a4b00", detail: "Kids-content policy can restrict durable identifiers, profiling, ad personalization, and retention. The policy context must be attached at collection and propagated through Bronze, Silver, Gold, experiments, and feature generation." },
 ] as const;
 
 function SourceNode({ source, align, side }: { source: (typeof producers)[number]; align?: "start" | "center" | "end"; side?: "top" | "bottom" }) {
   return (
-    <button type="button" className="group relative z-0 min-h-[118px] cursor-pointer rounded-xl border bg-[var(--bg-card)] p-4 text-left transition hover:z-50 hover:-translate-y-0.5 hover:shadow-md focus-visible:z-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#ff0033]" style={{ borderColor: `${source.tone}45` }}>
+    <button type="button" className="group relative z-0 min-h-[118px] cursor-pointer rounded-xl border bg-[var(--bg-card)] p-4 text-left transition hover:z-50 hover:-translate-y-0.5 hover:shadow-md focus-visible:z-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#b00020]" style={{ borderColor: `${source.tone}45` }}>
       <span className="flex items-center justify-between gap-3"><span className="flex h-9 w-9 items-center justify-center rounded-lg text-sm font-black" style={{ color: source.tone, background: `${source.tone}18` }}>{source.icon}</span><span className="text-[10px]" style={{ color: source.tone }} aria-hidden>ⓘ</span></span>
       <strong className="mt-3 block text-sm">{source.title}</strong>
       <span className="mt-1 block text-[11px] text-[var(--text-faint)]">{source.scope}</span>
@@ -144,9 +144,9 @@ function ProducerMap() {
         <div className="grid gap-2 sm:grid-cols-2">
           {producers.map((source, index) => <SourceNode key={source.title} source={source} align={index % 2 === 0 ? "start" : "center"} side={index < 2 ? "bottom" : "top"} />)}
         </div>
-        <span className="hidden text-[#ff0033] xl:block">→</span>
-        <button type="button" className="group relative cursor-pointer rounded-xl border border-red-500/35 bg-red-500/[.05] p-5 text-center focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#ff0033]">
-          <span className="mx-auto flex h-11 w-11 items-center justify-center rounded-xl bg-red-500/10 font-black text-[#ff0033]">G</span>
+        <span className="hidden text-[#b00020] xl:block">→</span>
+        <button type="button" className="group relative cursor-pointer rounded-xl border border-red-500/35 bg-red-500/[.05] p-5 text-center focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#b00020]">
+          <span className="mx-auto flex h-11 w-11 items-center justify-center rounded-xl bg-red-500/10 font-black text-[#b00020]">G</span>
           <strong className="mt-3 block">Event Gateway</strong>
           <div className="mt-3 flex flex-wrap justify-center gap-1.5 text-[10px] text-[var(--text-muted)]"><span>auth</span><span>·</span><span>schema</span><span>·</span><span>consent</span><span>·</span><span>ingest time</span></div>
           <div className="mt-4 rounded-lg border border-[var(--border)] bg-[var(--bg-card)] px-3 py-2 text-xs font-semibold">Kafka topic families →</div>
@@ -165,7 +165,7 @@ function FamilyMap() {
           <div className="flex items-center gap-3 rounded-lg px-3 py-3 lg:flex-col lg:items-start lg:justify-center" style={{ color: group.tone, background: `${group.tone}10` }}><strong className="text-sm">{group.label}</strong><span className="text-[10px] leading-4 text-[var(--text-faint)]">{group.note}</span></div>
           <div className={`grid gap-2 ${group.items.length === 2 ? "sm:grid-cols-2" : "sm:grid-cols-2 xl:grid-cols-4"}`}>
             {group.items.map((family, index) => (
-              <button type="button" key={family.name} className="group relative min-h-[112px] cursor-pointer rounded-lg border border-[var(--border)] bg-[var(--bg-card)] p-3 text-left transition hover:-translate-y-0.5 hover:border-current focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#ff0033]" style={{ color: group.tone }}>
+              <button type="button" key={family.name} className="group relative min-h-[112px] cursor-pointer rounded-lg border border-[var(--border)] bg-[var(--bg-card)] p-3 text-left transition hover:-translate-y-0.5 hover:border-current focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#b00020]" style={{ color: group.tone }}>
                 <span className="flex items-center justify-between"><strong className="text-sm text-[var(--text)]">{family.name}</strong><span className="rounded-full px-2 py-1 text-[9px] font-bold uppercase" style={{ background: `${group.tone}16` }}>{family.volume}</span></span>
                 <code className="mt-3 block text-[11px] leading-4 text-[var(--text-muted)]">{family.events}</code>
                 <span className="mt-2 block text-[10px]">→ {family.output}</span>
@@ -186,30 +186,30 @@ function ContractExplorer() {
   return (
     <div className="mt-5 grid gap-3 xl:grid-cols-[1.15fr_.85fr]">
       <div className="overflow-hidden rounded-xl border border-[var(--border)] bg-[#0d1117]">
-        <div className="flex items-center justify-between border-b border-white/10 px-4 py-3"><span className="text-[10px] font-bold uppercase tracking-[.16em] text-[#ff4d70]">playback.heartbeat · v4</span><span className="text-[10px] text-slate-500">JSON</span></div>
+        <div className="flex items-center justify-between border-b border-white/10 px-4 py-3"><span className="text-[10px] font-bold uppercase tracking-[.16em] text-[#ff7790]">playback.heartbeat · v4</span><span className="text-[10px] text-slate-300">JSON</span></div>
         <pre className="overflow-x-auto p-3 text-[11px] leading-[1.55] sm:p-4 sm:text-xs">
           {jsonLines.map(([group, line], index) => (
-            <span key={`${index}-${line}`} className="block rounded px-1 transition" style={{ color: group === selected ? active.tone : group === "base" ? "#94a3b8" : "#cbd5e1", background: group === selected ? `${active.tone}22` : "transparent" }}>{line}</span>
+            <span key={`${index}-${line}`} className="block rounded px-1 transition" style={{ color: group === selected ? "#e2e8f0" : group === "base" ? "#94a3b8" : "#cbd5e1", background: group === selected ? `${active.tone}55` : "transparent" }}>{line}</span>
           ))}
         </pre>
       </div>
 
       <div>
-        <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
+        <div className="grid grid-cols-2 gap-2 sm:grid-cols-3" role="tablist" aria-label="Event contract field groups">
           {contractGroups.map((group) => (
-            <button type="button" key={group.id} onClick={() => setSelected(group.id)} className="cursor-pointer rounded-lg border p-3 text-left transition" style={{ borderColor: selected === group.id ? group.tone : "var(--border)", background: selected === group.id ? `${group.tone}10` : "var(--bg-muted)" }}>
+            <button type="button" role="tab" id={`event-contract-tab-${group.id}`} aria-selected={selected === group.id} aria-controls="event-contract-panel" key={group.id} onClick={() => setSelected(group.id)} className="cursor-pointer rounded-lg border p-3 text-left transition" style={{ borderColor: selected === group.id ? group.tone : "var(--border)", background: selected === group.id ? `${group.tone}10` : "var(--bg-muted)" }}>
               <strong className="text-xs" style={{ color: selected === group.id ? group.tone : "var(--text)" }}>{group.name}</strong><span className="mt-1 block text-[10px] text-[var(--text-faint)]">{group.fields.length} fields</span>
             </button>
           ))}
         </div>
-        <div className="mt-3 rounded-xl border p-4" style={{ borderColor: `${active.tone}45`, background: `${active.tone}08` }}>
+        <div id="event-contract-panel" role="tabpanel" aria-labelledby={`event-contract-tab-${active.id}`} className="mt-3 rounded-xl border p-4" style={{ borderColor: `${active.tone}45`, background: `${active.tone}08` }}>
           <p className="text-[10px] font-bold uppercase tracking-[.16em]" style={{ color: active.tone }}>{active.name} fields</p>
           <div className="mt-3 flex flex-wrap gap-2">{active.fields.map((field) => <code key={field} className="rounded-md border border-[var(--border)] bg-[var(--bg-card)] px-2.5 py-2 text-xs">{field}</code>)}</div>
           <p className="mt-4 text-xs leading-6 text-[var(--text-muted)]">{active.detail}</p>
         </div>
         <div className="mt-3 space-y-2">
           {contractRules.map(([rule, detail], index) => (
-            <button type="button" key={rule} className="group relative flex w-full cursor-pointer items-center gap-3 rounded-lg border border-[var(--border)] bg-[var(--bg-muted)] px-3 py-3 text-left text-xs hover:border-[#ff0033]"><span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-red-500/10 text-[10px] font-bold text-[#ff0033]">{index + 1}</span><code className="font-semibold">{rule}</code><span className="ml-auto text-[#ff0033]" aria-hidden>ⓘ</span><Tooltip align="end">{detail}</Tooltip></button>
+            <button type="button" key={rule} className="group relative flex w-full cursor-pointer items-center gap-3 rounded-lg border border-[var(--border)] bg-[var(--bg-muted)] px-3 py-3 text-left text-xs hover:border-[#b00020]"><span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-red-500/10 text-[10px] font-bold text-[#b00020]">{index + 1}</span><code className="font-semibold">{rule}</code><span className="ml-auto text-[#b00020]" aria-hidden>ⓘ</span><Tooltip align="end">{detail}</Tooltip></button>
           ))}
         </div>
       </div>
@@ -230,7 +230,7 @@ function PlaybackEvidence() {
     <div className="mt-5">
       <div className="mb-3 grid gap-3 rounded-xl border border-blue-500/25 bg-blue-500/[.035] p-4 lg:grid-cols-[1.2fr_.8fr] lg:items-center">
         <div>
-          <p className="text-[10px] font-bold uppercase tracking-[.14em] text-blue-600">What it means</p>
+          <p className="text-[10px] font-bold uppercase tracking-[.14em] text-[#1d4ed8]">What it means</p>
           <p className="mt-2 text-sm font-medium leading-6">Playback evidence is the ordered set of player events that shows how one attempt to watch a video actually progressed.</p>
         </div>
         <div className="flex flex-wrap gap-2 text-[11px] font-semibold">
@@ -245,17 +245,17 @@ function PlaybackEvidence() {
         <div className="grid gap-2 sm:grid-cols-2 xl:grid-cols-6">
           {steps.map(([step, title, output, detail], index) => (
             <button type="button" key={step} className="group relative z-0 min-h-[112px] cursor-pointer rounded-lg border border-emerald-500/25 bg-[var(--bg-card)] p-3 text-left transition hover:z-50 hover:-translate-y-0.5 hover:border-emerald-500 focus-visible:z-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500">
-              <span className="flex items-center justify-between text-[10px] font-bold text-emerald-600"><span>{step}</span><span aria-hidden>ⓘ</span></span>
+              <span className="flex items-center justify-between text-[10px] font-bold text-[#077149]"><span>{step}</span><span aria-hidden>ⓘ</span></span>
               <strong className="mt-3 block text-sm">{title}</strong>
               <span className="mt-1 block text-[11px] text-[var(--text-faint)]">{output}</span>
-              {index < steps.length - 1 ? <span className="absolute -right-2.5 top-1/2 z-10 hidden text-emerald-600 xl:block">→</span> : null}
+              {index < steps.length - 1 ? <span className="absolute -right-2.5 top-1/2 z-10 hidden text-[#077149] xl:block">→</span> : null}
               <Tooltip align={index === 0 ? "start" : index === steps.length - 1 ? "end" : "center"}>{detail}</Tooltip>
             </button>
           ))}
         </div>
       </div>
 
-      <p className="mt-3 border-l-4 border-[#ff0033] bg-red-500/[.04] px-4 py-3 text-sm font-medium leading-6">“Use stable event IDs, group by playback attempt, process in event time, sum only validated played deltas, apply a versioned qualification policy, then certify with complete Bronze history.”</p>
+      <p className="mt-3 border-l-4 border-[#b00020] bg-red-500/[.04] px-4 py-3 text-sm font-medium leading-6">“Use stable event IDs, group by playback attempt, process in event time, sum only validated played deltas, apply a versioned qualification policy, then certify with complete Bronze history.”</p>
     </div>
   );
 }
@@ -265,7 +265,7 @@ function WorkloadMatrix() {
     <div className="mt-5 overflow-visible rounded-xl border border-[var(--border)] bg-[var(--bg-muted)] p-3">
       <div className="hidden grid-cols-[120px_1fr_1fr_1.15fr] gap-3 border-b border-[var(--border)] px-3 pb-3 text-[10px] font-bold uppercase tracking-[.14em] text-[var(--text-faint)] lg:grid"><span>Workload</span><span>Traffic shape</span><span>Required context</span><span>Pipeline treatment</span></div>
       {workloads.map((item, index) => (
-        <button type="button" key={item.name} className="group relative grid w-full cursor-pointer gap-2 border-b border-[var(--border)] px-3 py-4 text-left last:border-b-0 hover:bg-[var(--bg-card)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#ff0033] lg:grid-cols-[120px_1fr_1fr_1.15fr] lg:items-center">
+        <button type="button" key={item.name} className="group relative grid w-full cursor-pointer gap-2 border-b border-[var(--border)] px-3 py-4 text-left last:border-b-0 hover:bg-[var(--bg-card)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#b00020] lg:grid-cols-[120px_1fr_1fr_1.15fr] lg:items-center">
           <strong className="text-sm" style={{ color: item.tone }}>{item.name}</strong>
           <span className="text-xs font-semibold">{item.shape}</span>
           <code className="text-[11px] leading-5 text-[var(--text-muted)]">{item.keys}</code>
