@@ -27,6 +27,7 @@ import AccessibleExplainer from "../data-design/AccessibleExplainer";
 import ChapterPageHeading from "../data-design/ChapterPageHeading";
 import MobileSectionNav from "../data-design/MobileSectionNav";
 import UberInteractionTutorial from "./UberInteractionTutorial";
+import UberUiIcon, { type UberIconName } from "./UberUiIcon";
 import {
   getActiveDataDesignSection,
   scrollToDataDesignSection,
@@ -40,12 +41,12 @@ const C = {
   text: "var(--text)",
   muted: "var(--text-muted)",
   faint: "var(--text-muted)",
-  blue: "#42586c",
-  cyan: "#445e72",
-  green: "#50675d",
-  amber: "#625346",
-  red: "#62595d",
-  violet: "#6d6774",
+  blue: "#111111",
+  cyan: "#2f2f2f",
+  green: "#3f3f3f",
+  amber: "#4b4b4b",
+  red: "#595959",
+  violet: "#666666",
 };
 const href = (tab: UberDeTabSlug) => `/data-engineering/uber/${tab}`;
 
@@ -114,10 +115,10 @@ function Outline({
                 style={{
                   borderColor: on ? C.blue : C.border,
                   background: on
-                    ? "color-mix(in srgb, #42586c 13%, var(--bg-card))"
+                    ? "color-mix(in srgb, #111111 13%, var(--bg-card))"
                     : C.card,
                   color: on ? C.text : C.muted,
-                  boxShadow: on ? "0 6px 18px rgba(82,107,130,.12)" : "none",
+                  boxShadow: on ? "0 6px 18px rgba(0,0,0,.12)" : "none",
                 }}
               >
                 {on ? (
@@ -145,27 +146,27 @@ function Outline({
   );
 }
 
-type VisualItem = { icon: string; title: string; sub: string; detail: string };
+type VisualItem = { icon: UberIconName; title: string; sub: string; detail: string };
 function Tip({ text }: { text: string }) {
   return <AccessibleExplainer company="Uber">{text}</AccessibleExplainer>;
 }
 const producers: VisualItem[] = [
   {
-    icon: "🚘",
+    icon: "car",
     title: "Driver app",
     sub: "GPS + availability",
     detail:
       "Publishes location pings, online/offline status, and trip state changes. GPS is the dominant stream by volume.",
   },
   {
-    icon: "📱",
+    icon: "phone",
     title: "Rider app",
     sub: "Demand + conversion",
     detail:
       "Publishes fare estimates, trip requests, screen views, ratings, and the steps that explain marketplace demand.",
   },
   {
-    icon: "🧭",
+    icon: "compass",
     title: "Dispatch + payments",
     sub: "Lifecycle + settlement",
     detail:
@@ -174,28 +175,28 @@ const producers: VisualItem[] = [
 ];
 const consumers: VisualItem[] = [
   {
-    icon: "⚡",
+    icon: "bolt",
     title: "Surge pricing",
     sub: "30–60 second updates",
     detail:
       "Consumes fresh supply and demand aggregates so prices react to a city cell without flapping on every GPS ping.",
   },
   {
-    icon: "🗺️",
+    icon: "map",
     title: "ETA features",
     sub: "Seconds-level freshness",
     detail:
       "Consumes recent driver position, route, traffic, and trip context for online model serving and routing decisions.",
   },
   {
-    icon: "📊",
+    icon: "chart",
     title: "Finance + city ops",
     sub: "Trusted daily truth",
     detail:
       "Consumes reconciled Gold trip and settlement facts for official reporting, marketplace operations, and regulatory analysis.",
   },
   {
-    icon: "🧪",
+    icon: "experiment",
     title: "Analytics + ML",
     sub: "Historical datasets",
     detail:
@@ -219,16 +220,14 @@ function Endpoint({
           style={{ borderColor: `${color}44`, background: C.card2 }}
           key={item.title}
         >
-          <span className="text-xl">{item.icon}</span>
+          <UberUiIcon name={item.icon} className="h-5 w-5 shrink-0" />
           <div className="min-w-0">
             <p className="text-sm font-semibold">{item.title}</p>
             <p className="text-[11px]" style={{ color: C.faint }}>
               {item.sub}
             </p>
           </div>
-          <span className="ml-auto text-xs" style={{ color }}>
-            ⓘ
-          </span>
+          <UberUiIcon name="info" className="ml-auto h-4 w-4" style={{ color }} />
           <Tip text={item.detail} />
         </button>
       ))}
@@ -265,13 +264,13 @@ function Mission() {
       <button
         data-testid="hero-platform-card"
         className="group relative rounded-md border p-5 text-center transition-all hover:-translate-y-0.5 hover:shadow-md"
-        style={{ borderColor: "rgba(101,126,144,.3)", background: C.card2 }}
+        style={{ borderColor: "rgba(0,0,0,.3)", background: C.card2 }}
       >
         <div
           className="mx-auto flex h-12 w-12 items-center justify-center rounded-md text-2xl"
-          style={{ background: "rgba(82,107,130,.16)" }}
+          style={{ background: "rgba(0,0,0,.16)" }}
         >
-          🏙️
+          <UberUiIcon name="database" className="h-6 w-6" />
         </div>
         <h3 className="mt-4 text-xl font-semibold">
           Marketplace data platform
@@ -371,42 +370,42 @@ function Section({
 function StartHere() {
   const req: VisualItem[] = [
     {
-      icon: "📥",
+      icon: "arrow-in",
       title: "Ingest marketplace events",
       sub: "Trips, GPS, rider, payments, maps",
       detail:
         "Accept continuous events from independent mobile and backend producers through durable, versioned contracts.",
     },
     {
-      icon: "⚡",
+      icon: "bolt",
       title: "Serve fast + batch paths",
       sub: "One platform, different time horizons",
       detail:
         "Streaming feeds surge and ETA within seconds; batch processing publishes corrected official business tables.",
     },
     {
-      icon: "🧹",
+      icon: "clean",
       title: "Validate, enrich, dedupe",
       sub: "Correct outcomes over raw delivery",
       detail:
         "Use event IDs, event time, schema checks, and reference joins so retries or late events do not corrupt business outcomes.",
     },
     {
-      icon: "🗂️",
+      icon: "archive",
       title: "Keep durable history",
       sub: "Petabyte-scale geospatial storage",
       detail:
         "Retain raw Bronze truth and compacted analytical history so pipelines can replay, audit, and train models economically.",
     },
     {
-      icon: "🔒",
+      icon: "shield",
       title: "Protect sensitive data",
       sub: "Deletion guarantees for rider PII",
       detail:
         "Tokenize identity, restrict address and payment fields, and propagate deletion requests through lakehouse and serving copies.",
     },
     {
-      icon: "🔗",
+      icon: "link",
       title: "Reconcile the trip",
       sub: "Five producers, one trusted record",
       detail:
@@ -460,8 +459,8 @@ function StartHere() {
         <div
           className="mt-4 rounded-md border px-5 py-4"
           style={{
-            borderColor: "rgba(82,107,130,.35)",
-            background: "color-mix(in srgb, #42586c 8%, var(--bg-card))",
+            borderColor: "rgba(0,0,0,.35)",
+            background: "color-mix(in srgb, #111111 8%, var(--bg-card))",
           }}
         >
           <p
@@ -496,9 +495,9 @@ function StartHere() {
             >
               <span
                 className="flex h-9 w-9 items-center justify-center rounded-md text-lg"
-                style={{ background: "rgba(121,111,100,.12)" }}
+                style={{ background: "rgba(0,0,0,.12)" }}
               >
-                {item.icon}
+                <UberUiIcon name={item.icon} className="h-5 w-5" />
               </span>
               <div>
                 <p className="text-sm font-semibold">{item.title}</p>
@@ -506,9 +505,11 @@ function StartHere() {
                   {item.sub}
                 </p>
               </div>
-              <span className="ml-auto" style={{ color: C.amber }}>
-                ⓘ
-              </span>
+              <UberUiIcon
+                name="info"
+                className="ml-auto h-4 w-4"
+                style={{ color: C.amber }}
+              />
               <Tip text={item.detail} />
             </button>
           ))}
@@ -658,7 +659,7 @@ function StartHere() {
       >
         <Link
           href={href("requirements")}
-          className="inline-flex items-center gap-3 rounded-md border px-4 py-3 text-sm font-semibold transition-colors hover:border-[#42586c]"
+          className="inline-flex items-center gap-3 rounded-md border px-4 py-3 text-sm font-semibold transition-colors hover:border-[#111111]"
           style={{ borderColor: C.border, background: C.card, color: C.text }}
         >
           <span>
@@ -701,28 +702,28 @@ function RequirementsTab() {
   };
   const assumptions: VisualItem[] = [
     {
-      icon: "👥",
+      icon: "users",
       title: "25M–40M DAU",
       sub: "≈20%–30% of 130M MAU",
       detail:
         "Use round interview numbers: 25M daily riders is roughly 20% of 130M monthly riders; 40M is roughly 30%.",
     },
     {
-      icon: "🚘",
+      icon: "car",
       title: "1M–2M online",
       sub: "from ~6M active drivers",
       detail:
         "Use 2M concurrent drivers for the global peak calculation. Idle drivers also continue sending background pings.",
     },
     {
-      icon: "🧭",
+      icon: "compass",
       title: "30M trips/day",
       sub: "× 6 lifecycle events per trip",
       detail:
         "Count 6 clear milestones: request, match, arrival, start, completion, and payment. Then test peak traffic at 10× the daily average.",
     },
     {
-      icon: "📍",
+      icon: "pin",
       title: "1 ping / 4 sec",
       sub: "15 min trip → 225 pings",
       detail:
@@ -808,7 +809,7 @@ function RequirementsTab() {
                 className="group relative min-h-[126px] border p-4 text-left transition-all hover:-translate-y-0.5 hover:shadow-md"
                 style={{ borderColor: C.border, background: C.card2 }}
               >
-                <span className="text-xl">{item.icon}</span>
+                <UberUiIcon name={item.icon} className="h-5 w-5" />
                 <strong
                   className="mt-3 block text-xl"
                   style={{ color: C.blue }}
@@ -863,8 +864,8 @@ function RequirementsTab() {
           <div
             className="mt-3 flex items-center gap-3 rounded-xl border px-4 py-3"
             style={{
-              borderColor: "rgba(82,107,130,.35)",
-              background: "color-mix(in srgb, #42586c 8%, var(--bg-card))",
+              borderColor: "rgba(0,0,0,.35)",
+              background: "color-mix(in srgb, #111111 8%, var(--bg-card))",
             }}
           >
             <strong className="text-2xl" style={{ color: C.blue }}>
@@ -886,7 +887,7 @@ function RequirementsTab() {
             <button
               className="group relative rounded-2xl border p-5 text-left"
               style={{
-                borderColor: "rgba(121,111,100,.35)",
+                borderColor: "rgba(0,0,0,.35)",
                 background: C.card2,
               }}
             >
@@ -975,7 +976,7 @@ function RequirementsTab() {
                 <div
                   className="mt-3 rounded-lg border px-3 py-2 text-xs font-semibold"
                   style={{
-                    borderColor: "rgba(109,103,116,.35)",
+                    borderColor: "rgba(0,0,0,.35)",
                     background: C.card,
                     color: C.violet,
                   }}
@@ -1002,7 +1003,7 @@ function RequirementsTab() {
               <button
                 className="group relative border p-4 text-left"
                 style={{
-                  borderColor: "rgba(82,107,130,.4)",
+                  borderColor: "rgba(0,0,0,.4)",
                   background: C.card,
                 }}
               >
@@ -1027,7 +1028,7 @@ function RequirementsTab() {
               <button
                 className="group relative border p-4 text-left"
                 style={{
-                  borderColor: "rgba(121,111,100,.45)",
+                  borderColor: "rgba(0,0,0,.45)",
                   background: C.card,
                 }}
               >
@@ -1053,7 +1054,7 @@ function RequirementsTab() {
                 <button
                   className="group relative border p-4 text-left"
                   style={{
-                    borderColor: "rgba(101,126,144,.4)",
+                    borderColor: "rgba(0,0,0,.4)",
                     background: C.card,
                   }}
                 >
@@ -1072,7 +1073,7 @@ function RequirementsTab() {
                 <button
                   className="group relative border p-4 text-left"
                   style={{
-                    borderColor: "rgba(102,122,112,.4)",
+                    borderColor: "rgba(0,0,0,.4)",
                     background: C.card,
                   }}
                 >
@@ -1143,7 +1144,7 @@ function EventSourcesTab() {
   };
   const sources = [
     {
-      icon: "🚘",
+      icon: "car" as UberIconName,
       name: "Driver app",
       tier: "Highest",
       color: C.blue,
@@ -1153,7 +1154,7 @@ function EventSourcesTab() {
         "The dominant producer. Location pings drive the 500K/sec peak; status changes describe availability and trip progress.",
     },
     {
-      icon: "📱",
+      icon: "phone" as UberIconName,
       name: "Rider app",
       tier: "High",
       color: C.cyan,
@@ -1163,7 +1164,7 @@ function EventSourcesTab() {
         "Captures demand intent, conversion funnels, experimentation exposure, and rider feedback.",
     },
     {
-      icon: "🧭",
+      icon: "compass" as UberIconName,
       name: "Dispatch service",
       tier: "Medium",
       color: C.violet,
@@ -1172,7 +1173,7 @@ function EventSourcesTab() {
         "Publishes marketplace decisions that connect rider intent with a driver and update the trip state.",
     },
     {
-      icon: "💳",
+      icon: "payment" as UberIconName,
       name: "Payments service",
       tier: "Critical",
       color: C.amber,
@@ -1181,7 +1182,7 @@ function EventSourcesTab() {
         "Moderate volume but financially critical. Event IDs and effectively-once business outcomes matter more than raw throughput.",
     },
     {
-      icon: "🗺️",
+      icon: "map" as UberIconName,
       name: "Maps + routing",
       tier: "Medium",
       color: C.green,
@@ -1190,7 +1191,7 @@ function EventSourcesTab() {
         "Provides route and traffic context used to interpret location history and build ETA features.",
     },
     {
-      icon: "🆘",
+      icon: "support" as UberIconName,
       name: "Support + safety",
       tier: "Priority",
       color: C.red,
@@ -1294,7 +1295,7 @@ function EventSourcesTab() {
                 }}
               >
                 <div className="flex items-center justify-between gap-3">
-                  <span className="text-xl">{source.icon}</span>
+                  <UberUiIcon name={source.icon} className="h-5 w-5" />
                   <span
                     className="rounded-full border px-2.5 py-1 text-xs font-bold uppercase"
                     style={{
@@ -1328,7 +1329,7 @@ function EventSourcesTab() {
             <div
               className="rounded-2xl border p-5"
               style={{
-                borderColor: "rgba(109,103,116,.45)",
+                borderColor: "rgba(0,0,0,.45)",
                 background: C.card2,
               }}
             >
@@ -1351,7 +1352,7 @@ function EventSourcesTab() {
                     key={field}
                     className="rounded-lg border px-2 py-1 text-xs"
                     style={{
-                      borderColor: "rgba(109,103,116,.35)",
+                      borderColor: "rgba(0,0,0,.35)",
                       background: C.card,
                     }}
                   >
@@ -1534,7 +1535,7 @@ function EventSourcesTab() {
         >
           <button
             className="group relative mt-5 w-full border p-4 text-left md:p-5"
-            style={{ borderColor: "rgba(102,122,112,.35)", background: C.card2 }}
+            style={{ borderColor: "rgba(0,0,0,.35)", background: C.card2 }}
           >
             <div className="grid gap-4 lg:grid-cols-[1fr_260px_1fr] lg:items-center">
               <div className="grid gap-2">
@@ -1560,7 +1561,7 @@ function EventSourcesTab() {
               <div
                 className="rounded-2xl border p-5 text-center"
                 style={{
-                  borderColor: "rgba(102,122,112,.45)",
+                  borderColor: "rgba(0,0,0,.45)",
                   background: C.card,
                 }}
               >
@@ -1588,7 +1589,7 @@ function EventSourcesTab() {
               <div
                 className="rounded-2xl border p-5"
                 style={{
-                  borderColor: "rgba(102,122,112,.35)",
+                  borderColor: "rgba(0,0,0,.35)",
                   background: C.card,
                 }}
               >
@@ -3083,7 +3084,38 @@ export default function UberDataEngineeringPage({
           {tab === "start-here" ? <StartHere /> : <Placeholder tab={tab} />}
         </section>
       </div>
-      <style>{`.uber-de-page { --bg: #f4f7fb; --bg-card: #ffffff; --bg-muted: #eef4f9; --border: #d6e1eb; --text: #17202b; --text-muted: #526171; --text-faint: #59697a; color-scheme: light; } .uber-de-content section button { border-radius: 14px; } .uber-de-page [data-testid="platform-mission-visual"] { border-radius: 20px; } .uber-de-content section > div { border-radius: 16px; } .uber-architecture-canvas .react-flow__controls-button { background: var(--bg-card); color: var(--text); border-color: var(--border); } .uber-architecture-canvas .react-flow__controls-button:hover { background: var(--bg-muted); } .uber-architecture-canvas .react-flow__controls-button svg { fill: currentColor; }`}</style>
+      <style>{`
+        .uber-de-page {
+          --bg: #f1f1f1;
+          --bg-card: #ffffff;
+          --bg-muted: #e9e9e9;
+          --border: #d2d2d2;
+          --text: #111111;
+          --text-muted: #444444;
+          --text-faint: #5f5f5f;
+          color-scheme: light;
+        }
+        .uber-de-page [class*="bg-[#526b82]"] {
+          background-color: #111111 !important;
+        }
+        .uber-de-page [class*="text-[#526b82]"] {
+          color: #111111 !important;
+        }
+        .uber-de-page button:not(:disabled),
+        .uber-de-page a[href] {
+          cursor: pointer;
+        }
+        .uber-de-content section button { border-radius: 14px; }
+        .uber-de-page [data-testid="platform-mission-visual"] { border-radius: 20px; }
+        .uber-de-content section > div { border-radius: 16px; }
+        .uber-architecture-canvas .react-flow__controls-button {
+          background: var(--bg-card);
+          color: var(--text);
+          border-color: var(--border);
+        }
+        .uber-architecture-canvas .react-flow__controls-button:hover { background: var(--bg-muted); }
+        .uber-architecture-canvas .react-flow__controls-button svg { fill: currentColor; }
+      `}</style>
     </div>
   );
 }

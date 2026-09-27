@@ -16,11 +16,11 @@ const C = {
   border: "var(--border)",
   text: "var(--text)",
   muted: "var(--text-muted)",
-  blue: "#42586c",
-  cyan: "#445e72",
-  green: "#50675d",
-  amber: "#625346",
-  red: "#62595d",
+  blue: "#111111",
+  cyan: "#2f2f2f",
+  green: "#3f3f3f",
+  amber: "#4b4b4b",
+  red: "#595959",
 };
 type TableDef = {
   id: string;
@@ -815,7 +815,7 @@ function Anchors({
                   style={{
                     borderColor: on ? C.blue : C.border,
                     background: on
-                      ? "color-mix(in srgb, #42586c 13%, var(--bg-card))"
+                      ? "color-mix(in srgb, #111111 13%, var(--bg-card))"
                       : C.card,
                     color: on ? C.text : C.muted,
                   }}
@@ -989,7 +989,7 @@ function ErdExplorer({
                   refY="3.5"
                   orient="auto"
                 >
-                  <path d="M0 0L7 3.5L0 7Z" fill="#667386" />
+                  <path d="M0 0L7 3.5L0 7Z" fill="#666666" />
                 </marker>
               </defs>
               {edges.map((edge, edgeIndex) => {
@@ -1007,7 +1007,7 @@ function ErdExplorer({
                     key={`${edge.from}-${edge.to}-${edgeIndex}`}
                     d={`M${ax} ${ay} C${ax} ${(ay + by) / 2},${bx} ${(ay + by) / 2},${bx} ${by}`}
                     fill="none"
-                    stroke={highlighted ? viewColor : "#667386"}
+                    stroke={highlighted ? viewColor : "#666666"}
                     strokeWidth={highlighted ? 2 : 1}
                     strokeDasharray="5 5"
                     markerEnd="url(#erd-arrow)"
@@ -1018,7 +1018,7 @@ function ErdExplorer({
               {layoutNodes.map((pos) => {
                 const table = TABLES[pos.id],
                   on = selectedId === pos.id,
-                  color = table.kind === "fact" ? viewColor : "#94a3b8";
+                  color = table.kind === "fact" ? viewColor : "#999999";
                 return (
                   <g
                     key={pos.id}
@@ -1085,7 +1085,7 @@ function ErdExplorer({
                         key={fk}
                         x="16"
                         y={99 + i * 18}
-                        fill="#aeb8c7"
+                        fill="#aaaaaa"
                         fontSize={fk.length > 24 ? "9.5" : "11"}
                         fontWeight="600"
                       >

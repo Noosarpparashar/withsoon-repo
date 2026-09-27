@@ -85,7 +85,7 @@ export default function UberInteractionTutorial() {
         aria-describedby="uber-tutorial-description"
         data-testid="uber-interaction-tutorial"
         tabIndex={-1}
-        className="relative rounded-xl border border-[var(--border)] bg-[var(--bg-card)] px-4 py-3 pr-12 shadow-sm outline-none focus-visible:ring-2 focus-visible:ring-[#42586c]"
+        className="relative rounded-xl border border-[var(--border)] bg-[var(--bg-card)] px-4 py-3 pr-12 shadow-sm outline-none focus-visible:ring-2 focus-visible:ring-[#111111]"
       >
         <p className="text-[9px] font-bold uppercase tracking-[.16em] text-[var(--text-faint)]">
           Quick guide
@@ -102,7 +102,7 @@ export default function UberInteractionTutorial() {
           type="button"
           onClick={dismiss}
           aria-label="Close card explanations tutorial"
-          className="absolute right-2.5 top-2.5 flex h-8 w-8 items-center justify-center rounded-lg border border-[var(--border)] bg-[var(--bg-muted)] text-base text-[var(--text-muted)] outline-none hover:text-[var(--text)] focus-visible:ring-2 focus-visible:ring-[#42586c]"
+          className="absolute right-2.5 top-2.5 flex h-8 w-8 items-center justify-center rounded-lg border border-[var(--border)] bg-[var(--bg-muted)] text-base text-[var(--text-muted)] outline-none hover:text-[var(--text)] focus-visible:ring-2 focus-visible:ring-[#111111]"
         >
           <span aria-hidden>&times;</span>
         </button>

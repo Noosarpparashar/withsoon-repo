@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import {
   Background,
   Controls,
@@ -30,6 +31,7 @@ import {
   scrollToDataDesignSection,
 } from "../data-design/sectionAnchors";
 import StartHereDesktopExperience from "./StartHereDesktopExperience";
+import NetflixUiIcon, { type NetflixIconName } from "./NetflixUiIcon";
 import {
   ARCHITECTURE_NODES,
   ARCHITECTURE_REVEALS,
@@ -78,14 +80,14 @@ const T = {
   text: "var(--text)",
   muted: "var(--text-muted)",
   faint: "var(--text-faint)",
-  red: "#5f565a",
-  amber: "#62594f",
-  gold: "#655e55",
-  blue: "#49667d",
-  violet: "#5b5263",
-  purple: "#77707e",
-  green: "#50675d",
-  orange: "#80756c",
+  red: "#111111",
+  amber: "#4b4b4b",
+  gold: "#666666",
+  blue: "#2f2f2f",
+  violet: "#595959",
+  purple: "#747474",
+  green: "#3f3f3f",
+  orange: "#686868",
 } as const;
 
 type WatchMetricMode = (typeof WATCH_TIME_DEFINITIONS)[number]["id"];
@@ -194,7 +196,7 @@ const SECTION4_ENVELOPE_FIELDS = [
     label: "event_id",
     line: '"event_id": "uuid-123",',
     color: T.red,
-    icon: "🧾",
+    icon: "fingerprint",
     meaning: "Business dedup key across retries, offline replays, and duplicate submits.",
     interviewUse: "Use this when you explain why exactly-once infrastructure still needs logical deduplication.",
     example: "Example: the TV app retries the same playback_started call after reconnecting, so both copies carry the same event_id.",
@@ -204,7 +206,7 @@ const SECTION4_ENVELOPE_FIELDS = [
     label: "event_time",
     line: '"event_time": "2026-07-30T04:20:00Z",',
     color: T.blue,
-    icon: "⏱️",
+    icon: "clock",
     meaning: "The moment the user action happened. Windows, freshness, and point-in-time joins should anchor here.",
     interviewUse: "This is how you separate user truth from platform delay.",
     example: "Example: the member pressed play at 8:00:00 PM, even if the platform sees the record a few seconds later.",
@@ -214,7 +216,7 @@ const SECTION4_ENVELOPE_FIELDS = [
     label: "ingestion_time",
     line: '"ingestion_time": "2026-07-30T04:20:02Z",',
     color: T.green,
-    icon: "📥",
+    icon: "arrow-in",
     meaning: "Measures source-to-platform delay and helps detect bad client clocks.",
     interviewUse: "Bring this up when you talk about late events, quarantine rules, or freshness dashboards.",
     example: "Example: if event_time says 8:00:00 PM and ingestion_time is 8:00:02 PM, source-to-platform lag is 2 seconds.",
@@ -224,7 +226,7 @@ const SECTION4_ENVELOPE_FIELDS = [
     label: "event_version",
     line: '"event_version": 3,',
     color: T.violet,
-    icon: "🧩",
+    icon: "schema",
     meaning: "Makes schema and semantic evolution explicit so field meaning never changes silently.",
     interviewUse: "This is your clean compatibility answer.",
     example: "Example: version 3 can add experiment_assignments without breaking older readers that still understand version 2.",
@@ -234,7 +236,7 @@ const SECTION4_ENVELOPE_FIELDS = [
     label: "session_id",
     line: '"session_id": "playback-session-42",',
     color: T.amber,
-    icon: "🎬",
+    icon: "play",
     meaning: "Best source partition key for playback ordering because play, pause, seek, and heartbeat stay together.",
     interviewUse: "Tie it directly to topic design and sessionization.",
     example: "Example: one movie session emits start -> heartbeat -> pause -> seek -> stop, and all of them stay on one Kafka partition.",
@@ -243,8 +245,8 @@ const SECTION4_ENVELOPE_FIELDS = [
     id: "producer_trace",
     label: "producer + trace_id",
     line: '"producer": "playback-service", "trace_id": "abc-789",',
-    color: "#756970",
-    icon: "🛰️",
+    color: "#5f5f5f",
+    icon: "nodes",
     meaning: "Carries ownership, escalation path, and debugging context with every record.",
     interviewUse: "Useful for lineage and on-call explanations.",
     example: "Example: if QoE metrics spike, trace_id helps connect the bad record back to the exact producer request path.",
@@ -254,7 +256,7 @@ const SECTION4_ENVELOPE_FIELDS = [
   label: string;
   line: string;
   color: string;
-  icon: string;
+  icon: NetflixIconName;
   meaning: string;
   interviewUse: string;
   example: string;
@@ -264,7 +266,7 @@ const SECTION4_TOPIC_CHOICES = [
   {
     id: "session_id",
     label: "session_id",
-    icon: "🎬",
+    icon: "play",
     color: T.green,
     goodAt: "All events for one playback journey land on the same partition, so the stream processor sees play, pause, seek, heartbeat, and stop in the right sequence without cross-partition stitching.",
     risk: "You preserve ordering only inside one session. If the same member starts a second session on another device, those two sessions can be processed independently and are not globally ordered at member level.",
@@ -274,7 +276,7 @@ const SECTION4_TOPIC_CHOICES = [
   {
     id: "profile_id",
     label: "profile_id",
-    icon: "👤",
+    icon: "user",
     color: T.blue,
     goodAt: "Useful when the downstream question is member-centric, such as building a user activity timeline or joining browse, search, and playback behavior for one profile in sequence.",
     risk: "Heavy users or shared household profiles can skew traffic badly. A few power profiles can create hotter partitions than the rest of the topic, especially during prime time.",
@@ -284,7 +286,7 @@ const SECTION4_TOPIC_CHOICES = [
   {
     id: "title_id",
     label: "title_id",
-    icon: "🍿",
+    icon: "film",
     color: T.red,
     goodAt: "Feels attractive when the main downstream query is title-level aggregation, for example trending, title watch hours, or release monitoring.",
     risk: "This is the classic hot-key trap. A blockbuster release can send an enormous fraction of all playback events for that hour into one or two partitions, causing lag even when the cluster looks healthy overall.",
@@ -294,7 +296,7 @@ const SECTION4_TOPIC_CHOICES = [
   {
     id: "random",
     label: "random / event_id",
-    icon: "🎲",
+    icon: "distribute",
     color: T.violet,
     goodAt: "Gives the cleanest distribution across partitions and minimizes hot-key risk because the hashing is effectively uniform.",
     risk: "You lose business ordering. Sessionization, dedup around related records, and any per-entity stateful logic become much harder because related events are scattered across the cluster.",
@@ -304,7 +306,7 @@ const SECTION4_TOPIC_CHOICES = [
 ] as const satisfies Array<{
   id: Section4TopicChoiceId;
   label: string;
-  icon: string;
+  icon: NetflixIconName;
   color: string;
   goodAt: string;
   risk: string;
@@ -316,7 +318,7 @@ const SECTION4_FACTS = [
   {
     id: "fact_playback_session",
     title: "fact_playback_session",
-    icon: "▶️",
+    icon: "play",
     color: T.red,
     grain: "One closed playback session for one profile-title-device combination.",
     measures: ["watch_duration", "completion_pct", "startup_latency", "rebuffer_ms"],
@@ -326,7 +328,7 @@ const SECTION4_FACTS = [
   {
     id: "fact_browse_impression",
     title: "fact_browse_impression",
-    icon: "🧭",
+    icon: "compass",
     color: T.blue,
     grain: "One rendered title card in one page/row/position context.",
     measures: ["impression_count", "visible_duration", "dwell_time"],
@@ -336,7 +338,7 @@ const SECTION4_FACTS = [
   {
     id: "fact_recommendation_impression",
     title: "fact_recommendation_impression",
-    icon: "🎯",
+    icon: "target",
     color: T.violet,
     grain: "One recommended title shown in one recommendation request.",
     measures: ["rank", "model_score", "click_flag", "eventual_watch_time"],
@@ -346,7 +348,7 @@ const SECTION4_FACTS = [
 ] as const satisfies Array<{
   id: Section4FactId;
   title: string;
-  icon: string;
+  icon: NetflixIconName;
   color: string;
   grain: string;
   measures: readonly string[];
@@ -358,7 +360,7 @@ const SECTION4_DIMENSIONS = [
   {
     id: "dim_profile",
     title: "dim_profile",
-    icon: "🙂",
+    icon: "user",
     color: T.green,
     purpose: "Tokenized analytics identity with profile-level preferences and status.",
     fields: ["profile_sk", "language", "maturity_setting", "created_date"],
@@ -367,7 +369,7 @@ const SECTION4_DIMENSIONS = [
   {
     id: "dim_title",
     title: "dim_title",
-    icon: "🎞️",
+    icon: "film",
     color: T.blue,
     purpose: "Content metadata for movies, series, episodes, genre bridges, and language context.",
     fields: ["title_sk", "content_type", "runtime_min", "original_language"],
@@ -376,7 +378,7 @@ const SECTION4_DIMENSIONS = [
   {
     id: "dim_device",
     title: "dim_device",
-    icon: "📺",
+    icon: "device",
     color: T.amber,
     purpose: "Device family and capability context for playback and QoE slices.",
     fields: ["device_sk", "device_family", "os", "hdr_support"],
@@ -385,8 +387,8 @@ const SECTION4_DIMENSIONS = [
   {
     id: "dim_geography",
     title: "dim_geography",
-    icon: "🌍",
-    color: "#6f8584",
+    icon: "globe",
+    color: "#555555",
     purpose: "Country, region, timezone, and regulatory grouping for reporting and licensing cuts.",
     fields: ["geo_sk", "country_code", "region", "timezone"],
     scd: "Usually stable; version only when hierarchy corrections matter.",
@@ -394,7 +396,7 @@ const SECTION4_DIMENSIONS = [
   {
     id: "dim_experiment",
     title: "dim_experiment",
-    icon: "🧪",
+    icon: "experiment",
     color: T.violet,
     purpose: "Owner, hypothesis, variant, and metric context for controlled rollouts.",
     fields: ["experiment_sk", "variant", "owner_team", "primary_metric"],
@@ -403,7 +405,7 @@ const SECTION4_DIMENSIONS = [
   {
     id: "dim_date",
     title: "dim_date",
-    icon: "📅",
+    icon: "calendar",
     color: T.red,
     purpose: "Calendar-friendly cuts that keep BI and finance queries simple and consistent.",
     fields: ["date_sk", "week", "month", "holiday_flag"],
@@ -412,8 +414,8 @@ const SECTION4_DIMENSIONS = [
   {
     id: "dim_ui_row",
     title: "dim_ui_row",
-    icon: "🪄",
-    color: "#6b8495",
+    icon: "grid",
+    color: "#555555",
     purpose: "Recommendation and browse placement context like row type, surface, and position family.",
     fields: ["row_sk", "surface", "row_type", "placement_group"],
     scd: "Type 2 when taxonomy or placement logic changes.",
@@ -421,8 +423,8 @@ const SECTION4_DIMENSIONS = [
   {
     id: "dim_recommendation_model",
     title: "dim_recommendation_model",
-    icon: "🤖",
-    color: "#7d7783",
+    icon: "model",
+    color: "#666666",
     purpose: "Model lineage, version, and feature-set context behind every recommendation decision.",
     fields: ["model_sk", "model_name", "model_version", "training_snapshot"],
     scd: "Immutable model versions rather than mutable overwrite.",
@@ -430,7 +432,7 @@ const SECTION4_DIMENSIONS = [
 ] as const satisfies Array<{
   id: Section4DimensionId;
   title: string;
-  icon: string;
+  icon: NetflixIconName;
   color: string;
   purpose: string;
   fields: readonly string[];
@@ -441,7 +443,7 @@ const SECTION4_CONTROLS = [
   {
     id: "late_data",
     title: "Late data + duplicates",
-    icon: "⏳",
+    icon: "clock",
     color: T.amber,
     summary: "Use event_id for business dedup, event_time for truth, ingestion_time for delay, and split fast metrics from corrected historical truth.",
     cues: ["24h dedup TTL", "5-10m watermark", "30-60m allowed lateness", "very-late -> correction path"],
@@ -453,7 +455,7 @@ const SECTION4_CONTROLS = [
   {
     id: "scd2",
     title: "SCD2 + point-in-time joins",
-    icon: "🧠",
+    icon: "replay",
     color: T.violet,
     summary: "Facts should join to the dimension row valid at the event timestamp, not the latest row today.",
     cues: ["plan changes", "title metadata fixes", "experiment config history", "unknown key then repair"],
@@ -465,7 +467,7 @@ const SECTION4_CONTROLS = [
   {
     id: "quality",
     title: "Quality gates",
-    icon: "🛡️",
+    icon: "shield",
     color: T.green,
     summary: "Check schema, enums, nulls, lag, counts, and referential integrity before publishing trusted tables.",
     cues: ["schema registry", "quarantine bad events", "source-sink reconciliation", "fact-dim integrity"],
@@ -477,7 +479,7 @@ const SECTION4_CONTROLS = [
   {
     id: "cost",
     title: "Cost controls",
-    icon: "💸",
+    icon: "coins",
     color: T.gold,
     summary: "Use bounded-cardinality partitions, short hot retention, and tier older data down instead of keeping everything forever-hot.",
     cues: ["Bronze by ingestion_date/hour", "avoid profile_id partitions", "compaction", "selective marts"],
@@ -489,7 +491,7 @@ const SECTION4_CONTROLS = [
 ] as const satisfies Array<{
   id: Section4ControlId;
   title: string;
-  icon: string;
+  icon: NetflixIconName;
   color: string;
   summary: string;
   cues: readonly string[];
@@ -1256,13 +1258,13 @@ const MODELING_TABLE_VISUALS = {
     accent: "Discovery fact",
   },
   fact_playback_event: {
-    color: "#756970",
+    color: "#5f5f5f",
     objectName: "FactPlaybackEventRow",
     builtBy: "Built directly from canonical playback event streams before they are rolled into the session fact, preserving sequence-level truth.",
     accent: "Event fact",
   },
   fact_qoe_event: {
-    color: "#78909f",
+    color: "#666666",
     objectName: "FactQoeEventRow",
     builtBy: "Built from player QoE, CDN, and network diagnostics so operational playback pain can be analyzed independently from engagement facts.",
     accent: "QoE fact",
@@ -1304,7 +1306,7 @@ const MODELING_TABLE_VISUALS = {
     accent: "Dimension",
   },
   dim_geography: {
-    color: "#6f8584",
+    color: "#555555",
     objectName: "DimGeographyRow",
     builtBy: "Prepared from standardized market and timezone hierarchies so facts can be sliced consistently across reporting and policy domains.",
     accent: "Dimension",
@@ -1316,13 +1318,13 @@ const MODELING_TABLE_VISUALS = {
     accent: "Dimension",
   },
   dim_time: {
-    color: "#79737f",
+    color: "#666666",
     objectName: "DimTimeRow",
     builtBy: "Prepared as a static intraday dimension for hour, minute-bucket, and prime-time style analysis.",
     accent: "Dimension",
   },
   dim_app_version: {
-    color: "#71889a",
+    color: "#666666",
     objectName: "DimAppVersionRow",
     builtBy: "Prepared from release metadata so QoE and playback metrics can be tied back to rollout cohorts and version regressions.",
     accent: "Dimension",
@@ -1334,13 +1336,13 @@ const MODELING_TABLE_VISUALS = {
     accent: "Dimension",
   },
   dim_recommendation_model: {
-    color: "#7d7783",
+    color: "#666666",
     objectName: "DimRecommendationModelRow",
     builtBy: "Prepared from model registry and deployment metadata so every recommendation fact row keeps immutable model lineage.",
     accent: "Dimension",
   },
   rpt_content_daily_metrics: {
-    color: "#6f8584",
+    color: "#555555",
     objectName: "RptContentDailyMetricsRow",
     builtBy: "Prepared by daily Spark or dbt-style aggregation over trusted session facts, then published as the official business metric mart.",
     accent: "Gold mart",
@@ -1352,13 +1354,13 @@ const MODELING_TABLE_VISUALS = {
     accent: "Gold mart",
   },
   feature_user_genre_affinity: {
-    color: "#50675d",
+    color: "#3f3f3f",
     objectName: "FeatureUserGenreAffinityRow",
     builtBy: "Prepared from watch history plus genre joins so offline training and online serving can share one consistent feature definition.",
     accent: "Feature",
   },
   feature_content_popularity: {
-    color: "#6b8495",
+    color: "#555555",
     objectName: "FeatureContentPopularityRow",
     builtBy: "Prepared from nearline watch, start, and trend signals so recommendation systems can fetch a freshness-aware popularity feature.",
     accent: "Feature",
@@ -1408,23 +1410,23 @@ const MODELING_ER_LAYOUT = [
 const MODELING_ER_RELATIONSHIPS = [
   { from: "dim_user", to: "fact_playback_event", label: "profile / account", d: "M286 206 L380 206", color: T.green },
   { from: "dim_content", to: "fact_playback_event", label: "content_id", d: "M820 178 L730 178", color: T.blue },
-  { from: "dim_app_version", to: "fact_playback_event", label: "app_version", d: "M1210 178 L730 178", color: "#71889a" },
+  { from: "dim_app_version", to: "fact_playback_event", label: "app_version", d: "M1210 178 L730 178", color: "#666666" },
   { from: "fact_playback_event", to: "fact_watch_session", label: "session rollup", d: "M555 266 L555 350", color: T.red },
-  { from: "dim_geography", to: "fact_watch_session", label: "geo", d: "M296 490 L380 490", color: "#6f8584" },
+  { from: "dim_geography", to: "fact_watch_session", label: "geo", d: "M296 490 L380 490", color: "#555555" },
   { from: "dim_device", to: "fact_watch_session", label: "device", d: "M286 756 L380 756 L380 560", color: T.amber },
   { from: "dim_content", to: "fact_watch_session", label: "content_id", d: "M970 310 L970 250 L585 250 L585 350", color: T.blue },
   { from: "dim_date", to: "fact_watch_session", label: "event_date", d: "M1310 720 L790 720 L790 520", color: T.violet },
-  { from: "dim_time", to: "fact_qoe_event", label: "event_time", d: "M1310 460 L1240 460", color: "#79737f" },
-  { from: "dim_geography", to: "fact_qoe_event", label: "market / ISP", d: "M296 520 L820 520 L820 520 L860 520", color: "#6f8584" },
+  { from: "dim_time", to: "fact_qoe_event", label: "event_time", d: "M1310 460 L1240 460", color: "#666666" },
+  { from: "dim_geography", to: "fact_qoe_event", label: "market / ISP", d: "M296 520 L820 520 L820 520 L860 520", color: "#555555" },
   { from: "fact_watch_session", to: "fact_qoe_event", label: "session_id", d: "M790 470 L860 470", color: T.red },
-  { from: "fact_watch_session", to: "rpt_content_daily_metrics", label: "daily aggregate", d: "M790 650 L900 650 L900 980", color: "#6f8584" },
+  { from: "fact_watch_session", to: "rpt_content_daily_metrics", label: "daily aggregate", d: "M790 650 L900 650 L900 980", color: "#555555" },
   { from: "dim_content", to: "rpt_content_daily_metrics", label: "title context", d: "M970 286 L970 900", color: T.blue },
   { from: "dim_user", to: "feature_user_genre_affinity", label: "user feature entity", d: "M161 350 L161 1240", color: T.green },
   { from: "dim_content", to: "feature_user_genre_affinity", label: "genre join", d: "M820 190 L414 190 L414 1240", color: T.blue },
-  { from: "fact_watch_session", to: "feature_content_popularity", label: "freshness signals", d: "M600 770 L600 1080 L640 1080 L640 1290", color: "#6b8495" },
-  { from: "dim_content", to: "feature_content_popularity", label: "content entity", d: "M1120 190 L1120 1260 L810 1260", color: "#6b8495" },
+  { from: "fact_watch_session", to: "feature_content_popularity", label: "freshness signals", d: "M600 770 L600 1080 L640 1080 L640 1290", color: "#555555" },
+  { from: "dim_content", to: "feature_content_popularity", label: "content entity", d: "M1120 190 L1120 1260 L810 1260", color: "#555555" },
   { from: "fact_browse_impression", to: "fact_recommendation_impression", label: "surface context", d: "M800 1010 L1140 1010 L1140 1480 L1300 1480", color: T.blue },
-  { from: "dim_recommendation_model", to: "fact_recommendation_impression", label: "model lineage", d: "M1240 1410 L1300 1410", color: "#7d7783" },
+  { from: "dim_recommendation_model", to: "fact_recommendation_impression", label: "model lineage", d: "M1240 1410 L1300 1410", color: "#666666" },
   { from: "dim_experiment", to: "fact_recommendation_impression", label: "experiment / variant", d: "M1440 1168 L1440 1320 L1510 1320 L1510 1360", color: T.purple },
 ] as const;
 
@@ -1441,7 +1443,7 @@ const NETFLIX_TECH_MAP = [
   {
     id: "keystone",
     name: "Keystone",
-    emoji: "🧭",
+    icon: "compass",
     color: T.red,
     lane: "Transport",
     what: "Netflix's unified real-time data movement backbone built around Kafka and stream processing.",
@@ -1451,7 +1453,7 @@ const NETFLIX_TECH_MAP = [
   {
     id: "kafka",
     name: "Apache Kafka",
-    emoji: "📮",
+    icon: "layers",
     color: T.blue,
     lane: "Transport",
     what: "The durable pub/sub log that carries thousands of topics and absorbs replay plus fan-out.",
@@ -1461,7 +1463,7 @@ const NETFLIX_TECH_MAP = [
   {
     id: "flink",
     name: "Apache Flink",
-    emoji: "⚡",
+    icon: "bolt",
     color: T.violet,
     lane: "Streaming",
     what: "The stateful stream engine for event-time windows, sessionization, dedup, and online aggregates.",
@@ -1471,7 +1473,7 @@ const NETFLIX_TECH_MAP = [
   {
     id: "iceberg",
     name: "Apache Iceberg",
-    emoji: "🧊",
+    icon: "database",
     color: T.green,
     lane: "Lakehouse",
     what: "The table format on S3 that gives snapshots, schema evolution, hidden partitioning, and replay-friendly history.",
@@ -1481,7 +1483,7 @@ const NETFLIX_TECH_MAP = [
   {
     id: "druid",
     name: "Druid",
-    emoji: "📊",
+    icon: "chart",
     color: T.amber,
     lane: "Serving",
     what: "A real-time OLAP store for live dashboards such as QoE, trending, and operational metrics.",
@@ -1491,7 +1493,7 @@ const NETFLIX_TECH_MAP = [
   {
     id: "elasticsearch",
     name: "Elasticsearch",
-    emoji: "🔎",
+    icon: "search",
     color: T.orange,
     lane: "Serving",
     what: "Operational search and observability indexing for incident response and troubleshooting.",
@@ -1501,7 +1503,7 @@ const NETFLIX_TECH_MAP = [
   {
     id: "metacat",
     name: "Metacat",
-    emoji: "🗂️",
+    icon: "catalog",
     color: T.blue,
     lane: "Platform",
     what: "A unified catalog and metadata layer across heterogeneous data systems.",
@@ -1511,7 +1513,7 @@ const NETFLIX_TECH_MAP = [
   {
     id: "maestro",
     name: "Maestro",
-    emoji: "🎼",
+    icon: "workflow",
     color: T.violet,
     lane: "Platform",
     what: "Netflix workflow orchestration for batch and data movement jobs.",
@@ -1521,7 +1523,7 @@ const NETFLIX_TECH_MAP = [
   {
     id: "genie",
     name: "Genie",
-    emoji: "🧞",
+    icon: "compute",
     color: T.amber,
     lane: "Platform",
     what: "A job-submission layer for Spark, Hadoop, and SQL-style workloads.",
@@ -1531,7 +1533,7 @@ const NETFLIX_TECH_MAP = [
   {
     id: "titus",
     name: "Titus",
-    emoji: "🛰️",
+    icon: "container",
     color: T.green,
     lane: "Platform",
     what: "Netflix's container platform where services and data engines can run.",
@@ -1541,7 +1543,7 @@ const NETFLIX_TECH_MAP = [
   {
     id: "evcache",
     name: "EVCache",
-    emoji: "🚀",
+    icon: "cache",
     color: T.red,
     lane: "Serving",
     what: "A very low-latency caching layer for hot serving paths and online features.",
@@ -1551,7 +1553,7 @@ const NETFLIX_TECH_MAP = [
   {
     id: "mantis",
     name: "Mantis",
-    emoji: "🪄",
+    icon: "pulse",
     color: T.blue,
     lane: "Streaming",
     what: "A real-time stream processing platform often used for operational insights and developer-facing stream views.",
@@ -1561,7 +1563,7 @@ const NETFLIX_TECH_MAP = [
   {
     id: "spinnaker",
     name: "Spinnaker",
-    emoji: "🛫",
+    icon: "deploy",
     color: T.orange,
     lane: "Platform",
     what: "Continuous delivery tooling for rolling out infrastructure and job changes safely.",
@@ -1571,7 +1573,7 @@ const NETFLIX_TECH_MAP = [
   {
     id: "chaos",
     name: "Chaos Monkey",
-    emoji: "🐒",
+    icon: "shield",
     color: T.red,
     lane: "Reliability",
     what: "Fault-injection tooling that reinforced Netflix's resilience mindset and multi-region thinking.",
@@ -2079,7 +2081,7 @@ function Pill({ children, color }: { children: React.ReactNode; color?: string }
       style={{
         background: `${color ?? T.card2}14`,
         color: color ?? T.muted,
-        border: `1px solid ${(color ?? "#64748b")}22`,
+        border: `1px solid ${(color ?? "#5f5f5f")}22`,
       }}
     >
       {children}
@@ -2146,10 +2148,12 @@ function Sidebar({
   activeTab,
   activeSectionId,
   onNavigateSection,
+  architectureSlotRef,
 }: {
   activeTab: DataEngineeringTabSlug;
   activeSectionId: string;
   onNavigateSection: (sectionId: string) => void;
+  architectureSlotRef: (node: HTMLDivElement | null) => void;
 }) {
   const sections = PRODUCT_TAB_SECTIONS[activeTab];
   const accent = NETFLIX_ROUTE_REGISTRY.find((tab) => tab.id === activeTab)?.accent ?? T.red;
@@ -2161,14 +2165,16 @@ function Sidebar({
       <aside
         className="hidden shrink-0 self-start border-r xl:block"
         style={{
-          width: "max(266px, calc((100vw - 1600px) / 2 + 266px))",
+          width: activeTab === "architecture"
+            ? "max(336px, calc((100vw - 1600px) / 2 + 336px))"
+            : "max(266px, calc((100vw - 1600px) / 2 + 266px))",
           borderColor: T.border,
         }}
         aria-hidden="true"
       />
       <div
         data-testid="anchor-rail"
-        className="fixed z-20 hidden w-[250px] overflow-y-auto pr-1 xl:block"
+        className={`fixed z-20 hidden overflow-y-auto pr-1 xl:block ${activeTab === "architecture" ? "w-[320px] no-scrollbar" : "w-[250px]"}`}
         style={{
           left: "max(16px, calc((100vw - 1600px) / 2 + 16px))",
           top: 140,
@@ -2180,7 +2186,9 @@ function Sidebar({
           <Image src="/logo-netflix.webp" alt="Netflix" width={36} height={36} className="h-9 w-9 rounded-lg object-contain" />
           <p className="text-base font-bold" style={{ color: T.text }}>Netflix</p>
         </div>
-        {activeTab !== "data-modeling" ? (
+        {activeTab === "architecture" ? (
+          <div ref={architectureSlotRef} data-testid="netflix-architecture-sidebar-slot" />
+        ) : activeTab !== "data-modeling" ? (
           <>
             <div data-testid="desktop-section-progress" className="mb-3 rounded-lg p-3" style={{ background: T.card, border: `1px solid ${T.border}` }}>
               <div className="flex items-center justify-between gap-3 text-[10px] font-bold uppercase tracking-[0.14em]" style={{ color: T.faint }}>
@@ -2365,7 +2373,7 @@ function ScrollableShell({
               className="px-3 py-2 rounded-xl text-xs font-semibold cursor-pointer"
               style={{ background: feedbackVote === "up" ? `${T.green}18` : T.card2, color: feedbackVote === "up" ? T.green : T.text, border: `1px solid ${feedbackVote === "up" ? `${T.green}33` : T.border}` }}
             >
-              👍
+              Useful
             </button>
             <button
               type="button"
@@ -2375,7 +2383,7 @@ function ScrollableShell({
               className="px-3 py-2 rounded-xl text-xs font-semibold cursor-pointer"
               style={{ background: feedbackVote === "down" ? `${T.red}18` : T.card2, color: feedbackVote === "down" ? T.red : T.text, border: `1px solid ${feedbackVote === "down" ? `${T.red}33` : T.border}` }}
             >
-              👎
+              Needs work
             </button>
             <span className="sr-only" role="status" aria-live="polite">
               {feedbackVote === "up" ? "Feedback saved: useful." : feedbackVote === "down" ? "Feedback saved: not useful." : "No feedback selected."}
@@ -3111,7 +3119,7 @@ function ErDiagramPanel() {
                 width="1760"
                 height="1480"
                 rx="28"
-                fill="#f4f7fb"
+                fill="#f1f1f1"
               />
 
               <g fill="none" strokeWidth="1.4">
@@ -3193,8 +3201,8 @@ function ErDiagramPanel() {
                       width={node.width}
                       height={boxHeight}
                       rx="18"
-                      fill={isActive ? `${visual.color}16` : "#eef3f7"}
-                      stroke={isActive ? visual.color : "#a7b2bc"}
+                      fill={isActive ? `${visual.color}16` : "#ededed"}
+                      stroke={isActive ? visual.color : "#aaaaaa"}
                       strokeWidth={isActive ? 1.8 : 1}
                     />
                     <rect
@@ -3203,12 +3211,12 @@ function ErDiagramPanel() {
                       width={node.width}
                       height={headerHeight}
                       rx="18"
-                      fill={isActive ? `${visual.color}1f` : "#e7eef4"}
+                      fill={isActive ? `${visual.color}1f` : "#e7e7e7"}
                     />
                     <text x="16" y="22" fontSize="10" fontWeight="700" fill={visual.color} letterSpacing="0.16em">
                       {visual.accent.toUpperCase()}
                     </text>
-                    <text x="16" y="42" fontSize="16" fontWeight="700" fill="#17202b">
+                    <text x="16" y="42" fontSize="16" fontWeight="700" fill="#111111">
                       {table.name}
                     </text>
 
@@ -3253,7 +3261,7 @@ function ErDiagramPanel() {
                             y="14"
                             fontSize="11"
                             fontWeight="700"
-                            fill={column.name.endsWith("_id") || column.name.endsWith("_sk") ? visual.color : "#526171"}
+                            fill={column.name.endsWith("_id") || column.name.endsWith("_sk") ? visual.color : "#444444"}
                           >
                             {column.name}
                           </text>
@@ -3262,7 +3270,7 @@ function ErDiagramPanel() {
                             y="14"
                             textAnchor="end"
                             fontSize="9"
-                            fill="#6b7a8b"
+                            fill="#5f5f5f"
                           >
                             {column.type}
                           </text>
@@ -3362,17 +3370,17 @@ function ErDiagramPanel() {
               {activeColumn ? activeColumn.definition : activeTable.useCase}
             </p>
             {activeColumn && "formula" in activeColumn && activeColumn.formula ? (
-              <div className="mt-3 rounded-xl p-3 font-mono text-xs" style={{ background: "#eef4f9", border: `1px solid ${T.border}`, color: T.text }}>
+              <div className="mt-3 rounded-xl p-3 font-mono text-xs" style={{ background: "#e9e9e9", border: `1px solid ${T.border}`, color: T.text }}>
                 {activeColumn.formula}
               </div>
             ) : null}
           </div>
 
-          <div className="rounded-[20px] p-4" style={{ background: "#eaf1f7", border: `1px solid ${T.border}` }}>
+          <div className="rounded-[20px] p-4" style={{ background: "#ededed", border: `1px solid ${T.border}` }}>
             <p className="text-[10px] font-bold uppercase tracking-[0.18em]" style={{ color: activeVisual.color }}>
               Row object shape
             </p>
-            <pre className="mt-3 whitespace-pre-wrap break-all font-mono text-[11px] leading-5" style={{ color: "#526171" }}>
+            <pre className="mt-3 whitespace-pre-wrap break-all font-mono text-[11px] leading-5" style={{ color: "#444444" }}>
               {objectSnippet.lines.map((line, index) => {
                 const highlighted =
                   activeColumn
@@ -3383,7 +3391,7 @@ function ErDiagramPanel() {
                     className="rounded-lg px-2"
                     style={{
                       background: highlighted ? `${activeVisual.color}18` : "transparent",
-                      color: highlighted ? "#17202b" : "#526171",
+                      color: highlighted ? "#111111" : "#444444",
                     }}
                   >
                     {line}
@@ -3644,7 +3652,7 @@ function CapacityEstimationExperience() {
                         style={{ background: step.accent }}
                       />
                     ) : (
-                      <div className="mt-4 h-1 rounded-full" style={{ background: "rgba(148,163,184,0.14)" }} />
+                      <div className="mt-4 h-1 rounded-full" style={{ background: "rgba(0,0,0,0.12)" }} />
                     )}
                   </motion.button>
 
@@ -4574,7 +4582,7 @@ function ArchitectureTab({ onNavigate }: { onNavigate: (tab: DataEngineeringTabS
                       y1={from.y}
                       x2={to.x}
                       y2={to.y}
-                      stroke={highlighted ? from.color : "rgba(148,163,184,0.35)"}
+                      stroke={highlighted ? from.color : "rgba(0,0,0,0.22)"}
                       strokeWidth={highlighted ? 1.8 : 0.8}
                       strokeDasharray={overlayMode === "replay" && link.groups.includes("replay") ? "3 2" : undefined}
                       strokeLinecap="round"
@@ -6846,7 +6854,7 @@ function NetflixTechMapTab() {
                       }}
                     >
                       <p className="text-sm font-bold flex items-center gap-2" style={{ color: T.text }}>
-                        <span>{item.emoji}</span>
+                        <NetflixUiIcon name={item.icon} className="h-4 w-4" style={{ color: item.color }} />
                         <span>{item.name}</span>
                       </p>
                       <p className="text-[12px] mt-2 leading-5" style={{ color: T.faint }}>
@@ -6862,8 +6870,8 @@ function NetflixTechMapTab() {
       </div>
       <div className="rounded-[24px] p-5" style={{ background: T.card, border: `1px solid ${selected.color}24` }}>
         <div className="flex items-center gap-3">
-          <div className="w-12 h-12 rounded-2xl flex items-center justify-center text-2xl" style={{ background: `${selected.color}12`, border: `1px solid ${selected.color}24` }}>
-            {selected.emoji}
+          <div className="w-12 h-12 rounded-xl flex items-center justify-center" style={{ background: `${selected.color}12`, border: `1px solid ${selected.color}24`, color: selected.color }}>
+            <NetflixUiIcon name={selected.icon} className="h-6 w-6" />
           </div>
           <div>
             <p className="text-[10px] font-bold uppercase tracking-[0.18em]" style={{ color: selected.color }}>
@@ -7155,12 +7163,10 @@ function EventSourcesTrackTab() {
   );
 }
 
-function HighLevelArchitectureDiagram() {
-  const baseDiagramWidth = 680;
-  const defaultZoomLevel = 0.5;
-  const minZoomLevel = 0.5;
-  const maxZoomLevel = 1.8;
-  const shellRef = useRef<HTMLDivElement | null>(null);
+function HighLevelArchitectureDiagram({ sidebarTarget }: { sidebarTarget: HTMLElement | null }) {
+  const defaultZoomLevel = 1;
+  const minZoomLevel = 0.7;
+  const maxZoomLevel = 1.3;
   const reduceMotion = useReducedMotion();
   const [activeNodeId, setActiveNodeId] = useState<string | null>("kafka");
   const [zoomLevel, setZoomLevel] = useState(defaultZoomLevel);
@@ -7169,10 +7175,10 @@ function HighLevelArchitectureDiagram() {
     () => [
       {
         id: "client",
-        x: 140,
-        y: 40,
-        width: 400,
-        height: 56,
+        x: 40,
+        y: 48,
+        width: 300,
+        height: 64,
         tone: "gray" as const,
         title: "Client devices",
         subtitleLines: ["TV apps, mobile, web, game consoles"],
@@ -7181,10 +7187,10 @@ function HighLevelArchitectureDiagram() {
       },
       {
         id: "cdn",
-        x: 140,
-        y: 136,
-        width: 400,
-        height: 56,
+        x: 410,
+        y: 48,
+        width: 300,
+        height: 64,
         tone: "gray" as const,
         title: "Edge / Open Connect CDN",
         subtitleLines: ["Video delivery, not part of data path"],
@@ -7193,22 +7199,22 @@ function HighLevelArchitectureDiagram() {
       },
       {
         id: "microservices",
-        x: 140,
-        y: 232,
-        width: 400,
-        height: 64,
+        x: 780,
+        y: 44,
+        width: 300,
+        height: 72,
         tone: "blue" as const,
         title: "Microservices tier",
-        subtitleLines: ["Playback, recs, billing, search, A/B, UI", "Cassandra, EVCache, DynamoDB, MySQL-Aurora"],
+        subtitleLines: ["Playback, recs, billing, search, A/B", "Cassandra, EVCache, DynamoDB, Aurora"],
         tooltip:
           "Hundreds of services handle playback, recommendations, membership, billing, A/B test assignment, search, and UI rendering through Falcor or GraphQL. Each service emits Avro events and/or exposes OLTP state in Cassandra, EVCache, DynamoDB, or MySQL-Aurora.",
       },
       {
         id: "kafka",
-        x: 140,
-        y: 336,
-        width: 400,
-        height: 64,
+        x: 435,
+        y: 180,
+        width: 250,
+        height: 72,
         tone: "blue" as const,
         title: "Apache Kafka",
         subtitleLines: ["Keystone transport backbone", "~1M msg/sec hot topics, 4-6h retention"],
@@ -7217,9 +7223,9 @@ function HighLevelArchitectureDiagram() {
       },
       {
         id: "flink",
-        x: 40,
-        y: 440,
-        width: 190,
+        x: 60,
+        y: 280,
+        width: 260,
         height: 72,
         tone: "purple" as const,
         title: "Apache Flink",
@@ -7229,9 +7235,9 @@ function HighLevelArchitectureDiagram() {
       },
       {
         id: "iceberg_sink",
-        x: 245,
-        y: 440,
-        width: 190,
+        x: 430,
+        y: 280,
+        width: 260,
         height: 72,
         tone: "teal" as const,
         title: "Iceberg sink",
@@ -7241,9 +7247,9 @@ function HighLevelArchitectureDiagram() {
       },
       {
         id: "cdc",
-        x: 450,
-        y: 440,
-        width: 190,
+        x: 800,
+        y: 280,
+        width: 260,
         height: 72,
         tone: "coral" as const,
         title: "CDC connectors",
@@ -7253,10 +7259,10 @@ function HighLevelArchitectureDiagram() {
       },
       {
         id: "evcache",
-        x: 40,
-        y: 552,
-        width: 140,
-        height: 72,
+        x: 60,
+        y: 370,
+        width: 200,
+        height: 70,
         tone: "gray" as const,
         title: "EVCache / Cassandra",
         subtitleLines: ["Serving", "personalization"],
@@ -7265,10 +7271,10 @@ function HighLevelArchitectureDiagram() {
       },
       {
         id: "elasticsearch",
-        x: 200,
-        y: 552,
-        width: 140,
-        height: 72,
+        x: 280,
+        y: 370,
+        width: 200,
+        height: 70,
         tone: "gray" as const,
         title: "Elasticsearch",
         subtitleLines: ["Observability", "on-call"],
@@ -7277,10 +7283,10 @@ function HighLevelArchitectureDiagram() {
       },
       {
         id: "druid",
-        x: 360,
-        y: 552,
-        width: 140,
-        height: 72,
+        x: 500,
+        y: 370,
+        width: 200,
+        height: 70,
         tone: "gray" as const,
         title: "Druid",
         subtitleLines: ["Real-time OLAP", "QoE, live metrics"],
@@ -7289,10 +7295,10 @@ function HighLevelArchitectureDiagram() {
       },
       {
         id: "lakehouse",
-        x: 140,
-        y: 664,
-        width: 400,
-        height: 64,
+        x: 350,
+        y: 480,
+        width: 420,
+        height: 72,
         tone: "teal" as const,
         title: "S3 data lake + Apache Iceberg",
         subtitleLines: ["ACID, schema evolution, time travel", "hidden partitioning, compaction"],
@@ -7301,9 +7307,9 @@ function HighLevelArchitectureDiagram() {
       },
       {
         id: "batch",
-        x: 70,
-        y: 768,
-        width: 260,
+        x: 170,
+        y: 560,
+        width: 300,
         height: 72,
         tone: "purple" as const,
         title: "Batch processing",
@@ -7313,9 +7319,9 @@ function HighLevelArchitectureDiagram() {
       },
       {
         id: "governance",
-        x: 350,
-        y: 768,
-        width: 270,
+        x: 650,
+        y: 560,
+        width: 300,
         height: 72,
         tone: "gray" as const,
         title: "Metadata and governance",
@@ -7325,10 +7331,10 @@ function HighLevelArchitectureDiagram() {
       },
       {
         id: "consumption",
-        x: 140,
-        y: 872,
-        width: 400,
-        height: 80,
+        x: 350,
+        y: 668,
+        width: 420,
+        height: 72,
         tone: "gray" as const,
         title: "Consumption layer",
         subtitleLines: ["Presto/Trino, Spark SQL, Redshift", "BI tools, ML features, A/B, finance"],
@@ -7340,288 +7346,374 @@ function HighLevelArchitectureDiagram() {
   );
 
   const toneStyles = {
-    blue: { fill: "#e8f0f6", stroke: "#9caebe", title: "#667f94", subtitle: "#65788a" },
-    purple: { fill: "#eef0f4", stroke: "#aaa3ae", title: "#7a7480", subtitle: "#746f79" },
-    teal: { fill: "#edf2f1", stroke: "#9caaa4", title: "#6d827c", subtitle: "#6c7f77" },
-    coral: { fill: "#f2f0ed", stroke: "#afa69d", title: "#82766f", subtitle: "#7e746c" },
-    gray: { fill: "#edf1f4", stroke: "#a7b2bc", title: "#526171", subtitle: "#68798a" },
+    blue: { fill: "#ededed", stroke: "#999999", title: "#555555", subtitle: "#5f5f5f" },
+    purple: { fill: "#ededed", stroke: "#aaaaaa", title: "#666666", subtitle: "#666666" },
+    teal: { fill: "#ededed", stroke: "#999999", title: "#555555", subtitle: "#5f5f5f" },
+    coral: { fill: "#f1f1f1", stroke: "#aaaaaa", title: "#666666", subtitle: "#666666" },
+    gray: { fill: "#ededed", stroke: "#aaaaaa", title: "#444444", subtitle: "#5f5f5f" },
   } as const;
 
   const connectorPaths = useMemo(
     () => [
-      { d: "M340 96 L340 136", stroke: "#526171" },
-      { d: "M340 192 L340 232", stroke: "#526171" },
-      { d: "M340 296 L340 336", stroke: "#667f94" },
-      { d: "M340 400 L340 420 L135 420 L135 440", stroke: "#7a7480" },
-      { d: "M340 400 L340 440", stroke: "#6d827c" },
-      { d: "M340 400 L340 420 L545 420 L545 440", stroke: "#82766f" },
-      { d: "M135 512 L135 528 L110 528 L110 552", stroke: "#526171" },
-      { d: "M135 512 L135 528 L270 528 L270 552", stroke: "#526171" },
-      { d: "M135 512 L135 528 L430 528 L430 552", stroke: "#526171" },
-      { d: "M340 512 L340 536 L565 536 L565 648 L340 648 L340 664", stroke: "#6d827c" },
-      { d: "M340 728 L340 744 L200 744 L200 768", stroke: "#7a7480" },
-      { d: "M340 728 L340 744 L485 744 L485 768", stroke: "#526171" },
-      { d: "M200 840 L200 856 L340 856 L340 872", stroke: "#526171" },
-      { d: "M485 840 L485 856 L340 856 L340 872", stroke: "#526171" },
+      { d: "M340 80 L410 80", stroke: "#444444" },
+      { d: "M710 80 L780 80", stroke: "#444444" },
+      { d: "M930 116 L930 145 L560 145 L560 180", stroke: "#555555" },
+      { d: "M560 252 L560 265 L190 265 L190 280", stroke: "#666666" },
+      { d: "M560 252 L560 280", stroke: "#555555" },
+      { d: "M930 280 L930 265 L720 265 L720 216 L685 216", stroke: "#666666" },
+      { d: "M190 352 L190 360 L160 360 L160 370", stroke: "#444444" },
+      { d: "M190 352 L190 360 L380 360 L380 370", stroke: "#444444" },
+      { d: "M190 352 L190 360 L600 360 L600 370", stroke: "#444444" },
+      { d: "M560 352 L560 360 L730 360 L730 460 L560 460 L560 480", stroke: "#555555" },
+      { d: "M560 552 L560 554 L320 554 L320 560", stroke: "#666666" },
+      { d: "M560 552 L560 554 L800 554 L800 560", stroke: "#444444" },
+      { d: "M320 632 L320 650 L560 650 L560 668", stroke: "#444444" },
+      { d: "M800 632 L800 650 L560 650 L560 668", stroke: "#444444" },
     ],
     [],
   );
 
+  const architectureDetails = useMemo(
+    () => ({
+      client: {
+        code: "CLIENT",
+        detail: "Netflix apps emit playback, browse, search, rating, and device-health events while carrying the identifiers needed to rebuild one viewing journey.",
+        example: "A TV app emits play_start, periodic playback heartbeats, buffering events, and play_stop for one viewing_id so downstream jobs can reconstruct watch time and QoE.",
+        receives: "Member actions, device state, assigned experiment variants, and playback responses",
+        produces: "Versioned telemetry with viewing_id, session_id, profile_id, title_id, event time, and app context",
+        boundary: "Client events are evidence, not unquestioned truth. Device clocks, retries, offline buffering, and duplicate delivery must be handled downstream.",
+        chips: ["telemetry", "event time"],
+      },
+      cdn: {
+        code: "CDN",
+        detail: "Open Connect places encoded video close to members and records delivery health without becoming part of the analytical event backbone.",
+        example: "A playback request is served from a nearby Open Connect appliance while cache hit, throughput, and delivery-error signals feed operational analysis.",
+        receives: "Encoded video assets, manifest requests, and regional traffic-routing decisions",
+        produces: "Video bytes plus delivery logs and edge-health metrics",
+        boundary: "The CDN delivers media; it does not calculate viewing truth, recommendation features, billing state, or experiment results.",
+        chips: ["media path", "edge delivery"],
+      },
+      microservices: {
+        code: "SERVICES",
+        detail: "Playback, recommendations, search, billing, membership, and experimentation services own product decisions and emit durable domain events.",
+        example: "The playback service authorizes a stream, the experiment service supplies a variant, and both publish events that share request and viewing identifiers.",
+        receives: "Member requests, service calls, experiment assignments, and operational state from OLTP stores",
+        produces: "Avro domain events, request traces, and authoritative service-state changes",
+        boundary: "Each service owns its transaction. Analytics pipelines may derive facts but must not silently rewrite operational service state.",
+        chips: ["domain events", "OLTP state"],
+      },
+      kafka: {
+        code: "KAFKA",
+        detail: "Kafka is the replayable transport backbone that separates thousands of Netflix producers from independent streaming, lakehouse, and operational consumers.",
+        example: "Playback events are keyed by viewing_id for local order, validated against their schema, and retained long enough for Flink, Iceberg writers, and live consumers to process them independently.",
+        receives: "Validated client telemetry, microservice events, CDC changes, and producer metadata",
+        produces: "Partitioned topic logs consumed by Flink, Iceberg sinks, Druid, Elasticsearch, and other services",
+        boundary: "Kafka provides durable partition order, not global order or exactly-once business outcomes. Consumers still need stable IDs and idempotent writes.",
+        chips: ["partition order", "replay"],
+      },
+      flink: {
+        code: "FLINK",
+        detail: "Flink performs low-latency, stateful computation using event time, watermarks, checkpoints, keyed state, and controlled late-event handling.",
+        example: "A job groups heartbeats by viewing_id, subtracts pause and buffering intervals, and publishes a versioned provisional watch-time update within seconds.",
+        receives: "Kafka events, reference broadcasts, event-time timestamps, and checkpoint state",
+        produces: "Live sessions, QoE metrics, trends, alerts, and online feature updates",
+        boundary: "Streaming output is provisional when evidence is late. Certified batch data can correct history without creating duplicate facts.",
+        chips: ["event time", "checkpoints"],
+      },
+      iceberg_sink: {
+        code: "ICEBERG SINK",
+        detail: "Streaming writers land Kafka evidence into Iceberg with atomic, checkpoint-aligned commits so the durable lake reflects a complete processing boundary.",
+        example: "Only after a Flink checkpoint succeeds does the corresponding Iceberg snapshot become visible, preventing readers from seeing half of a playback batch.",
+        receives: "Kafka-derived records, schema IDs, source offsets, and completed streaming checkpoints",
+        produces: "Atomic Iceberg snapshots with committed source-offset ranges",
+        boundary: "A committed file is not enough; the snapshot and its source-offset evidence must advance together before data is visible.",
+        chips: ["atomic commit", "offset evidence"],
+      },
+      cdc: {
+        code: "CDC",
+        detail: "CDC connectors capture committed row changes from service databases and republish them into Kafka beside native domain events.",
+        example: "A membership-plan update is read from the source commit log, tagged with its source position, and made available for lakehouse and serving projections.",
+        receives: "Committed database logs from MySQL, Aurora, DynamoDB streams, and other operational stores",
+        produces: "Ordered row-change records containing operation, before/after state, and source position",
+        boundary: "CDC is at least once. Restarts and resnapshots can resend changes, so consumers apply source positions and stable primary keys idempotently.",
+        chips: ["commit log", "at least once"],
+      },
+      evcache: {
+        code: "ONLINE STORE",
+        detail: "EVCache and Cassandra expose recent, keyed state for millisecond product decisions such as personalization and playback context.",
+        example: "A recommendation request reads the latest approved profile features without scanning the lakehouse or waiting for an offline query.",
+        receives: "Versioned streaming features, materialized service views, and explicit expiry metadata",
+        produces: "Low-latency keyed reads for recommendations and product services",
+        boundary: "This tier is rebuildable and freshness-bounded; it is not the durable source for historical reporting or finance.",
+        chips: ["online serving", "TTL"],
+      },
+      elasticsearch: {
+        code: "SEARCH OPS",
+        detail: "Elasticsearch indexes operational events and traces so engineers can investigate failures without querying raw lakehouse history.",
+        example: "An on-call engineer filters playback errors by app version, device family, region, and request trace during a buffering incident.",
+        receives: "Operational logs, errors, traces, and selected near-real-time event projections",
+        produces: "Searchable incident views and debugging timelines",
+        boundary: "Search indexes are eventually consistent operational projections, not certified analytical truth or authoritative product state.",
+        chips: ["observability", "on-call"],
+      },
+      druid: {
+        code: "DRUID",
+        detail: "Druid serves fast, sliceable aggregates for recent operational and product metrics where seconds-level query latency matters.",
+        example: "Operations compare current buffering rate by country, ISP, device, and app version while every chart displays its latest event time.",
+        receives: "Windowed Kafka or Flink aggregates and dimension enrichment",
+        produces: "Near-real-time QoE, trending, and operational dashboards",
+        boundary: "Druid optimizes fresh aggregation. Long-range corrected history and official metrics remain owned by certified lakehouse products.",
+        chips: ["real-time OLAP", "freshness"],
+      },
+      lakehouse: {
+        code: "LAKEHOUSE",
+        detail: "S3 and Iceberg retain the durable analytical record through ACID snapshots, schema evolution, partition evolution, time travel, and compaction.",
+        example: "Raw playback evidence is standardized into replay-safe Silver sessions and then published as certified Gold title, member, QoE, and finance products.",
+        receives: "Streaming snapshots, raw archives, CDC history, batch corrections, and governed reference data",
+        produces: "Versioned Bronze, Silver, and Gold tables with reproducible snapshot lineage",
+        boundary: "Consumers read certified snapshots; failed validation never replaces the last trusted publication, and corrections create a new version.",
+        chips: ["Iceberg", "durable truth"],
+      },
+      batch: {
+        code: "BATCH",
+        detail: "Spark rebuilds historical truth, performs large joins and backfills, prepares training data, and publishes corrected products on scheduled boundaries.",
+        example: "A daily job replays playback evidence, resolves late heartbeats, recalculates final watch time, validates the candidate, and atomically promotes a new snapshot.",
+        receives: "Iceberg snapshots, manifests, reference dimensions, code version, and explicit processing intervals",
+        produces: "Corrected sessions, aggregates, features, reconciliation reports, and certified candidate snapshots",
+        boundary: "Runs are deterministic and restartable. Partial output stays isolated until completeness, quality, and reconciliation checks pass.",
+        chips: ["Spark", "backfill safe"],
+      },
+      governance: {
+        code: "GOVERNANCE",
+        detail: "Metadata, lineage, privacy classification, access policy, and quality ownership travel with every shared Netflix dataset.",
+        example: "A profile-level table records its owner, PII tags, retention rule, upstream snapshots, quality status, and approved consumer purposes.",
+        receives: "Schemas, table metadata, lineage edges, access requests, privacy tags, and validation results",
+        produces: "Discoverable catalog entries, policy decisions, audit evidence, and certification status",
+        boundary: "Unowned, unclassified, or failed data cannot become a certified product even when its pipeline completed successfully.",
+        chips: ["lineage", "policy"],
+      },
+      consumption: {
+        code: "CONSUMERS",
+        detail: "SQL engines, BI tools, experimentation, ML, finance, and product services consume purpose-built views rather than raw shared events.",
+        example: "Trino reads certified title engagement facts, recommendation training uses point-in-time features, and finance reads separately reconciled subscription products.",
+        receives: "Certified Iceberg tables, approved online features, Druid aggregates, and documented freshness contracts",
+        produces: "Decisions, dashboards, experiments, models, reports, and controlled downstream extracts",
+        boundary: "Each consumer uses the product matching its latency and correctness need; a live estimate must not be presented as final financial truth.",
+        chips: ["BI + ML", "certified views"],
+      },
+    }),
+    [],
+  );
+
   const connectorLabels = [
-    { x: 370, y: 216, text: "HTTPS / gRPC", color: "#526171" },
-    { x: 365, y: 318, text: "Avro + schema registry", color: "#667f94" },
-    { x: 98, y: 415, text: "real-time fan-out", color: "#7a7480" },
-    { x: 284, y: 410, text: "analytical fan-out", color: "#6d827c" },
-    { x: 478, y: 415, text: "CDC fan-out", color: "#82766f" },
+    { x: 190, y: 259, text: "real-time fan-out", color: "#666666" },
+    { x: 560, y: 259, text: "analytical fan-out", color: "#555555" },
+    { x: 835, y: 259, text: "CDC into Kafka", color: "#666666" },
   ] as const;
 
   const activeNode = architectureNodes.find((node) => node.id === activeNodeId) ?? null;
+  const activeDetails = activeNode
+    ? architectureDetails[activeNode.id as keyof typeof architectureDetails]
+    : null;
 
-  const zoomIntoWorkingView = useCallback(() => {
-    setZoomLevel((value) => (value <= defaultZoomLevel ? 0.9 : value));
-  }, []);
+  useEffect(() => {
+    const rail = sidebarTarget?.closest<HTMLElement>('[data-testid="anchor-rail"]');
+    if (rail?.scrollTop) rail.scrollTo({ top: 0, behavior: "auto" });
+  }, [activeNodeId, sidebarTarget]);
 
   const zoomPercent = Math.round(zoomLevel * 100);
+  const renderInspector = (testId: string) => (
+    <aside
+      data-testid={testId}
+      className="overflow-hidden rounded-2xl"
+      style={{ background: T.card2, border: `1px solid ${T.border}` }}
+      aria-live="polite"
+    >
+      <div className="border-b p-4 text-white" style={{ background: "#111111", borderColor: "#2f2f2f" }}>
+        <p className="font-mono text-[9px] font-bold uppercase tracking-[0.14em]" style={{ color: "#cfcfcf" }}>
+          Selected component · {activeDetails?.code ?? "GUIDE"}
+        </p>
+        <h3 className="mt-2 text-lg font-semibold">
+          {activeNode?.title ?? "Choose a component"}
+        </h3>
+      </div>
+      <div className="grid gap-4 p-4">
+        <p className="text-xs leading-6" style={{ color: T.muted }}>
+          {activeDetails?.detail ?? "Hover, focus, or click a component to inspect its Netflix responsibility."}
+        </p>
+        {activeDetails ? (
+          <>
+            <div className="rounded-xl p-3" style={{ background: T.card, border: `1px solid ${T.border}` }}>
+              <p className="font-mono text-[9px] font-bold uppercase tracking-[0.12em]" style={{ color: T.faint }}>Netflix example</p>
+              <p className="mt-1.5 text-xs leading-5" style={{ color: T.text }}>{activeDetails.example}</p>
+            </div>
+            <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-1">
+              <div>
+                <p className="font-mono text-[9px] font-bold uppercase tracking-[0.12em]" style={{ color: T.faint }}>Receives</p>
+                <p className="mt-1 text-xs leading-5" style={{ color: T.text }}>{activeDetails.receives}</p>
+              </div>
+              <div>
+                <p className="font-mono text-[9px] font-bold uppercase tracking-[0.12em]" style={{ color: T.faint }}>Produces</p>
+                <p className="mt-1 text-xs leading-5" style={{ color: T.text }}>{activeDetails.produces}</p>
+              </div>
+            </div>
+            <div className="border-l-2 pl-3" style={{ borderColor: "#111111" }}>
+              <p className="font-mono text-[9px] font-bold uppercase tracking-[0.12em]" style={{ color: T.faint }}>Boundary / failure rule</p>
+              <p className="mt-1 text-xs leading-5" style={{ color: T.text }}>{activeDetails.boundary}</p>
+            </div>
+            <div className="flex flex-wrap gap-2">
+              {activeDetails.chips.map((chip) => (
+                <span key={chip} className="rounded-lg px-2.5 py-1.5 text-[10px] font-semibold" style={{ background: T.card, border: `1px solid ${T.border}`, color: T.muted }}>
+                  {chip}
+                </span>
+              ))}
+            </div>
+          </>
+        ) : null}
+      </div>
+    </aside>
+  );
 
   return (
-    <div
-      className="rounded-[30px]"
-      style={{ background: T.card, border: `1px solid ${T.blue}24` }}
-    >
-      <div className="flex items-center justify-between gap-3 flex-wrap px-5 py-4" style={{ borderBottom: `1px solid ${T.border}` }}>
-        <div>
-          <p className="text-[10px] font-bold uppercase tracking-[0.18em]" style={{ color: T.blue }}>
-            High-level architecture
-          </p>
-          <p className="mt-1 text-[12px] leading-6" style={{ color: T.faint }}>
-            Starts at 50%. Hover into the diagram to zoom in, then fine-tune with the controls. Hover any component for the interview-ready explanation.
-          </p>
+    <>
+      {sidebarTarget ? createPortal(renderInspector("netflix-architecture-detail-panel"), sidebarTarget) : null}
+      <div
+        data-testid="architecture-high-level-flow"
+        className="relative isolate overflow-x-auto overflow-y-visible rounded-2xl"
+        style={{ background: "#f4f4f4", border: `1px solid ${T.border}`, scrollbarGutter: "stable" }}
+      >
+        <div className="sticky top-0 z-20 flex items-center justify-between gap-3 px-4 py-3" style={{ background: "rgba(255,255,255,0.97)", borderBottom: `1px solid ${T.border}` }}>
+          <div>
+            <p className="text-[10px] font-bold uppercase tracking-[0.16em]" style={{ color: T.text }}>Netflix data flow</p>
+            <p className="mt-1 text-[11px]" style={{ color: T.faint }}>Hover, focus, or click any component</p>
+          </div>
+          <div className="flex shrink-0 items-center rounded-lg p-1" style={{ background: T.card, border: `1px solid ${T.border}` }}>
+            <button
+              type="button"
+              onClick={() => setZoomLevel((value) => Math.max(minZoomLevel, Number((value - 0.1).toFixed(2))))}
+              className="h-8 w-8 text-lg font-semibold"
+              aria-label="Zoom out architecture diagram"
+            >
+              −
+            </button>
+            <button
+              type="button"
+              onClick={() => setZoomLevel(defaultZoomLevel)}
+              className="min-w-14 border-x px-2 text-[10px] font-bold"
+              style={{ borderColor: T.border }}
+              aria-label="Reset architecture zoom"
+            >
+              {zoomPercent}%
+            </button>
+            <button
+              type="button"
+              onClick={() => setZoomLevel((value) => Math.min(maxZoomLevel, Number((value + 0.1).toFixed(2))))}
+              className="h-8 w-8 text-lg font-semibold"
+              aria-label="Zoom in architecture diagram"
+            >
+              +
+            </button>
+          </div>
         </div>
-      </div>
-
-      <div className="relative z-0 p-4 md:p-5" data-testid="architecture-high-level-flow">
-        <div className="grid gap-5 xl:grid-cols-[minmax(0,1fr)_320px] xl:items-start">
+        <div className="flex justify-start p-3 pb-8 xl:justify-center">
           <div
-            ref={shellRef}
-            className="relative z-0 isolate overflow-x-auto overflow-y-visible rounded-[26px]"
-            onMouseEnter={() => zoomIntoWorkingView()}
             style={{
-              scrollbarGutter: "stable",
-              background:
-                "radial-gradient(circle at top, rgba(102,127,148,0.12), transparent 36%), linear-gradient(180deg, #f4f7fb, #eef4f9)",
-              border: `1px solid ${T.border}`,
+              width: `${zoomLevel * 100}%`,
+              minWidth: `${900 * zoomLevel}px`,
+              maxWidth: "none",
+              flex: "0 0 auto",
+              transition: "width 180ms ease",
             }}
           >
-            <div className="sticky top-0 z-20 flex items-center justify-between gap-3 px-4 py-3" style={{ background: "linear-gradient(180deg, rgba(255,255,255,0.98), rgba(238,244,249,0.96))", borderBottom: `1px solid ${T.border}` }}>
-              <div className="text-[11px] font-semibold" style={{ color: T.faint }}>
-                Explore the architecture
-              </div>
-              <div className="flex items-center gap-2 shrink-0">
-                <span
-                  className="rounded-full px-3 py-1 text-[11px] font-semibold"
-                  style={{ background: T.card2, color: T.faint, border: `1px solid ${T.border}` }}
-                >
-                  {zoomPercent}%
-                </span>
-                <button
-                  type="button"
-                  onClick={(event) => {
-                    event.stopPropagation();
-                    setZoomLevel((value) => Math.max(minZoomLevel, Number((value - 0.1).toFixed(2))));
-                  }}
-                  className="rounded-full px-3 py-1.5 text-sm font-semibold transition-colors"
-                  style={{ background: T.card2, color: T.text, border: `1px solid ${T.border}` }}
-                  aria-label="Zoom out architecture diagram"
-                >
-                  -
-                </button>
-                <button
-                  type="button"
-                  onClick={(event) => {
-                    event.stopPropagation();
-                    setZoomLevel(defaultZoomLevel);
-                  }}
-                  className="rounded-full px-3 py-1.5 text-[11px] font-semibold transition-colors"
-                  style={{ background: T.card2, color: T.text, border: `1px solid ${T.border}` }}
-                >
-                  Reset
-                </button>
-                <button
-                  type="button"
-                  onClick={(event) => {
-                    event.stopPropagation();
-                    setZoomLevel((value) => Math.min(maxZoomLevel, Number((value + 0.1).toFixed(2))));
-                  }}
-                  className="rounded-full px-3 py-1.5 text-sm font-semibold transition-colors"
-                  style={{ background: T.card2, color: T.text, border: `1px solid ${T.border}` }}
-                  aria-label="Zoom in architecture diagram"
-                >
-                  +
-                </button>
-              </div>
-            </div>
-            <div className="flex justify-center p-4 pb-14">
-            <div
-              style={{
-                width: `${baseDiagramWidth * zoomLevel}px`,
-                maxWidth: "none",
-                flex: "0 0 auto",
-                transition: "width 180ms ease",
-              }}
-            >
-              <svg
-                viewBox="0 0 680 980"
-                role="group"
-                aria-label="Netflix big data architecture"
-                className="block w-full h-auto"
-              >
-                <defs>
-                  <marker id="architecture-arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
-                    <path d="M2 1L8 5L2 9" fill="none" stroke="context-stroke" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
-                  </marker>
-                </defs>
+            <svg viewBox="0 0 1120 760" role="group" aria-label="Netflix big data architecture" className="block h-auto w-full">
+              <defs>
+                <marker id="architecture-arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+                  <path d="M2 1L8 5L2 9" fill="none" stroke="context-stroke" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
+                </marker>
+              </defs>
 
-                <rect x="0" y="0" width="680" height="980" fill="transparent" />
-
-                <g fill="none" strokeWidth="1.35">
-                  {connectorPaths.map((path) => (
-                    <motion.path
-                      key={path.d}
-                      d={path.d}
-                      stroke={path.stroke}
-                      markerEnd="url(#architecture-arrow)"
-                      strokeDasharray="4 5"
-                      initial={reduceMotion ? false : { strokeDashoffset: 0 }}
-                      animate={reduceMotion ? undefined : { strokeDashoffset: -18 }}
-                      transition={reduceMotion ? undefined : { duration: 1.4, ease: "linear", repeat: Number.POSITIVE_INFINITY }}
-                    />
-                  ))}
+              <rect x="0" y="0" width="1120" height="760" fill="transparent" />
+              {[
+                { label: "01 · CLIENT, MEDIA + SERVICES", y: 8, height: 130 },
+                { label: "02 + 03 · KAFKA, STREAMING + LIVE SERVING", y: 150, height: 300 },
+                { label: "04 · LAKEHOUSE + BATCH + GOVERNANCE", y: 460, height: 180 },
+                { label: "05 · CONSUMPTION", y: 650, height: 100 },
+              ].map((stage, index) => (
+                <g key={stage.label}>
+                  <rect x="8" y={stage.y} width="1104" height={stage.height} rx="12" fill={index % 2 === 0 ? "#eeeeee" : "#f8f8f8"} stroke="#d7d7d7" />
+                  <text x="22" y={stage.y + 16} fontSize="8" fontWeight="800" fill="#555555" letterSpacing="1.1">{stage.label}</text>
                 </g>
+              ))}
 
-                <g fontFamily="inherit">
-                  {connectorLabels.map((label) => (
-                    <text
-                      key={`${label.text}-${label.x}-${label.y}`}
-                      x={label.x}
-                      y={label.y}
-                      textAnchor="middle"
-                      fill={label.color}
-                      fontSize="10"
-                      fontWeight="600"
-                      letterSpacing="0.02em"
-                    >
-                      {label.text}
-                    </text>
-                  ))}
-                </g>
+              <g fill="none" strokeWidth="1.35">
+                {connectorPaths.map((path) => (
+                  <motion.path
+                    key={path.d}
+                    d={path.d}
+                    stroke={path.stroke}
+                    markerEnd="url(#architecture-arrow)"
+                    strokeDasharray="4 5"
+                    initial={reduceMotion ? false : { strokeDashoffset: 0 }}
+                    animate={reduceMotion ? undefined : { strokeDashoffset: -18 }}
+                    transition={reduceMotion ? undefined : { duration: 1.4, ease: "linear", repeat: Number.POSITIVE_INFINITY }}
+                  />
+                ))}
+              </g>
 
-                <g fontFamily="inherit">
-                  {architectureNodes.map((node) => {
-                    const tone = toneStyles[node.tone];
-                    const isHovered = activeNodeId === node.id;
+              <g fontFamily="inherit">
+                {connectorLabels.map((label) => (
+                  <text key={`${label.text}-${label.x}-${label.y}`} x={label.x} y={label.y} textAnchor="middle" fill={label.color} fontSize="10" fontWeight="600" letterSpacing="0.02em">
+                    {label.text}
+                  </text>
+                ))}
+              </g>
 
-                    return (
-                      <g
-                        key={node.id}
-                        data-id={node.id}
-                        transform={`translate(${node.x},${node.y})`}
-                        tabIndex={0}
-                        role="button"
-                        aria-label={node.title}
-                        aria-pressed={isHovered}
-                        onClick={(event) => {
-                          event.stopPropagation();
+              <g fontFamily="inherit">
+                {architectureNodes.map((node) => {
+                  const tone = toneStyles[node.tone];
+                  const isActive = activeNodeId === node.id;
+                  return (
+                    <g
+                      key={node.id}
+                      data-id={node.id}
+                      transform={`translate(${node.x},${node.y})`}
+                      tabIndex={0}
+                      role="button"
+                      aria-label={node.title}
+                      aria-pressed={isActive}
+                      onClick={(event) => { event.stopPropagation(); setActiveNodeId(node.id); }}
+                      onMouseEnter={() => setActiveNodeId(node.id)}
+                      onFocus={() => setActiveNodeId(node.id)}
+                      onKeyDown={(event) => {
+                        if (event.key === "Enter" || event.key === " ") {
+                          event.preventDefault();
                           setActiveNodeId(node.id);
-                        }}
-                        onMouseEnter={() => setActiveNodeId(node.id)}
-                        onFocus={() => setActiveNodeId(node.id)}
-                        className="cursor-pointer outline-none"
-                        style={{ filter: isHovered ? "brightness(1.12)" : "none" }}
-                      >
-                        <rect
-                          x="-8"
-                          y="-18"
-                          width={node.width + 16}
-                          height={node.height + 36}
-                          fill="transparent"
-                          pointerEvents="all"
-                        />
-                        <rect
-                          width={node.width}
-                          height={node.height}
-                          rx="8"
-                          fill={tone.fill}
-                          stroke={tone.stroke}
-                          strokeWidth={isHovered ? 1.6 : 1}
-                        />
-                        <text
-                          x={node.width / 2}
-                          y={node.subtitleLines.length > 1 ? "22" : "24"}
-                          textAnchor="middle"
-                          fill={tone.title}
-                          fontSize="14"
-                          fontWeight="600"
-                        >
-                          {node.title}
-                        </text>
-                        <text x={node.width / 2} y={node.subtitleLines.length > 1 ? "40" : "42"} textAnchor="middle" fill={tone.subtitle} fontSize="12">
-                          {node.subtitleLines.map((line, index) => (
-                            <tspan key={`${node.id}-${line}`} x={node.width / 2} dy={index === 0 ? 0 : 14}>
-                              {line}
-                            </tspan>
-                          ))}
-                        </text>
-                      </g>
-                    );
-                  })}
-                </g>
-              </svg>
-            </div>
-            </div>
-          </div>
-
-          <div className="hidden xl:block xl:self-start">
-            <div
-              data-testid="architecture-detail-panel"
-              className="rounded-[24px] p-5 xl:fixed xl:z-10"
-              style={{
-                top: 268,
-                right: "max(16px, calc((100vw - 1320px) / 2 + 8px))",
-                width: 300,
-                background: T.card2,
-                border: `1px solid ${T.border}`,
-              }}
-            >
-              <p className="text-[10px] font-bold uppercase tracking-[0.18em]" style={{ color: T.blue }}>
-                Diagram Guide
-              </p>
-              <p className="mt-2 text-sm font-semibold" style={{ color: T.text }}>
-                {activeNode ? activeNode.title : "Hover a component"}
-              </p>
-              <p className="mt-3 text-[13px] leading-7" style={{ color: T.muted }}>
-                {activeNode
-                  ? activeNode.tooltip
-                  : "Move across the diagram to inspect a component here. Click a node to keep it selected while you zoom or continue exploring."}
-              </p>
-              {activeNode ? (
-                <div className="mt-4 rounded-[18px] px-4 py-3" style={{ background: T.card, border: `1px solid ${T.border}` }}>
-                  <p className="text-[10px] font-bold uppercase tracking-[0.18em]" style={{ color: T.faint }}>
-                    Visible Summary
-                  </p>
-                  <div className="mt-2 space-y-1">
-                    {activeNode.subtitleLines.map((line) => (
-                      <p key={`${activeNode.id}-${line}`} className="text-[12px] leading-6" style={{ color: T.text }}>
-                        {line}
-                      </p>
-                    ))}
-                  </div>
-                </div>
-              ) : null}
-            </div>
+                        }
+                      }}
+                      className="cursor-pointer outline-none"
+                    >
+                      <rect x="-8" y="-12" width={node.width + 16} height={node.height + 24} fill="transparent" pointerEvents="all" />
+                      <rect width={node.width} height={node.height} rx="8" fill={isActive ? "#d6d6d6" : tone.fill} stroke={isActive ? "#111111" : tone.stroke} strokeWidth={isActive ? 2 : 1} />
+                      <rect width="5" height={node.height} rx="2.5" fill={isActive ? "#111111" : "#777777"} />
+                      <text x={node.width / 2} y={node.subtitleLines.length > 1 ? "22" : "24"} textAnchor="middle" fill={isActive ? "#111111" : tone.title} fontSize="14" fontWeight="700">
+                        {node.title}
+                      </text>
+                      <text x={node.width / 2} y={node.subtitleLines.length > 1 ? "40" : "42"} textAnchor="middle" fill={tone.subtitle} fontSize="12">
+                        {node.subtitleLines.map((line, index) => (
+                          <tspan key={`${node.id}-${line}`} x={node.width / 2} dy={index === 0 ? 0 : 14}>{line}</tspan>
+                        ))}
+                      </text>
+                      {isActive ? <circle cx={node.width - 13} cy="13" r="4" fill="#111111" /> : null}
+                    </g>
+                  );
+                })}
+              </g>
+            </svg>
           </div>
         </div>
       </div>
-    </div>
+      <div className="mt-4 xl:hidden">{renderInspector("netflix-architecture-mobile-detail-panel")}</div>
+    </>
   );
 }
 
@@ -7641,7 +7733,7 @@ function Section4EnvelopeStudio() {
               Hover or click a field to see why it exists.
             </p>
           </div>
-          <Pill color={activeField.color}>{activeField.icon} {activeField.label}</Pill>
+          <Pill color={activeField.color}><span className="inline-flex items-center gap-1.5"><NetflixUiIcon name={activeField.icon} className="h-3.5 w-3.5" />{activeField.label}</span></Pill>
         </div>
         <div className="mt-4 flex flex-wrap gap-2">
           {SECTION4_ENVELOPE_FIELDS.map((field) => {
@@ -7662,13 +7754,13 @@ function Section4EnvelopeStudio() {
                   border: `1px solid ${active ? `${field.color}3a` : T.border}`,
                 }}
               >
-                {field.icon} {field.label}
+                <span className="inline-flex items-center gap-1.5"><NetflixUiIcon name={field.icon} className="h-3.5 w-3.5" />{field.label}</span>
               </motion.button>
             );
           })}
         </div>
-        <div className="mt-5 rounded-[22px] p-4 font-mono text-[12px] leading-7" style={{ background: "#eaf1f7", border: `1px solid ${T.border}` }}>
-          <div style={{ color: "#8497a6" }}>{"{"}</div>
+        <div className="mt-5 rounded-[22px] p-4 font-mono text-[12px] leading-7" style={{ background: "#ededed", border: `1px solid ${T.border}` }}>
+          <div style={{ color: "#777777" }}>{"{"}</div>
           {SECTION4_ENVELOPE_FIELDS.map((field) => {
             const active = field.id === activeField.id;
             return (
@@ -7683,7 +7775,7 @@ function Section4EnvelopeStudio() {
                 className="rounded-xl px-3"
                 style={{
                   background: active ? `${field.color}14` : "transparent",
-                  color: active ? "#17202b" : "#59697a",
+                  color: active ? "#111111" : "#5f5f5f",
                   border: active ? `1px solid ${field.color}30` : "1px solid transparent",
                 }}
               >
@@ -7691,7 +7783,7 @@ function Section4EnvelopeStudio() {
               </motion.div>
             );
           })}
-          <div style={{ color: "#8497a6" }}>{"}"}</div>
+          <div style={{ color: "#777777" }}>{"}"}</div>
         </div>
       </div>
 
@@ -7700,7 +7792,7 @@ function Section4EnvelopeStudio() {
           Why this field matters
         </p>
         <h3 className="mt-2 text-2xl font-bold tracking-[-0.04em]" style={{ color: T.text }}>
-          {activeField.icon} {activeField.label}
+          <span className="inline-flex items-center gap-2"><NetflixUiIcon name={activeField.icon} className="h-6 w-6" />{activeField.label}</span>
         </h3>
         <p className="mt-3 text-sm leading-7" style={{ color: T.muted }}>
           {activeField.meaning}
@@ -7774,7 +7866,7 @@ function Section4TopicStudio() {
                   }}
                 >
                   <p className="text-[10px] font-bold uppercase tracking-[0.18em]" style={{ color: item.color }}>
-                    {item.icon} key option
+                    <span className="inline-flex items-center gap-1.5"><NetflixUiIcon name={item.icon} className="h-3.5 w-3.5" />Key option</span>
                   </p>
                   <p className="mt-2 text-sm font-semibold" style={{ color: T.text }}>
                     {item.label}
@@ -7856,7 +7948,7 @@ function Section4TopicStudio() {
             {[
               { label: "Peak topic throughput", value: "1.2M events/sec", color: T.red },
               { label: "Safe partition rate", value: "5K events/sec", color: T.blue },
-              { label: "Base partitions", value: `${peakPerSecond.toLocaleString()} / ${safePerPartition.toLocaleString()} = ${basePartitions}`, color: T.green },
+              { label: "Base partitions", value: `${peakPerSecond.toLocaleString("en-US")} / ${safePerPartition.toLocaleString("en-US")} = ${basePartitions}`, color: T.green },
               { label: "Headroom", value: `${basePartitions} x ${1 + headroom / 100} = ${finalPartitions}`, color: T.violet },
             ].map((row) => (
               <div key={row.label} className="rounded-[18px] p-3" style={{ background: T.card2, border: `1px solid ${T.border}` }}>
@@ -7917,7 +8009,7 @@ function Section4FactModelStudio() {
                     border: `1px solid ${active ? `${item.color}36` : T.border}`,
                   }}
                 >
-                  {item.icon} {item.title.replace("fact_", "")}
+                  <span className="inline-flex items-center gap-1.5"><NetflixUiIcon name={item.icon} className="h-3.5 w-3.5" />{item.title.replace("fact_", "")}</span>
                 </button>
               );
             })}
@@ -7946,7 +8038,7 @@ function Section4FactModelStudio() {
                   }}
                 >
                   <p className="text-xs font-semibold" style={{ color: dimension.color }}>
-                    {dimension.icon} {dimension.title}
+                    <span className="inline-flex items-center gap-1.5"><NetflixUiIcon name={dimension.icon} className="h-3.5 w-3.5" />{dimension.title}</span>
                   </p>
                 </motion.button>
               );
@@ -7970,7 +8062,7 @@ function Section4FactModelStudio() {
               }}
             >
               <p className="text-[10px] font-bold uppercase tracking-[0.18em]" style={{ color: fact.color }}>
-                {fact.icon} central fact
+                <span className="inline-flex items-center gap-1.5"><NetflixUiIcon name={fact.icon} className="h-3.5 w-3.5" />Central fact</span>
               </p>
               <h4 className="mt-2 text-lg font-bold" style={{ color: T.text }}>
                 {fact.title}
@@ -8003,7 +8095,7 @@ function Section4FactModelStudio() {
                   }}
                 >
                   <p className="text-xs font-semibold" style={{ color: dimension.color }}>
-                    {dimension.icon} {dimension.title}
+                    <span className="inline-flex items-center gap-1.5"><NetflixUiIcon name={dimension.icon} className="h-3.5 w-3.5" />{dimension.title}</span>
                   </p>
                 </motion.button>
               );
@@ -8043,7 +8135,7 @@ function Section4FactModelStudio() {
               Dimension detail
             </p>
             <h3 className="mt-2 text-2xl font-bold tracking-[-0.04em]" style={{ color: T.text }}>
-              {focusedDimension.icon} {focusedDimension.title}
+              <span className="inline-flex items-center gap-2"><NetflixUiIcon name={focusedDimension.icon} className="h-6 w-6" />{focusedDimension.title}</span>
             </h3>
             <p className="mt-3 text-sm leading-7" style={{ color: T.muted }}>
               {focusedDimension.purpose}
@@ -8100,7 +8192,7 @@ function Section4ControlsStudio() {
               >
                 <div className="flex items-center justify-between gap-3">
                   <p className="text-sm font-semibold" style={{ color: T.text }}>
-                    {item.icon} {item.title}
+                    <span className="inline-flex items-center gap-2"><NetflixUiIcon name={item.icon} className="h-4 w-4" />{item.title}</span>
                   </p>
                   <span className="text-lg" style={{ color: item.color }}>→</span>
                 </div>
@@ -8117,7 +8209,7 @@ function Section4ControlsStudio() {
               Selected guardrail
             </p>
             <h3 className="mt-2 text-2xl font-bold tracking-[-0.04em]" style={{ color: T.text }}>
-              {control.icon} {control.title}
+              <span className="inline-flex items-center gap-2"><NetflixUiIcon name={control.icon} className="h-6 w-6" />{control.title}</span>
             </h3>
           </div>
           <Pill color={control.color}>Protects trust</Pill>
@@ -8166,20 +8258,22 @@ function Section4ControlsStudio() {
 function ArchitectureTrackTab({
   onNavigate: _onNavigate,
   depthMode: _depthMode,
+  sidebarTarget,
 }: {
   onNavigate: (tab: DataEngineeringTabSlug) => void;
   depthMode: DepthMode;
+  sidebarTarget: HTMLElement | null;
 }) {
   return (
     <div className="space-y-8">
       <AnchoredSection
         id="arch-layered"
-        eyebrow="High-level diagram"
-        title="Trace the shared data platform in one clean architecture map"
-        subtitle="Keep this section visual: one diagram, one selected-node explanation, and one clear separation between the media path and the data path."
+        eyebrow="End-to-end big-data architecture"
+        title="Client events → Kafka → streaming, lakehouse, and consumers"
+        subtitle="Follow Netflix data through five layers. Hover, focus, or click a component; its exact responsibility, example, inputs, outputs, and failure boundary stay visible on the left."
         accent={T.blue}
       >
-        <HighLevelArchitectureDiagram />
+        <HighLevelArchitectureDiagram sidebarTarget={sidebarTarget} />
       </AnchoredSection>
     </div>
   );
@@ -8534,12 +8628,14 @@ function ContentForTab({
   onNavigate,
   onNavigateSection,
   depthMode,
+  architectureSidebarTarget,
 }: {
   activeTab: DataEngineeringTabSlug;
   activeSectionId: string;
   onNavigate: (tab: DataEngineeringTabSlug) => void;
   onNavigateSection: (sectionId: string) => void;
   depthMode: DepthMode;
+  architectureSidebarTarget: HTMLElement | null;
 }) {
   switch (activeTab) {
     case "start-here":
@@ -8547,7 +8643,7 @@ function ContentForTab({
     case "requirements":
       return <RequirementsTrackTab />;
     case "architecture":
-      return <ArchitectureTrackTab onNavigate={onNavigate} depthMode={depthMode} />;
+      return <ArchitectureTrackTab onNavigate={onNavigate} depthMode={depthMode} sidebarTarget={architectureSidebarTarget} />;
     case "ingestion-kafka":
       return <IngestionKafkaTrackTab onNavigate={onNavigate} />;
     case "real-time-streaming":
@@ -8661,6 +8757,7 @@ function RangeField({
         value={value}
         onChange={(e) => onChange(Number(e.target.value))}
         className="w-full"
+        style={{ accentColor: T.red }}
       />
     </label>
   );
@@ -8846,6 +8943,7 @@ export default function DataEngineeringPage({ initialTab }: { initialTab?: strin
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [notes, setNotes] = useState<Record<string, string>>({});
   const [activeSectionId, setActiveSectionId] = useState(PRODUCT_TAB_SECTIONS[initial][0]?.id ?? "");
+  const [architectureSidebarTarget, setArchitectureSidebarTarget] = useState<HTMLDivElement | null>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
   const sectionNavLockRef = useRef(0);
   const depthMode: DepthMode = "senior";
@@ -8994,7 +9092,7 @@ export default function DataEngineeringPage({ initialTab }: { initialTab?: strin
         />
       ) : null}
 
-      {!focusMode ? (
+      {!focusMode && activeTab !== "architecture" ? (
           <>
             <div className="xl:hidden h-[var(--de-section-nav-height)]" aria-hidden="true" />
             <div
@@ -9023,7 +9121,12 @@ export default function DataEngineeringPage({ initialTab }: { initialTab?: strin
 
       <div className="flex min-h-0 w-full flex-1">
         {!focusMode ? (
-          <Sidebar activeTab={activeTab} activeSectionId={activeSectionId} onNavigateSection={navigateSection} />
+          <Sidebar
+            activeTab={activeTab}
+            activeSectionId={activeSectionId}
+            onNavigateSection={navigateSection}
+            architectureSlotRef={setArchitectureSidebarTarget}
+          />
         ) : null}
         <ScrollableShell
           prevTab={prevTab}
@@ -9051,6 +9154,7 @@ export default function DataEngineeringPage({ initialTab }: { initialTab?: strin
             onNavigate={switchTab}
             onNavigateSection={navigateSection}
             depthMode={depthMode}
+            architectureSidebarTarget={architectureSidebarTarget}
           />
         </ScrollableShell>
       </div>
@@ -9145,14 +9249,33 @@ export default function DataEngineeringPage({ initialTab }: { initialTab?: strin
 
       <style>{`
         .netflix-de-page {
-          --bg: #f4f7fb;
+          --bg: #f1f1f1;
           --bg-card: #ffffff;
-          --bg-muted: #eef4f9;
-          --border: #d6e1eb;
-          --text: #17202b;
-          --text-muted: #526171;
-          --text-faint: #59697a;
+          --bg-muted: #e9e9e9;
+          --border: #d2d2d2;
+          --text: #111111;
+          --text-muted: #444444;
+          --text-faint: #5f5f5f;
           color-scheme: light;
+        }
+        .netflix-de-page [class*="bg-[#526b82]"] {
+          background-color: #111111 !important;
+        }
+        .netflix-de-page [class*="text-[#526b82]"] {
+          color: #111111 !important;
+        }
+        .netflix-de-page [data-testid="core-takeaway"] {
+          border-color: var(--border) !important;
+          border-left: 4px solid #111111 !important;
+          background: var(--bg-muted) !important;
+          color: var(--text-muted) !important;
+        }
+        .netflix-de-page [data-testid="core-takeaway"] strong {
+          color: var(--text) !important;
+        }
+        .netflix-de-page button:not(:disabled),
+        .netflix-de-page a[href] {
+          cursor: pointer;
         }
         .moving-dot {
           animation: moveDot 4.2s linear infinite;

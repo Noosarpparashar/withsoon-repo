@@ -15,14 +15,14 @@ const C = {
   border: "var(--border)",
   text: "var(--text)",
   muted: "var(--text-muted)",
-  blue: "#42586c",
-  cyan: "#445e72",
-  green: "#50675d",
-  amber: "#625346",
-  violet: "#42586c",
-  bronze: "#62594f",
-  silver: "#59697a",
-  gold: "#655e55",
+  blue: "#111111",
+  cyan: "#2f2f2f",
+  green: "#3f3f3f",
+  amber: "#4b4b4b",
+  violet: "#111111",
+  bronze: "#555555",
+  silver: "#5f5f5f",
+  gold: "#666666",
 };
 const SYSTEMS = [
   {
@@ -191,7 +191,7 @@ function Anchors({ active, go }: { active: string; go: (id: string) => void }) {
                 style={{
                   borderColor: selected ? C.blue : C.border,
                   background: selected
-                    ? "color-mix(in srgb, #42586c 13%, var(--bg-card))"
+                    ? "color-mix(in srgb, #111111 13%, var(--bg-card))"
                     : C.card,
                   color: selected ? C.text : C.muted,
                 }}

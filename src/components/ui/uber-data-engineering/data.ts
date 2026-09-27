@@ -24,7 +24,7 @@ export const UBER_DE_TABS: UberDeTab[] = [
   {
     id: "start-here",
     label: "Start Here",
-    accent: "#42586c",
+    accent: "#111111",
     mins: 5,
     summary:
       "Frame Uber as a shared batch and streaming data platform for marketplace signals and trusted history.",
@@ -32,21 +32,21 @@ export const UBER_DE_TABS: UberDeTab[] = [
   {
     id: "requirements",
     label: "Requirements",
-    accent: "#827a70",
+    accent: "#777777",
     mins: 8,
     summary: "Lock freshness, correctness, and privacy expectations.",
   },
   {
     id: "event-sources",
     label: "Event Sources",
-    accent: "#675d62",
+    accent: "#595959",
     mins: 7,
     summary: "Map driver, rider, dispatch, payments, and maps producers.",
   },
   {
     id: "architecture",
     label: "Architecture",
-    accent: "#6f879a",
+    accent: "#747474",
     mins: 9,
     summary:
       "Trace Kafka to stream, batch, lakehouse, warehouse, and features.",
@@ -54,28 +54,28 @@ export const UBER_DE_TABS: UberDeTab[] = [
   {
     id: "ingestion-kafka",
     label: "Ingestion / Kafka",
-    accent: "#827a70",
+    accent: "#777777",
     mins: 8,
     summary: "Explain topic keys, partition strategy, and late data controls.",
   },
   {
     id: "batch-pipelines",
     label: "Batch + Lakehouse",
-    accent: "#655e55",
+    accent: "#666666",
     mins: 9,
     summary: "Explain Bronze, Silver, Gold, DAGs, and trusted publish.",
   },
   {
     id: "data-modeling",
     label: "Data Modeling",
-    accent: "#445e72",
+    accent: "#2f2f2f",
     mins: 9,
     summary: "Move from trip grain to fact constellation and dimensions.",
   },
   {
     id: "governance-quality",
     label: "Failures + Data Quality",
-    accent: "#42586c",
+    accent: "#111111",
     mins: 10,
     summary:
       "Connect quality controls, PII governance, failure detection, blast radius, mitigation, and replay recovery.",
@@ -83,7 +83,7 @@ export const UBER_DE_TABS: UberDeTab[] = [
   {
     id: "quiz",
     label: "Interview Q&A",
-    accent: "#6f879a",
+    accent: "#747474",
     mins: 8,
     summary: "Answer follow-up questions crisply and defensibly.",
   },

@@ -32,7 +32,7 @@ export const NETFLIX_ROUTE_REGISTRY = [
     label: "Start Here",
     group: "FOUNDATION",
     mins: 5,
-    accent: "#5f565a",
+    accent: "#111111",
     summary: "Open the round like a dedicated Netflix data-platform interview.",
     description:
       "Clarify scope, show the end-to-end journey, and position the data-engineering boundary before any deep dive.",
@@ -44,7 +44,7 @@ export const NETFLIX_ROUTE_REGISTRY = [
     label: "Requirements",
     group: "FOUNDATION",
     mins: 8,
-    accent: "#827a70",
+    accent: "#4b4b4b",
     summary: "Turn business questions into freshness, correctness, and SLA contracts.",
     description:
       "Group requirements by domain, show scale anchors, and separate real-time, batch, and governance expectations.",
@@ -56,7 +56,7 @@ export const NETFLIX_ROUTE_REGISTRY = [
     label: "Architecture",
     group: "FOUNDATION",
     mins: 10,
-    accent: "#49667d",
+    accent: "#2f2f2f",
     summary: "Show the full Netflix data journey as one layered system map.",
     description:
       "Walk from event emitters to validation, Kafka, streaming, Bronze/Silver/Gold, warehouse, features, replay, and governance.",
@@ -75,7 +75,7 @@ export const NETFLIX_ROUTE_REGISTRY = [
     label: "Event Contracts",
     group: "PIPELINES",
     mins: 9,
-    accent: "#827a70",
+    accent: "#4b4b4b",
     summary: "Make canonical events, Kafka ordering, and data trust easy to explain.",
     description:
       "Cover canonical event envelopes, topic keys and partition math, late data handling, SCD2 joins, quality gates, and cost-aware controls.",
@@ -93,7 +93,7 @@ export const NETFLIX_ROUTE_REGISTRY = [
     label: "Real-Time Streaming",
     group: "PIPELINES",
     mins: 10,
-    accent: "#49667d",
+    accent: "#2f2f2f",
     summary: "Explain how raw events become trusted real-time metrics and features.",
     description:
       "Cover Flink jobs, watch-time logic, sessionization, watermarks, late data handling, and exactly-once style guarantees.",
@@ -110,7 +110,7 @@ export const NETFLIX_ROUTE_REGISTRY = [
     label: "Data Modeling",
     group: "MODELING",
     mins: 9,
-    accent: "#5b5263",
+    accent: "#595959",
     summary: "Connect ERD, star schema, lineage, and table semantics in one place.",
     description:
       "Explain grain, partitions, facts, dimensions, marts, lineage, and why each table exists for analytics or ML use cases.",
@@ -122,7 +122,7 @@ export const NETFLIX_ROUTE_REGISTRY = [
     label: "Batch + Lakehouse",
     group: "PIPELINES",
     mins: 10,
-    accent: "#8b8377",
+    accent: "#686868",
     summary: "Show how trusted batch truth and the lakehouse operating model work together.",
     description:
       "Combine DAG visuals, Bronze/Silver/Gold responsibilities, Iceberg layout, DQ gates, replayability, and official publish flows in one section.",
@@ -141,7 +141,7 @@ export const NETFLIX_ROUTE_REGISTRY = [
     label: "Governance / Quality",
     group: "PRODUCTION",
     mins: 8,
-    accent: "#6e8178",
+    accent: "#3f3f3f",
     summary: "Treat schema, privacy, freshness, and trust as first-class product surfaces.",
     description:
       "Cover data contracts, DQ dashboards, PII policy, deletions, lineage, audits, and severity-driven response paths.",
@@ -160,7 +160,7 @@ export const NETFLIX_ROUTE_REGISTRY = [
     label: "Capacity / Cost",
     group: "PRODUCTION",
     mins: 7,
-    accent: "#8b8377",
+    accent: "#686868",
     summary: "Make scale math, tool choices, and cost controls explicit and defensible.",
     description:
       "Derive event rates, partitions, retention, storage, and compute costs from one consistent workload model.",
@@ -172,7 +172,7 @@ export const NETFLIX_ROUTE_REGISTRY = [
     label: "Interview Q&A",
     group: "PRACTICE",
     mins: 9,
-    accent: "#49667d",
+    accent: "#2f2f2f",
     summary: "Merge follow-up answers and Netflix tech name-drops into one light interview section.",
     description:
       "Use compact Q&A, a technology map, and simple draw-if-asked visuals so you can explain the platform crisply in an interview.",

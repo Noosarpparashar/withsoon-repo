@@ -2,14 +2,15 @@
 
 import { useId, useState, type ReactNode } from "react";
 import { motion, useReducedMotion } from "motion/react";
+import NetflixUiIcon, { type NetflixIconName } from "./NetflixUiIcon";
 
 const C = {
-  red: "#5f565a",
-  amber: "#62594f",
-  gold: "#655e55",
-  blue: "#49667d",
-  green: "#50675d",
-  violet: "#5b5263",
+  red: "#111111",
+  amber: "#4b4b4b",
+  gold: "#666666",
+  blue: "#2f2f2f",
+  green: "#3f3f3f",
+  violet: "#595959",
   text: "var(--text)",
   muted: "var(--text-muted)",
   faint: "var(--text-faint)",
@@ -20,7 +21,7 @@ const C = {
 
 type DetailItem = {
   key: string;
-  emoji: string;
+  icon: NetflixIconName;
   label: string;
   category: string;
   color: string;
@@ -38,7 +39,7 @@ const OPENING_LINE =
 const PRODUCERS: readonly DetailItem[] = [
   {
     key: "playback",
-    emoji: "📱",
+    icon: "play",
     label: "Playback",
     category: "Producer",
     color: C.red,
@@ -52,7 +53,7 @@ const PRODUCERS: readonly DetailItem[] = [
   },
   {
     key: "browse",
-    emoji: "🧭",
+    icon: "compass",
     label: "Browse",
     category: "Producer",
     color: C.red,
@@ -66,7 +67,7 @@ const PRODUCERS: readonly DetailItem[] = [
   },
   {
     key: "search",
-    emoji: "🔎",
+    icon: "search",
     label: "Search",
     category: "Producer",
     color: C.red,
@@ -80,7 +81,7 @@ const PRODUCERS: readonly DetailItem[] = [
   },
   {
     key: "qoe",
-    emoji: "📡",
+    icon: "pulse",
     label: "QoE",
     category: "Producer",
     color: C.red,
@@ -94,7 +95,7 @@ const PRODUCERS: readonly DetailItem[] = [
   },
   {
     key: "cdc",
-    emoji: "🧬",
+    icon: "database",
     label: "CDC",
     category: "Producer",
     color: C.red,
@@ -111,7 +112,7 @@ const PRODUCERS: readonly DetailItem[] = [
 const PLATFORM_STEPS: readonly DetailItem[] = [
   {
     key: "ingest",
-    emoji: "📥",
+    icon: "arrow-in",
     label: "Ingest",
     category: "Platform step",
     color: C.blue,
@@ -125,7 +126,7 @@ const PLATFORM_STEPS: readonly DetailItem[] = [
   },
   {
     key: "stream",
-    emoji: "⚡",
+    icon: "bolt",
     label: "Stream",
     category: "Platform step",
     color: C.blue,
@@ -139,7 +140,7 @@ const PLATFORM_STEPS: readonly DetailItem[] = [
   },
   {
     key: "store",
-    emoji: "🗂️",
+    icon: "archive",
     label: "Store",
     category: "Platform step",
     color: C.blue,
@@ -153,7 +154,7 @@ const PLATFORM_STEPS: readonly DetailItem[] = [
   },
   {
     key: "query",
-    emoji: "🔎",
+    icon: "chart",
     label: "Query",
     category: "Platform step",
     color: C.blue,
@@ -167,7 +168,7 @@ const PLATFORM_STEPS: readonly DetailItem[] = [
   },
   {
     key: "recover",
-    emoji: "🔁",
+    icon: "replay",
     label: "Recover",
     category: "Platform step",
     color: C.blue,
@@ -184,7 +185,7 @@ const PLATFORM_STEPS: readonly DetailItem[] = [
 const CONSUMERS: readonly DetailItem[] = [
   {
     key: "qoe-alerts",
-    emoji: "🚨",
+    icon: "alert",
     label: "QoE alerts",
     category: "Consumer",
     color: C.green,
@@ -198,7 +199,7 @@ const CONSUMERS: readonly DetailItem[] = [
   },
   {
     key: "trending",
-    emoji: "🔥",
+    icon: "trend",
     label: "Trending",
     category: "Consumer",
     color: C.green,
@@ -212,7 +213,7 @@ const CONSUMERS: readonly DetailItem[] = [
   },
   {
     key: "online-recs",
-    emoji: "🎯",
+    icon: "target",
     label: "Online recs",
     category: "Consumer",
     color: C.green,
@@ -226,7 +227,7 @@ const CONSUMERS: readonly DetailItem[] = [
   },
   {
     key: "analytics",
-    emoji: "📊",
+    icon: "chart",
     label: "Analytics",
     category: "Consumer",
     color: C.green,
@@ -240,7 +241,7 @@ const CONSUMERS: readonly DetailItem[] = [
   },
   {
     key: "training",
-    emoji: "🧠",
+    icon: "model",
     label: "Training",
     category: "Consumer",
     color: C.green,
@@ -254,7 +255,7 @@ const CONSUMERS: readonly DetailItem[] = [
   },
   {
     key: "finance",
-    emoji: "🧾",
+    icon: "receipt",
     label: "Finance",
     category: "Consumer",
     color: C.green,
@@ -271,7 +272,7 @@ const CONSUMERS: readonly DetailItem[] = [
 const REQUIREMENTS: readonly DetailItem[] = [
   {
     key: "req-ingest",
-    emoji: "📥",
+    icon: "arrow-in",
     label: "Ingest events + CDC",
     category: "Requirement",
     color: C.amber,
@@ -285,7 +286,7 @@ const REQUIREMENTS: readonly DetailItem[] = [
   },
   {
     key: "req-fast-batch",
-    emoji: "⚡",
+    icon: "split",
     label: "Support fast + batch consumers",
     category: "Requirement",
     color: C.amber,
@@ -299,7 +300,7 @@ const REQUIREMENTS: readonly DetailItem[] = [
   },
   {
     key: "req-history",
-    emoji: "🗂️",
+    icon: "archive",
     label: "Keep durable history",
     category: "Requirement",
     color: C.amber,
@@ -313,7 +314,7 @@ const REQUIREMENTS: readonly DetailItem[] = [
   },
   {
     key: "req-durability",
-    emoji: "🛡️",
+    icon: "shield",
     label: "Protect accepted data",
     category: "Requirement",
     color: C.amber,
@@ -327,7 +328,7 @@ const REQUIREMENTS: readonly DetailItem[] = [
   },
   {
     key: "req-cost",
-    emoji: "💸",
+    icon: "coins",
     label: "Stay cost-aware",
     category: "Requirement",
     color: C.amber,
@@ -341,7 +342,7 @@ const REQUIREMENTS: readonly DetailItem[] = [
   },
   {
     key: "req-schema",
-    emoji: "📐",
+    icon: "schema",
     label: "Govern schemas",
     category: "Requirement",
     color: C.amber,
@@ -356,12 +357,12 @@ const REQUIREMENTS: readonly DetailItem[] = [
 ] as const;
 
 const FRESHNESS = [
-  { label: "QoE alerting", freshness: "30-60s", width: "18%", color: C.red, emoji: "🚨" },
-  { label: "Trending titles", freshness: "1-2m", width: "28%", color: C.amber, emoji: "🔥" },
-  { label: "Online recs", freshness: "<1m", width: "22%", color: C.blue, emoji: "🎯" },
-  { label: "Analytics", freshness: "15-60m", width: "70%", color: C.green, emoji: "📊" },
-  { label: "Training", freshness: "hourly/daily", width: "86%", color: C.gold, emoji: "🧠" },
-  { label: "Finance", freshness: "T+1", width: "96%", color: C.violet, emoji: "🧾" },
+  { label: "QoE alerting", freshness: "30-60s", width: "18%", color: C.red, icon: "alert" },
+  { label: "Trending titles", freshness: "1-2m", width: "28%", color: C.amber, icon: "trend" },
+  { label: "Online recs", freshness: "<1m", width: "22%", color: C.blue, icon: "target" },
+  { label: "Analytics", freshness: "15-60m", width: "70%", color: C.green, icon: "chart" },
+  { label: "Training", freshness: "hourly/daily", width: "86%", color: C.gold, icon: "model" },
+  { label: "Finance", freshness: "T+1", width: "96%", color: C.violet, icon: "receipt" },
 ] as const;
 
 const IN_SCOPE = [
@@ -448,8 +449,8 @@ function RichTooltip({
       style={{ background: "color-mix(in srgb, var(--bg-card) 97%, black)", border: `1px solid ${item.color}30` }}
     >
       <div className="flex items-center gap-3">
-        <div className="flex h-10 w-10 items-center justify-center rounded-2xl text-xl" style={{ background: `${item.color}16` }}>
-          {item.emoji}
+        <div className="flex h-10 w-10 items-center justify-center rounded-xl" style={{ background: `${item.color}16`, color: item.color }}>
+          <NetflixUiIcon name={item.icon} className="h-5 w-5" />
         </div>
         <div>
           <p className="text-[10px] font-bold uppercase tracking-[0.16em]" style={{ color: item.color }}>
@@ -497,15 +498,15 @@ function HoverItem({
       >
         {compact ? (
           <div className="flex items-center justify-center gap-2">
-            <span className="text-lg">{item.emoji}</span>
+            <NetflixUiIcon name={item.icon} className="h-4 w-4 shrink-0" style={{ color: item.color }} />
             <span className="text-sm font-semibold" style={{ color: C.text }}>
               {item.label}
             </span>
           </div>
         ) : simple ? (
           <div className="flex items-center gap-3">
-            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl text-lg" style={{ background: `${item.color}16` }}>
-              {item.emoji}
+            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl" style={{ background: `${item.color}16`, color: item.color }}>
+              <NetflixUiIcon name={item.icon} className="h-5 w-5" />
             </div>
             <div className="min-w-0">
               <p className="text-sm font-semibold" style={{ color: C.text }}>
@@ -518,8 +519,8 @@ function HoverItem({
           </div>
         ) : (
           <div className="flex items-start gap-3">
-            <div className="flex h-11 w-11 items-center justify-center rounded-2xl text-xl" style={{ background: `${item.color}16` }}>
-              {item.emoji}
+            <div className="flex h-11 w-11 items-center justify-center rounded-xl" style={{ background: `${item.color}16`, color: item.color }}>
+              <NetflixUiIcon name={item.icon} className="h-5 w-5" />
             </div>
             <div>
               <p className="text-sm font-semibold" style={{ color: C.text }}>
@@ -557,8 +558,8 @@ function MobileDetailSheet({ item, onClose }: { item: DetailItem; onClose: () =>
       >
         <div className="flex items-start justify-between gap-4">
           <div className="flex min-w-0 items-center gap-3">
-            <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl text-xl" style={{ background: `${item.color}16` }} aria-hidden="true">
-              {item.emoji}
+            <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl" style={{ background: `${item.color}16`, color: item.color }} aria-hidden="true">
+              <NetflixUiIcon name={item.icon} className="h-5 w-5" />
             </div>
             <div className="min-w-0">
               <p className="text-[10px] font-bold uppercase tracking-[0.16em]" style={{ color: item.color }}>
@@ -605,7 +606,7 @@ export default function StartHereDesktopExperience() {
                 className="rounded-[22px] p-4 sm:p-5 xl:rounded-[24px] xl:p-6"
                 style={{
                   background:
-                    "radial-gradient(circle at top, rgba(111,135,154,0.08), transparent 34%), linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0))",
+                    "radial-gradient(circle at top, rgba(0,0,0,0.05), transparent 34%), linear-gradient(180deg, #f4f4f4, #ffffff)",
                   border: `1px solid ${C.border}`,
                 }}
               >
@@ -635,8 +636,8 @@ export default function StartHereDesktopExperience() {
                   </div>
 
                   <div data-testid="hero-platform-card" className="rounded-[24px] p-4 text-center sm:p-5 xl:p-6" style={{ background: C.card2, border: `1px solid ${C.blue}24` }}>
-                    <div className="mx-auto flex h-18 w-18 items-center justify-center rounded-[24px] text-4xl" style={{ background: `${C.blue}14` }}>
-                      🧠
+                    <div className="mx-auto flex h-18 w-18 items-center justify-center rounded-[20px]" style={{ background: `${C.blue}14`, color: C.blue }}>
+                      <NetflixUiIcon name="database" className="h-9 w-9" />
                     </div>
                     <p className="mt-4 text-2xl font-semibold tracking-[-0.04em]" style={{ color: C.text }}>
                       Shared data platform
@@ -677,7 +678,7 @@ export default function StartHereDesktopExperience() {
                 </div>
               </div>
 
-              <div className="rounded-[20px] px-5 py-4" style={{ background: "rgba(255,255,255,0.02)", border: `1px solid ${C.border}` }}>
+              <div className="rounded-[20px] border-l-4 border-l-[#111] px-5 py-4" style={{ background: C.card2, borderTop: `1px solid ${C.border}`, borderRight: `1px solid ${C.border}`, borderBottom: `1px solid ${C.border}` }}>
                 <p className="text-sm leading-7" style={{ color: C.muted }}>
                   {OPENING_LINE}
                 </p>
@@ -760,14 +761,14 @@ export default function StartHereDesktopExperience() {
                   <div key={row.label}>
                     <div className="flex items-center justify-between gap-3 xl:hidden">
                       <div className="text-sm font-semibold" style={{ color: C.text }}>
-                        <span className="mr-2">{row.emoji}</span>
+                        <NetflixUiIcon name={row.icon} className="mr-2 inline h-4 w-4 align-[-3px]" style={{ color: row.color }} />
                         {row.label}
                       </div>
                       <div className="shrink-0 text-right text-[12px] font-semibold" style={{ color: C.faint }}>
                         {row.freshness}
                       </div>
                     </div>
-                    <div className="mt-2 h-3 rounded-full xl:hidden" style={{ background: "rgba(148,163,184,0.14)" }}>
+                    <div className="mt-2 h-3 rounded-full xl:hidden" style={{ background: "rgba(0,0,0,0.12)" }}>
                       <motion.div
                         initial={{ width: 0 }}
                         whileInView={{ width: row.width }}
@@ -779,10 +780,10 @@ export default function StartHereDesktopExperience() {
                     </div>
                     <div className="hidden grid-cols-[120px_1fr_86px] items-center gap-3 xl:grid">
                       <div className="text-sm font-semibold" style={{ color: C.text }}>
-                        <span className="mr-2">{row.emoji}</span>
+                        <NetflixUiIcon name={row.icon} className="mr-2 inline h-4 w-4 align-[-3px]" style={{ color: row.color }} />
                         {row.label}
                       </div>
-                      <div className="h-3 rounded-full" style={{ background: "rgba(148,163,184,0.14)" }}>
+                      <div className="h-3 rounded-full" style={{ background: "rgba(0,0,0,0.12)" }}>
                         <motion.div
                           initial={{ width: 0 }}
                           whileInView={{ width: row.width }}
