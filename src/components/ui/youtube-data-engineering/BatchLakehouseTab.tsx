@@ -2,7 +2,7 @@
 
 import { type ReactNode } from "react";
 import { BATCH_LAKEHOUSE_SECTIONS } from "./data";
-import { Section, SectionInspector, YouTubeFrame } from "./shared";
+import { Section, SectionInspector, Tooltip, YouTubeFrame } from "./shared";
 import { CoreTakeaway, DepthPanel, InterviewPath } from "../data-design/ProgressiveChapter";
 
 type Explainable = {
@@ -287,10 +287,25 @@ function FloatingCard({
   children: ReactNode;
   className?: string;
 }) {
+  const guide = EXPLANATION_GUIDE[item.id] ?? {
+    purpose: `Make ${item.short.toLowerCase()} explicit and testable in the pipeline.`,
+    result: `A documented ${item.title.toLowerCase()} result that the next stage can consume safely.`,
+  };
+
   return (
-    <div className={className} data-flow-id={item.id}>
+    <button
+      type="button"
+      className={`group relative cursor-pointer transition hover:z-50 hover:-translate-y-0.5 hover:border-[#8fa5b8] hover:shadow-md focus-visible:z-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#70879b] ${className}`}
+      data-flow-id={item.id}
+    >
       {children}
-    </div>
+      <Tooltip wide triggerLabel={item.title}>
+        <div data-testid="explainer-copy" className="max-w-[65ch]">
+          <p>{item.detail}</p>
+          <p className="mt-2"><strong>YouTube example: </strong>{item.example} {guide.result}</p>
+        </div>
+      </Tooltip>
+    </button>
   );
 }
 
@@ -724,31 +739,31 @@ export default function BatchLakehouseTab() {
       />
       <Section id="batch-architecture" number="01" title="Batch Architecture">
         <CoreTakeaway>Immutable Bronze evidence flows through deterministic Silver reconstruction into candidate Gold products; Iceberg snapshots make every input and output reproducible.</CoreTakeaway>
-        <DepthPanel title="Explore the batch architecture" summary="Eight-stage flow, storage foundation, layer contracts, partitioning, and outputs.">
+        <DepthPanel desktopInline title="Explore the batch architecture" summary="Eight-stage flow, storage foundation, layer contracts, partitioning, and outputs.">
           <BatchArchitecture />
         </DepthPanel>
       </Section>
       <Section id="batch-dag" number="02" title="Daily DAG">
         <CoreTakeaway>The orchestrator waits for a complete manifest, plans changed partitions, runs deterministic transforms, validates the candidate, and only then permits publication.</CoreTakeaway>
-        <DepthPanel title="Explore the daily DAG" summary="Four phases, individual tasks, dependencies, idempotency, and pipeline controls.">
+        <DepthPanel desktopInline title="Explore the daily DAG" summary="Four phases, individual tasks, dependencies, idempotency, and pipeline controls.">
           <DailyDag />
         </DepthPanel>
       </Section>
       <Section id="publish-protocol" number="03" title="Publishing">
         <CoreTakeaway>Write into run-scoped staging, test the candidate, record the release manifest, and switch one atomic pointer so consumers never observe a partial table.</CoreTakeaway>
-        <DepthPanel title="Explore the publish protocol" summary="Staging, quality checks, approval, atomic promotion, rollback, and consumer refresh.">
+        <DepthPanel desktopInline title="Explore the publish protocol" summary="Staging, quality checks, approval, atomic promotion, rollback, and consumer refresh.">
           <Publishing />
         </DepthPanel>
       </Section>
       <Section id="reconciliation" number="04" title="Reconciliation">
         <CoreTakeaway>Compare stream and batch only at the same key, window, timezone, and metric version; attribute every material delta before replacing provisional history.</CoreTakeaway>
-        <DepthPanel title="Explore reconciliation" summary="Aligned inputs, delta ledger, decision gates, corrections, and late dimension repair.">
+        <DepthPanel desktopInline title="Explore reconciliation" summary="Aligned inputs, delta ledger, decision gates, corrections, and late dimension repair.">
           <Reconciliation />
         </DepthPanel>
       </Section>
       <Section id="batch-answer" number="05" title="Interview Answer">
         <CoreTakeaway>Close inputs, rebuild trusted evidence incrementally, reconcile the candidate, and atomically promote one certified snapshot for every consumer.</CoreTakeaway>
-        <DepthPanel title="Open the complete interview answer" summary="The full batch and lakehouse answer to rehearse.">
+        <DepthPanel desktopInline title="Open the complete interview answer" summary="The full batch and lakehouse answer to rehearse.">
         <div className="mx-auto mt-5 w-full max-w-5xl rounded-xl border border-[var(--border)] bg-[var(--bg-muted)] px-6 py-5 text-justify text-sm font-medium leading-7 md:px-8">
           I use batch processing to publish YouTube’s certified historical metrics for views, watch time, audience retention, revenue, payouts, and point-in-time ML datasets. Ingestion first closes the processing window and records the exact Kafka ranges, CDC snapshots, and files in a source manifest, so the Airflow or Dagster DAG cannot start from partial input. Spark then reads immutable Bronze Iceberg tables, deduplicates events, builds playback sessions, enforces consent, and applies versioned trust-and-safety decisions to create reusable Silver evidence. Incremental planning selects only changed dates and keys, while deterministic transforms, run-scoped staging, and partition replacement make every retry idempotent. Gold candidates are reconciled with matching streaming windows, tested, reviewed where required, and promoted with one atomic pointer change. Parquet on object storage provides efficient analytical scans, while Iceberg provides snapshots, time travel, schema evolution, hidden partitioning, and safe backfills. Creator Studio, BI, finance, recommendation features, and training jobs therefore read the same certified release with a reproducible explanation for every material correction.
         </div>

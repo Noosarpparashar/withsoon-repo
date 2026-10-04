@@ -194,7 +194,7 @@ html {
   }
 }
 
-:is(.netflix-de-page, .uber-de-page, .youtube-de-page, .bookmyshow-de-page) section[id] {
+:is(.netflix-de-page, .uber-de-page, .youtube-de-page, .bookmyshow-de-page, .whatsapp-de-page) section[id] {
   scroll-margin-top: var(--de-anchor-offset) !important;
 }
 
@@ -212,6 +212,19 @@ html {
 .bookmyshow-de-page [data-testid="chapter-position-track"] > span,
 .bookmyshow-de-page [data-active-indicator] {
   background: #111111 !important;
+}
+
+.whatsapp-de-page [data-testid="chapter-position-track"] > span,
+.whatsapp-de-page [data-active-indicator] {
+  background: #111111 !important;
+}
+
+.whatsapp-de-page [data-testid="data-design-switcher"] img {
+  filter: grayscale(1);
+}
+
+.whatsapp-de-page [data-testid="company-chapter-rail"] a:hover {
+  border-color: #777777;
 }
 
 [data-de-content] {

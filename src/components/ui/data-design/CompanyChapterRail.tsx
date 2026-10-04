@@ -40,6 +40,7 @@ export default function CompanyChapterRail({
   const next = chapters[activeIndex + 1];
   const chapterPosition = ((activeIndex + 1) / chapters.length) * 100;
   const chapterPositionLabel = `Chapter ${activeIndex + 1} of ${chapters.length}`;
+  const chapterAccent = company === "bookmyshow" || company === "whatsapp" ? "#111111" : "#526b82";
 
   useEffect(() => {
     const rail = railRef.current;
@@ -126,7 +127,7 @@ export default function CompanyChapterRail({
           {chapterPositionLabel}: {chapters[activeIndex]?.label}
         </p>
         <div data-testid="chapter-position-track" className="absolute inset-x-0 top-0 h-1 overflow-hidden bg-[var(--bg-muted)]" aria-hidden>
-          <span className="block h-full bg-[#526b82] transition-[width] duration-300" style={{ width: `${chapterPosition}%` }} />
+          <span className="block h-full transition-[width] duration-300" style={{ width: `${chapterPosition}%`, background: chapterAccent }} />
         </div>
 
         <div data-testid="chapter-rail" className="mx-auto grid h-full max-w-[1800px] grid-cols-[96px_minmax(0,1fr)_44px] items-center gap-2 px-2 pt-0.5 sm:px-3 sm:pt-1 xl:grid-cols-[380px_minmax(0,1fr)_44px]">
@@ -163,7 +164,7 @@ export default function CompanyChapterRail({
                       navigate(chapter.id);
                     } : undefined}
                   >
-                    {active ? <span data-active-indicator className="absolute inset-x-2 bottom-0 h-0.5 rounded-full bg-[#526b82]" /> : null}
+                    {active ? <span data-active-indicator className="absolute inset-x-2 bottom-0 h-0.5 rounded-full" style={{ background: chapterAccent }} /> : null}
                     <span data-testid="chapter-label" className="inline-flex items-baseline gap-1.5">
                       <span className="block w-[18px] text-right text-[9px] font-bold leading-none text-[var(--text-faint)]">
                         {String(index + 1).padStart(2, "0")}

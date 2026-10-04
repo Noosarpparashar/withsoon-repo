@@ -63,18 +63,15 @@ test.describe("concise explainer writing", () => {
     await expect(panel).toContainText("Netflix example:");
   });
 
-  test("streaming inspectors no longer repeat What and How fragments", async ({ page }) => {
+  test("streaming hover cards use the concise explanation hierarchy", async ({ page }, testInfo) => {
+    test.skip(testInfo.project.name !== "chromium", "Desktop hover is covered with a precise pointer.");
     await page.setViewportSize({ width: 1440, height: 900 });
-    const response = await page.goto("/data-engineering/youtube/real-time-streaming#rt-jobs");
-    expect(response?.status()).toBeLessThan(400);
+    const { panel } = await openFirstSharedExplainer(page, "/data-engineering/youtube/real-time-streaming#rt-jobs");
+    await expect(panel.getByTestId("explainer-copy").locator(":scope > p")).toHaveCount(2);
+    await expect(panel).toContainText("YouTube example:");
+    await expect(panel).not.toContainText(/What it (does|means):|What we do:|How:/i);
 
-    const inspector = page.getByTestId("section-inspector-content").first();
-    await expect(inspector).toBeVisible();
-    await expect(inspector.getByTestId("explainer-copy").locator(":scope > p")).toHaveCount(2);
-    await expect(inspector).toContainText("YouTube example:");
-    await expect(inspector).not.toContainText(/What it (does|means):|What we do:|How:/i);
-
-    const width = await inspector.evaluate((element) => element.getBoundingClientRect().width);
+    const width = await panel.evaluate((element) => element.getBoundingClientRect().width);
     expect(width).toBeLessThanOrEqual(430);
   });
 });

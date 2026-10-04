@@ -10,7 +10,7 @@ const geistMono = Geist_Mono({ variable: "--font-geist-mono", subsets: ["latin"]
 
 export const metadata: Metadata = {
   title: "withsoon — Data Engineering Designs",
-  description: "Interactive data engineering interview designs for Netflix, Uber, YouTube, and BookMyShow.",
+  description: "Interactive data engineering interview designs for Netflix, Uber, YouTube, BookMyShow, and WhatsApp.",
   metadataBase: new URL("https://withsoon.com"),
   openGraph: {
     title: "withsoon — Data Engineering Designs",

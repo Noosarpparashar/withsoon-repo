@@ -16,7 +16,6 @@ const ROUTES = [
   "/data-engineering/youtube/architecture",
   "/data-engineering/youtube/ingestion-kafka",
   "/data-engineering/youtube/real-time-streaming",
-  "/data-engineering/youtube/data-modeling",
   "/data-engineering/youtube/batch-lakehouse",
   "/data-engineering/youtube/governance-quality",
 ] as const;

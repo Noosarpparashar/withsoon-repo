@@ -76,11 +76,13 @@ export function DepthPanel({
   summary,
   children,
   defaultOpen = false,
+  desktopInline = false,
 }: {
   title: string;
   summary: string;
   children: ReactNode;
   defaultOpen?: boolean;
+  desktopInline?: boolean;
 }) {
   const panelRef = useRef<HTMLDetailsElement>(null);
 
@@ -106,9 +108,9 @@ export function DepthPanel({
       data-depth-panel
       data-testid="depth-panel"
       open={defaultOpen || undefined}
-      className="group mt-3 overflow-hidden rounded-xl border border-[var(--border)] bg-[var(--bg-card)]"
+      className={`group mt-3 overflow-hidden rounded-xl border border-[var(--border)] bg-[var(--bg-card)] ${desktopInline ? "lg:overflow-visible lg:border-0 lg:bg-transparent" : ""}`}
     >
-      <summary className="flex min-h-11 cursor-pointer list-none items-center justify-between gap-4 px-4 py-3 outline-none focus-visible:ring-2 focus-visible:ring-[#526b82] focus-visible:ring-inset [&::-webkit-details-marker]:hidden">
+      <summary className={`min-h-11 cursor-pointer list-none items-center justify-between gap-4 px-4 py-3 outline-none focus-visible:ring-2 focus-visible:ring-[#526b82] focus-visible:ring-inset [&::-webkit-details-marker]:hidden ${desktopInline ? "flex lg:hidden" : "flex"}`}>
         <span className="min-w-0">
           <span className="block text-xs font-semibold text-[var(--text)]">{title}</span>
           <span className="mt-0.5 block text-[11px] leading-4 text-[var(--text-muted)]">{summary}</span>
@@ -121,7 +123,7 @@ export function DepthPanel({
           </svg>
         </span>
       </summary>
-      <div data-depth-content className="border-t border-[var(--border)] p-4 md:p-5">{children}</div>
+      <div data-depth-content className={`border-t border-[var(--border)] p-4 md:p-5 ${desktopInline ? "lg:border-t-0 lg:p-0" : ""}`}>{children}</div>
     </details>
   );
 }

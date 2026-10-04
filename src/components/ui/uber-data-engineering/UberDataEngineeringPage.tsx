@@ -806,12 +806,13 @@ function RequirementsTab() {
             {assumptions.map((item) => (
               <button
                 key={item.title}
-                className="group relative min-h-[126px] border p-4 text-left transition-all hover:-translate-y-0.5 hover:shadow-md"
+                data-density-card="uber-assumption"
+                className="group relative min-h-[126px] border p-4 text-left transition-all hover:-translate-y-0.5 hover:shadow-md xl:min-h-[96px] xl:p-3"
                 style={{ borderColor: C.border, background: C.card2 }}
               >
                 <UberUiIcon name={item.icon} className="h-5 w-5" />
                 <strong
-                  className="mt-3 block text-xl"
+                  className="mt-3 block text-xl xl:mt-2"
                   style={{ color: C.blue }}
                 >
                   {item.title}
@@ -883,7 +884,7 @@ function RequirementsTab() {
           sub="Raw location history is the capacity problem; trip facts are the correctness problem."
           color={C.amber}
         >
-          <div className="mt-5 grid gap-3 lg:grid-cols-[1.25fr_.75fr]">
+          <div className="mt-5 grid gap-3 lg:grid-cols-[1.25fr_.75fr] lg:items-start">
             <button
               className="group relative rounded-2xl border p-5 text-left"
               style={{
@@ -925,6 +926,7 @@ function RequirementsTab() {
               <Tip text="The 200-byte estimate covers latitude, longitude, driver_id, trip_id, event timestamp, heading, speed, accuracy, and small serialization overhead. Therefore 500K pings/sec × 200 bytes = 100 MB/sec, or about 8.6 TB/day raw." />
             </button>
             <button
+              data-density-card="uber-trip-facts"
               className="group relative rounded-2xl border p-5 text-left"
               style={{ borderColor: C.border, background: C.card2 }}
             >

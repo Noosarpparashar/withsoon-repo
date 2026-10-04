@@ -16,10 +16,13 @@ const sharedExplainerRoutes = [
     "ingestion-kafka",
   ].map((tab) => `/data-engineering/uber/${tab}`),
   ...[
+    "start-here",
     "requirements",
     "event-sources",
     "architecture",
     "ingestion-kafka",
+    "real-time-streaming",
+    "batch-lakehouse",
     "governance-quality",
   ].map((tab) => `/data-engineering/youtube/${tab}`),
 ];

@@ -1,6 +1,6 @@
 "use client";
 
-import { Section, SectionInspector, YouTubeFrame } from "./shared";
+import { Section, SectionInspector, Tooltip, YouTubeFrame } from "./shared";
 import { STREAMING_SECTIONS } from "./data";
 import { CoreTakeaway, DepthPanel, InterviewPath } from "../data-design/ProgressiveChapter";
 
@@ -12,12 +12,13 @@ type ExplainCardProps = {
   wide?: boolean;
 };
 
-function ExplainCard({ title, sub }: ExplainCardProps) {
+function ExplainCard({ title, sub, detail, side = "top", wide = false }: ExplainCardProps) {
   return (
-    <div className="relative min-h-[94px] rounded-xl border border-[var(--border)] bg-[var(--bg-card)] p-4 text-left">
-      <span className="flex items-start justify-between gap-3"><strong className="text-sm text-[var(--text)]">{title}</strong></span>
+    <button type="button" className="group relative min-h-[94px] rounded-xl border border-[var(--border)] bg-[var(--bg-card)] p-4 text-left transition hover:z-50 hover:-translate-y-0.5 hover:border-[#91a9c2] hover:shadow-md focus-visible:z-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#8da5bd]">
+      <span className="flex items-start justify-between gap-3"><strong className="text-sm text-[var(--text)]">{title}</strong><span className="text-[10px] text-[var(--text-faint)]" aria-hidden>i</span></span>
       <span className="mt-2 block text-xs leading-5 text-[var(--text-muted)]">{sub}</span>
-    </div>
+      <Tooltip align="center" side={side} wide={wide} triggerLabel={title}>{detail}</Tooltip>
+    </button>
   );
 }
 
@@ -133,10 +134,11 @@ function StateMachine() {
       <p className="mt-4 text-[10px] font-bold uppercase tracking-[.16em] text-[var(--text-faint)]">Branches from Playing</p>
       <div className="mt-3 grid gap-2 md:grid-cols-2 xl:grid-cols-4">
         {stateBranches.map((branch) => (
-          <div key={branch.title} className="relative rounded-xl border border-[var(--border)] bg-[var(--bg-card)] p-3 text-left">
+          <button key={branch.title} type="button" className="group relative rounded-xl border border-[var(--border)] bg-[var(--bg-card)] p-3 text-left transition hover:z-50 hover:border-[#91a9c2] hover:shadow-md focus-visible:z-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#8da5bd]">
             <strong className="text-xs">{branch.path}</strong>
             <span className="mt-2 block text-[10px] leading-4 text-[var(--text-muted)]">{branch.trigger}</span>
-          </div>
+            <Tooltip align="center" side="top" triggerLabel={`${branch.title} path`}><strong className="mb-1 block">{branch.title} path</strong>{branch.detail}</Tooltip>
+          </button>
         ))}
       </div>
       <div className="mt-3 rounded-lg border border-[var(--border)] bg-[var(--bg-card)] px-4 py-3 text-center text-xs"><strong>Late/offline event:</strong> reopen the same playback-attempt key, recalculate the session, and emit a versioned upsert—never a duplicate fact.</div>
@@ -202,8 +204,8 @@ function RuntimePlacement() {
 function OutputTable() {
   return (
     <div className="mt-5 rounded-xl border border-[var(--border)] bg-[var(--bg-muted)] p-3">
-      <div className="hidden grid-cols-[1.1fr_1fr_1fr] gap-3 px-3 pb-2 text-[10px] font-bold uppercase tracking-[.14em] text-[var(--text-faint)] md:grid"><span>Output</span><span>Stable key</span><span>Update model</span></div>
-      <div className="grid gap-2">{outputs.map((row) => <div key={row.output} className="relative grid min-h-[60px] gap-1 rounded-lg border border-[var(--border)] bg-[var(--bg-card)] px-3 py-2 text-left md:grid-cols-[1.1fr_1fr_1fr] md:items-center md:gap-3"><strong className="text-xs">{row.output}</strong><code className="text-xs">{row.keyName}</code><span className="text-xs text-[var(--text-muted)]">{row.update}</span></div>)}</div>
+      <div className="hidden grid-cols-[1.1fr_1fr_1fr_30px] gap-3 px-3 pb-2 text-[10px] font-bold uppercase tracking-[.14em] text-[var(--text-faint)] md:grid"><span>Output</span><span>Stable key</span><span>Update model</span><span /></div>
+      <div className="grid gap-2">{outputs.map((row) => <button key={row.output} type="button" className="group relative grid min-h-[60px] gap-1 rounded-lg border border-[var(--border)] bg-[var(--bg-card)] px-3 py-2 text-left transition hover:z-50 hover:border-[#91a9c2] hover:shadow-md focus-visible:z-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#8da5bd] md:grid-cols-[1.1fr_1fr_1fr_30px] md:items-center md:gap-3"><strong className="text-xs">{row.output}</strong><code className="text-xs">{row.keyName}</code><span className="text-xs text-[var(--text-muted)]">{row.update}</span><span className="text-[10px] text-[var(--text-faint)]" aria-hidden>i</span><Tooltip align="center" side="top" wide triggerLabel={row.output}>{row.detail}</Tooltip></button>)}</div>
       <SectionInspector
         id="output-contracts-inspector"
         label="output contract"
@@ -230,14 +232,14 @@ export default function RealTimeStreamingTab() {
       />
       <Section id="streaming-jobs" number="01" title="Streaming Jobs">
         <CoreTakeaway>Split the stream by decision latency: dedicated jobs consume shared Kafka evidence and publish sessions, counters, trends, alerts, and online features with stable keys.</CoreTakeaway>
-        <DepthPanel title="Explore the streaming jobs" summary="Inputs, six job responsibilities, live outputs, and YouTube examples.">
+        <DepthPanel desktopInline title="Explore the streaming jobs" summary="Inputs, six job responsibilities, live outputs, and YouTube examples.">
           <StreamingJobs />
         </DepthPanel>
       </Section>
 
       <Section id="session-state" number="02" title="Session State">
         <CoreTakeaway>Keep one state record per playback attempt. Playing heartbeats add bounded time; pause, buffer, seek, duplicate, close, and late-reopen rules update that same versioned session.</CoreTakeaway>
-        <DepthPanel title="Explore playback state" summary="State machine, record fields, event rules, inactivity close, and late reopen.">
+        <DepthPanel desktopInline title="Explore playback state" summary="State machine, record fields, event rules, inactivity close, and late reopen.">
         <StateMachine />
         <SessionStateFlow />
         <p className="mt-4 text-[10px] font-bold uppercase tracking-[.16em] text-[var(--text-faint)]">Inside one state record</p>
@@ -258,7 +260,7 @@ export default function RealTimeStreamingTab() {
 
       <Section id="time-windows" number="03" title="Time + Windows">
         <CoreTakeaway>Use event time for truth, watermarks for bounded waiting, and a late-data side path for evidence outside the live allowance. Never silently discard delayed mobile events.</CoreTakeaway>
-        <DepthPanel title="Explore event time and windows" summary="Watermarks, window types, late heartbeats, recovery, and live-versus-certified truth.">
+        <DepthPanel desktopInline title="Explore event time and windows" summary="Watermarks, window types, late heartbeats, recovery, and live-versus-certified truth.">
         <div className="mt-5 grid gap-2 sm:grid-cols-2 lg:grid-cols-3">{concepts.map((item) => <ExplainCard key={item.title} title={item.title} sub={item.sub} detail={<Explanation what={item.what} how={item.how} example={item.example} />} />)}</div>
         <LateHeartbeatFlow />
         <div className="mt-3 grid gap-2 sm:grid-cols-2">
@@ -279,14 +281,14 @@ export default function RealTimeStreamingTab() {
 
       <Section id="output-contracts" number="04" title="Output Contracts">
         <CoreTakeaway>Every live product has a stable business key and update rule, so replay and late evidence replace the intended version instead of creating duplicate facts.</CoreTakeaway>
-        <DepthPanel title="Explore output contracts" summary="Keys and write semantics for counters, sessions, trending, alerts, and features.">
+        <DepthPanel desktopInline title="Explore output contracts" summary="Keys and write semantics for counters, sessions, trending, alerts, and features.">
           <OutputTable />
         </DepthPanel>
       </Section>
 
       <Section id="trending-design" number="05" title="Trending">
         <CoreTakeaway>Rank recent, broad, meaningful attention—not lifetime popularity—using sliding-window momentum, audience breadth, engagement quality, freshness, and abuse penalties.</CoreTakeaway>
-        <DepthPanel title="Explore trending design" summary="Eligible evidence, feature groups, regional windows, trust penalties, and versioned ranking.">
+        <DepthPanel desktopInline title="Explore trending design" summary="Eligible evidence, feature groups, regional windows, trust penalties, and versioned ranking.">
         <div className="mt-5 rounded-xl border border-[#a9bacb] bg-[var(--bg-muted)] px-4 py-3 text-sm leading-6"><strong>Problem being solved:</strong><span className="ml-1 text-[var(--text-muted)]">find trustworthy videos gaining meaningful attention now for each region—not the videos with the largest lifetime totals.</span></div>
         <div className="mt-5 grid gap-3 rounded-xl border border-[var(--border)] bg-[var(--bg-muted)] p-4 lg:grid-cols-[190px_auto_1fr_auto_190px] lg:items-center">
           <div className="rounded-xl border border-[var(--border)] bg-[var(--bg-card)] p-4 text-center"><strong className="text-sm">Eligible Events</strong><p className="mt-2 text-xs text-[var(--text-muted)]">deduped views · watch depth<br />engagement · trust flags</p></div><span className="hidden lg:block">-&gt;</span>
@@ -308,7 +310,7 @@ export default function RealTimeStreamingTab() {
 
       <Section id="engine-choice" number="06" title="Runtime + Operations">
         <CoreTakeaway>Use Flink where keyed state, event-time timers, and low latency matter; operate it through checkpoint health, lag, watermark, state, rescaling, and sink-commit signals.</CoreTakeaway>
-        <DepthPanel title="Explore runtime and operations" summary="Flink placement, Spark trade-off, recovery controls, state lifecycle, and production monitoring.">
+        <DepthPanel desktopInline title="Explore runtime and operations" summary="Flink placement, Spark trade-off, recovery controls, state lifecycle, and production monitoring.">
         <RuntimePlacement />
         <div className="mt-5 grid gap-3 md:grid-cols-2">
           <ExplainCard title="Apache Flink" sub="Preferred · event-at-a-time" wide detail={<Explanation what="Provides low-latency event processing with rich keyed state, event-time timers, checkpoints, and side outputs." how="Use it for playback sessionization, fraud patterns, live counters, QoE alerts, and online features." example="A late p-42 heartbeat updates its keyed session immediately while checkpointed state protects recovery." />} />
@@ -329,7 +331,7 @@ export default function RealTimeStreamingTab() {
 
       <Section id="streaming-answer" number="07" title="Interview Answer">
         <CoreTakeaway>Route by playback attempt, reconstruct with event time and state, publish versioned live products, and let certified batch replace incomplete history.</CoreTakeaway>
-        <DepthPanel title="Open the complete interview answer" summary="Five-part speaking structure and the full answer to rehearse.">
+        <DepthPanel desktopInline title="Open the complete interview answer" summary="Five-part speaking structure and the full answer to rehearse.">
         <div className="mt-5 rounded-xl border border-[#a9bacb] bg-[var(--bg-muted)] px-4 py-3 text-sm leading-6"><strong>Goal:</strong><span className="ml-1 text-[var(--text-muted)]">turn continuous playback and engagement events into seconds-old watch sessions, counters, trends, alerts, and recommendation features without letting retries or delayed phones corrupt the results.</span></div>
         <div className="mt-3 grid gap-2 sm:grid-cols-2 lg:grid-cols-5">{[
           ["1. Bring together", "Send every event for one playback attempt to the same Flink worker."],

@@ -81,7 +81,6 @@ export const STREAMING_SECTIONS = [
 
 export const MODELING_SECTIONS = [
   { id: "model-erd", title: "ER Diagram" },
-  { id: "model-answer", title: "Interview Answer" },
 ] as const;
 
 export const BATCH_LAKEHOUSE_SECTIONS = [

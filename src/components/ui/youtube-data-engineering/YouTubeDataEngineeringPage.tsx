@@ -6,7 +6,7 @@ import {
   YOUTUBE_SLOS,
 } from "./content";
 import { START_SECTIONS } from "./data";
-import { Section, SectionInspector, YouTubeFrame } from "./shared";
+import { Section, SectionInspector, Tooltip, YouTubeFrame } from "./shared";
 
 const inputSignals = [
   ["▶", "Playback", "Starts, heartbeats, pauses, seeks, completions, and QoE signals describe the viewing session."],
@@ -73,7 +73,9 @@ const capabilityGroups = [
 function MiniNode({
   icon,
   title,
+  detail,
   tone,
+  align = "center",
 }: {
   icon: string;
   title: string;
@@ -82,8 +84,9 @@ function MiniNode({
   align?: "start" | "center" | "end";
 }) {
   return (
-    <div
-      className="relative flex min-h-[58px] items-center gap-2 rounded-lg border bg-[var(--bg-card)] px-3 text-left text-xs font-semibold"
+    <button
+      type="button"
+      className="group relative flex min-h-[58px] cursor-pointer items-center gap-2 rounded-lg border bg-[var(--bg-card)] px-3 text-left text-xs font-semibold transition hover:z-50 hover:-translate-y-0.5 hover:shadow-md focus-visible:z-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#b00020]"
       style={{ borderColor: `${tone}44` }}
     >
       <span
@@ -96,7 +99,9 @@ function MiniNode({
         {icon}
       </span>
       <span>{title}</span>
-    </div>
+      <span className="ml-auto text-[10px]" style={{ color: tone }} aria-hidden>i</span>
+      <Tooltip align={align} triggerLabel={title}>{detail}</Tooltip>
+    </button>
   );
 }
 
@@ -124,8 +129,9 @@ function ScopeFlow() {
 
         <span className="hidden text-[#b00020] lg:block">→</span>
 
-        <div
-          className="relative rounded-xl border border-red-500/35 bg-red-500/[.05] p-5 text-center"
+        <button
+          type="button"
+          className="group relative rounded-xl border border-red-500/35 bg-red-500/[.05] p-5 text-center transition hover:z-50 hover:-translate-y-0.5 hover:shadow-md focus-visible:z-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#b00020]"
         >
           <span className="mx-auto flex h-11 w-11 items-center justify-center rounded-xl bg-red-500/10 text-xl font-bold text-[#b00020]">
             YT
@@ -141,7 +147,8 @@ function ScopeFlow() {
               </span>
             ))}
           </div>
-        </div>
+          <Tooltip triggerLabel="YouTube Data Platform">The platform turns high-volume YouTube behavior and business events into fresh signals, replayable history, certified metrics, and recommendation data.</Tooltip>
+        </button>
 
         <span className="hidden text-[#b00020] lg:block">→</span>
 
@@ -195,24 +202,25 @@ function CapabilitiesFlow() {
         return (
           <div
             key={group.label}
-            className="overflow-visible rounded-xl border border-[var(--border)] bg-[var(--bg-muted)] p-3"
+            className="overflow-visible rounded-2xl border border-[var(--border)] bg-[var(--bg-card)] p-2.5 shadow-[0_1px_2px_rgba(0,0,0,0.04)]"
           >
-            <div className="grid gap-3 lg:grid-cols-[170px_1fr] lg:items-stretch">
+            <div className="grid gap-2.5 lg:grid-cols-[210px_28px_minmax(0,1fr)] lg:items-stretch">
               <div
-                className="flex items-center gap-3 rounded-lg border px-4 py-3 lg:flex-col lg:items-start lg:justify-center"
+                className="relative flex items-center gap-3 overflow-hidden rounded-xl border px-4 py-3 lg:px-3 lg:py-2.5"
                 style={{
                   borderColor: `${group.tone}3d`,
-                  background: `linear-gradient(135deg, color-mix(in srgb, ${group.tone} 13%, var(--bg-card)), var(--bg-card))`,
+                  background: `linear-gradient(135deg, color-mix(in srgb, ${group.tone} 11%, var(--bg-card)), var(--bg-card) 72%)`,
                 }}
               >
+                <span className="absolute inset-y-0 left-0 w-1" style={{ background: group.tone }} aria-hidden />
                 <span
-                  className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-xs font-black"
-                  style={{ color: group.tone, background: `${group.tone}1f` }}
+                  className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full border text-[11px] font-black"
+                  style={{ color: group.tone, background: "var(--bg-card)", borderColor: `${group.tone}35` }}
                 >
                   {String(groupIndex + 1).padStart(2, "0")}
                 </span>
-                <div>
-                  <h3 className="text-base font-bold" style={{ color: group.tone }}>
+                <div className="min-w-0">
+                  <h3 className="text-[15px] font-bold leading-5" style={{ color: group.tone }}>
                     {group.label}
                   </h3>
                   <p className="mt-0.5 text-[11px] leading-4 text-[var(--text-faint)]">
@@ -221,18 +229,25 @@ function CapabilitiesFlow() {
                 </div>
               </div>
 
-              <div className="grid gap-2 sm:grid-cols-3">
-                {items.map((item) =>
+              <div className="hidden items-center lg:flex" aria-hidden>
+                <span className="h-px flex-1" style={{ background: `${group.tone}55` }} />
+                <span className="-ml-px flex h-5 w-5 items-center justify-center rounded-full border bg-[var(--bg-card)] text-xs font-bold" style={{ color: group.tone, borderColor: `${group.tone}55` }}>›</span>
+              </div>
+
+              <div className="grid gap-2 sm:grid-cols-3 lg:items-center">
+                {items.map((item, index) =>
                   item ? (
-                    <div
+                    <button
+                      type="button"
                       key={item.title}
-                      className="relative min-h-[86px] overflow-visible rounded-lg border border-[var(--border)] bg-[var(--bg-card)] p-3 text-left"
+                      data-density-card="youtube-capability"
+                      className="group relative min-h-[86px] overflow-visible rounded-xl border border-[var(--border)] bg-[var(--bg-card)] p-3 text-left shadow-[0_1px_1px_rgba(0,0,0,0.025)] transition hover:z-50 hover:-translate-y-0.5 hover:border-current hover:bg-[var(--bg-muted)] hover:shadow-md focus-visible:z-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#b00020] lg:min-h-[72px] lg:p-2.5"
                       style={{ color: item.tone }}
                     >
                       <span className="flex items-center gap-3">
                         <span
-                          className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg text-sm font-black"
-                          style={{ background: `${item.tone}1f` }}
+                          className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border text-sm font-black transition group-hover:scale-105"
+                          style={{ background: `${item.tone}12`, borderColor: `${item.tone}25` }}
                         >
                           {item.icon}
                         </span>
@@ -244,12 +259,14 @@ function CapabilitiesFlow() {
                             {item.sub}
                           </span>
                         </span>
+                        <span className="ml-auto flex h-5 w-5 shrink-0 items-center justify-center rounded-full border border-[var(--border)] text-[9px] font-bold text-[var(--text-faint)] transition group-hover:border-current group-hover:text-current" aria-hidden>i</span>
                       </span>
                       <span
-                        className="absolute inset-x-3 bottom-0 h-0.5 rounded-full"
+                        className="absolute inset-x-3 bottom-0 h-0.5 origin-left scale-x-0 rounded-full transition-transform group-hover:scale-x-100 group-focus-visible:scale-x-100"
                         style={{ background: item.tone }}
                       />
-                    </div>
+                      <Tooltip align={index === 0 ? "start" : index === items.length - 1 ? "end" : "center"} triggerLabel={item.title}>{item.detail}</Tooltip>
+                    </button>
                   ) : null,
                 )}
               </div>
@@ -386,31 +403,37 @@ function ScaleTargets() {
   return (
     <div className="mt-5">
       <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-4">
-        {YOUTUBE_SCALE_ANCHORS.map((item) => (
-          <div
+        {YOUTUBE_SCALE_ANCHORS.map((item, index) => (
+          <button
+            type="button"
             key={item.label}
-            className="relative rounded-xl border bg-[var(--bg-muted)] p-3 text-left"
+            data-density-card="youtube-scale-anchor"
+            className="group relative rounded-xl border bg-[var(--bg-muted)] p-3 text-left transition hover:z-50 hover:-translate-y-0.5 hover:shadow-md focus-visible:z-50 focus-visible:outline-none focus-visible:ring-2 lg:px-3 lg:py-2"
             style={{ borderColor: `${item.tone}44` }}
           >
-            <strong className="text-xl" style={{ color: item.tone }}>{item.value}</strong>
+            <strong className="text-xl lg:text-lg" style={{ color: item.tone }}>{item.value}</strong>
             <span className="mt-1 block text-xs font-semibold">{item.label}</span>
-          </div>
+            <Tooltip align={index === 0 ? "start" : index === YOUTUBE_SCALE_ANCHORS.length - 1 ? "end" : "center"} triggerLabel={item.label}>{item.detail}</Tooltip>
+          </button>
         ))}
       </div>
 
-      <div className="mt-3 rounded-xl border border-[var(--border)] bg-[var(--bg-muted)] p-4">
-        <div className="space-y-3">
-          {YOUTUBE_SLOS.map((row) => (
-            <div
+      <div className="mt-3 rounded-xl border border-[var(--border)] bg-[var(--bg-muted)] p-4 lg:p-3">
+        <div className="space-y-3 lg:space-y-1">
+          {YOUTUBE_SLOS.map((row, index) => (
+            <button
+              type="button"
               key={row.title}
-              className="relative grid w-full grid-cols-[120px_1fr_88px] items-center gap-3 text-left sm:grid-cols-[170px_1fr_110px]"
+              data-density-card="youtube-scale-slo"
+              className="group relative grid min-h-11 w-full grid-cols-[120px_1fr_88px] items-center gap-3 rounded-md text-left outline-none hover:bg-white/70 focus-visible:ring-2 focus-visible:ring-[#70879b] sm:grid-cols-[170px_1fr_110px] lg:min-h-9"
             >
               <span className="text-xs font-semibold sm:text-sm">{row.title}</span>
               <span className="h-2.5 overflow-hidden rounded-full bg-[var(--border)]">
                 <span className="block h-full rounded-full" style={{ width: row.width, background: row.tone }} />
               </span>
               <strong className="text-right text-xs" style={{ color: row.tone }}>{row.value}</strong>
-            </div>
+              <Tooltip align={index === 0 ? "start" : "center"} triggerLabel={row.title}>{row.detail}</Tooltip>
+            </button>
           ))}
         </div>
       </div>
@@ -451,8 +474,9 @@ function CorrectnessFlow() {
         />
         <span className="hidden text-[#b00020] lg:block">⇉</span>
         <div className="grid gap-2">
-          <div
-            className="relative grid gap-2 rounded-xl border border-violet-500/30 bg-violet-500/[.045] p-3 sm:grid-cols-[110px_auto_1fr_auto_120px] sm:items-center"
+          <button
+            type="button"
+            className="group relative grid gap-2 rounded-xl border border-violet-500/30 bg-violet-500/[.045] p-3 text-left transition hover:z-50 hover:shadow-md focus-visible:z-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-500 sm:grid-cols-[110px_auto_1fr_auto_120px] sm:items-center"
           >
             <strong className="flex items-center gap-2 text-xs text-[#6d28d9]">
               FAST LANE <span className="text-[10px]" aria-hidden>ⓘ</span>
@@ -461,9 +485,11 @@ function CorrectnessFlow() {
             <span className="rounded-lg border border-[var(--border)] bg-[var(--bg-card)] px-3 py-3 text-xs font-semibold">Window + bounded dedupe</span>
             <span className="hidden text-[#6d28d9] sm:block">→</span>
             <span className="rounded-full bg-violet-500/10 px-3 py-2 text-center text-[10px] font-bold text-[#6d28d9]">PROVISIONAL</span>
-          </div>
-          <div
-            className="relative grid gap-2 rounded-xl border border-emerald-500/30 bg-emerald-500/[.045] p-3 sm:grid-cols-[110px_auto_1fr_auto_120px] sm:items-center"
+            <Tooltip align="end" triggerLabel="Fast lane">Consumes Kafka continuously, uses event-time windows and bounded deduplication, then publishes seconds-to-minutes results. It favors freshness, so late events and later fraud decisions may still change the count.</Tooltip>
+          </button>
+          <button
+            type="button"
+            className="group relative grid gap-2 rounded-xl border border-emerald-500/30 bg-emerald-500/[.045] p-3 text-left transition hover:z-50 hover:shadow-md focus-visible:z-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 sm:grid-cols-[110px_auto_1fr_auto_120px] sm:items-center"
           >
             <strong className="flex items-center gap-2 text-xs text-[#077149]">
               CERTIFY LANE <span className="text-[10px]" aria-hidden>ⓘ</span>
@@ -472,7 +498,8 @@ function CorrectnessFlow() {
             <span className="rounded-lg border border-[var(--border)] bg-[var(--bg-card)] px-3 py-3 text-xs font-semibold">Full replay + quality gates</span>
             <span className="hidden text-[#077149] sm:block">→</span>
             <span className="rounded-full bg-emerald-500/10 px-3 py-2 text-center text-[10px] font-bold text-[#077149]">CERTIFIED</span>
-          </div>
+            <Tooltip align="end" triggerLabel="Certify lane">Replays complete Bronze history after the lateness window, performs full deduplication, applies traffic-quality and metric-version rules, and publishes an atomic certified snapshot for official views, watch time, and revenue.</Tooltip>
+          </button>
         </div>
       </div>
 

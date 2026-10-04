@@ -5,64 +5,48 @@ const chapters = [
     path: "/data-engineering/youtube/start-here",
     title: "Start Here",
     inspectors: 5,
-    maxButtons: 20,
-    maxInteractive: 40,
+    panels: 0,
   },
   {
     path: "/data-engineering/youtube/real-time-streaming",
     title: "Real-Time Streaming",
     inspectors: 6,
-    maxButtons: 24,
-    maxInteractive: 44,
+    panels: 7,
   },
   {
     path: "/data-engineering/youtube/batch-lakehouse",
     title: "Batch + Lakehouse",
     inspectors: 4,
-    maxButtons: 20,
-    maxInteractive: 40,
+    panels: 5,
   },
 ] as const;
 
 for (const chapter of chapters) {
-  test(`${chapter.title} uses consolidated section inspectors`, async ({ page }) => {
+  test(`${chapter.title} restores hover explanations on desktop`, async ({ page }, testInfo) => {
+    test.skip(testInfo.project.name !== "chromium", "Desktop hover is covered with a precise pointer.");
+    await page.setViewportSize({ width: 1440, height: 900 });
     const response = await page.goto(chapter.path);
     expect(response?.status()).toBeLessThan(400);
     await expect(page.getByRole("heading", { level: 1, name: chapter.title })).toBeVisible();
 
-    const counts = await page.evaluate(() => ({
-      buttons: document.querySelectorAll("button").length,
-      interactive: document.querySelectorAll(
-        'button,a[href],select,input,textarea,[role="button"]',
-      ).length,
-      explainers: document.querySelectorAll("[data-explainer-trigger]").length,
-    }));
+    const triggers = page.locator("[data-explainer-trigger]:visible");
+    await expect(triggers.first()).toBeVisible();
+    expect(await triggers.count()).toBeGreaterThan(10);
 
-    expect(counts.buttons).toBeLessThanOrEqual(chapter.maxButtons);
-    expect(counts.interactive).toBeLessThanOrEqual(chapter.maxInteractive);
-    expect(counts.explainers).toBe(0);
+    await triggers.first().scrollIntoViewIfNeeded();
+    await triggers.first().hover();
+    await expect(page.getByTestId("explainer-panel")).toBeVisible();
 
     const inspectors = page.getByTestId("section-inspector");
     await expect(inspectors).toHaveCount(chapter.inspectors);
+    for (let index = 0; index < chapter.inspectors; index += 1) {
+      await expect(inspectors.nth(index)).toBeHidden();
+    }
 
-    for (let inspectorIndex = 0; inspectorIndex < chapter.inspectors; inspectorIndex += 1) {
-      const inspector = inspectors.nth(inspectorIndex);
-      await inspector.evaluate((element) => {
-        const panel = element.closest<HTMLDetailsElement>("details[data-depth-panel]");
-        if (panel) panel.open = true;
-      });
-      const select = inspector.locator("select");
-      const optionValues = await select.locator("option").evaluateAll((options) =>
-        options.map((option) => (option as HTMLOptionElement).value),
-      );
-      expect(optionValues.length).toBeGreaterThan(1);
-
-      for (const value of optionValues) {
-        await select.selectOption(value);
-        await expect(inspector.getByTestId("section-inspector-content")).not.toBeEmpty();
-        const detail = await inspector.getByTestId("section-inspector-content").innerText();
-        expect(detail.trim().length).toBeGreaterThan(35);
-      }
+    const panelSummaries = page.locator("details[data-depth-panel] > summary");
+    await expect(panelSummaries).toHaveCount(chapter.panels);
+    for (let index = 0; index < chapter.panels; index += 1) {
+      await expect(panelSummaries.nth(index)).toBeHidden();
     }
   });
 
@@ -72,6 +56,12 @@ for (const chapter of chapters) {
 
     const inspectors = page.getByTestId("section-inspector");
     await expect(inspectors).toHaveCount(chapter.inspectors);
+
+    const panelSummaries = page.locator("details[data-depth-panel] > summary");
+    await expect(panelSummaries).toHaveCount(chapter.panels);
+    for (let index = 0; index < chapter.panels; index += 1) {
+      await expect(panelSummaries.nth(index)).toBeVisible();
+    }
 
     for (let index = 0; index < chapter.inspectors; index += 1) {
       const inspector = inspectors.nth(index);

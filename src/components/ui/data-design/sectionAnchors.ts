@@ -51,7 +51,21 @@ export function scrollToDataDesignSection(
     node.getBoundingClientRect().top +
     window.scrollY -
     getDataDesignAnchorOffset();
-  window.scrollTo({ top: Math.max(0, top), behavior });
+  const targetTop = Math.max(0, top);
+  const longJump = Math.abs(targetTop - window.scrollY) > window.innerHeight * 3;
+  const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+  if (behavior === "auto" || longJump || reduceMotion) {
+    const root = document.documentElement;
+    const previous = root.style.scrollBehavior;
+    root.style.scrollBehavior = "auto";
+    window.scrollTo({ top: targetTop, behavior: "auto" });
+    window.requestAnimationFrame(() => {
+      root.style.scrollBehavior = previous;
+    });
+  } else {
+    window.scrollTo({ top: targetTop, behavior });
+  }
   return true;
 }
 

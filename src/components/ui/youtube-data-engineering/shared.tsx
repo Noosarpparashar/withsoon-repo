@@ -90,7 +90,7 @@ export function SectionInspector({
     <aside
       data-testid="section-inspector"
       data-inspector-id={id}
-      className="mt-3 grid gap-3 rounded-xl border border-[#b6c7d7] bg-[#eef4f9] p-3 md:grid-cols-[minmax(180px,0.36fr)_1fr] md:items-start"
+      className="mt-3 grid gap-3 rounded-xl border border-[#b6c7d7] bg-[#eef4f9] p-3 md:grid-cols-[minmax(180px,0.36fr)_1fr] md:items-start lg:hidden"
       aria-label={`${label} explanation`}
     >
       <label htmlFor={selectId} className="block">
@@ -190,12 +190,14 @@ export function YouTubeFrame({
   activeTab,
   sections,
   children,
+  modelSidebar = false,
 }: {
   activeTab: YouTubeTab;
   sections: readonly PageSection[];
   children: React.ReactNode;
   previous?: { id: YouTubeTab; label: string };
   next?: { id: YouTubeTab; label: string };
+  modelSidebar?: boolean;
 }) {
   const [activeSection, setActiveSection] = useState(sections[0]?.id ?? "");
   const activeSectionIndex = Math.max(0, sections.findIndex((section) => section.id === activeSection));
@@ -219,10 +221,10 @@ export function YouTubeFrame({
   return (
     <div className="youtube-de-page min-h-screen bg-[var(--bg)] text-[var(--text)]">
       <ChapterRail activeTab={activeTab} />
-      <MobileSectionNav sections={sections} accent={RED} />
-      <div className="mx-auto flex max-w-[1600px] px-4">
-        <aside className="hidden w-[250px] shrink-0 border-r border-[var(--border)] xl:block">
-          <div className="fixed bottom-4 top-[140px] w-[218px] overflow-y-auto pr-1">
+      {!modelSidebar && sections.length > 1 ? <MobileSectionNav sections={sections} accent={RED} /> : null}
+      <div className={`mx-auto flex w-full px-4 ${modelSidebar ? "max-w-[1920px]" : "max-w-[1600px]"}`}>
+        <aside className={`hidden shrink-0 border-r border-[var(--border)] xl:block ${modelSidebar ? "w-[300px]" : "w-[250px]"}`}>
+          <div className={`fixed bottom-4 top-[140px] overflow-y-auto pr-1 ${modelSidebar ? "w-[268px]" : "w-[218px]"}`}>
             <div className="mb-6 flex items-center gap-3">
               <Image
                 src="/logo-youtube.webp"
@@ -233,50 +235,54 @@ export function YouTubeFrame({
               />
               <p className="text-base font-bold">YouTube</p>
             </div>
-            <div data-testid="desktop-section-progress" className="mb-3 rounded-lg border border-[var(--border)] bg-[var(--bg-card)] px-3 py-2.5">
-              <div className="flex items-center justify-between gap-3 text-[10px] font-bold uppercase tracking-[.14em] text-[var(--text-faint)]">
-                <span>Page sections</span>
-                <span>{activeSectionIndex + 1}/{sections.length}</span>
-              </div>
-              <div className="mt-2 h-1 overflow-hidden rounded-full bg-[var(--bg-muted)]" aria-hidden="true">
-                <span className="block h-full bg-[#b00020] transition-[width]" style={{ width: `${sectionProgress}%` }} />
-              </div>
-            </div>
-            <div className="space-y-2">
-              {sections.map((section, index) => {
-                const current = activeSection === section.id;
-                return (
-                  <button
-                    type="button"
-                    key={section.id}
-                    onClick={() => go(section.id)}
-                    aria-current={current ? "location" : undefined}
-                    className="relative flex min-h-[54px] w-full items-center gap-3 overflow-hidden rounded-md border px-3 py-2 text-left text-xs font-semibold leading-4 transition-all"
-                    style={{
-                      borderColor: current ? RED : "var(--border)",
-                      background: current
-                        ? "color-mix(in srgb, #b00020 9%, var(--bg-card))"
-                        : "var(--bg-card)",
-                      color: current ? "var(--text)" : "var(--text-muted)",
-                    }}
-                  >
-                    {current ? (
-                      <span className="absolute inset-y-0 left-0 w-1 bg-[#b00020]" />
-                    ) : null}
-                    <span
-                      className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-[10px] font-bold"
-                      style={{
-                        background: current ? RED : "var(--bg-muted)",
-                        color: current ? "white" : "var(--text-faint)",
-                      }}
-                    >
-                      {index + 1}
-                    </span>
-                    {section.title}
-                  </button>
-                );
-              })}
-            </div>
+            {modelSidebar ? (
+              <div id="youtube-model-sidebar-slot" data-testid="youtube-model-sidebar-slot" />
+            ) : (
+              <>
+                <div data-testid="desktop-section-progress" className="mb-3 rounded-lg border border-[var(--border)] bg-[var(--bg-card)] px-3 py-2.5">
+                  <div className="flex items-center justify-between gap-3 text-[10px] font-bold uppercase tracking-[.14em] text-[var(--text-faint)]">
+                    <span>Page sections</span>
+                    <span>{activeSectionIndex + 1}/{sections.length}</span>
+                  </div>
+                  <div className="mt-2 h-1 overflow-hidden rounded-full bg-[var(--bg-muted)]" aria-hidden="true">
+                    <span className="block h-full bg-[#b00020] transition-[width]" style={{ width: `${sectionProgress}%` }} />
+                  </div>
+                </div>
+                <div className="space-y-2">
+                  {sections.map((section, index) => {
+                    const current = activeSection === section.id;
+                    return (
+                      <button
+                        type="button"
+                        key={section.id}
+                        onClick={() => go(section.id)}
+                        aria-current={current ? "location" : undefined}
+                        className="relative flex min-h-[54px] w-full items-center gap-3 overflow-hidden rounded-md border px-3 py-2 text-left text-xs font-semibold leading-4 transition-all"
+                        style={{
+                          borderColor: current ? RED : "var(--border)",
+                          background: current
+                            ? "color-mix(in srgb, #b00020 9%, var(--bg-card))"
+                            : "var(--bg-card)",
+                          color: current ? "var(--text)" : "var(--text-muted)",
+                        }}
+                      >
+                        {current ? <span className="absolute inset-y-0 left-0 w-1 bg-[#b00020]" /> : null}
+                        <span
+                          className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-[10px] font-bold"
+                          style={{
+                            background: current ? RED : "var(--bg-muted)",
+                            color: current ? "white" : "var(--text-faint)",
+                          }}
+                        >
+                          {index + 1}
+                        </span>
+                        {section.title}
+                      </button>
+                    );
+                  })}
+                </div>
+              </>
+            )}
           </div>
         </aside>
 
