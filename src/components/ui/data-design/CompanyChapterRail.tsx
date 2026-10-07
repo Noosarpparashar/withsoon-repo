@@ -40,7 +40,7 @@ export default function CompanyChapterRail({
   const next = chapters[activeIndex + 1];
   const chapterPosition = ((activeIndex + 1) / chapters.length) * 100;
   const chapterPositionLabel = `Chapter ${activeIndex + 1} of ${chapters.length}`;
-  const chapterAccent = company === "bookmyshow" || company === "whatsapp" ? "#111111" : "#526b82";
+  const chapterAccent = company === "amazon" || company === "bookmyshow" || company === "whatsapp" ? "#111111" : "#526b82";
 
   useEffect(() => {
     const rail = railRef.current;

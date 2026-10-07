@@ -4,10 +4,11 @@ import Link from "next/link";
 import { NETFLIX_ROUTE_REGISTRY } from "@/components/ui/netflix-data-engineering/curriculum";
 import { BOOKMYSHOW_CHAPTERS } from "@/components/ui/bookmyshow-data-engineering/data";
 import { WHATSAPP_CHAPTERS } from "@/components/ui/whatsapp-data-engineering/data";
+import { AMAZON_CHAPTERS } from "@/components/ui/amazon-data-engineering/data";
 
 export const metadata: Metadata = {
   title: "Data Engineering Designs | withsoon",
-  description: "Interactive, chapter-by-chapter data engineering interview designs for Netflix, Uber, YouTube, BookMyShow, and WhatsApp.",
+  description: "Interactive, chapter-by-chapter data engineering interview designs for Netflix, Uber, YouTube, BookMyShow, WhatsApp, and Amazon.",
   alternates: { canonical: "https://withsoon.com" },
 };
 
@@ -17,6 +18,7 @@ const COMPANIES = [
   { name: "YouTube", logo: "/logo-youtube.webp", tagline: "Video analytics and data platform", topics: "Watch time · Creators · Quality", href: "/data-engineering/youtube/start-here", chapters: 9 },
   { name: "BookMyShow", logo: "/logo-bookmyshow.jpg", tagline: "Live-event inventory and ticketing", topics: "Seats · Payments · Flash sales", href: "/data-engineering/bookmyshow/start-here", chapters: BOOKMYSHOW_CHAPTERS.length },
   { name: "WhatsApp", logo: "/logo-whatsapp.png", tagline: "Privacy-safe data at global scale", topics: "Events · Streaming · Lakehouse", href: "/data-engineering/whatsapp/start-here", chapters: WHATSAPP_CHAPTERS.length },
+  { name: "Amazon", logo: "/logo-amazon.svg", tagline: "E-commerce truth at global scale", topics: "Orders · Inventory · Finance", href: "/data-engineering/amazon/start-here", chapters: AMAZON_CHAPTERS.length },
 ] as const;
 
 export default function HomePage() {
@@ -39,10 +41,10 @@ export default function HomePage() {
               <p className="text-[10px] font-bold uppercase tracking-[.18em] text-[#59697a]">Company tracks</p>
               <h2 id="designs-heading" className="mt-2 text-2xl font-bold tracking-[-.035em] sm:text-3xl">Data Engineering Designs</h2>
             </div>
-            <span className="rounded-full border border-[#d6e1eb] bg-white px-3 py-1.5 text-[10px] font-bold text-[#65798b]">5 company tracks</span>
+            <span className="rounded-full border border-[#d6e1eb] bg-white px-3 py-1.5 text-[10px] font-bold text-[#65798b]">6 company tracks</span>
           </div>
 
-          <div className="grid gap-5 md:grid-cols-2 xl:grid-cols-5">
+          <div className="grid gap-5 md:grid-cols-2 xl:grid-cols-3">
             {COMPANIES.map((company) => (
               <Link key={company.name} href={company.href} className="group rounded-[24px] border border-[#d6e1eb] bg-white p-6 shadow-[0_10px_35px_rgba(72,91,108,.06)] transition duration-300 hover:-translate-y-2 hover:border-[#8197aa] hover:shadow-[0_25px_60px_rgba(72,91,108,.16)]">
                 <div className="flex items-start justify-between gap-4">

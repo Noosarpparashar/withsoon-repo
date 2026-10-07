@@ -194,6 +194,59 @@ html {
   }
 }
 
+/* Amazon follows the same intentionally monochrome system as WhatsApp. */
+.amazon-de-page [class*="bg-[#ff9900]"] {
+  background-color: #111111 !important;
+  color: #ffffff !important;
+}
+
+.amazon-de-page [class*="border-l-[#ff9900]"] {
+  border-color: #111111 !important;
+}
+
+.amazon-de-page [class*="bg-[#131a22]"] { background-color: #111111 !important; }
+.amazon-de-page [class*="bg-[#eaeded]"] { background-color: #ededed !important; }
+.amazon-de-page [class*="bg-[#f7f8f8]"] { background-color: #f7f7f7 !important; }
+.amazon-de-page [class*="bg-[#fff3df]"] { background-color: #ededed !important; }
+.amazon-de-page [class*="bg-[#fff8eb]"] { background-color: #f7f7f7 !important; }
+
+.amazon-de-page [class*="border-[#d5d9d9]"] { border-color: #d8d8d8 !important; }
+.amazon-de-page [class*="border-[#ff9900]"],
+.amazon-de-page [class*="border-[#c47b17]"],
+.amazon-de-page [class*="border-[#c6a15b]"],
+.amazon-de-page [class*="border-[#e2bd7c]"] { border-color: #777777 !important; }
+
+.amazon-de-page [class*="border-[#ead3ab]"] { border-color: #d8d8d8 !important; }
+.amazon-de-page [class*="bg-[#e6b66e]"] { background-color: #bdbdbd !important; }
+
+.amazon-de-page [class*="text-[#ffb84d]"] { color: #ffffff !important; }
+.amazon-de-page [class*="text-[#ffca7a]"],
+.amazon-de-page [class*="text-[#f6d8a8]"] { color: #d2d2d2 !important; }
+.amazon-de-page [class*="text-[#b35d00]"] { color: #333333 !important; }
+.amazon-de-page [class*="text-[#131a22]"] { color: #111111 !important; }
+.amazon-de-page [class*="text-[#5b6673]"],
+.amazon-de-page [class*="text-[#515c68]"] { color: #5f5f5f !important; }
+.amazon-de-page [class*="text-[#495463]"],
+.amazon-de-page [class*="text-[#3f4b59]"] { color: #444444 !important; }
+.amazon-de-page [class*="text-[#7a6545]"],
+.amazon-de-page [class*="text-[#8a6c40]"],
+.amazon-de-page [class*="text-[#777]"] { color: #5f5f5f !important; }
+.amazon-de-page [class*="text-[#3f3527]"],
+.amazon-de-page [class*="text-[#6b5a40]"],
+.amazon-de-page [class*="text-[#5f4f36]"] { color: #444444 !important; }
+
+.amazon-de-page [class*="ring-[#ff9900]"] { --tw-ring-color: rgb(0 0 0 / 0.12) !important; }
+.amazon-de-page [class*="rgba(255,153,0"],
+.amazon-de-page [class*="rgba(196,123,23"] { box-shadow: 0 10px 28px rgb(0 0 0 / 0.1) !important; }
+
+.amazon-de-page [class*="border-t-[3px]"][class*="border-[#ff9900]"] {
+  border-color: #777777 !important;
+}
+
+.amazon-de-page [class*="bg-[#ff9900]"][class*="text-[#131a22]"] {
+  color: #ffffff !important;
+}
+
 :is(.netflix-de-page, .uber-de-page, .youtube-de-page, .bookmyshow-de-page, .whatsapp-de-page) section[id] {
   scroll-margin-top: var(--de-anchor-offset) !important;
 }
@@ -293,4 +346,8 @@ button:disabled {
   #trip-reconciliation > button:has(> div > div:first-child:hover) > [role="tooltip"] {
     display: block !important;
   }
+}
+/* Keep small governance labels readable on selected light-grey controls. */
+.amazon-governance [class~="text-[#666]"] {
+  color: #555 !important;
 }

@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="Amazon-inspired commerce mark">
+  <rect width="64" height="64" rx="14" fill="#111111"/>
+  <path d="M18 39 30 13h6l11 26h-7l-2.2-6H27.2L25 39h-7Zm11.4-12h6.2l-3.1-8.6L29.4 27Z" fill="#fff"/>
+  <path d="M16 45.5c8.6 5.8 21 6.7 31.8 1.4" fill="none" stroke="#bdbdbd" stroke-width="3.5" stroke-linecap="round"/>
+  <path d="m45.5 43.8 4.8 1.1-2.7 4" fill="none" stroke="#bdbdbd" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>

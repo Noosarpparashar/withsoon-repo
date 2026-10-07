@@ -3,7 +3,7 @@
 import Image from "next/image";
 import Link from "next/link";
 
-export type DataDesignCompany = "netflix" | "youtube" | "uber" | "bookmyshow" | "whatsapp";
+export type DataDesignCompany = "netflix" | "youtube" | "uber" | "bookmyshow" | "whatsapp" | "amazon";
 
 const COMPANIES = {
   netflix: { name: "Netflix", logo: "/logo-netflix.webp" },
@@ -11,11 +11,12 @@ const COMPANIES = {
   uber: { name: "Uber", logo: "/logo-uber.png" },
   bookmyshow: { name: "BookMyShow", logo: "/logo-bookmyshow.jpg" },
   whatsapp: { name: "WhatsApp", logo: "/logo-whatsapp.png" },
+  amazon: { name: "Amazon", logo: "/logo-amazon.svg" },
 } as const;
 
 export default function DataDesignSwitcher({ current }: { current: DataDesignCompany }) {
   const company = COMPANIES[current];
-  const monochrome = current === "whatsapp" || current === "bookmyshow";
+  const monochrome = current === "whatsapp" || current === "bookmyshow" || current === "amazon";
 
   return (
     <Link
@@ -25,7 +26,7 @@ export default function DataDesignSwitcher({ current }: { current: DataDesignCom
       data-testid="data-design-switcher"
       className={`group flex h-11 w-11 shrink-0 items-center justify-center rounded-xl border border-[var(--border)] bg-[var(--bg-card)] text-left outline-none transition-colors hover:bg-[var(--bg-muted)] focus-visible:ring-2 focus-visible:ring-offset-2 xl:w-[164px] xl:justify-start xl:gap-2.5 xl:px-3 ${monochrome ? "hover:border-[#777] focus-visible:ring-[#111]" : "hover:border-[#526b82] focus-visible:ring-[#526b82]"}`}
     >
-      <Image src={company.logo} alt="" width={28} height={28} className={`h-6 w-6 rounded-md object-contain sm:h-7 sm:w-7 ${current === "whatsapp" ? "grayscale" : ""}`} />
+      <Image src={company.logo} alt="" width={28} height={28} className={`h-6 w-6 rounded-md object-contain sm:h-7 sm:w-7 ${current === "whatsapp" || current === "amazon" ? "grayscale" : ""}`} />
       <span className="hidden xl:block">
         <span className="block text-[8px] font-bold uppercase tracking-[.16em] text-[var(--text-faint)]">Data Engineering</span>
         <span className="mt-0.5 flex items-center gap-1 text-xs font-semibold leading-none text-[var(--text)]">
