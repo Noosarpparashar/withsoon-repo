@@ -5,6 +5,7 @@ import { YOUTUBE_READY_TABS } from "@/components/ui/youtube-data-engineering/dat
 import { BOOKMYSHOW_CHAPTERS } from "@/components/ui/bookmyshow-data-engineering/data";
 import { WHATSAPP_CHAPTERS } from "@/components/ui/whatsapp-data-engineering/data";
 import { AMAZON_CHAPTERS } from "@/components/ui/amazon-data-engineering/data";
+import { INTERVIEW_QUESTION_CATEGORIES } from "@/lib/interviewQuestionBank";
 
 const BASE = "https://withsoon.com";
 
@@ -17,6 +18,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
     ...BOOKMYSHOW_CHAPTERS.map((chapter) => `/data-engineering/bookmyshow/${chapter.id}`),
     ...WHATSAPP_CHAPTERS.map((chapter) => `/data-engineering/whatsapp/${chapter.id}`),
     ...AMAZON_CHAPTERS.map((chapter) => `/data-engineering/amazon/${chapter.id}`),
+    ...INTERVIEW_QUESTION_CATEGORIES.map((category) => `/interview-questions/${category.slug}`),
   ];
 
   return [

@@ -5,6 +5,8 @@ import { NETFLIX_ROUTE_REGISTRY } from "@/components/ui/netflix-data-engineering
 import { BOOKMYSHOW_CHAPTERS } from "@/components/ui/bookmyshow-data-engineering/data";
 import { WHATSAPP_CHAPTERS } from "@/components/ui/whatsapp-data-engineering/data";
 import { AMAZON_CHAPTERS } from "@/components/ui/amazon-data-engineering/data";
+import InterviewQuestionBank from "@/components/ui/interview-question-bank/InterviewQuestionBank";
+import { INTERVIEW_QUESTION_CATEGORIES } from "@/lib/interviewQuestionBank";
 
 export const metadata: Metadata = {
   title: "Data Engineering Designs | withsoon",
@@ -73,6 +75,7 @@ export default function HomePage() {
             <div className="mt-7 flex flex-wrap gap-3">
               <a href="#practice-notebooks" className="inline-flex items-center rounded-xl border border-[#cbd7e2] bg-white px-5 py-3 text-sm font-bold text-[#263646] transition hover:-translate-y-0.5 hover:border-[#8197aa] hover:bg-[#f7fafc]">Get practice notebooks</a>
               <a href="#data-engineering-designs" className="inline-flex items-center rounded-xl border border-[#cbd7e2] bg-white px-5 py-3 text-sm font-bold text-[#263646] transition hover:-translate-y-0.5 hover:border-[#8197aa] hover:bg-[#f7fafc]">Explore designs</a>
+              <a href="#interview-question-bank" className="inline-flex items-center rounded-xl border border-[#cbd7e2] bg-white px-5 py-3 text-sm font-bold text-[#263646] transition hover:-translate-y-0.5 hover:border-[#8197aa] hover:bg-[#f7fafc]">Interview Q&amp;A</a>
             </div>
           </div>
         </header>
@@ -152,6 +155,10 @@ export default function HomePage() {
             ))}
           </div>
         </section>
+
+        <InterviewQuestionBank
+          categories={INTERVIEW_QUESTION_CATEGORIES}
+        />
       </div>
     </div>
   );

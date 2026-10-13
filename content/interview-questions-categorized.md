@@ -1,0 +1,517 @@
+# Big Data and Distributed Systems
+
+- What is Big Data?
+  - What are the five V's of Big Data, and what are some real production examples of each?
+- What is the difference between OLTP and OLAP systems?
+- What problems does distributed computing solve?
+- What is the CAP theorem, and how does it apply to modern data systems?
+  - During a network partition, do you block requests to preserve consistency or continue serving requests and synchronize later?
+- What is the difference between horizontal and vertical scaling, and what are the fundamental limits of scaling distributed systems?
+  - Why doesn't doubling the number of machines always double performance?
+  - Can horizontal scaling actually make a system slower?
+  - What are the biggest scalability bottlenecks in distributed systems?
+  - What is the difference between scalability and elasticity?
+  - Does horizontal scaling automatically provide fault tolerance?
+  - How would you decide whether to add more machines or increase the size of existing machines?
+  - What is the difference between strong scaling and weak scaling?
+- What are the different Big Data processing paradigms, and how do batch processing, streaming, micro-batching, Lambda architecture, and Kappa architecture differ?
+  - What is the fundamental difference between batch and streaming?
+  - Is streaming always faster than batch processing?
+  - What is the difference between event time and processing time?
+  - What are windows and watermarks?
+  - What is stateful versus stateless stream processing?
+  - What is backpressure in streaming?
+  - What is the biggest challenge with Lambda architecture?
+  - What is the biggest limitation of Kappa architecture?
+  - Does Kappa architecture mean that batch processing cannot be performed?
+- How do distributed systems handle failures, and what fundamental mechanisms make large-scale distributed computing reliable?
+  - What types of failures can happen in a distributed system?
+  - How do distributed systems detect node failures?
+  - What is the difference between replication and checkpointing?
+  - What is the difference between a checkpoint and a backup?
+  - What happens if a worker fails before its checkpoint is saved?
+  - What is the difference between at-most-once, at-least-once, and exactly-once processing?
+  - What is idempotency, and why is it important?
+  - How should retries be implemented?
+  - What is split brain, and how do you prevent it?
+  - What is the difference between fault tolerance and high availability?
+  - What happens if an entire data center or cloud region fails?
+  - How do you prevent cascading failures?
+- What is MapReduce, how does it work internally, and why was it fundamental to the evolution of Big Data processing?
+  - Why is the shuffle phase needed in MapReduce?
+  - Why is shuffling expensive?
+  - What is the difference between a mapper, reducer, partitioner, and combiner?
+  - Does every MapReduce job need a reducer?
+  - What happens if a mapper or reducer fails?
+  - What is data locality, and why was it important in Hadoop?
+  - What happens if one key has significantly more records than other keys?
+  - Why is traditional MapReduce slower for iterative workloads?
+  - What is the difference between MapReduce and distributed processing in general?
+  - What are the biggest limitations of traditional Hadoop MapReduce?
+
+# Apache Spark Fundamentals and Architecture
+
+- What is Apache Spark?
+  - How is Spark different from Hadoop MapReduce?
+  - Why is Spark faster than Hadoop MapReduce?
+- What is Spark's architecture?
+  - What are the responsibilities of the Driver, Executors, and Cluster Manager?
+  - Where does each Spark component run?
+  - What happens if the Driver fails?
+- What happens internally when you call `spark-submit`?
+- What is an RDD?
+  - What are the key properties of an RDD?
+- What are the differences among RDDs, DataFrames, and Datasets?
+  - When would you use each one?
+- What are transformations and actions in Spark?
+  - What are some examples of transformations and actions?
+  - What is a Spark action?
+- What is lazy evaluation in Spark?
+  - Why is lazy evaluation important?
+- What is a DAG in Spark?
+  - What is the role of the DAG Scheduler?
+  - Does every Spark transformation create a new stage?
+  - What is the difference between a DAG and lineage?
+  - What is the difference between a Spark DAG and a Spark SQL execution plan?
+  - Can you see the DAG in Spark?
+  - How can you reduce the number of stages?
+  - Does caching break the DAG?
+- What is a Spark job?
+- What is a Spark stage?
+- What is a Spark task?
+  - How are jobs, stages, and tasks related?
+  - Can you explain jobs, stages, and tasks with an example?
+- What are narrow and wide transformations?
+  - What are some examples of each?
+- What is lineage in Spark?
+  - How does lineage provide fault tolerance?
+- How does Spark handle fault tolerance?
+  - How does Spark recover from a failure?
+  - What happens when a Spark executor dies?
+- If a read operation is lazy, how does Spark detect an incorrect file path?
+  - When does Spark validate an input path?
+  - Why can schema inference or file listing raise an error before an action runs?
+
+# Spark Partitioning, Shuffle, Joins, and Performance
+
+- What is a shuffle in Spark?
+  - Which Spark operations cause a shuffle?
+  - What happens internally during a shuffle?
+  - Why is a shuffle expensive?
+  - How can you minimize shuffle in Spark?
+- Why is `reduceByKey` generally better than `groupByKey`?
+- What is partitioning in Spark?
+  - Why does partitioning matter?
+  - How does Spark use partitions internally?
+  - How does Spark determine the default number of partitions?
+- How do you decide the number of Spark partitions?
+  - How do you reconcile the CPU-core rule with the target-partition-size rule?
+  - How many tasks can a cluster execute efficiently at once?
+  - How large should each task be to avoid out-of-memory errors and slow execution?
+  - Why are roughly 100–200 MB partitions commonly targeted?
+  - If a cluster has only 40 cores, is using 8,000 partitions wasteful?
+  - What happens when there are too few partitions?
+  - What happens when there are too many partitions?
+- What are shuffle partitions?
+  - How do you decide `spark.sql.shuffle.partitions`?
+  - What benefits do correctly sized shuffle partitions provide?
+  - What happens when you increase the number of shuffle partitions?
+  - What happens when you decrease the number of shuffle partitions?
+- What is the difference between `repartition` and `coalesce`?
+  - When should you use each one?
+- What is a broadcast join?
+  - When should you use a broadcast join?
+  - How would you optimize a join between a huge table and a small table?
+- What are broadcast variables, and when should you use them?
+  - Are broadcast variables copied once per task or once per executor?
+  - Can you modify a broadcast variable after creating it?
+  - What happens if a broadcast variable is very large?
+  - What happens when a new executor joins the application?
+  - How do you remove broadcast variables from memory?
+  - What is the difference between a broadcast variable and an accumulator?
+  - When should you force a broadcast join?
+  - Can broadcasting improve performance when there is no join?
+- How does Spark handle joins?
+  - What join types and join strategies are available in Spark?
+  - What is the difference between a broadcast hash join and a sort-merge join?
+  - What happens when both sides of a join are very large?
+  - How does Spark decide which join strategy to use?
+  - What happens when the broadcast side is too large?
+  - What is the difference between a left anti join and a left semi join?
+  - Can joining two tables increase the row count?
+  - How does Spark handle null join keys?
+  - What is salting in Spark joins?
+  - Does repartitioning both DataFrames by the join key eliminate shuffle?
+  - What are broadcast join hints?
+  - What is dynamic partition pruning?
+  - How do stream-stream joins work in Structured Streaming?
+- What causes data skew in Spark?
+  - How do you detect skew in the Spark UI and in key distributions?
+  - How do salting, Adaptive Query Execution, broadcast joins, and custom partitioning help fix skew?
+  - If salting only adds a column, how does it fix skew without an explicit `repartition` call?
+  - Where does Spark actually repartition salted data?
+- What is speculative execution in Spark?
+  - Why does Spark need speculative execution?
+  - When should you use speculative execution?
+  - When should you not use speculative execution?
+- How would you debug a Spark job that is running very slowly in production?
+  - Which Spark UI metrics and execution-plan details would you inspect first?
+- What could cause one executor to run much longer than the others?
+- Why can a Spark job become extremely slow after a `groupBy`?
+- Why might the same Spark job have different performance on different runs?
+- Why might a Spark job work on small data but fail on large data?
+- What causes out-of-memory errors in Spark executors?
+  - How do you fix executor out-of-memory errors?
+- What is the small-files problem?
+  - Why are many small files bad for Spark?
+  - How do you read many small files efficiently?
+  - How do you reduce or compact small output files?
+- What does `spark.sql.files.maxPartitionBytes` do?
+  - Why is 128 MB a common value?
+  - When should you change it?
+- How do you optimize a slow Spark job in production?
+- What Spark configurations should be tuned when the data is huge but the cluster is small?
+  - How do you limit the amount of data processed at one time?
+  - What exactly is being limited?
+
+# Spark Memory, Serialization, Caching, and Reliability
+
+- What does serialization mean?
+  - Why must distributed systems convert objects to bytes?
+- What does deserialization mean?
+- Why does Spark need serialization and deserialization?
+- Why are serialization and deserialization expensive?
+- What is the difference between Java serialization and Kryo serialization?
+  - When does Kryo provide the most benefit?
+  - When might Kryo not be the right choice?
+- Why should Kryo classes be registered?
+- What does verbose serialized output mean?
+  - Why is verbose output harmful to Spark performance?
+- What is the difference between `cache` and `persist`?
+  - What does `cache()` do?
+  - What does `persist()` do?
+  - Where is cached or persisted data stored?
+  - What happens internally when a dataset is cached or persisted?
+  - When should you use `cache()`?
+  - When should you use `persist()`?
+  - What is the difference among the persistence storage levels?
+- What does storing Spark data in memory or on disk mean?
+  - What exactly is stored?
+  - What happens when the data is not cached or persisted?
+- How does Spark manage memory?
+- What is checkpointing in Spark?
+  - When should you use checkpointing?
+- How should serialization and garbage collection be tuned in Spark?
+
+# Spark SQL, DataFrames, Data Formats, and Internals
+
+- What is Spark SQL?
+  - How is Spark SQL different from Hive?
+  - Are SQL queries faster than equivalent DataFrame operations?
+  - Can Spark SQL query Hive tables?
+  - Does Spark SQL require a Hive Metastore?
+  - What is the difference between temporary views and permanent tables?
+  - Is Spark SQL always faster than Hive?
+- What is the difference between Spark SQL and the DataFrame API?
+  - Do Spark SQL and the DataFrame API use the same execution engine?
+  - Do they have different performance characteristics?
+- What is the Catalyst Optimizer?
+  - Why is Catalyst powerful?
+  - What happens in the unresolved, analyzed, optimized logical, and physical plan stages?
+- What is Apache Spark Tungsten?
+  - Why was Tungsten needed?
+  - How do off-heap memory, binary processing, cache-friendly layouts, and whole-stage code generation improve performance?
+- What is the difference between rule-based optimization and cost-based optimization in Spark?
+  - What is the difference between Catalyst and cost-based optimization?
+  - Why is cost-based optimization needed when Spark already has rule-based optimization?
+  - What happens when table statistics are outdated?
+  - Does Spark automatically collect every statistic it needs?
+  - How do you inspect Spark's optimization decisions?
+  - Does Adaptive Query Execution replace cost-based optimization?
+  - What is join reordering?
+  - What if Spark chooses a poor join strategy despite CBO and AQE?
+- What are predicate pushdown and column pruning?
+  - Does predicate pushdown work with every file format?
+  - What is the difference between predicate pushdown and partition pruning?
+  - Does predicate pushdown eliminate the need for a filter operator?
+  - Can a UDF prevent predicate pushdown?
+  - Does column pruning work on nested data?
+  - Can SQL structure improve predicate pushdown?
+  - Does selecting fewer columns always make a query faster?
+  - How does predicate pushdown work with JDBC?
+  - What is the difference between predicate pushdown and dynamic partition pruning?
+- How does Spark handle schema evolution?
+  - What happens when a new column is added to a Parquet dataset?
+  - Is schema evolution automatically enabled in Spark?
+  - What happens when a column's data type changes?
+  - How should a column rename be handled?
+  - What is the difference between backward and forward schema compatibility?
+  - How do you handle schema evolution in streaming jobs?
+  - What happens when a source column is deleted?
+  - How do you handle schema drift in JSON data?
+  - What is the difference between schema-on-read and schema-on-write?
+  - What is the biggest risk in schema evolution?
+- What are Spark UDFs?
+  - Why should UDFs be avoided when built-in functions can be used?
+  - Are Scala UDFs faster than Python UDFs?
+  - Are Pandas UDFs always faster than regular Python UDFs?
+  - What role does Apache Arrow play in Pandas UDFs?
+  - Do UDFs completely disable Catalyst optimization?
+  - When is using a UDF justified?
+  - Can a UDF cause executor out-of-memory errors?
+  - Can a UDF be used in a Spark SQL query?
+  - What happens when a UDF throws an exception?
+  - What is a deterministic versus non-deterministic UDF?
+  - What is the difference between a UDF and a UDAF?
+  - What are the best alternatives to UDFs?
+- How does Spark handle nulls and missing data?
+  - What is the difference between null, NaN, an empty string, and zero?
+  - Does COUNT(*) include rows containing null values?
+  - What happens when every value in a numeric column is null?
+  - How does Spark handle null values in joins?
+  - Can null values cause data skew?
+  - What is the difference between ordinary equality and null-safe equality in Spark?
+  - What is the difference between coalesce() and fillna()?
+  - Does Spark automatically convert empty strings to null?
+  - How does ANSI mode affect null handling?
+  - How would you measure missing data in a production pipeline?
+- What are the differences among Parquet, ORC, and Avro?
+  - When should each format be used?
+  - Why is Parquet generally better for OLAP than Avro?
+  - Is ORC faster than Parquet?
+  - Which format provides the best compression?
+  - What is the difference between Parquet row groups and ORC stripes?
+  - Do Parquet and ORC support schema evolution?
+  - Why is Avro popular in Kafka and CDC applications?
+  - Does every Avro message contain its complete schema?
+  - Does Parquet always read fewer bytes than Avro?
+  - How does file size affect performance?
+  - Which format would you select for a new enterprise data lake?
+- How does Spark handle corrupt CSV or Parquet files?
+  - How should a pipeline isolate and process bad records?
+- What output format is best for Spark workloads?
+
+# Spark Streaming and Kafka Integration
+
+- What is the difference between Spark Streaming and Structured Streaming?
+- How does Spark Structured Streaming consume data from Kafka?
+  - How are Kafka partitions mapped to Spark tasks?
+- What is the difference between the receiver-based and direct Kafka approaches in Spark Streaming?
+- Where are Kafka offsets stored in Spark Streaming?
+- How does Spark read from Kafka?
+- How do you achieve end-to-end exactly-once processing with Kafka and Spark?
+  - What must the source, Spark processing layer, and sink each guarantee?
+  - When is an idempotent or transactional sink required?
+- What happens if a Spark job fails in the middle of a batch?
+  - What happens to uncommitted Kafka offsets after restart?
+  - Why can duplicate output still occur?
+- What is late data?
+  - How do you handle late data in Structured Streaming?
+  - What happens when late data arrives after a window is created?
+- What is watermarking?
+  - Why are watermarks needed?
+  - How does a watermark affect state cleanup and late-event acceptance?
+- What is backpressure?
+  - Why is backpressure needed?
+  - Where is backpressure supported in Spark Streaming and Structured Streaming?
+  - How does Structured Streaming throttle Kafka or file ingestion?
+- What causes lag in a Kafka and Spark pipeline?
+  - How do you reduce that lag?
+- How do you monitor Kafka and Spark together?
+- How do you process a huge dataset safely when the Spark cluster is small?
+  - Which ingestion, partitioning, memory, and Adaptive Query Execution settings should be tuned?
+
+# Apache Kafka Fundamentals
+
+- What is Apache Kafka?
+  - Why is Kafka used?
+  - What problem does Kafka solve?
+  - Why is Kafka fast?
+  - How does Kafka achieve high throughput?
+- What is a Kafka topic?
+- What is a Kafka partition?
+  - Why do Kafka partitions exist?
+  - How does Kafka decide which partition receives a record?
+  - How can a producer ensure that all records for the same key, such as a country, go to the same partition?
+- What is a Kafka broker?
+- What is the relationship between brokers, topics, and partitions?
+  - How are partition leaders and replicas distributed across brokers?
+  - How do brokers and partitions scale throughput and storage together?
+  - What happens when there are fewer partitions than brokers?
+  - What happens when there are too many partitions?
+  - What happens to broker load at very high throughput, such as 1 GB per second?
+- What is a Kafka producer?
+  - How does a producer send data to Kafka?
+- What do `acks=0`, `acks=1`, and `acks=all` mean?
+- What is a Kafka consumer group?
+  - What is consumer-group rebalancing?
+- What is a Kafka offset?
+- What is the difference between automatic and manual offset commits?
+- What delivery semantics does Kafka support?
+  - What are the differences among at-most-once, at-least-once, and exactly-once delivery?
+- What is an in-sync replica (ISR)?
+- What happens if a Kafka broker goes down?
+  - How is a new partition leader selected?
+- What is ZooKeeper?
+  - Why did Kafka historically need ZooKeeper?
+  - Which brokers are alive, who leads each partition, who is the controller, and who takes over after a broker failure?
+- What is KRaft?
+  - What changed when Kafka moved from ZooKeeper to KRaft?
+  - What does KRaft do?
+  - Is ZooKeeper still used by Kafka?
+- What is Kafka's retention policy?
+  - How do time-based and size-based retention differ?
+- What is the difference between Kafka and traditional messaging systems?
+
+# Kafka Consumers, Ordering, Reliability, and Schema Evolution
+
+- How many consumers can read from one Kafka partition within a consumer group?
+- How many consumers can consume data produced by one producer?
+- How many producers can write to one Kafka topic?
+- Can one producer send data that is read by multiple consumers?
+- How many consumers can read from one topic?
+- How many consumers can be in one consumer group?
+- What happens when a consumer group has fewer consumers than partitions?
+- What happens when a consumer group has more consumers than partitions?
+- Can one consumer read from multiple topics?
+- Can multiple consumer groups read the same topic independently?
+- How many consumer groups can a topic have?
+- How does Kafka guarantee message ordering?
+  - How do you ensure related messages go to the same partition?
+  - What happens if global ordering is required?
+- What is an idempotent Kafka producer?
+  - How does it contribute to exactly-once semantics?
+- How do you handle schema evolution in Kafka?
+  - How do producers add fields safely?
+  - How do producers remove fields safely?
+  - How do you change a field's data type safely?
+  - How do you prevent older consumers from breaking?
+  - How do Schema Registry compatibility modes affect schema changes?
+- How do you avoid data loss in Kafka?
+- How do you reprocess Kafka data safely?
+- How do you handle backpressure in Kafka consumers?
+- How do you secure Kafka?
+- How do you design a multi-tenant Kafka platform?
+- When would you choose Kafka instead of Pulsar?
+- What are the differences among Kafka Streams, Spark Streaming, and Flink?
+
+# Kafka Scaling, System Design, and Troubleshooting
+
+- How would you design Kafka to handle one million events per second?
+  - How would you size partitions, brokers, replication, producers, consumers, storage, and network capacity?
+- How do you decide the number of Kafka partitions?
+  - How do throughput, consumer parallelism, ordering, future growth, and key distribution affect the decision?
+- How would you design a Kafka-based pipeline that handles approximately 1 GB per second?
+- A producer reports success, but the consumer sees no data. Why?
+- Consumers are running, but consumer lag keeps increasing. Why?
+- One Kafka partition has a large lag while the others are healthy. Why?
+- Kafka messages are duplicated. Why?
+- Why might an exactly-once pipeline still produce duplicates?
+- Why might a Spark job reprocess old Kafka data after a restart?
+- Why might Kafka disk usage keep growing?
+- Why can a broker restart cause temporary unavailability?
+- How do you monitor Kafka throughput, latency, lag, replication, storage, and failures?
+
+# Scala for Data Engineering
+
+- What are the differences among `val`, `var`, `def`, and `lazy val` in Scala?
+- What are case classes?
+  - Why are case classes heavily used in Spark?
+- What are the differences among `map`, `flatMap`, and `foreach`?
+  - How are they used in Spark?
+- What is the difference between mutable and immutable Scala collections?
+
+# AWS and Cloud Data Pipelines
+
+- How would you design an AWS data pipeline using S3, Kafka, Spark, and Redshift or Snowflake?
+- What are the differences among Amazon EMR, AWS Glue, and Databricks?
+- How does the S3 consistency model affect Spark jobs?
+- How do you optimize cost versus performance in AWS data pipelines?
+
+# Data Engineering and End-to-End System Design
+
+- How would you design a real-time fraud-detection pipeline?
+- How would you design a log-ingestion and analytics platform similar to ELK?
+- How would you design a data pipeline for late-arriving events?
+- How would you backfill six months of data without affecting production workloads?
+- How would you design a recommendation system for an e-commerce platform?
+- How would you migrate a 10 TB daily pipeline safely?
+- How would you handle a single bad record that breaks a Spark job?
+- How would you ensure data quality and production monitoring in a data pipeline?
+- What are the trade-offs between batch and streaming architectures?
+
+# Data Modeling
+
+- When would you choose a star schema instead of a snowflake schema, and why?
+- How do you model slowly changing dimensions?
+  - When would you use SCD Type 1, Type 2, or Type 3?
+- How do you model event-based data such as clicks, logs, and transactions?
+- How do you design a data model that supports both real-time and batch analytics?
+- How do you handle many-to-many relationships in analytical models?
+- How do you model semi-structured data such as JSON, Avro, or nested records?
+  - When should data remain nested, and when should it be flattened?
+- How do you design a data model for late-arriving data?
+- How do you model high-cardinality dimensions?
+- How do you model incremental loads and backfills?
+- How do you design a data model that works across multiple source systems?
+
+# Database Design, Normalization, and Scaling
+
+- How do you design a database for a large-scale application?
+  - What is the business domain?
+  - What scale must the system support?
+  - Is the workload read-heavy or write-heavy?
+  - Is strong consistency required?
+  - Is reporting or analytics required?
+  - What are the most frequent queries?
+  - Which columns are commonly used in `WHERE`, `JOIN`, and `ORDER BY` clauses?
+  - Is ACID compliance required?
+  - Which transaction isolation level is appropriate?
+  - Should the system use optimistic or pessimistic locking?
+- What is normalization?
+  - Why is normalization important?
+  - What are 1NF, 2NF, 3NF, and the higher normal forms?
+  - Why is 3NF important?
+  - What should you do after reaching 3NF?
+- What is denormalization?
+  - When should you denormalize a database?
+- In an order-item model, is quantity dependent only on `order_id`?
+  - What does quantity represent in that relationship?
+  - What is the correct functional dependency?
+- How do you choose primary keys?
+  - When should you use natural keys, surrogate keys, UUIDs, or auto-incrementing IDs?
+- How do you design indexes?
+  - How do query patterns influence index design?
+  - When should you use a composite index?
+  - How do too many indexes affect writes?
+- How do you model one-to-many and many-to-many relationships?
+- How do you handle database schema evolution?
+- How do you ensure data consistency?
+  - How do constraints, transactions, isolation levels, and locking contribute to consistency?
+- How do you scale a database?
+  - When should you use vertical scaling, read replicas, partitioning, or sharding?
+- How do you design a database for high availability?
+  - How do replication, failover, backups, and multi-zone deployment remove single points of failure?
+
+# Low-Level Design and Concurrency Scenarios
+
+- How would you design BookMyShow at the low level?
+  - What are its requirements, entities, relationships, database tables, classes, and booking states?
+  - How do you model seat availability separately for each show?
+  - How do you prevent two users from booking the same seat?
+  - How do seat locks expire after a payment failure or timeout?
+  - How do you handle booking and payment failures?
+- Why use Redis-based seat locking?
+  - Why might database-only locking be insufficient at high scale?
+  - Is double booking still possible, and how would you prevent it?
+- How would you design Uber at the low level?
+  - How do you model users, drivers, vehicles, driver locations, rides, and payments?
+  - How do you find and atomically assign a nearby available driver?
+  - How do you prevent two users from receiving the same driver?
+  - How do you handle ride-state transitions, failures, and retries?
+- How would you design an Amazon-like e-commerce platform at the low level?
+  - How do you model products, carts, inventory, orders, payments, and shipments?
+  - Why should stock be reserved instead of reduced immediately when an item is added to a cart?
+  - Why use Redis in the inventory-reservation flow?
+  - How do you prevent overselling during a flash sale?
+  - How do you release reserved inventory after payment failure or timeout?
