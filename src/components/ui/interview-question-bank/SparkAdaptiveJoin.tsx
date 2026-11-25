@@ -1,0 +1,7 @@
+export default function SparkAdaptiveJoin() {
+  return <figure aria-label="AQE changes a planned sort-merge join to broadcast hash join when runtime statistics show Customers is five MiB" className="rounded-2xl border border-neutral-700 bg-[#0b0d10] p-4 text-neutral-200 sm:p-5">
+    <p className="mb-4 text-center font-bold text-white">AQE: revise the join using runtime statistics</p>
+    <div className="grid gap-3 sm:grid-cols-2">{[false,true].map(runtime=><div key={String(runtime)} className={`rounded-xl border p-4 ${runtime ? "border-emerald-400/35 bg-emerald-400/5" : "border-blue-400/35 bg-blue-400/5"}`}><p className="text-center text-sm font-bold text-white">{runtime ? "After runtime filtering" : "Initial estimates"}</p><div className="my-4 space-y-2 text-xs"><p className="rounded-lg border border-neutral-600 p-3">Orders: 500 GiB</p><p className="rounded-lg border border-neutral-600 p-3">Customers: {runtime ? "5 MiB" : "200 MiB"}</p></div><p className={`rounded-lg border p-3 text-center text-xs font-bold ${runtime ? "border-emerald-400/35 text-emerald-300" : "border-blue-400/35 text-blue-300"}`}>{runtime ? "Broadcast Hash Join" : "Sort-Merge Join planned"}</p></div>)}</div>
+    <figcaption className="mt-4 text-xs leading-5 text-neutral-400">Illustrative conversion when the runtime input is eligible for broadcasting. AQE may already have incurred shuffle work before changing the strategy.</figcaption>
+  </figure>;
+}

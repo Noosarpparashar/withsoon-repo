@@ -3,7 +3,7 @@ import { notFound } from "next/navigation";
 import InterviewTopicQuestions from "@/components/ui/interview-question-bank/InterviewTopicQuestions";
 import { BIG_DATA_INTERVIEW_ANSWERS, type InterviewAnswer } from "@/lib/interviewAnswers";
 import { INTERVIEW_QUESTION_CATEGORIES } from "@/lib/interviewQuestionBank";
-import { SPARK_INTERVIEW_ANSWERS } from "@/lib/sparkInterviewAnswers";
+import { getSparkInterviewAnswers } from "@/lib/sparkInterviewAnswers";
 
 const BASE_URL = "https://withsoon.com/interview-questions";
 
@@ -49,13 +49,13 @@ export default async function InterviewTopicPage({
   const answers: Record<string, InterviewAnswer> | undefined = category.slug === "big-data"
     ? BIG_DATA_INTERVIEW_ANSWERS
     : category.slug === "spark"
-      ? SPARK_INTERVIEW_ANSWERS
+      ? getSparkInterviewAnswers()
       : undefined;
 
   return (
     <div className="min-h-[calc(100vh-56px)] bg-[#f4f4f4] text-[#171717]">
-      <div className="w-full px-4 py-8 sm:px-6 sm:py-12 lg:px-8">
-        <div className="lg:grid lg:grid-cols-[minmax(0,620px)_minmax(0,1fr)] lg:gap-8">
+      <div className="w-full px-4 py-8 sm:px-6 sm:py-12 lg:px-8 lg:py-4">
+        <div className="lg:grid lg:h-[calc(100dvh-var(--site-nav-height)-2rem)] lg:min-h-0 lg:grid-cols-[minmax(0,620px)_minmax(0,1fr)] lg:gap-8">
           <InterviewTopicQuestions title={category.title} questions={category.questions} answers={answers} />
         </div>
       </div>

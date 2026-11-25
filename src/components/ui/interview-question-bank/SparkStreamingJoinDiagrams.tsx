@@ -1,0 +1,14 @@
+export default function SparkStreamingJoinDiagram({ watermark = false }: { watermark?: boolean }) {
+  return <figure aria-label={watermark ? "Maximum event time 10:30 minus fifteen minute delay gives an illustrative watermark of 10:15" : "Impression and click streams keep buffered state and match incoming events against the opposite stream"} className="rounded-2xl border border-neutral-700 bg-[#0b0d10] p-4 text-neutral-200 sm:p-5">
+    <p className="mb-4 text-center font-bold text-white">{watermark ? "Event-time watermarking" : "Stream-stream join architecture"}</p>
+    {watermark ? <>
+      <div className="grid gap-3 sm:grid-cols-2"><div className="rounded-xl border border-amber-400/35 bg-amber-400/5 p-4 text-center"><p className="text-xs text-neutral-300">Illustrative watermark</p><p className="mt-2 text-xl font-bold text-amber-300">10:15</p></div><div className="rounded-xl border border-blue-400/35 bg-blue-400/5 p-4 text-center"><p className="text-xs text-neutral-300">Maximum observed event time</p><p className="mt-2 text-xl font-bold text-blue-300">10:30</p></div></div>
+      <p className="mt-4 rounded-lg border border-neutral-600 p-3 text-center text-sm">10:30 − 15-minute delay = 10:15</p>
+      <p className="mt-3 text-xs leading-5 text-neutral-300">Events older than the effective watermark may be too late. State cleanup also depends on the opposite input and the join time range.</p>
+    </> : <>
+      <div className="grid grid-cols-2 gap-3">{["Impressions","Clicks"].map(s=><div key={s} className="text-center"><p className="rounded-xl border border-blue-400/35 bg-blue-400/5 p-3 text-sm font-bold">{s} stream</p><div aria-hidden="true" className="py-2">↓</div><p className="rounded-xl border border-neutral-600 p-3 text-xs">Buffered {s.toLowerCase()} state</p></div>)}</div>
+      <div aria-hidden="true" className="py-3 text-center">↓</div><div className="rounded-xl border border-amber-400/35 bg-amber-400/5 p-4 text-center"><p className="text-sm font-bold text-amber-300">Match against the opposite stream’s state</p><p className="mt-2 text-xs leading-5">Same ad_id · Click from impression time through +10 minutes</p></div><div aria-hidden="true" className="py-3 text-center">↓</div><p className="rounded-xl border border-emerald-400/35 bg-emerald-400/5 p-3 text-center text-sm font-bold text-emerald-300">Emit matching rows</p><p className="mt-3 rounded-lg border border-neutral-700 p-3 text-center text-xs">Watermarks + time constraints → remove obsolete state</p>
+    </>}
+    <figcaption className="mt-4 text-xs leading-5 text-neutral-400">{watermark ? "Conceptual per-input watermark. Effective multi-stream watermark policy and batch progress affect when state can be evicted; this is not a wall-clock expiry timer." : "Conceptual inner join. State is maintained across micro-batches and recovered using checkpoints; outer joins can emit unmatched rows after the required watermark progress."}</figcaption>
+  </figure>;
+}

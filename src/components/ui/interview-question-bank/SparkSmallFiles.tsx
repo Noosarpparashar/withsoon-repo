@@ -1,0 +1,7 @@
+export default function SparkSmallFiles() {
+  return <figure aria-label="Approximately one hundred GiB stored as one hundred thousand tiny files versus four hundred compacted files" className="rounded-2xl border border-neutral-700 bg-[#0b0d10] p-4 text-neutral-200 sm:p-5">
+    <p className="mb-4 text-center font-bold text-white">Same data volume · different file-handling cost</p>
+    <div className="grid gap-3 sm:grid-cols-2">{[false,true].map(compacted=><div key={String(compacted)} className={`rounded-xl border p-4 text-center ${compacted ? "border-emerald-400/35 bg-emerald-400/5" : "border-amber-400/35 bg-amber-400/5"}`}><p className="text-sm font-bold text-white">{compacted ? "Compacted files" : "Small files"}</p><div aria-hidden="true" className={`my-4 grid gap-1 ${compacted ? "grid-cols-4" : "grid-cols-8"}`}>{Array.from({length:compacted ? 8 : 40},(_,i)=><span key={i} className={`rounded-sm border ${compacted ? "h-8 border-emerald-400/40 bg-emerald-400/15" : "h-4 border-amber-400/40 bg-amber-400/15"}`} />)}</div><p className="text-xl font-bold">{compacted ? "400 files" : "100,000 files"}</p><p className="mt-2 text-xs text-neutral-300">{compacted ? "256 MiB each" : "≈1 MiB each"}</p></div>)}</div>
+    <figcaption className="mt-4 text-xs leading-5 text-neutral-400">Approximate comparison near 100 GiB total; icons represent file populations, not individual files. Spark can pack multiple small files into one scan task, but still has to discover and open them.</figcaption>
+  </figure>;
+}

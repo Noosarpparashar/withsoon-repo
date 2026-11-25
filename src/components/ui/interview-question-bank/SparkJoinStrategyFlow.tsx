@@ -1,0 +1,13 @@
+export default function SparkJoinStrategyFlow({ merge = false, huge = false, hinted = false }: { merge?: boolean; huge?: boolean; hinted?: boolean }) {
+  return <figure aria-label={merge ? "Orders and Transactions shuffle by order ID, sort corresponding partitions, then merge matching keys" : "Small Customers table broadcasts to executors for local hash joins with Orders partitions"} className="rounded-2xl border border-neutral-700 bg-[#0b0d10] p-4 text-neutral-200 sm:p-5">
+    <p className="mb-4 text-center font-bold text-white">{merge ? "Sort-Merge Join" : hinted ? "Broadcast join with an explicit hint" : "Broadcast Hash Join"}</p>
+    {merge ? <>
+      <div className="grid grid-cols-2 gap-3">{(huge ? ["Orders · 1 TiB","Transactions · 800 GiB"] : ["Orders · 500 GiB","Transactions · 300 GiB"]).map(t=><div key={t} className="text-center"><p className="rounded-lg border border-blue-400/35 bg-blue-400/5 p-3 text-xs font-bold">{t}</p><div aria-hidden="true" className="py-2">↓</div><p className="rounded-lg border border-amber-400/30 bg-amber-400/5 p-3 text-xs text-amber-200">Shuffle by order_id</p><div aria-hidden="true" className="py-2">↓</div><p className="rounded-lg border border-neutral-600 p-3 text-xs">Sort each partition by key</p></div>)}</div>
+      <div aria-hidden="true" className="py-3 text-center">↓</div><p className="rounded-xl border border-emerald-400/35 bg-emerald-400/5 p-4 text-center text-sm font-bold text-emerald-300">Merge corresponding sorted inputs → Joined rows</p>
+    </> : <>
+      <p className="rounded-xl border border-amber-400/35 bg-amber-400/5 p-3 text-center text-sm font-bold text-amber-200">Customers · {hinted ? "50" : "5"} MiB · {hinted ? "BROADCAST hint" : "Broadcast relation"}</p><p className="py-3 text-center text-xs">Distribute small side to executors ↓</p>
+      <div className="grid gap-3 sm:grid-cols-3">{[1,2,3].map(n=><div key={n} className="rounded-xl border border-neutral-700 p-3 text-center text-xs"><p className="font-bold text-white">Executor {n}</p><p className="mt-3 rounded-lg border border-blue-400/30 p-2">Orders partitions</p><p className="py-2 text-neutral-400">Probe Customers hash relation</p><p className="rounded-lg border border-emerald-400/30 bg-emerald-400/5 p-2 text-emerald-300">Joined rows</p></div>)}</div>
+    </>}
+    <figcaption className="mt-4 text-center text-xs leading-5 text-neutral-400">{merge ? "Conceptual equi-join. Compatible existing partitioning or ordering can avoid exchanges or sorting. Sorting may spill to disk." : "Orders total 500 GiB. Three executors shown for illustration. The join avoids a join-key shuffle of Orders; broadcast transfer still uses the network."}</figcaption>
+  </figure>;
+}

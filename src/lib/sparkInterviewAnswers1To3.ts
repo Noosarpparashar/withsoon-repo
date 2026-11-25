@@ -237,7 +237,29 @@ val completedOrderCount = filtered.count()`,
   }],
 };
 
+SPARK_INTERVIEW_ANSWERS_1_TO_3["What is Apache Spark?"] = {
+  summary: "Apache Spark is an open-source, distributed, general-purpose data processing engine designed to process large volumes of data efficiently across multiple machines using parallel computing.",
+  paragraphs: [
+    "Spark supports batch processing, streaming, SQL analytics, machine learning, and graph processing.",
+    "It provides high-level APIs in Python, Scala, Java, R, and SQL.",
+  ],
+  sections: [{
+    heading: "Key characteristics",
+    points: [
+      "Distributed computing: Processes large datasets across multiple machines in a cluster.",
+      "Parallel processing: Divides computation into tasks that can execute simultaneously.",
+      "In-memory processing: Supports caching and reusing intermediate data in memory, reducing repeated disk I/O.",
+      "Lazy evaluation: Defers execution of transformations until an action triggers computation, enabling optimization.",
+      "Fault tolerance: Can recover lost computations through mechanisms such as lineage-based recomputation and task retries.",
+      "Scalability: Handles growing data volumes by utilizing additional computing resources.",
+      "Unified processing: Supports batch, streaming, SQL, and machine learning within a single framework.",
+    ],
+  }],
+  takeaway: "Apache Spark is an open-source, distributed data processing engine designed for large-scale data processing. It distributes data and computation across multiple machines and executes tasks in parallel. Spark supports batch processing, streaming, SQL analytics, and machine learning. Its key features include in-memory computation, lazy evaluation, fault tolerance, and horizontal scalability. Spark is widely used in data engineering for building scalable ETL pipelines, processing large datasets, and performing distributed analytics.",
+};
+
 for (const [question, codeBlocks] of Object.entries(CODE_EXAMPLES_1_TO_3)) {
+  if (question === "What is Apache Spark?") continue;
   const answer = SPARK_INTERVIEW_ANSWERS_1_TO_3[question];
   if (answer) SPARK_INTERVIEW_ANSWERS_1_TO_3[question] = { ...answer, codeBlocks };
 }

@@ -1,7 +1,19 @@
 "use client";
 
 import Link from "next/link";
-import { useMemo, useState } from "react";
+import SparkMapReduceAnswer from "./SparkMapReduceAnswer";
+import SparkPerformanceAnswer from "./SparkPerformanceAnswer";
+import SparkArchitectureAnswer from "./SparkArchitectureAnswer";
+import SparkResponsibilitiesAnswer from "./SparkResponsibilitiesAnswer";
+import SparkComponentLocationsAnswer from "./SparkComponentLocationsAnswer";
+import FormattedSparkAnswer from "./FormattedSparkAnswer";
+import driverFailureContent from "@/lib/sparkDriverFailureAnswer.json";
+import sparkSubmitContent from "@/lib/sparkSubmitAnswer.json";
+import sparkRddContent from "@/lib/sparkRddAnswer.json";
+import sparkRddPropertiesContent from "@/lib/sparkRddPropertiesAnswer.json";
+import sparkAbstractionsContent from "@/lib/sparkAbstractionsAnswer.json";
+import sparkAbstractionUseCasesContent from "@/lib/sparkAbstractionUseCasesAnswer.json";
+import { useEffect, useMemo, useRef, useState } from "react";
 import type { InterviewAnswer, InterviewAnswerCodeBlock } from "@/lib/interviewAnswers";
 
 type InterviewQuestion = {
@@ -80,6 +92,52 @@ function AnswerCodeBlock({ block }: { block: InterviewAnswerCodeBlock }) {
 }
 
 function AnswerView({ question, answer }: { question: string; answer: InterviewAnswer }) {
+  if (answer.formattedContent) return <FormattedSparkAnswer content={answer.formattedContent} />;
+  if (question === "When would you use each one?") return <FormattedSparkAnswer content={sparkAbstractionUseCasesContent} />;
+  if (question === "What are the differences among RDDs, DataFrames, and Datasets?") return <FormattedSparkAnswer content={sparkAbstractionsContent} />;
+  if (question === "What are the key properties of an RDD?") return <FormattedSparkAnswer content={sparkRddPropertiesContent} />;
+  if (question === "What is an RDD?") return <FormattedSparkAnswer content={sparkRddContent} />;
+  if (question === "What happens internally when you call spark-submit?") return <FormattedSparkAnswer content={sparkSubmitContent} />;
+  if (question === "What happens if the Driver fails?") return <FormattedSparkAnswer content={driverFailureContent} />;
+  if (question === "Where does each Spark component run?") return <SparkComponentLocationsAnswer />;
+  if (question === "What are the responsibilities of the Driver, Executors, and Cluster Manager?") return <SparkResponsibilitiesAnswer />;
+  if (question === "What is Spark's architecture?") return <SparkArchitectureAnswer />;
+  if (question === "Why is Spark faster than Hadoop MapReduce?") return <SparkPerformanceAnswer />;
+  if (question === "How is Spark different from Hadoop MapReduce?") return <SparkMapReduceAnswer />;
+  if (question === "What is Apache Spark?") return (
+    <article className="overflow-hidden bg-white">
+      <header className="bg-[#171717] px-5 py-8 text-white sm:px-7">
+        <h2 className="text-2xl font-black tracking-tight sm:text-3xl">{question}</h2>
+      </header>
+      <div className="space-y-8 px-5 py-6 sm:px-7 sm:py-8">
+        <section aria-label="Overview" className="space-y-3">
+          <p className="text-[15px] font-medium leading-7 text-neutral-800">{answer.summary}</p>
+          {answer.paragraphs?.map((paragraph) => <p key={paragraph} className="text-sm leading-6 text-neutral-600">{paragraph}</p>)}
+        </section>
+        {answer.sections?.map((section) => (
+          <section key={section.heading}>
+            <h3 className="mb-4 text-xs font-bold uppercase tracking-[.14em] text-neutral-500">{section.heading}</h3>
+            <ul className="grid gap-3 sm:grid-cols-2">
+              {section.points?.map((point, index) => {
+                const separator = point.indexOf(":");
+                return (
+                  <li key={point} className="rounded-xl border border-neutral-200 bg-neutral-50 p-4">
+                    <span className="mb-3 inline-flex h-6 w-6 items-center justify-center rounded-md bg-white font-mono text-[10px] font-bold text-neutral-500 ring-1 ring-neutral-200" aria-hidden="true">{String(index + 1).padStart(2, "0")}</span>
+                    <h4 className="text-sm font-bold text-neutral-900">{point.slice(0, separator)}</h4>
+                    <p className="mt-1.5 text-[13px] leading-6 text-neutral-600">{point.slice(separator + 1).trim()}</p>
+                  </li>
+                );
+              })}
+            </ul>
+          </section>
+        ))}
+        <section className="rounded-xl border border-amber-200 bg-amber-50 p-5 sm:p-6">
+          <h3 className="mb-3 flex items-center gap-2 text-[11px] font-bold uppercase tracking-[.13em] text-amber-900"><AnswerIcon />Interview-ready answer</h3>
+          <blockquote className="border-l-2 border-amber-400 pl-4 text-sm leading-7 text-neutral-800">{answer.takeaway}</blockquote>
+        </section>
+      </div>
+    </article>
+  );
   return (
     <div>
       <div className="border-b border-[#d4d4d4] bg-[#171717] px-5 py-5 text-white sm:px-6">
@@ -216,6 +274,11 @@ export default function InterviewTopicQuestions({
 
   const selectedAnswer = answers?.[selectedQuestion];
   const hasAnswers = Boolean(answers && Object.keys(answers).length > 0);
+  const answerPanelRef = useRef<HTMLElement>(null);
+
+  useEffect(() => {
+    if (answerPanelRef.current) answerPanelRef.current.scrollTop = 0;
+  }, [selectedQuestion]);
 
   const activateAnswer = (question: string, openOnMobile = false) => {
     if (!answers?.[question]) return;
@@ -225,8 +288,8 @@ export default function InterviewTopicQuestions({
 
   return (
     <>
-      <div className="overflow-clip rounded-2xl border border-[#d4d4d4] bg-[#f1f1f1] shadow-[0_18px_50px_rgba(0,0,0,.07)]">
-        <div className="sticky top-[var(--site-nav-height)] z-30 border-b border-[#d4d4d4] bg-white p-4 shadow-[0_8px_24px_rgba(0,0,0,.08)] sm:px-5 sm:py-5">
+      <div className="overflow-clip rounded-2xl border border-[#d4d4d4] bg-[#f1f1f1] shadow-[0_18px_50px_rgba(0,0,0,.07)] lg:flex lg:min-h-0 lg:flex-col">
+        <div className="sticky top-[var(--site-nav-height)] z-30 border-b border-[#d4d4d4] bg-white p-4 shadow-[0_8px_24px_rgba(0,0,0,.08)] sm:px-5 sm:py-5 lg:static lg:shrink-0">
           <div className="flex items-center gap-3">
             <Link
               href="/#interview-question-bank"
@@ -271,7 +334,12 @@ export default function InterviewTopicQuestions({
           ) : null}
         </div>
 
-        <div className="p-3 sm:p-5">
+        <div
+          role="region"
+          aria-label="Scrollable question list"
+          tabIndex={0}
+          className="p-3 focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-[#525252] sm:p-5 lg:min-h-0 lg:flex-1 lg:overflow-y-auto lg:overscroll-y-contain lg:[scrollbar-gutter:stable]"
+        >
           {questions.length === 0 ? (
             <div className="rounded-xl border border-dashed border-[#a3a3a3] bg-white px-6 py-14 text-center">
               <p className="text-sm font-extrabold text-[#262626]">Questions will be added here.</p>
@@ -349,8 +417,9 @@ export default function InterviewTopicQuestions({
 
       {selectedAnswer ? (
         <aside
+          ref={answerPanelRef}
           id="interview-answer-panel"
-          className="sticky top-[calc(var(--site-nav-height)+1rem)] hidden max-h-[calc(100vh-var(--site-nav-height)-8rem)] self-start overflow-y-auto rounded-2xl border border-[#d4d4d4] bg-white shadow-[0_22px_60px_rgba(0,0,0,.10)] lg:block"
+          className="hidden min-h-0 overflow-y-auto overscroll-y-contain rounded-2xl border border-[#d4d4d4] bg-white shadow-[0_22px_60px_rgba(0,0,0,.10)] [scrollbar-gutter:stable] lg:block"
           aria-live="polite"
           aria-label={`Answer to ${selectedQuestion}`}
           tabIndex={0}

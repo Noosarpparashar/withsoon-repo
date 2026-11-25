@@ -1,0 +1,8 @@
+export default function SparkSpeculationDiagram() {
+  return <figure aria-label="Illustrative speculative execution: task five would finish at 120 seconds, but a duplicate launched at 30 seconds wins at 45 seconds" className="rounded-2xl border border-neutral-700 bg-[#0b0d10] p-4 text-neutral-200 sm:p-5">
+    <p className="mb-4 text-center font-bold text-white">Without speculative execution</p>
+    <div className="space-y-2">{[10,12,11,10,120].map((n,i)=><div key={i} className="grid grid-cols-[3.5rem_1fr_2.5rem] items-center gap-2 text-xs"><span>Task {i+1}</span><div className="h-5 rounded bg-neutral-800"><div style={{width:`${n/120*100}%`}} className={`h-full rounded ${i===4 ? "bg-amber-400/80" : "bg-blue-400/80"}`} /></div><span className="text-right">{n}s</span></div>)}</div>
+    <div className="mt-5 rounded-xl border border-emerald-400/35 bg-emerald-400/5 p-4"><p className="text-center text-sm font-bold text-emerald-300">With speculative execution</p><div className="mt-4 space-y-3 text-xs"><p className="rounded-lg border border-amber-400/30 p-3">Original Task 5: still slow</p><p className="rounded-lg border border-blue-400/30 p-3">30s: launch duplicate on another executor</p><p className="rounded-lg border border-emerald-400/35 p-3">45s: duplicate succeeds first → use its result</p><p className="text-center text-neutral-400">Spark attempts to stop the remaining original attempt.</p></div></div>
+    <figcaption className="mt-4 text-xs leading-5 text-neutral-400">Illustrative timing, not a guaranteed launch threshold. Eligibility depends on configuration, completed tasks, efficiency checks, and available resources.</figcaption>
+  </figure>;
+}

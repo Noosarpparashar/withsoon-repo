@@ -1,4 +1,6 @@
 import type { InterviewAnswer } from "@/lib/interviewAnswers";
+import { readdirSync, readFileSync } from "node:fs";
+import { join } from "node:path";
 import { INTERVIEW_QUESTION_CATEGORIES } from "@/lib/interviewQuestionBank";
 import { SPARK_INTERVIEW_ANSWERS_1_TO_3 } from "@/lib/sparkInterviewAnswers1To3";
 import { SPARK_INTERVIEW_ANSWERS_4_TO_14 } from "@/lib/sparkInterviewAnswers4To14";
@@ -90,5 +92,22 @@ function validateSparkAnswerCoverage(answers: Record<string, InterviewAnswer>): 
 }
 
 export const SPARK_INTERVIEW_ANSWERS = mergeAnswerModules(ANSWER_MODULES);
+
+export function getSparkInterviewAnswers(): Record<string, InterviewAnswer> {
+const refreshedAnswers = { ...SPARK_INTERVIEW_ANSWERS };
+const freshAnswersDirectory = join(process.cwd(), "content", "spark-refreshed-answers");
+for (const filename of readdirSync(freshAnswersDirectory).filter((name) => name.endsWith(".md")).sort()) {
+  const formattedContent = readFileSync(join(freshAnswersDirectory, filename), "utf8");
+  const question = formattedContent.split(/\r?\n/)[0].replace(/^# /, "").replace(/`/g, "").trim();
+  if (!Object.hasOwn(SPARK_INTERVIEW_ANSWERS, question)) {
+    throw new Error(`Fresh Spark answer does not match a question: ${question}`);
+  }
+  refreshedAnswers[question] = {
+    summary: formattedContent.split(/\r?\n\r?\n/)[1] ?? "",
+    formattedContent,
+  };
+}
+return refreshedAnswers;
+}
 
 validateSparkAnswerCoverage(SPARK_INTERVIEW_ANSWERS);

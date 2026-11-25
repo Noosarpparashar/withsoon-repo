@@ -27,6 +27,7 @@ export type InterviewAnswerCodeBlock = {
 
 export type InterviewAnswer = {
   summary: string;
+  formattedContent?: string;
   paragraphs?: string[];
   sections?: InterviewAnswerSection[];
   diagrams?: InterviewAnswerDiagram[];

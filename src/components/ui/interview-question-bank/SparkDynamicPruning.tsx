@@ -1,0 +1,8 @@
+export default function SparkDynamicPruning() {
+  return <figure aria-label="Without DPP all five 200 GiB sales partitions are scanned; with DPP only India is scanned, reducing scanned data by 80 percent" className="rounded-2xl border border-neutral-700 bg-[#0b0d10] p-4 text-neutral-200 sm:p-5">
+    <p className="text-center font-bold text-white">Partition scanning: before vs. after DPP</p>
+    <p className="my-4 rounded-xl border border-blue-400/35 bg-blue-400/5 p-3 text-center text-xs leading-5">Countries filter: country_name = India → country_id = 1</p>
+    <div className="grid gap-4 sm:grid-cols-2">{[false,true].map(prune=><div key={String(prune)} className="rounded-xl border border-neutral-700 p-3"><p className="mb-3 text-center text-sm font-bold text-white">{prune ? "With DPP" : "Without DPP"}</p><div className="space-y-2">{["India","USA","UK","Japan","Germany"].map((country,i)=>{const skipped=prune&&i>0;return <div key={country} className={`flex flex-wrap justify-between gap-2 rounded-lg border p-3 text-xs ${skipped ? "border-neutral-700 text-neutral-500" : "border-emerald-400/30 bg-emerald-400/5 text-emerald-300"}`}><span>{country} · ID {i+1}</span><span>{skipped ? "Skipped" : "200 GiB scanned"}</span></div>})}</div><p className="mt-4 text-center text-xl font-bold text-white">{prune ? "200" : "1,000"} GiB</p><p className="text-center text-xs text-neutral-400">Scanned</p></div>)}</div>
+    <figcaption className="mt-4 text-xs leading-5 text-neutral-400">Illustrative equal-sized storage partitions: DPP reduces the fact-table scan by 80%. It does not by itself eliminate join shuffles.</figcaption>
+  </figure>;
+}
